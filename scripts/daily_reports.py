@@ -113,6 +113,44 @@ def parse_feed(source: str, url: str, limit: int = 12) -> list[Item]:
     return out
 
 
+def article_paragraphs(url: str, limit: int = 8) -> list[str]:
+    try:
+        page = fetch_bytes(url, timeout=20).decode("utf-8", "ignore")
+    except Exception:
+        return []
+    raw_paras = re.findall(r"<p[^>]*>(.*?)</p>", page, flags=re.I | re.S)
+    out: list[str] = []
+    noise = (
+        "expert insights content hubs",
+        "nothing in this blog constitutes",
+        "please read the alpha architect disclosures",
+        "was originally published",
+        "check out our t-shirts",
+        "posted may ",
+        "subscribe",
+        "advertisement",
+    )
+    for para in raw_paras:
+        text = clean_text(para, 700)
+        lower = text.lower()
+        if len(text) < 55:
+            continue
+        if any(x in lower for x in noise):
+            continue
+        out.append(text)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def enrich_article_item(item: Item) -> Item:
+    paras = article_paragraphs(item.url)
+    if not paras:
+        return item
+    summary = clean_text(" ".join([item.summary, *paras]), 3000)
+    return Item(item.source, item.title, item.url, item.published, summary)
+
+
 def sort_recent(items: list[Item]) -> list[Item]:
     return sorted(items, key=lambda x: parse_date(x.published) or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
 
@@ -136,20 +174,35 @@ def chinese_topic(title: str, summary: str = "") -> str:
 
 
 def etf_research_heading(title: str, summary: str = "") -> str:
+    title_l = title.lower()
     text = (title + " " + summary).lower()
+    if "world markets watchlist" in title_l:
+        return "全球市场与跨区域股票表现"
+    if "weekly economic snapshot" in title_l:
+        return "美国经济数据与利率预期"
+    if "dram hits" in title_l or "record pace" in title_l:
+        return "AI 主题 ETF 资金流与产品热度"
+    if "nuclear" in title_l:
+        return "能源主题与产业链 ETF"
+    if "securitization" in title_l:
+        return "证券化资产与信用配置"
+    if "melt-up" in title_l:
+        return "风险偏好与市场过热"
+    if "hedge fund" in title_l or "bearish" in title_l:
+        return "机构情绪与风险叙事"
+    if "trend following" in title_l or "regime-dependent" in title_l:
+        return "趋势跟踪与状态依赖配置"
+    if "private equity" in title_l or "401k" in title_l.replace(" ", ""):
+        return "私募股权与退休账户配置"
     if "institutional investor attention" in text or ("macro news" in text and "volatility" in text):
         return "机构注意力、波动率与宏观新闻"
-    if "private equity" in text or "401k" in text.replace(" ", ""):
-        return "私募股权与退休账户配置"
-    if "trend following" in text or "regime-dependent" in text:
-        return "趋势跟踪与状态依赖配置"
-    if "animal spirits" in text or "stock market is doing something" in text:
+    if "animal spirits" in title_l or "stock market is doing something" in title_l:
         return "市场结构与风险偏好"
     if "capital market" in text or "expected return" in text or "valuation" in text:
         return "长期资本市场假设与估值"
     if "treasury" in text or "duration" in text or "bond" in text or "yield" in text:
         return "债券久期、收益率与信用风险"
-    if "factor" in text or "momentum" in text or "value" in text or "quality" in text:
+    if re.search(r"\b(factor|momentum|value|quality)\b", text):
         return "因子配置与轮动"
     if "commodity" in text or "gold" in text or "inflation" in text:
         return "商品、黄金与通胀对冲"
@@ -234,36 +287,74 @@ def dedupe_items(items: list[Item]) -> list[Item]:
 
 def etf_chinese_fact(item: Item) -> str:
     title = clean_text(item.title, 220)
-    text = clean_text(item.summary, 900)
+    text = clean_text(item.summary, 3000)
     lower = f"{title} {text}".lower()
     parts: list[str] = []
 
     if "world markets watchlist" in lower:
-        parts.append("文章是全球市场观察清单，围绕主要区域市场和跨资产价格表现更新当日市场状态。")
+        parts.append(
+            "文章跟踪全球九个主要股票指数，截至 2026 年 5 月 11 日，其中六个指数年内仍为正收益。"
+            "日本 Nikkei 225 年内上涨约 24.0%，领先观察清单；美国 S&P 500 上涨约 8.3%，加拿大 TSX 上涨约 7.7%。"
+            "表现较弱的是印度 BSE SENSEX，年内下跌约 10.8%；德国 DAXK 和法国 CAC 40 分别下跌约 2.6% 和 1.1%。"
+        )
     elif "weekly economic snapshot" in lower and "labor market" in lower:
-        parts.append("文章是每周经济快照，核心事实是美国劳动力市场仍显示韧性，这会影响市场对增长、通胀和利率路径的判断。")
+        parts.append(
+            "文章的核心是美国劳动力市场仍然强于预期：4 月新增就业 11.5 万，高于市场预期的 4.6 万。"
+            "3 月就业数据被上修至 18.5 万，2 月则下修为减少 15.6 万，失业率维持在 4.3%。"
+            "文章认为，这组数据让美联储在降息时点上仍有等待空间，同时市场把它解读为增长韧性信号，S&P 500 因此延续周度上涨并刷新高位。"
+        )
     elif "hits $6.5 billion" in lower or "record pace" in lower:
-        parts.append("文章提到相关 ETF 资产规模快速增长并达到 65 亿美元，反映该主题产品的资金关注度正在上升。")
+        parts.append(
+            "文章关注 Roundhill Memory ETF（DRAM）的资产规模扩张：截至 2026 年 5 月 11 日，该 ETF 上市 36 天内达到 65 亿美元 AUM。"
+            "文中引用 Bloomberg 的 Eric Balchunas 观点称，这一速度快于 IBIT 达到同一规模所用的 43 天。"
+            "DRAM 的卖点是聚焦 AI 基础设施所需的存储芯片、内存与数据存储相关公司，因此这条信息更多反映 AI 硬件主题 ETF 的资金拥挤度。"
+        )
     elif "private equity" in lower and ("401k" in lower or "401 k" in lower):
-        parts.append("文章讨论私募股权是否适合进入 401K 等退休账户，核心事实是非公开资产的流动性、估值频率和费用结构与普通公募基金不同。")
+        parts.append(
+            "文章讨论私募股权是否适合进入 401K 这类退休账户。事实层面，私募股权与普通公募基金的主要差异在于流动性更低、估值频率更慢、费用层级更复杂，且底层资产透明度较弱。"
+            "这类产品如果进入退休账户，核心问题不是“是否另类资产更高级”，而是普通退休投资者是否理解锁定期、估值滞后和费用拖累。"
+        )
     elif "trend following" in lower or "regime-dependent" in lower:
-        parts.append("文章讨论趋势跟踪和状态依赖配置，核心事实是趋势策略的资产权重可以随市场状态变化，而不是维持固定比例。")
+        parts.append(
+            "文章讨论趋势跟踪与状态依赖配置，重点是组合权重不必始终维持固定比例，而可以根据市场状态改变风险资产、避险资产和现金类资产的暴露。"
+            "这类框架通常需要明确趋势指标、状态划分、再平衡频率和信号滞后，否则容易把事后解释误当成可执行规则。"
+        )
     elif "animal spirits" in lower or "stock market is doing something" in lower:
-        parts.append("文章讨论股市出现少见走势时的市场心理和风险偏好，核心事实是异常强势行情可能改变投资者对后续收益和回撤的预期。")
+        parts.append(
+            "文章讨论股市出现少见强势走势时的市场心理。核心事实是，当行情快速走强时，投资者容易把近期上涨外推成后续收益预期，风险偏好会随价格本身上升而强化。"
+            "这类内容适合作为市场情绪观察，而不应直接等同于买入或卖出信号。"
+        )
     elif "institutional investor attention" in lower or ("macro news" in lower and "volatility" in lower):
         parts.append(
-            "文章讨论机构投资者注意力：当市场波动率上升时，把更多注意力转向宏观新闻的基金表现更好。"
+            "文章基于机构投资者实际在线阅读行为来研究“注意力”如何影响基金决策。"
+            "论文发现，当总体波动率升高时，机构会把注意力从个股新闻更多转向宏观和市场层面的新闻。"
         )
+        if "0.48%" in lower or "1.9%" in lower:
+            parts.append("文中还给出量化结果：宏观注意力切换能力较高的基金，未来表现约高出 0.48%/季，折合约 1.9% 年化，且这种差异在高波动环境中更明显。")
         if "stocks they own" in lower or "position and trading decisions" in lower:
             parts.append("文章还指出，基金会更关注自己持有的股票，这种注意力有助于提升仓位管理和交易决策的价值。")
     elif "nuclear" in lower:
-        parts.append("文章关注美国核能主题，核心事实是合作项目和市场情绪改善正在推动核能相关主题资产获得更多关注。")
+        parts.append(
+            "文章关注美国核能主题的产业进展：Brookfield Asset Management 与 The Nuclear Company 合作推进 Westinghouse AP1000 和 AP300 反应堆部署，Blue Energy 与 GE Vernova 则推进天然气加核能的混合方案。"
+            "文章还提到新的 Gallup 民调显示美国公众对核能支持度处于高位，这些因素共同构成核能主题 ETF 的基本面叙事。"
+            "VettaFi Nuclear Renaissance Index（NUKZX）覆盖反应堆技术、设备供应和服务公司，并作为 Range Nuclear Renaissance Index ETF（NUKZ）的底层指数。"
+        )
     elif "securitization" in lower:
-        parts.append("文章讨论证券化投资，重点是把贷款、应收账款或其他现金流资产打包后的信用暴露如何进入投资组合。")
+        parts.append(
+            "文章是关于证券化投资的访谈，嘉宾来自 Janus Henderson Investors，主题包括证券化产品如何运作、CLO 投资、证券化市场规模，以及固定收益投资方式的变化。"
+            "从资产配置角度看，证券化资产本质上是把贷款、应收账款或其他现金流资产打包后形成的信用暴露，收益来源和风险都不同于单纯持有国债。"
+        )
     elif "melt-up" in lower:
-        parts.append("文章讨论市场快速上行阶段的风险偏好，核心事实是价格上涨本身可能吸引更多资金追涨，形成短期动量强化。")
+        parts.append(
+            "文章讨论美股可能进入 melt-up（快速上冲）阶段：S&P 500 在 3 月底年内仍下跌约 7%，随后反弹到 2026 年内上涨接近 9%。"
+            "作者把这种行情与 AI 交易升温、市场迅速消化地缘政治担忧联系起来，重点是价格上涨本身可能继续吸引追涨资金，形成短期动量强化。"
+        )
     elif "hedge fund" in lower or "bearish" in lower:
-        parts.append("文章讨论对冲基金经理为何经常偏谨慎或偏空，核心事实是机构表达的风险叙事不一定等同于实际仓位。")
+        parts.append(
+            "文章讨论为什么许多知名对冲基金经理经常公开表达偏空观点。文中提到 Ray Dalio、Paul Tudor Jones、Stanley Druckenmiller 等人长期有过谨慎或偏空预测，但这并不代表他们的基金完全按这些宏观判断单边下注。"
+            "文中引用 Tudor Jones 对市场估值的担忧，包括美国股市总市值/GDP 达到约 252%、S&P 500 在 22 倍 PE 附近买入时十年前瞻收益可能偏低等观点。"
+            "作者强调，这些人更像交易者而非买入并长期持有的投资者，因此他们的公开叙事、实际仓位和长期资产配置含义需要分开看。"
+        )
     elif "capital market" in lower or "expected return" in lower:
         parts.append("文章围绕长期资本市场假设、估值和预期收益展开，重点是不同资产类别未来回报与风险补偿的变化。")
     elif "treasury" in lower or "duration" in lower or "bond" in lower or "yield" in lower:
@@ -519,6 +610,7 @@ def build_etf(out_dir: Path) -> None:
     for source, url in feeds.items():
         items.extend(parse_feed(source, url, limit=5))
     picked = dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)])[:8]
+    picked = [enrich_article_item(x) for x in picked]
     date_s = report_date()
     md = out_dir / f"us_etf_allocation_digest_{date_s}.md"
     lines = [
