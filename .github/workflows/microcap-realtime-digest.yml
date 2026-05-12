@@ -1,0 +1,148 @@
+name: Microcap Realtime Digest
+
+on:
+  schedule:
+    # Mirrors liuruojiang/microcap top100_realtime_signals.yml:
+    # 12:45 Asia/Shanghai == 04:45 UTC.
+    - cron: "45 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      TZ: Asia/Shanghai
+      PLANNED_BJ: "12:45 Asia/Shanghai"
+      GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      QVERIS_API_KEY: ${{ secrets.QVERIS_API_KEY }}
+    steps:
+      - name: Record workflow start time
+        run: echo "STARTED_BJ=$(date '+%Y-%m-%d %H:%M:%S %Z')" >> "$GITHUB_ENV"
+
+      - name: Check out automation repository
+        uses: actions/checkout@v6
+        with:
+          path: automation
+
+      - name: Check out microcap repository
+        uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: main
+          path: microcap
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Restore generated strategy cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            microcap/outputs
+            microcap/.microcap_index_cache
+            microcap/.microcap_ohlc_cache
+          key: microcap-digest-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            microcap-digest-${{ runner.os }}-
+            top100-realtime-${{ runner.os }}-
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas requests akshare matplotlib
+
+      - name: Validate required realtime data secret
+        run: |
+          if [ -z "${QVERIS_API_KEY}" ]; then
+            echo "Missing required GitHub Secret: QVERIS_API_KEY"
+            exit 1
+          fi
+
+      - name: Clear stale realtime outputs
+        working-directory: microcap
+        run: |
+          mkdir -p outputs
+          rm -f realtime_signal_result.txt outputs/*_realtime_signal.csv
+
+      - name: Run v1.4, v1.6 and v1.8 realtime signals
+        id: signals
+        working-directory: microcap
+        shell: bash
+        run: |
+          set +e
+          {
+            echo "### v1.4"
+            python microcap_top100_mom16_biweekly_live_v1_4.py "实时信号"
+            v14_status=$?
+            echo
+            echo "### v1.6/v1.8"
+            python run_top100_v1_6_v1_8_realtime_signals.py
+            v16_v18_status=$?
+            if [ "${v14_status}" -ne 0 ] || [ "${v16_v18_status}" -ne 0 ]; then
+              exit 1
+            fi
+          } 2>&1 | tee realtime_signal_result.txt
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          echo "SIGNAL_EXIT_CODE=${status}" >> "${GITHUB_ENV}"
+          exit 0
+
+      - name: Build Markdown digest
+        if: always()
+        run: |
+          python automation/scripts/build_microcap_realtime_digest.py \
+            --result microcap/realtime_signal_result.txt \
+            --out-dir artifacts \
+            --planned "${PLANNED_BJ}" \
+            --started "${STARTED_BJ}" \
+            --exit-code "${SIGNAL_EXIT_CODE:-unknown}"
+
+      - name: Send Gmail
+        if: always()
+        env:
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
+        run: python automation/scripts/send_report.py artifacts/metadata.json
+
+      - name: Upload signal outputs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-realtime-digest
+          path: |
+            artifacts/
+            microcap/realtime_signal_result.txt
+            microcap/outputs/*_realtime_signal.csv
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Add realtime signal result to job summary
+        if: always()
+        run: |
+          {
+            echo "## Microcap realtime digest"
+            echo
+            echo "- Planned: ${PLANNED_BJ}"
+            echo "- Started: ${STARTED_BJ}"
+            echo "- Script exit code: ${{ steps.signals.outputs.exit_code }}"
+            echo "- Artifact: microcap-realtime-digest"
+            echo
+            echo '```text'
+            cat microcap/realtime_signal_result.txt
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Fail job when realtime signal script failed
+        if: steps.signals.outputs.exit_code != '0'
+        run: exit 1
