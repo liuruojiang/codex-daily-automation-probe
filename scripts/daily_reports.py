@@ -1046,7 +1046,7 @@ def etf_price_change(symbol: str) -> tuple[str, float] | None:
     return date_s, change
 
 
-def build_etf(out_dir: Path) -> None:
+def build_etf_legacy(out_dir: Path) -> None:
     started = now_bj()
     tickers = ["SPY", "QQQM", "EMXC", "VEA", "GLDM", "VGLT", "PDBC", "IBIT", "UUP", "DBMF", "KMLM", "XLK", "XLE", "XLF", "XLV", "IWM", "TLT", "HYG", "LQD", "VNQ"]
     rows = []
@@ -1112,6 +1112,393 @@ def build_etf(out_dir: Path) -> None:
         ]
     )
     write_meta(out_dir, f"美股 ETF 与资产配置简报 - {date_s}", body, md)
+
+
+@dataclass(frozen=True)
+class MarketAsset:
+    code: str
+    name: str
+    source: str
+    symbol: str
+    description: str
+    category: str = ""
+
+
+def yahoo_daily_rows(symbol: str, range_s: str = "3mo") -> list[tuple[str, float]]:
+    encoded = urllib.parse.quote(symbol.upper(), safe="")
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}?range={range_s}&interval=1d"
+    try:
+        payload = json.loads(fetch_bytes(url, timeout=20).decode("utf-8"))
+        result = payload["chart"]["result"][0]
+        timestamps = result["timestamp"]
+        closes = result["indicators"]["quote"][0]["close"]
+    except Exception:
+        return []
+    rows: list[tuple[str, float]] = []
+    for ts, close in zip(timestamps, closes):
+        if close is None:
+            continue
+        date_s = datetime.fromtimestamp(int(ts), timezone.utc).astimezone(ZoneInfo("America/New_York")).date().isoformat()
+        rows.append((date_s, float(close)))
+    return rows
+
+
+def secid_to_sina_symbol(secid: str) -> str:
+    market, code = secid.split(".", 1)
+    prefix = "sh" if market == "1" else "sz"
+    return prefix + code
+
+
+def sina_daily_rows(secid: str, lmt: int = 80) -> list[tuple[str, float]]:
+    symbol = secid_to_sina_symbol(secid)
+    url = (
+        "https://quotes.sina.cn/cn/api/jsonp.php/var%20K=/CN_MarketDataService.getKLineData"
+        f"?symbol={urllib.parse.quote(symbol, safe='')}&scale=240&ma=no&datalen={lmt}"
+    )
+    try:
+        text = fetch_bytes(url, timeout=20).decode("utf-8", "ignore")
+    except Exception:
+        return []
+    match = re.search(r"var K=\((\[.*\])\)", text, flags=re.S)
+    if not match:
+        return []
+    try:
+        payload = json.loads(match.group(1))
+    except Exception:
+        return []
+    rows: list[tuple[str, float]] = []
+    for item in payload:
+        try:
+            rows.append((str(item["day"]), float(item["close"])))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return rows
+
+
+def eastmoney_daily_rows(secid: str, lmt: int = 80) -> list[tuple[str, float]]:
+    sina_rows = sina_daily_rows(secid, lmt)
+    if sina_rows:
+        return sina_rows
+    end_date = (now_bj() + timedelta(days=30)).strftime("%Y%m%d")
+    url = (
+        "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+        f"?secid={urllib.parse.quote(secid, safe='.')}"
+        "&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57"
+        f"&klt=101&fqt=1&beg=20050101&end={end_date}&lmt={lmt}"
+    )
+    try:
+        payload = json.loads(fetch_bytes(url, timeout=20).decode("utf-8"))
+        klines = (payload.get("data") or {}).get("klines") or []
+    except Exception:
+        return []
+    rows: list[tuple[str, float]] = []
+    for line in klines:
+        parts = str(line).split(",")
+        if len(parts) < 3:
+            continue
+        try:
+            rows.append((parts[0], float(parts[2])))
+        except ValueError:
+            continue
+    return rows
+
+
+def change_from_rows(rows: list[tuple[str, float]], sessions: int = 1) -> tuple[str, float] | None:
+    if len(rows) <= sessions:
+        return None
+    last_date, last_close = rows[-1]
+    _prev_date, prev_close = rows[-1 - sessions]
+    if prev_close == 0:
+        return None
+    return last_date, (last_close / prev_close - 1.0) * 100.0
+
+
+def asset_change(asset: MarketAsset, sessions: int = 1) -> tuple[str, float] | None:
+    if asset.source == "yahoo":
+        rows = yahoo_daily_rows(asset.symbol, "6mo" if sessions > 5 else "1mo")
+    elif asset.source == "eastmoney":
+        rows = eastmoney_daily_rows(asset.symbol, max(80, sessions + 10))
+    else:
+        return None
+    return change_from_rows(rows, sessions=sessions)
+
+
+def fetch_asset_changes(assets: list[MarketAsset], sessions: int = 1) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for asset in assets:
+        val = asset_change(asset, sessions=sessions)
+        if val:
+            rows.append({"asset": asset, "date": val[0], "change": val[1]})
+        time.sleep(0.05)
+    return rows
+
+
+def fmt_change(value: object) -> str:
+    return f"{float(value):+.2f}%"
+
+
+def append_asset_table(lines: list[str], rows: list[dict[str, object]], include_strategy: bool = False) -> None:
+    if include_strategy:
+        lines += [
+            "| 策略 | 代码 | 名称 | 交易日 | 涨跌幅 | 一句话说明 |",
+            "|---|---|---|---:|---:|---|",
+        ]
+        for row in rows:
+            asset = row["asset"]
+            assert isinstance(asset, MarketAsset)
+            lines.append(
+                f"| {asset.category} | {asset.code} | {asset.name} | {row['date']} | {fmt_change(row['change'])} | {asset.description} |"
+            )
+    else:
+        lines += ["| 代码 | 名称 | 交易日 | 涨跌幅 | 一句话说明 |", "|---|---|---:|---:|---|"]
+        for row in rows:
+            asset = row["asset"]
+            assert isinstance(asset, MarketAsset)
+            lines.append(
+                f"| {asset.code} | {asset.name} | {row['date']} | {fmt_change(row['change'])} | {asset.description} |"
+            )
+
+
+def dedupe_by_category(rows: list[dict[str, object]], reverse: bool) -> list[dict[str, object]]:
+    picked: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for row in sorted(rows, key=lambda x: float(x["change"]), reverse=reverse):
+        asset = row["asset"]
+        assert isinstance(asset, MarketAsset)
+        key = asset.category or asset.code
+        if key in seen:
+            continue
+        seen.add(key)
+        picked.append(row)
+        if len(picked) >= 10:
+            break
+    return picked
+
+
+A_STRATEGY_ASSETS = [
+    MarketAsset("H20955", "中证红利低波100全收益", "eastmoney", "1.000827", "A策略使用的红利低波权益指数；日涨跌用中证红利低波动100价格指数代理。", "A策略"),
+    MarketAsset("399606", "创业板指数", "eastmoney", "0.399606", "A策略权益池里的创业板宽基指数。", "A策略"),
+    MarketAsset("H00016", "上证50全收益", "eastmoney", "1.000016", "A策略使用的大盘蓝筹指数；日涨跌用上证50价格指数代理。", "A策略"),
+    MarketAsset("H00852", "中证1000全收益", "eastmoney", "1.000852", "A策略使用的小盘成长宽基指数；日涨跌用中证1000价格指数代理。", "A策略"),
+    MarketAsset("H00905", "中证500全收益", "eastmoney", "1.000905", "A策略使用的中盘宽基指数；日涨跌用中证500价格指数代理。", "A策略"),
+    MarketAsset("H11077", "10年期国债全收益", "eastmoney", "1.000012", "A策略债券防守资产；日涨跌用上证国债指数代理。", "A策略"),
+]
+
+ADK_STRATEGY_ASSETS = [
+    MarketAsset("000852", "中证1000", "eastmoney", "1.000852", "ADK策略多配对池里的小盘宽基指数。", "ADK策略"),
+    MarketAsset("000016", "上证50", "eastmoney", "1.000016", "ADK策略多配对池里的大盘蓝筹指数。", "ADK策略"),
+    MarketAsset("000300", "沪深300", "eastmoney", "1.000300", "ADK策略多配对池里的A股核心宽基指数。", "ADK策略"),
+    MarketAsset("000905", "中证500", "eastmoney", "1.000905", "ADK策略多配对池里的中盘宽基指数。", "ADK策略"),
+    MarketAsset("399006", "创业板指", "eastmoney", "0.399006", "ADK策略多配对池里的创业板价格指数。", "ADK策略"),
+]
+
+B_STRATEGY_ASSETS = [
+    MarketAsset("QQQM", "Invesco NASDAQ 100 ETF", "yahoo", "QQQM", "B策略美股成长敞口，跟踪纳斯达克100指数。", "B策略"),
+    MarketAsset("EMXC", "iShares MSCI Emerging Markets ex China ETF", "yahoo", "EMXC", "B策略新兴市场但排除中国的股票敞口。", "B策略"),
+    MarketAsset("VEA", "Vanguard FTSE Developed Markets ETF", "yahoo", "VEA", "B策略美国以外发达市场股票敞口。", "B策略"),
+    MarketAsset("GLDM", "SPDR Gold MiniShares Trust", "yahoo", "GLDM", "B策略黄金敞口，代表实物黄金价格变化。", "B策略"),
+    MarketAsset("VGLT", "Vanguard Long-Term Treasury ETF", "yahoo", "VGLT", "B策略美国长期国债久期敞口。", "B策略"),
+    MarketAsset("PDBC", "Invesco Optimum Yield Diversified Commodity Strategy No K-1 ETF", "yahoo", "PDBC", "B策略多商品期货篮子敞口。", "B策略"),
+    MarketAsset("IBIT", "iShares Bitcoin Trust ETF", "yahoo", "IBIT", "B策略现货比特币敞口。", "B策略"),
+    MarketAsset("UUP", "Invesco DB US Dollar Index Bullish Fund", "yahoo", "UUP", "B策略美元指数多头敞口。", "B策略"),
+    MarketAsset("DBMF", "iMGP DBi Managed Futures Strategy ETF", "yahoo", "DBMF", "B策略管理期货/趋势跟踪敞口。", "B策略"),
+    MarketAsset("KMLM", "KFA Mount Lucas Managed Futures Index Strategy ETF", "yahoo", "KMLM", "B策略系统化管理期货趋势敞口。", "B策略"),
+]
+
+D_STRATEGY_ASSETS = [
+    MarketAsset("159915.SZ", "创业板100 ETF", "eastmoney", "0.159915", "D策略六ETF池里的创业板100场内ETF。", "D策略"),
+    MarketAsset("159941.SZ", "纳指ETF", "eastmoney", "0.159941", "D策略六ETF池里的境内纳斯达克100 ETF。", "D策略"),
+    MarketAsset("513030.SH", "德国ETF", "eastmoney", "1.513030", "D策略六ETF池里的德国股票市场ETF。", "D策略"),
+    MarketAsset("513520.SH", "日经ETF", "eastmoney", "1.513520", "D策略六ETF池里的日本日经指数ETF。", "D策略"),
+    MarketAsset("159985.SZ", "豆粕ETF", "eastmoney", "0.159985", "D策略六ETF池里的豆粕商品ETF。", "D策略"),
+    MarketAsset("518880.SH", "黄金ETF", "eastmoney", "1.518880", "D策略六ETF池里的境内黄金ETF。", "D策略"),
+]
+
+CORE_MARKET_ASSETS = [
+    MarketAsset("^GSPC", "S&P 500", "yahoo", "^GSPC", "美国大盘股核心指数。"),
+    MarketAsset("^NDX", "NASDAQ 100", "yahoo", "^NDX", "美国大型成长股和科技股权重较高的核心指数。"),
+    MarketAsset("^DJI", "Dow Jones Industrial Average", "yahoo", "^DJI", "美国蓝筹股价格加权指数。"),
+    MarketAsset("^RUT", "Russell 2000", "yahoo", "^RUT", "美国小盘股核心指数。"),
+    MarketAsset("^VIX", "CBOE VIX", "yahoo", "^VIX", "美股隐含波动率指数，反映期权市场风险定价。"),
+    MarketAsset("000300", "沪深300", "eastmoney", "1.000300", "A股核心大盘宽基指数。"),
+    MarketAsset("000905", "中证500", "eastmoney", "1.000905", "A股中盘宽基指数。"),
+    MarketAsset("000852", "中证1000", "eastmoney", "1.000852", "A股小盘宽基指数。"),
+    MarketAsset("399006", "创业板指", "eastmoney", "0.399006", "A股成长风格核心指数。"),
+    MarketAsset("000016", "上证50", "eastmoney", "1.000016", "A股大盘蓝筹核心指数。"),
+]
+
+MOVER_UNIVERSE = [
+    MarketAsset("^GSPC", "S&P 500 指数", "yahoo", "^GSPC", "美国大盘股核心指数。", "US Large Cap Index"),
+    MarketAsset("^NDX", "NASDAQ 100 指数", "yahoo", "^NDX", "美国大型成长股和科技股权重较高的指数。", "US Growth Index"),
+    MarketAsset("^RUT", "Russell 2000 指数", "yahoo", "^RUT", "美国小盘股核心指数。", "US Small Cap Index"),
+    MarketAsset("RSP", "Invesco S&P 500 Equal Weight ETF", "yahoo", "RSP", "等权重持有标普500成分股的美国大盘ETF。", "US Equal Weight"),
+    MarketAsset("VEA", "Vanguard FTSE Developed Markets ETF", "yahoo", "VEA", "覆盖美国以外发达市场股票。", "Developed ex US"),
+    MarketAsset("VWO", "Vanguard FTSE Emerging Markets ETF", "yahoo", "VWO", "覆盖全球新兴市场股票。", "Emerging Markets"),
+    MarketAsset("EMXC", "iShares MSCI Emerging Markets ex China ETF", "yahoo", "EMXC", "覆盖中国以外新兴市场股票。", "Emerging ex China"),
+    MarketAsset("EWJ", "iShares MSCI Japan ETF", "yahoo", "EWJ", "日本股票市场ETF。", "Japan Equity"),
+    MarketAsset("EWG", "iShares MSCI Germany ETF", "yahoo", "EWG", "德国股票市场ETF。", "Germany Equity"),
+    MarketAsset("EWU", "iShares MSCI United Kingdom ETF", "yahoo", "EWU", "英国股票市场ETF。", "UK Equity"),
+    MarketAsset("EWZ", "iShares MSCI Brazil ETF", "yahoo", "EWZ", "巴西股票市场ETF。", "Brazil Equity"),
+    MarketAsset("INDA", "iShares MSCI India ETF", "yahoo", "INDA", "印度股票市场ETF。", "India Equity"),
+    MarketAsset("EWT", "iShares MSCI Taiwan ETF", "yahoo", "EWT", "台湾股票市场ETF。", "Taiwan Equity"),
+    MarketAsset("EWY", "iShares MSCI South Korea ETF", "yahoo", "EWY", "韩国股票市场ETF。", "Korea Equity"),
+    MarketAsset("FXI", "iShares China Large-Cap ETF", "yahoo", "FXI", "香港上市中国大盘股ETF。", "China Equity"),
+    MarketAsset("ASHR", "Xtrackers Harvest CSI 300 China A-Shares ETF", "yahoo", "ASHR", "跟踪沪深300A股的美国上市ETF。", "China Equity"),
+    MarketAsset("XLK", "Technology Select Sector SPDR Fund", "yahoo", "XLK", "美国科技行业ETF。", "US Technology"),
+    MarketAsset("XLY", "Consumer Discretionary Select Sector SPDR Fund", "yahoo", "XLY", "美国可选消费行业ETF。", "US Discretionary"),
+    MarketAsset("XLP", "Consumer Staples Select Sector SPDR Fund", "yahoo", "XLP", "美国必需消费行业ETF。", "US Staples"),
+    MarketAsset("XLE", "Energy Select Sector SPDR Fund", "yahoo", "XLE", "美国能源行业ETF。", "US Energy"),
+    MarketAsset("XLF", "Financial Select Sector SPDR Fund", "yahoo", "XLF", "美国金融行业ETF。", "US Financials"),
+    MarketAsset("XLV", "Health Care Select Sector SPDR Fund", "yahoo", "XLV", "美国医疗保健行业ETF。", "US Health Care"),
+    MarketAsset("XLI", "Industrial Select Sector SPDR Fund", "yahoo", "XLI", "美国工业行业ETF。", "US Industrials"),
+    MarketAsset("XLB", "Materials Select Sector SPDR Fund", "yahoo", "XLB", "美国材料行业ETF。", "US Materials"),
+    MarketAsset("XLRE", "Real Estate Select Sector SPDR Fund", "yahoo", "XLRE", "美国上市房地产行业ETF。", "US Real Estate"),
+    MarketAsset("XLU", "Utilities Select Sector SPDR Fund", "yahoo", "XLU", "美国公用事业行业ETF。", "US Utilities"),
+    MarketAsset("XLC", "Communication Services Select Sector SPDR Fund", "yahoo", "XLC", "美国通信服务行业ETF。", "US Communication"),
+    MarketAsset("SMH", "VanEck Semiconductor ETF", "yahoo", "SMH", "美国上市半导体产业链ETF。", "Semiconductors"),
+    MarketAsset("IGV", "iShares Expanded Tech-Software Sector ETF", "yahoo", "IGV", "美国软件行业ETF。", "Software"),
+    MarketAsset("BUG", "Global X Cybersecurity ETF", "yahoo", "BUG", "网络安全主题ETF，持有安全软件、身份管理和云安全相关公司。", "Cybersecurity"),
+    MarketAsset("XBI", "SPDR S&P Biotech ETF", "yahoo", "XBI", "等权重美国生物科技行业ETF。", "Biotech"),
+    MarketAsset("KRE", "SPDR S&P Regional Banking ETF", "yahoo", "KRE", "美国区域银行行业ETF。", "Regional Banks"),
+    MarketAsset("XRT", "SPDR S&P Retail ETF", "yahoo", "XRT", "美国零售行业ETF。", "Retail"),
+    MarketAsset("XHB", "SPDR S&P Homebuilders ETF", "yahoo", "XHB", "美国住宅建筑与相关产业ETF。", "Homebuilders"),
+    MarketAsset("JETS", "U.S. Global Jets ETF", "yahoo", "JETS", "航空公司和航空服务相关股票ETF。", "Airlines"),
+    MarketAsset("IYT", "iShares U.S. Transportation ETF", "yahoo", "IYT", "美国运输行业ETF。", "Transportation"),
+    MarketAsset("URA", "Global X Uranium ETF", "yahoo", "URA", "铀矿和核燃料产业链ETF。", "Uranium Equity"),
+    MarketAsset("TAN", "Invesco Solar ETF", "yahoo", "TAN", "全球太阳能产业链ETF。", "Clean Energy"),
+    MarketAsset("ICLN", "iShares Global Clean Energy ETF", "yahoo", "ICLN", "全球清洁能源股票ETF。", "Clean Energy"),
+    MarketAsset("MTUM", "iShares MSCI USA Momentum Factor ETF", "yahoo", "MTUM", "美国动量因子ETF。", "Momentum Factor"),
+    MarketAsset("VLUE", "iShares MSCI USA Value Factor ETF", "yahoo", "VLUE", "美国价值因子ETF。", "Value Factor"),
+    MarketAsset("QUAL", "iShares MSCI USA Quality Factor ETF", "yahoo", "QUAL", "美国质量因子ETF。", "Quality Factor"),
+    MarketAsset("USMV", "iShares MSCI USA Min Vol Factor ETF", "yahoo", "USMV", "美国低波动因子ETF。", "Low Vol Factor"),
+    MarketAsset("SHY", "iShares 1-3 Year Treasury Bond ETF", "yahoo", "SHY", "美国短期国债ETF。", "Short Treasury"),
+    MarketAsset("IEF", "iShares 7-10 Year Treasury Bond ETF", "yahoo", "IEF", "美国中长期国债ETF。", "Intermediate Treasury"),
+    MarketAsset("VGLT", "Vanguard Long-Term Treasury ETF", "yahoo", "VGLT", "美国长期国债ETF。", "Long Treasury"),
+    MarketAsset("TIP", "iShares TIPS Bond ETF", "yahoo", "TIP", "美国通胀保值债券ETF。", "TIPS"),
+    MarketAsset("LQD", "iShares iBoxx Investment Grade Corporate Bond ETF", "yahoo", "LQD", "美元投资级公司债ETF。", "Investment Grade Credit"),
+    MarketAsset("HYG", "iShares iBoxx High Yield Corporate Bond ETF", "yahoo", "HYG", "美元高收益公司债ETF。", "High Yield Credit"),
+    MarketAsset("EMB", "iShares J.P. Morgan USD Emerging Markets Bond ETF", "yahoo", "EMB", "美元计价新兴市场主权债ETF。", "EM Bond"),
+    MarketAsset("MUB", "iShares National Muni Bond ETF", "yahoo", "MUB", "美国市政债ETF。", "Municipal Bond"),
+    MarketAsset("PDBC", "Invesco Diversified Commodity Strategy ETF", "yahoo", "PDBC", "多商品期货策略ETF。", "Broad Commodities"),
+    MarketAsset("VNQ", "Vanguard Real Estate ETF", "yahoo", "VNQ", "美国REITs和房地产股票ETF。", "REITs"),
+    MarketAsset("UUP", "Invesco DB US Dollar Index Bullish Fund", "yahoo", "UUP", "美元指数多头ETF。", "US Dollar"),
+    MarketAsset("DBMF", "iMGP DBi Managed Futures Strategy ETF", "yahoo", "DBMF", "管理期货趋势跟踪ETF。", "Managed Futures"),
+    MarketAsset("KMLM", "KFA Mount Lucas Managed Futures Index Strategy ETF", "yahoo", "KMLM", "系统化管理期货趋势ETF。", "Managed Futures"),
+    MarketAsset("000300", "沪深300指数", "eastmoney", "1.000300", "A股核心大盘宽基指数。", "China Equity"),
+    MarketAsset("000905", "中证500指数", "eastmoney", "1.000905", "A股中盘宽基指数。", "China Equity"),
+    MarketAsset("000852", "中证1000指数", "eastmoney", "1.000852", "A股小盘宽基指数。", "China Equity"),
+    MarketAsset("399006", "创业板指", "eastmoney", "0.399006", "A股成长风格核心指数。", "China Equity"),
+]
+
+
+def build_etf(out_dir: Path) -> None:
+    started = now_bj()
+    strategy_assets = A_STRATEGY_ASSETS + ADK_STRATEGY_ASSETS + B_STRATEGY_ASSETS + D_STRATEGY_ASSETS
+    strategy_rows = fetch_asset_changes(strategy_assets)
+    core_rows = fetch_asset_changes(CORE_MARKET_ASSETS)
+    mover_rows = fetch_asset_changes(MOVER_UNIVERSE)
+    top_rows = dedupe_by_category(mover_rows, reverse=True)
+    bottom_rows = dedupe_by_category(mover_rows, reverse=False)
+
+    feeds = {
+        "A Wealth of Common Sense": "https://awealthofcommonsense.com/feed/",
+        "ETF Trends": "https://www.etftrends.com/feed/",
+        "ETF Database": "https://etfdb.com/feed/",
+        "Alpha Architect": "https://alphaarchitect.com/feed/",
+        "Meb Faber": "https://mebfaber.com/feed/",
+    }
+    items: list[Item] = []
+    for source, url in feeds.items():
+        items.extend(parse_feed(source, url, limit=5))
+    picked = dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)])[:8]
+    picked = [enrich_article_item(x) for x in picked]
+
+    date_s = report_date()
+    data_dates = sorted({str(r["date"]) for r in strategy_rows + core_rows + mover_rows})
+    data_date_s = data_dates[-1] if data_dates else "数据不足"
+    md = out_dir / f"us_etf_allocation_digest_{date_s}.md"
+
+    lines = [
+        f"# 美股 ETF 与资产配置日报 - {date_s}",
+        "",
+        f"> 数据日期：最新可取得的收盘数据截至 {data_date_s}；涨跌幅为收盘价相对上一交易日的价格涨跌，不含分红再投资。",
+        "",
+        "## 目录",
+        "- [策略相关 ETF / 指数涨跌](#策略相关-etf--指数涨跌)",
+        "- [市场核心指数涨跌](#市场核心指数涨跌)",
+        "- [前一交易日 ETF / 指数涨跌幅榜](#前一交易日-etf--指数涨跌幅榜)",
+        "- [研究/资讯线索](#研究资讯线索)",
+        "",
+        "---",
+        "",
+        "## 一句话结论",
+        "",
+        "今天的日报先看 A、ADK、B、D 四个策略直接涉及的资产，再看核心市场指数，最后看已过滤杠杆、反向、期权收益增强、单一资产和同类重复后的 ETF/指数涨跌榜。",
+        "",
+        "## 策略相关 ETF / 指数涨跌",
+        "",
+    ]
+    append_asset_table(lines, strategy_rows, include_strategy=True)
+
+    lines += ["", "---", "", "## 市场核心指数涨跌", ""]
+    append_asset_table(lines, core_rows)
+
+    lines += [
+        "",
+        "---",
+        "",
+        "## 前一交易日 ETF / 指数涨跌幅榜",
+        "",
+        "过滤口径：已排除杠杆、反向、期权/收益增强、单股日内目标、单一资产信托/现货商品/单一加密产品，并按主题/类别去重；每个类别只保留当日表现最极端的一只。",
+        "",
+        "### 涨幅前 10",
+        "",
+    ]
+    append_asset_table(lines, top_rows)
+    lines += ["", "### 跌幅前 10", ""]
+    append_asset_table(lines, bottom_rows)
+
+    if now_bj().weekday() == 5:
+        for label, sessions in [("最近一周", 5), ("最近一个月", 21)]:
+            period_rows = fetch_asset_changes(MOVER_UNIVERSE, sessions=sessions)
+            lines += ["", f"### {label}涨幅前 10", ""]
+            append_asset_table(lines, dedupe_by_category(period_rows, reverse=True))
+            lines += ["", f"### {label}跌幅前 10", ""]
+            append_asset_table(lines, dedupe_by_category(period_rows, reverse=False))
+
+    lines += ["", "---", "", "## 研究/资讯线索", ""]
+    for i, it in enumerate(picked, 1):
+        lines += [
+            f"### {i}. {etf_research_heading(it.title, it.summary)}",
+            f"- 来源：{it.source}",
+            f"- 原文标题：{it.title}",
+            f"- 链接：{it.url}",
+            "",
+            f"**原文事实**：{etf_chinese_fact(it)}",
+            "",
+            f"**后续关注**：{etf_follow_up_point(it.title, it.summary)}",
+            "",
+        ]
+    lines += audit_lines("08:00 Asia/Shanghai", started)
+    md.write_text("\n".join(lines), encoding="utf-8")
+
+    top_preview = "; ".join(
+        f"{row['asset'].code} {fmt_change(row['change'])}" for row in top_rows[:3] if isinstance(row["asset"], MarketAsset)
+    )
+    bottom_preview = "; ".join(
+        f"{row['asset'].code} {fmt_change(row['change'])}" for row in bottom_rows[:3] if isinstance(row["asset"], MarketAsset)
+    )
+    body = "\n".join(
+        [
+            "一句话结论：ETF/资产配置日报已按策略池、核心指数、去重涨跌榜三段式生成。",
+            f"数据日期：{data_date_s}",
+            f"涨幅靠前：{top_preview}",
+            f"跌幅靠前：{bottom_preview}",
+            "完整排版版见附件。",
+            f"调度审计：实际启动 {started.strftime('%Y-%m-%d %H:%M:%S %Z')}；执行环境 GitHub Actions。",
+        ]
+    )
+    write_meta(out_dir, f"美股 ETF 与资产配置日报 - {date_s}", body, md)
 
 
 def fetch_json(url: str) -> object:
