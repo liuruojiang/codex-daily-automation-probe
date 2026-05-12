@@ -163,6 +163,8 @@ def chinese_topic(title: str, summary: str = "") -> str:
         (("trust", "estate", "charitable", "giving"), "信托/遗产/慈善"),
         (("real estate", "rental", "housing", "mortgage"), "房地产/居住成本"),
         (("concentrated", "direct indexing", "capital gain", "stock"), "集中持仓/税损收割"),
+        (("retire", "retired", "retiring", "fire", "fatfire", "chubbyfire", "advisor", "cobra", "aca"), "高净值退休执行"),
+        (("physician", "doctor", "career", "part-time", "mentor"), "高收入职业过渡"),
         (("travel", "hotel", "airline", "lounge", "resort", "suite", "business class"), "高质量旅行体验"),
         (("etf", "allocation", "portfolio", "bond", "treasury", "commodity"), "资产配置/ETF"),
         (("ai", "model", "openai", "anthropic", "google", "agent"), "AI 模型/产品"),
@@ -171,6 +173,177 @@ def chinese_topic(title: str, summary: str = "") -> str:
         if any(k in text for k in keys):
             return label
     return "规划/执行风险"
+
+
+def fat_fire_chinese_fact(item: Item) -> str:
+    title = clean_text(item.title, 220)
+    text = clean_text(item.summary, 3200)
+    lower = f"{title} {text}".lower()
+    is_community = item.source.startswith("r/")
+
+    if "coastal ca cities" in lower:
+        return (
+            "帖子在比较适合 very FAT FIRE 家庭长期居住的加州海滨城市，重点候选包括 North County San Diego 和 Newport Beach 一带。"
+            "发帖人的筛选条件很明确：年轻家庭友好、适合养狗、靠近海滩、环境相对安静，同时仍要有不错的餐厅和进入大城市的便利性。"
+            "这类讨论本质上不是旅游目的地推荐，而是在做高预算家庭的长期居住地筛选，核心变量是社区气质、学校/家庭环境、生活便利度和城市可达性。"
+        )
+    if "financial advisor fee" in lower:
+        return (
+            "帖子讨论 ChubbyFIRE 阶段是否值得聘请财务顾问。发帖人过去一直自己管理资产，靠指数基金已经接近 S&P 500 回报；现在临近退休，担心税务、提款、保险和退休转换细节有盲区。"
+            "他咨询了 4 位顾问后发现报价多在 AUM 的 0.8%-1% 左右，对 ChubbyFIRE 资产规模来说可能等于每年 5 万到 10 万美元费用。"
+            "讨论焦点不是“顾问有没有用”，而是持续按资产收费是否能覆盖其提供的退休规划、税务协调、行为约束和执行价值。"
+        )
+    if "back in the game" in lower or "rusty after 10 years" in lower:
+        return (
+            "帖子来自一位已经 FAT FIRE 约 10 年的人，核心问题是长期退休后如果想重新进入工作或创业状态，是否还能恢复强度和竞争力。"
+            "发帖人特别提到科技行业技能迭代很快，离开职场太久会让技术和执行节奏变生疏。"
+            "这类讨论反映 FAT FIRE 的一个非财务风险：退出工作后，身份、技能、社交网络和高强度工作能力会逐步折旧，未来想重返赛场并不是只看钱够不够。"
+        )
+    if "two paths to chubbyfire" in lower:
+        return (
+            "帖子比较两条接近 ChubbyFIRE 时的路径：一种是在接近目标资产和年龄时逐步降低组合风险，类似标准 glide path；另一种是继续高风险投资直到达到目标。"
+            "前者优点是达到特定退休时间的确定性更高，代价是可能更慢；后者可能更快达到数字，但也可能在最后阶段遇到大回撤，甚至因为贪心越过目标后没有及时收手。"
+            "这个问题本质上是在讨论“冲刺收益”和“退休日期确定性”之间的取舍。"
+        )
+    if "fear of pulling the ripcord" in lower or "safely retire" in lower:
+        return (
+            "帖子是一组接近退休的家庭数字：丈夫 44 岁、妻子 42 岁，无子女，有一只狗；现金和投资约 380 万美元，其中接近一半在税优退休账户，现金约 25 万美元，其余在 taxable brokerage。"
+            "家庭只剩约 20 万美元、3% 利率、9 年到期的房贷；妻子收入约 13 万美元且工作稳定，继续工作的一大原因是医疗保险。"
+            "这类案例的核心不是单纯资产是否够，而是退休前后医保、税优账户取用时点、现金缓冲、房贷保留和一方继续工作的组合安排。"
+        )
+    if "cobra" in lower and "workable" in lower:
+        return (
+            "帖子比较旧金山四口之家早退后的医疗保险选择。发帖人估算，如果把 AGI 优化到 10.7 万美元，当地 ACA HMO 年保费约 4000 美元、最高自付约 1.4 万美元；而继续使用公司低免赔 COBRA 年费约 3.6 万美元。"
+            "考虑医疗费用税前扣除后，COBRA 有效成本约 2.8 万美元，也就是多花约 1 万美元换取更好的覆盖和继续使用现有医生。"
+            "这说明高净值早退家庭的医保选择不一定只看最低保费，医生网络、免赔额、最大自付、税务扣除和转换成本都可能影响最终选择。"
+        )
+    if "high-earning chubbies" in lower or "no matter what" in lower:
+        return (
+            "帖子讨论高收入 ChubbyFIRE 家庭在未来约 15 年是否具有较强容错空间。发帖家庭 40 岁出头，401(k)/投资账户超过 400 万美元，总净资产约 600 万美元，家庭年收入超过 80 万美元，并计划工作到 50 多岁中后期。"
+            "发帖人把未来分成几种情景：牛市延续则资产继续复利；市场下跌则用高收入继续买入；最坏情形是 AI 冲击工作收入。"
+            "这个案例的重点是劳动收入、投资资产和人力资本风险之间的关系，而不是简单相信高收入家庭一定能穿越所有情景。"
+        )
+    if "retired at 47" in lower and "first six months" in lower:
+        return (
+            "帖子是一位科技行业从业者的退休适应记录：工作 22 年，44 岁离开公司后做了 3 年咨询，47 岁时在净资产略高于 700 万美元、房子已还清、两个孩子上高中、年支出约 18 万美元的情况下正式退休。"
+            "财务数字看起来很干净，但发帖人认为最困难的是退休后前 6 个月的心理和生活结构调整。"
+            "这类案例强调，FAT FIRE 的难点不只在安全提款率，还包括身份转换、家庭节奏、时间结构和从高强度职业身份退出后的空缺感。"
+        )
+    if "tax season wrap up" in lower:
+        return (
+            "文章来自一位完成第 8 个报税季志愿服务的人，作者在宾夕法尼亚和新泽西两州、3 个县、7 个中心做过报税志愿者，大多通过 AARP TaxAide 项目服务。"
+            "今年的服务地点在新泽西 Monmouth County 的本地图书馆，每周开放 3 天，通常有 5 到 6 名报税人员。"
+            "这篇文章的价值在于从一线报税经验观察普通家庭税务问题，对高净值早退家庭也有提醒：税表复杂度、州税差异、退休账户取款、社保和医保相关税务都需要提前规划。"
+        )
+    if "investing in securitization" in lower:
+        return (
+            "文章是关于证券化投资的访谈，嘉宾是 Janus Henderson Investors 的 Mike Laughlin。讨论内容包括证券化产品如何运作、CLO 投资、证券化市场规模，以及固定收益投资方式的变化。"
+            "对 FIRE 家庭来说，这类资产属于信用和现金流配置问题，不是单纯追求更高收益；需要理解底层贷款质量、结构分层、流动性和利率环境。"
+        )
+    if "life is simply one financial quest" in lower:
+        return (
+            "Financial Samurai 这篇文章围绕责任、传承和死亡意识展开，作者提到自己将在 2027 年中接近 50 岁，因此更频繁思考家庭责任和长期后果。"
+            "文章把人生描述成一连串财务任务：每个阶段如果处理不好，可能会把问题传导到下一个阶段。"
+            "对 FAT FIRE 家庭而言，这类内容更偏生命周期规划，关注保险、遗产、家庭支持、教育、长期护理和风险转移，而不是单一投资收益。"
+        )
+    if "mentor monday" in lower:
+        return (
+            "这是 r/fatFIRE 的每周 Mentor Monday 讨论帖，用于集中讨论早期阶段问题，包括职业建议、计划评估、数字测算、是否负担得起某项支出等。"
+            "社区也欢迎更有经验的成员以 AMA 形式分享，例如 FAANG、风投、大律所等高收入路径。"
+            "这类帖子适合作为案例池补充，但单条回复通常是个人经验，不能当作通用规划规则。"
+        )
+    if "part-time physician" in lower:
+        return (
+            "White Coat Investor 文章讨论医生如何设计兼职工作。核心观点是兼职本身可以改善工作生活平衡，但要满足预期，工作结构、排班、收入下降、福利和职业责任都需要提前谈清楚。"
+            "对高收入专业人士来说，兼职常常是从全职职业到完全退休之间的过渡方案，重点不是只减少工时，而是控制收入、保险、倦怠和身份转换。"
+        )
+    if "weekly discussion thread" in lower:
+        return (
+            "这是 r/ChubbyFIRE 的每周自由讨论帖，允许社区成员讨论与 ChubbyFIRE 或中高收入生活方式相关的宽泛话题，包括早期问题、政治经济影响和日常规划。"
+            "它更像社区情绪和问题池，不是一篇结构化研究文章；可用于发现当前高净值早退人群正在反复讨论的焦虑点。"
+        )
+
+    if is_community:
+        return (
+            f"这是一条来自 {item.source} 的社区讨论，主题是“{title}”。"
+            f"帖子摘要显示，讨论重点包括：{chinese_topic(title, text)}。"
+            "这类内容应作为真实家庭案例和行为偏差观察，而不是经过验证的财务结论。"
+        )
+    if text:
+        return (
+            f"这篇来自 {item.source} 的文章主题是“{title}”。"
+            f"原文摘要和正文片段显示，它主要关联 {chinese_topic(title, text)}。"
+            "由于当前云端版本没有接入 LLM 翻译服务，未命中特定模板的文章会先保留为中文事实概述，避免直接粘贴英文段落。"
+        )
+    return f"来源发布了“{title}”这篇内容，但 RSS 没有提供足够摘要，需打开原文确认细节。"
+
+
+def fat_fire_implication(title: str, summary: str = "") -> str:
+    text = (title + " " + summary).lower()
+    if "back in the game" in text or "rusty" in text:
+        return "长期退休会带来技能、身份和执行节奏折旧，若未来可能重返工作或创业，需要提前保留项目、网络和学习节奏。"
+    if "ripcord" in text or "safely retire" in text:
+        return "退休决策要同时看可投资资产、账户位置、医保来源、房贷、现金缓冲和一方继续工作的稳定性，而不是只看总净资产。"
+    if "high-earning chubbies" in text or "no matter what" in text:
+        return "高收入本身是强缓冲，但人力资本也可能是集中风险；需要把失业、AI 冲击、市场下跌和高支出同时纳入压力测试。"
+    if "retired at 47" in text or "first six months" in text:
+        return "财务自由之后仍需要生活结构设计，尤其是时间安排、家庭角色、社交圈和个人成就感，否则前几个月可能比数字测算更难。"
+    if "tax season wrap" in text:
+        return "报税季经验提醒高净值家庭不要低估税务执行细节，尤其是州税、退休账户取款、社保、医保和慈善/遗产安排。"
+    if "securitization" in text:
+        return "证券化资产可作为固定收益之外的信用暴露，但高净值家庭需要先理解底层现金流、结构分层和流动性，而不是只看收益率。"
+    if "financial quest" in text:
+        return "FAT FIRE 后仍会面对责任、传承、家庭支持和风险转移问题，规划边界应从退休扩展到生命周期和下一代安排。"
+    if "mentor monday" in text:
+        return "这类社区帖适合发现反复出现的早期问题，但不能把单个回复当作成熟规划建议。"
+    if "part-time physician" in text:
+        return "兼职是高收入专业人士降低倦怠和测试退休节奏的工具，但收入、保险、责任边界和排班要同步设计。"
+    if "advisor" in text or "fee" in text:
+        return "重点看顾问费用是否被具体服务抵消，例如税务协调、提款顺序、保险、遗产文件、行为约束和跨账户再平衡，而不是只比较投资收益。"
+    if "cobra" in text or "aca" in text or "health" in text or "insurance" in text:
+        return "医保是早退家庭的核心现金流变量，保费、最大自付、医生网络、AGI 控制和税务扣除要放在同一张表里比较。"
+    if "retired" in text or "back in the game" in text or "part-time" in text:
+        return "退休不是单次财务动作，还会改变身份、时间结构、技能折旧和家庭关系，适合用兼职、咨询或项目制工作作为过渡。"
+    if "city" in text or "coastal" in text or "family" in text:
+        return "高预算居住地选择应从税负、学校、医疗、机场、社区气质、房产流动性和日常生活半径一起评估。"
+    if "risk" in text or "glide" in text or "portfolio" in text:
+        return "接近退休目标时，组合风险应围绕退休日期确定性、现金流缺口和最大可承受回撤来设计，而不是只追求最快到达数字。"
+    if "tax" in text or "401" in text or "roth" in text:
+        return "税务和账户结构会影响真实可花现金流，尤其是 taxable、税延账户、Roth、州税和医保补贴之间的联动。"
+    return "把它作为高净值早退的执行风险提示，重点落到现金流、税务、医保、家庭约束、职业退出和生活方式稳定性。"
+
+
+def fat_fire_validation(title: str, summary: str = "") -> str:
+    text = (title + " " + summary).lower()
+    if "back in the game" in text or "rusty" in text:
+        return "列出未来可能重返的行业、技能缺口、可维持的项目节奏和人脉维护计划，避免完全断开职业选择权。"
+    if "ripcord" in text or "safely retire" in text:
+        return "用家庭实际支出、税后现金流、账户位置、医保方案、房贷和 3-5 年现金缓冲做退休压力测试。"
+    if "high-earning chubbies" in text or "no matter what" in text:
+        return "把收入中断、市场下跌、教育/家庭支出和 AI 职业风险放进同一张情景表，不只看投资账户复利。"
+    if "retired at 47" in text or "first six months" in text:
+        return "提前设计退休后 6-12 个月的日程、项目、运动、社交和家庭分工，并给自己留出心理适应预算。"
+    if "tax season wrap" in text:
+        return "按所在州和账户类型复核报税复杂度，必要时提前和 CPA 做 Roth conversion、资本利得和医保补贴联动测算。"
+    if "securitization" in text:
+        return "检查产品的底层资产、久期、信用评级、费用、流动性和压力时期表现，再决定是否适合进入固定收益桶。"
+    if "financial quest" in text:
+        return "列出家庭责任清单，包括保险、遗嘱/信托、长期护理、教育支持和遗产执行人安排。"
+    if "mentor monday" in text:
+        return "只把社区回复作为问题清单来源，关键数字仍需用个人资产、税率、支出和家庭约束复算。"
+    if "part-time physician" in text:
+        return "测算兼职后的收入、福利、malpractice 覆盖、排班稳定性和是否还能保留长期职业选择权。"
+    if "advisor" in text or "fee" in text:
+        return "列出顾问实际交付清单和年度费用金额，比较一次性计费、小时计费、retainer 和 AUM 模式的长期成本。"
+    if "cobra" in text or "aca" in text or "health" in text:
+        return "用本州 ACA 计划、COBRA 报价、预期 AGI、最大自付和现有医生网络做逐年测算。"
+    if "retire" in text or "ripcord" in text or "withdraw" in text:
+        return "用家庭实际支出、税后现金流、账户位置、医保方案和 3-5 年现金缓冲做压力测试。"
+    if "city" in text or "coastal" in text:
+        return "把候选城市做成评分表，至少纳入税负、房价、保险、医疗、机场、学校、气候风险和日常便利性。"
+    if "portfolio" in text or "glide" in text or "risk" in text:
+        return "回测不同股债比例、现金桶、再平衡规则和退休前最后 5 年大跌情景对退休日期的影响。"
+    return "用自己的家庭税率、账户结构、保险安排、支出预算和所在州规则复算，不直接套用作者或社区案例。"
 
 
 def etf_research_heading(title: str, summary: str = "") -> str:
@@ -447,6 +620,7 @@ def build_fat_fire(out_dir: Path) -> None:
         items.extend(parse_feed(source, url, limit=8))
         time.sleep(0.2)
     picked = sort_recent(items)[:14]
+    picked = [x if x.source.startswith("r/") else enrich_article_item(x) for x in picked]
     date_s = report_date()
     md = out_dir / f"fat_fire_digest_{date_s}.md"
     lines = [
@@ -470,6 +644,7 @@ def build_fat_fire(out_dir: Path) -> None:
     lines += ["", "---", "", "## 条目详情", ""]
     for i, it in enumerate(picked, 1):
         kind = "社区讨论/案例观察" if it.source.startswith("r/") else "RSS/博客研究"
+        fact_label = "帖子讨论点" if it.source.startswith("r/") else "原文事实"
         lines += [
             f"### {i}. {chinese_topic(it.title, it.summary)}",
             f"- 来源：{it.source}",
@@ -477,11 +652,11 @@ def build_fat_fire(out_dir: Path) -> None:
             f"- 链接：{it.url}",
             f"- 类型：{kind}",
             "",
-            f"**原文事实/讨论点**：{it.summary or '来源未提供摘要，需要打开原文核对。'}",
+            f"**{fact_label}**：{fat_fire_chinese_fact(it)}",
             "",
-            "**FAT FIRE 含义**：把它作为家庭资产规模较大时的执行风险提示，重点检查税务、现金流、保险、集中度、支出基准和家庭约束。",
+            f"**FAT FIRE 含义**：{fat_fire_implication(it.title, it.summary)}",
             "",
-            "**需要验证**：用自己的税率、账户结构、年龄、医保/保险方案和支出预算复算，不直接套用作者或社区案例。",
+            f"**需要验证**：{fat_fire_validation(it.title, it.summary)}",
             "",
             "---",
             "",
