@@ -1,0 +1,40 @@
+name: AI HOT Digest
+
+on:
+  schedule:
+    # 08:15 Asia/Shanghai == 00:15 UTC.
+    - cron: "15 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Shanghai
+      GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Build AI HOT digest
+        run: python scripts/daily_reports.py ai-hot --out-dir artifacts
+      - name: Send Gmail
+        env:
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
+        run: python scripts/send_report.py artifacts/metadata.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ai-hot-digest
+          path: artifacts/
+          retention-days: 30
