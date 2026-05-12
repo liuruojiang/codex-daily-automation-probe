@@ -1,0 +1,85 @@
+name: Daily Scheduler Probe
+
+on:
+  schedule:
+    # 07:05 Asia/Shanghai == 23:05 UTC on the previous day.
+    - cron: "5 23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write scheduler probe issue comment
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const planned = "07:05 Asia/Shanghai";
+            const now = new Date();
+            const beijing = new Intl.DateTimeFormat("sv-SE", {
+              timeZone: "Asia/Shanghai",
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: false,
+            }).format(now);
+
+            const title = "Codex daily automation scheduler probe";
+            const { owner, repo } = context.repo;
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: "open",
+              labels: "scheduler-probe",
+              per_page: 10,
+            });
+            let issue = issues.find((item) => item.title === title);
+            if (!issue) {
+              const created = await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                labels: ["scheduler-probe"],
+                body: [
+                  "This issue records GitHub Actions schedule timing for daily digest delivery tests.",
+                  "",
+                  "| Planned | Beijing actual | UTC actual | Event | Run |",
+                  "|---|---|---|---|---|",
+                ].join("\n"),
+              });
+              issue = created.data;
+            }
+
+            const row = `| ${planned} | ${beijing} | ${now.toISOString()} | ${context.eventName} | ${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId} |`;
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issue.number,
+              body: [
+                "Scheduler probe run:",
+                "",
+                "| Planned | Beijing actual | UTC actual | Event | Run |",
+                "|---|---|---|---|---|",
+                row,
+              ].join("\n"),
+            });
+
+            await core.summary
+              .addHeading("Daily scheduler probe")
+              .addTable([
+                [
+                  { data: "Planned", header: true },
+                  { data: "Beijing actual", header: true },
+                  { data: "UTC actual", header: true },
+                  { data: "Event", header: true },
+                ],
+                [planned, beijing, now.toISOString(), context.eventName],
+              ])
+              .write();
