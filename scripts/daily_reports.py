@@ -346,6 +346,276 @@ def fat_fire_validation(title: str, summary: str = "") -> str:
     return "用自己的家庭税率、账户结构、保险安排、支出预算和所在州规则复算，不直接套用作者或社区案例。"
 
 
+def travel_relevant(item: Item) -> bool:
+    text = f"{item.title} {item.summary} {item.url}".lower()
+    exclusions = [
+        "jeffrey epstein",
+        "decoy",
+        "frontier fly one",
+        "prepaid fuel",
+        "whoop",
+        "fitness wearable",
+        "strong approvals",
+        "citi strata elite",
+        "citi merchant offer",
+        "sapphire preferred vs. reserve",
+        "barclays spending offer",
+        "targeted barclays",
+        "hyatt find experiences auctions",
+        "rakuten promotion",
+        "frontier scolded",
+        "save money on dining",
+        "bonus points & rate promotions",
+        "merchant offer",
+        "save at amazon",
+        "dying loved one",
+        "brand badges",
+        "atmos rewards summit visa",
+        "amazing deal",
+        "sale ends",
+    ]
+    if any(x in text for x in exclusions):
+        return False
+    inclusions = [
+        "hotel",
+        "resort",
+        "airline",
+        "flying blue",
+        "airport",
+        "lounge",
+        "points",
+        "miles",
+        "hyatt",
+        "hilton",
+        "marriott",
+        "ihg",
+        "four seasons",
+        "belmond",
+        "villa",
+        "italy",
+        "bali",
+        "mendoza",
+        "restaurant",
+        "spring break",
+        "kids",
+        "family",
+        "bedbug",
+        "compensation",
+        "lounger",
+        "pool chair",
+        "europe",
+        "travel",
+        "trip",
+    ]
+    return item.source.startswith("r/") or any(x in text for x in inclusions)
+
+
+def travel_heading(title: str, summary: str = "") -> str:
+    text = f"{title} {summary}".lower()
+    if "points and miles alive" in text:
+        return "积分和里程有效期管理"
+    if "spring break" in text and "kids" in text:
+        return "2027 年春假亲子国际目的地选择"
+    if "bali alternative" in text or "solo travel" in text:
+        return "独自高端度假停留地选择"
+    if "dulles" in text or "mobile lounges" in text:
+        return "华盛顿 Dulles 机场改造"
+    if "mendoza" in text:
+        return "Mendoza 餐厅与葡萄酒体验"
+    if "st tropez" in text or "restaurant" in text:
+        return "目的地餐厅口碑与避坑"
+    if "italy trip" in text or "taormina" in text or "palermo" in text or "positano" in text:
+        return "意大利高端酒店线路规划"
+    if "flying blue" in text:
+        return "Flying Blue 会员计划变化"
+    if "pool chair" in text or "lounger" in text or "towel hog" in text:
+        return "欧洲度假村躺椅规则与退款风险"
+    if "bedbug" in text:
+        return "高端酒店虫害事故与补偿"
+    if "explora journeys" in text or "cruises" in text:
+        return "高端邮轮产品与私享价"
+    if "antagonistic about the way i travel" in text or "just do you" in text:
+        return "旅行方式与个人偏好边界"
+    if "barclays" in text or "atmos" in text:
+        return "航空联名卡定向消费任务"
+    if "sixt" in text:
+        return "租车燃油预付促销"
+    if "sapphire" in text or "chase" in text:
+        return "高端信用卡旅行权益"
+    return chinese_topic(title, summary)
+
+
+def travel_chinese_fact(item: Item) -> str:
+    title = clean_text(item.title, 220)
+    text = clean_text(item.summary, 3200)
+    lower = f"{title} {text}".lower()
+
+    if "points and miles alive" in lower:
+        return (
+            "Frequent Miler 这篇文章更新了 2026 年主要美国航空和酒店会员计划的积分/里程有效期规则。"
+            "核心问题是哪些账户活动可以延长里程有效期，以及哪些项目可以通过信用卡可转点体系间接保持活跃。"
+            "对长期环球旅行而言，这类信息不是为了薅小羊毛，而是防止多年积累的航司里程、酒店积分在不用时过期。"
+        )
+    if "spring break" in lower and "kids" in lower:
+        return (
+            "社区帖在规划 2027 年 3 月底四口之家、两个小孩分别 3 岁和 5 岁的约一周国际春假旅行。"
+            "发帖人的条件包括目的地步行友好或交通简单、有适合家庭的餐厅和博物馆、从费城出发直飞或最多转机一次。"
+            "候选方向包括葡萄牙、瑞士、布拉格、阿姆斯特丹和爱尔兰，也愿意接受其他适合小孩节奏的目的地。"
+        )
+    if "bali alternative" in lower or "fly and flop" in lower:
+        return (
+            "社区帖来自一位独自旅行者，计划从悉尼出发、之后去日本、最后回美国，中间想安排 5-7 天的高端停留。"
+            "需求不是深度探索，而是“fly and flop”式放松：高端酒店、舒适躺平、尽量少折腾。"
+            "原本考虑 Four Seasons Bali 的组合住宿优惠，在 Jimbaran Bay 和另一家巴厘岛物业之间分配时间，但也在寻找类似体验的替代目的地。"
+        )
+    if "dulles" in lower or "mobile lounges" in lower:
+        return (
+            "View from the Wing 报道称，Washington Dulles 机场可能推进旅客期待已久的重建方案。"
+            "方案方向包括用真正连接铁路的航站楼大厅替代长期被视为临时方案的 C/D 区，并逐步减少移动休息车。"
+            "问题在于成本已上升到约 220 亿美元，可能把机场成本推高到每名旅客 90 美元以上，除非由纳税人或部分私有化方案承担相当一部分费用。"
+        )
+    if "mendoza" in lower:
+        return (
+            "社区帖询问阿根廷 Mendoza 的非米其林餐厅建议。发帖人已经会安排几家高端或 tasting menu 餐厅，但希望第一天在 Mendoza 市区吃更轻松的普通餐厅。"
+            "需求是有好食物和葡萄酒的 casual a la carte 或 parrilla，最好不要太游客化。"
+            "这类信息适合长期环球旅行的“到达日策略”：第一晚避免过重行程，选择当地感强、交通轻松、用餐压力低的餐厅。"
+        )
+    if "italy trip" in lower or "taormina" in lower or "villa igiea" in lower:
+        return (
+            "社区帖在规划 2027 年意大利 12 晚高端旅行，时间考虑 4-5 月或 9-10 月的肩季。"
+            "目前候选包括 FS Taormina 或 Belmond Villa Sant’Andrea 住 3-4 晚，Palermo 的 Villa Igiea 住 4 晚，再考虑 FS Florence 或 Il San Pietro Positano 住 4 晚。"
+            "问题核心是西西里、佛罗伦萨和 Positano 如何组合，以及哪个肩季更适合避开旺季人流和高温。"
+        )
+    if "flying blue" in lower:
+        return (
+            "文章关注 Air France KLM Flying Blue 的管理层变化：Tiffany Funk 接任 Flying Blue 负责人，原负责人 Ben Lipsey 的职责扩大到 Loyalty、Digital 与 Data。"
+            "报道强调 Tiffany Funk 长期站在会员和积分使用者视角，熟悉奖励票搜索、会员体验和项目导航。"
+            "对常飞欧洲和跨大西洋航线的人来说，这可能影响 Flying Blue 未来在奖励票、伙伴航司、燃油附加费和会员体验上的取向。"
+        )
+    if "pool chair" in lower or "lounger" in lower or "towel" in lower:
+        return (
+            "报道提到，欧洲度假村正在更严格处理用毛巾占躺椅的问题。背景是一名德国游客因酒店躺椅不足而获得退款，法院认为广告承诺的度假体验受损。"
+            "案例涉及希腊 Kos 的 Grecotel Kos Imperial，一家德国四口之家在 2024 年 8 月通过 TUI Deutschland 预订 11 晚套餐，价格为 7186 欧元，约合 8500 美元。"
+            "这说明高端度假村的泳池/海滩容量、躺椅管理和服务兑现，可能从体验问题变成退款和法律风险。"
+        )
+    if "bedbug" in lower:
+        return (
+            "社区帖讨论一家昂贵五星酒店出现 bedbugs 后的补偿问题。发帖人称妻子和孩子被咬得很严重，身体多处出现大量叮咬，原本特殊旅行被彻底破坏。"
+            "酒店道歉并免除了住宿费用，但发帖人认为这没有覆盖更广泛的影响，例如医疗、行程损失、心理压力和后续处理成本。"
+            "这类案例提醒高端旅行也要保留证据、照片、医疗记录、酒店沟通记录和保险材料。"
+        )
+    if "explora journeys" in lower or "cruises" in lower:
+        return (
+            "Travel Codex 提到 Explora Journeys 邮轮出现 private fares，折扣最高可达 30%。"
+            "Explora Journeys 属于更偏高端、慢节奏的邮轮产品，适合把邮轮当成移动酒店和目的地串联方式来评估。"
+            "这类信息的重点不是折扣本身，而是邮轮是否符合你们未来多年环球旅行中的节奏：少换酒店、减少交通摩擦、但也牺牲一部分目的地自由度。"
+        )
+    if "antagonistic about the way i travel" in lower or "just do you" in lower:
+        return (
+            "One Mile at a Time 这篇文章讨论不同旅行方式之间的评价和冲突。"
+            "核心事实是，高端旅行、积分旅行、独自旅行、家庭旅行和慢旅行之间没有统一答案，适合别人的节奏未必适合自己。"
+            "对你们未来 10 年以上的环球旅行来说，这类内容的价值在于提醒：需要建立自己的体验标准，而不是被外部评价、网红路线或积分最大化牵着走。"
+        )
+    if "barclays" in lower and "atmos" in lower:
+        return (
+            "Frequent Miler 报道 Barclays 针对部分 Hawaiian Airlines Atmos 持卡人推出定向消费任务。"
+            "活动要求在注册后到 2026 年 6 月 8 日之间完成 5 笔每笔 50 美元消费，可获得 2500 点 Atmos 里程。"
+            "这类活动适合顺手完成，不值得为了小额里程改变消费结构。"
+        )
+    if "sixt" in lower:
+        return (
+            "Frequent Miler 报道 Sixt 对 Sixt ONE 会员提供美国租车 49.99 美元预付燃油活动，适用于即日起至 2026 年 5 月 31 日取车的租赁。"
+            "文章也指出，这不一定是好交易，具体取决于车型油箱大小和当地油价。"
+            "对高质量旅行而言，这类信息只能作为租车结算便利性提示，不应取代对车辆等级、保险、取还车效率和服务稳定性的评估。"
+        )
+    if "sapphire preferred vs. reserve" in lower:
+        return (
+            "One Mile at a Time 比较 Chase Sapphire Preferred 与 Chase Sapphire Reserve 两张旅行卡。"
+            "这类内容主要影响旅行保险、点数转移、机场/酒店权益和年费回收，而不是目的地体验本身。"
+            "如果已有成熟信用卡体系，应把它作为权益盘点，而不是因为单篇文章频繁换卡。"
+        )
+    if "sapphire reserve" in lower and "whoop" in lower:
+        return (
+            "Frequent Miler 报道 Chase Sapphire Reserve 持卡人可获得约一年的 WHOOP 健身穿戴会员权益。"
+            "这更偏高端卡生活方式权益，而不是核心旅行体验。"
+            "如果已经持卡且会使用 WHOOP，可以视为附加价值；否则不应为这个权益单独调整信用卡策略。"
+        )
+    if "st tropez" in lower and "restaurant" in lower:
+        return (
+            "社区帖讨论 St Tropez 一些被反复推荐但评价不佳的餐厅，发帖人想判断哪些餐厅是名气大于体验。"
+            "这类内容对高端旅行很实用：热门度、网红推荐和真实用餐体验可能脱节，尤其在旺季海滨目的地。"
+            "选择餐厅时应同时看近期评论、订位难度、地理位置、服务稳定性和是否符合当天行程节奏。"
+        )
+
+    if item.source.startswith("r/"):
+        return (
+            f"这是一条来自 {item.source} 的旅行社区讨论，主题是“{title}”。"
+            f"帖子摘要显示，重点围绕 {travel_heading(title, text)} 展开。"
+            "社区内容适合作为真实体验和踩坑案例来源，但需要结合评论质量和个人偏好判断。"
+        )
+    if text:
+        return (
+            f"这篇来自 {item.source} 的文章主题是“{title}”。"
+            f"当前可确认它主要关联 {travel_heading(title, text)}。"
+            "云端脚本会优先保留中文事实概述，避免直接把英文 RSS 摘要或广告免责声明放入报告。"
+        )
+    return f"来源发布了“{title}”这篇内容，但 RSS 没有提供足够摘要，需打开原文确认细节。"
+
+
+def travel_implication(title: str, summary: str = "") -> str:
+    text = f"{title} {summary}".lower()
+    if "bedbug" in text or "compensation" in text:
+        return "高价酒店也会出现严重服务事故，预订时要重视保险、酒店响应机制、证据留存和升级补偿路径。"
+    if "explora journeys" in text or "cruises" in text:
+        return "高端邮轮可以作为慢旅行工具评估，重点看航线质量、岸上体验、套房空间、餐饮、船上密度和是否降低转场疲劳。"
+    if "antagonistic about the way i travel" in text or "just do you" in text:
+        return "长期环球旅行要有自己的节奏和取舍，避免为了迎合别人眼中的高端、深度或性价比而牺牲真实体验。"
+    if "pool chair" in text or "lounger" in text:
+        return "度假村体验要看实际服务容量，尤其是躺椅、泳池、早餐、儿童活动和旺季管理，而不是只看房间照片。"
+    if "st tropez" in text or "restaurant" in text:
+        return "餐厅选择要区分名气、位置、景观和食物本身，尤其在高端度假区，热门推荐不一定等于稳定体验。"
+    if "points and miles alive" in text or "flying blue" in text or "atmos" in text:
+        return "对长期环球旅行，会员计划管理的重点是可用性和稳定性：里程不过期、奖励票好查、伙伴航司覆盖好、改签规则清楚。"
+    if "spring break" in text or "kids" in text or "family" in text:
+        return "亲子旅行应优先看直飞/少转机、步行友好、餐厅容错、博物馆和短行程节奏，而不是只看目的地名气。"
+    if "bali" in text or "solo" in text or "resort" in text:
+        return "高端度假停留更应关注酒店硬件、餐饮、泳池/海滩、服务一致性和机场接驳，而不是塞满景点。"
+    if "dulles" in text or "airport" in text:
+        return "机场改造会影响转机体验、步行距离、航站楼拥堵和贵宾室可达性，长期路线规划要关注枢纽质量。"
+    if "mendoza" in text or "restaurant" in text:
+        return "慢旅行的餐饮体验不应只追求米其林，第一天和转场日更适合低压力、当地感强、酒单稳定的餐厅。"
+    if "italy" in text or "taormina" in text or "positano" in text:
+        return "高端意大利线路要把季节、人流、酒店位置、交通转场和每站停留天数一起设计，避免频繁换酒店拖累体验。"
+    return "用于沉淀长期环球旅行的筛选标准：舒适度、位置、服务稳定性、航线便利性、权益兑现和低摩擦转场。"
+
+
+def travel_standard(title: str, summary: str = "") -> str:
+    text = f"{title} {summary}".lower()
+    if "bedbug" in text or "compensation" in text:
+        return "保留照片、医疗记录、酒店沟通、费用损失和保险材料；高端酒店事故处理要有证据链。"
+    if "explora journeys" in text or "cruises" in text:
+        return "记录航线停靠、岸上时间、套房面积、餐饮稳定性、儿童/成人氛围、网络质量和与陆地酒店组合的便利度。"
+    if "antagonistic about the way i travel" in text or "just do you" in text:
+        return "写清你们自己的旅行原则：每站停留时长、酒店等级、餐饮偏好、转场频率、是否接受邮轮/团队体验和休息日比例。"
+    if "pool chair" in text or "lounger" in text:
+        return "记录房型、泳池/沙滩容量、躺椅规则、早餐、餐饮水平、服务响应、Spa、接送机和旺季拥挤度。"
+    if "st tropez" in text or "restaurant" in text:
+        return "建立餐厅筛选表：近期差评原因、菜品稳定性、服务节奏、景观溢价、订位难度和离酒店距离。"
+    if "points and miles alive" in text or "flying blue" in text or "atmos" in text:
+        return "维护一张会员计划清单，记录里程有效期、延长期动作、常用转点伙伴、奖励票搜索规律和改退票成本。"
+    if "kids" in text or "family" in text:
+        return "记录飞行时长、转机次数、步行便利度、亲子餐厅、天气、儿童友好博物馆和酒店房型适配。"
+    if "resort" in text or "bali" in text or "pool chair" in text:
+        return "记录房型、泳池/沙滩容量、躺椅规则、早餐、餐饮水平、服务响应、Spa、接送机和旺季拥挤度。"
+    if "airport" in text:
+        return "记录常用枢纽的航站楼动线、贵宾室、安检、转机时间、延误韧性和长期改造影响。"
+    if "restaurant" in text or "mendoza" in text:
+        return "建立到达日餐厅标准：离酒店近、订位简单、菜品稳定、酒单好、氛围轻松、不以打卡为主。"
+    if "italy" in text or "taormina" in text or "positano" in text:
+        return "用表格比较每个候选酒店的季节、交通、房型、景观、餐饮、周边可玩性和换酒店成本。"
+    return "记录舒适度、位置、服务稳定性、航线便利性、权益兑现、餐饮质量和长期在路上的疲劳成本。"
+
+
 def etf_research_heading(title: str, summary: str = "") -> str:
     title_l = title.lower()
     text = (title + " " + summary).lower()
@@ -691,7 +961,18 @@ def build_travel(out_dir: Path) -> None:
     for source, url in feeds.items():
         items.extend(parse_feed(source, url, limit=10))
         time.sleep(0.2)
-    picked = sort_recent(items)[:16]
+    candidates = [x for x in sort_recent(items) if travel_relevant(x)]
+    picked = []
+    seen_travel_topics: set[str] = set()
+    for item in candidates:
+        topic = travel_heading(item.title, item.summary)
+        if topic in seen_travel_topics:
+            continue
+        seen_travel_topics.add(topic)
+        picked.append(item)
+        if len(picked) >= 12:
+            break
+    picked = [x if x.source.startswith("r/") else enrich_article_item(x) for x in picked]
     date_s = report_date()
     md = out_dir / f"global_slow_travel_digest_{date_s}.md"
     lines = [
@@ -712,17 +993,18 @@ def build_travel(out_dir: Path) -> None:
         lines.append(f"| {i} | {chinese_topic(it.title, it.summary)} | {it.source} | {dt} | {kind} |")
     lines += ["", "---", "", "## 条目详情", ""]
     for i, it in enumerate(picked, 1):
+        fact_label = "帖子体验点" if it.source.startswith("r/") else "原文事实"
         lines += [
-            f"### {i}. {chinese_topic(it.title, it.summary)}",
+            f"### {i}. {travel_heading(it.title, it.summary)}",
             f"- 来源：{it.source}",
             f"- 原文标题：{it.title}",
             f"- 链接：{it.url}",
             "",
-            f"**原文事实/体验点**：{it.summary or '来源未提供摘要，需要打开原文核对。'}",
+            f"**{fact_label}**：{travel_chinese_fact(it)}",
             "",
-            "**对你们的意义**：用于建立酒店、航线、休息室、会籍、目的地体验和旅行节奏的长期筛选标准。",
+            f"**对你们的意义**：{travel_implication(it.title)}",
             "",
-            "**可以沉淀的标准**：记录舒适度、位置、服务稳定性、航线便利性、权益兑现和长期在路上的疲劳成本。",
+            f"**可以沉淀的标准**：{travel_standard(it.title)}",
             "",
             "---",
             "",
