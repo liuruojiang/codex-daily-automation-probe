@@ -139,6 +139,12 @@ def etf_research_heading(title: str, summary: str = "") -> str:
     text = (title + " " + summary).lower()
     if "institutional investor attention" in text or ("macro news" in text and "volatility" in text):
         return "机构注意力、波动率与宏观新闻"
+    if "private equity" in text or "401k" in text.replace(" ", ""):
+        return "私募股权与退休账户配置"
+    if "trend following" in text or "regime-dependent" in text:
+        return "趋势跟踪与状态依赖配置"
+    if "animal spirits" in text or "stock market is doing something" in text:
+        return "市场结构与风险偏好"
     if "capital market" in text or "expected return" in text or "valuation" in text:
         return "长期资本市场假设与估值"
     if "treasury" in text or "duration" in text or "bond" in text or "yield" in text:
@@ -238,6 +244,12 @@ def etf_chinese_fact(item: Item) -> str:
         parts.append("文章是每周经济快照，核心事实是美国劳动力市场仍显示韧性，这会影响市场对增长、通胀和利率路径的判断。")
     elif "hits $6.5 billion" in lower or "record pace" in lower:
         parts.append("文章提到相关 ETF 资产规模快速增长并达到 65 亿美元，反映该主题产品的资金关注度正在上升。")
+    elif "private equity" in lower and ("401k" in lower or "401 k" in lower):
+        parts.append("文章讨论私募股权是否适合进入 401K 等退休账户，核心事实是非公开资产的流动性、估值频率和费用结构与普通公募基金不同。")
+    elif "trend following" in lower or "regime-dependent" in lower:
+        parts.append("文章讨论趋势跟踪和状态依赖配置，核心事实是趋势策略的资产权重可以随市场状态变化，而不是维持固定比例。")
+    elif "animal spirits" in lower or "stock market is doing something" in lower:
+        parts.append("文章讨论股市出现少见走势时的市场心理和风险偏好，核心事实是异常强势行情可能改变投资者对后续收益和回撤的预期。")
     elif "institutional investor attention" in lower or ("macro news" in lower and "volatility" in lower):
         parts.append(
             "文章讨论机构投资者注意力：当市场波动率上升时，把更多注意力转向宏观新闻的基金表现更好。"
@@ -276,6 +288,12 @@ def etf_follow_up_point(title: str, summary: str = "") -> str:
         return "可重点观察就业数据是否改变降息预期，并映射到长债、信用债、小盘股和周期行业的相对表现。"
     if "hits $6.5 billion" in text or "record pace" in text:
         return "可把它当作主题 ETF 资金拥挤度线索，和估值、成交量及主题成分股集中度一起看。"
+    if "private equity" in text and "401k" in text.replace(" ", ""):
+        return "可作为另类资产进入退休账户的风险提示，重点看锁定期、估值滞后、费用层级和资产透明度。"
+    if "trend following" in text or "regime-dependent" in text:
+        return "可与现有动量/趋势规则对照，关注状态定义、再平衡频率和换手成本是否可复现。"
+    if "animal spirits" in text or "stock market is doing something" in text:
+        return "可作为风险偏好温度计，重点看上涨是否由盈利、估值扩张还是流动性推动。"
     if "institutional investor attention" in text or ("macro news" in text and "volatility" in text):
         return "如果把它转成组合研究问题，重点不是直接交易新闻，而是测试高波动阶段宏观变量是否能改善风险开关或仓位调整。"
     if "nuclear" in text:
