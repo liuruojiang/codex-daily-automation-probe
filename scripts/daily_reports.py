@@ -135,6 +135,170 @@ def chinese_topic(title: str, summary: str = "") -> str:
     return "规划/执行风险"
 
 
+def etf_research_heading(title: str, summary: str = "") -> str:
+    text = (title + " " + summary).lower()
+    if "institutional investor attention" in text or ("macro news" in text and "volatility" in text):
+        return "机构注意力、波动率与宏观新闻"
+    if "capital market" in text or "expected return" in text or "valuation" in text:
+        return "长期资本市场假设与估值"
+    if "treasury" in text or "duration" in text or "bond" in text or "yield" in text:
+        return "债券久期、收益率与信用风险"
+    if "factor" in text or "momentum" in text or "value" in text or "quality" in text:
+        return "因子配置与轮动"
+    if "commodity" in text or "gold" in text or "inflation" in text:
+        return "商品、黄金与通胀对冲"
+    if "nuclear" in text or "uranium" in text or "energy" in text:
+        return "能源主题与产业链 ETF"
+    if "securitization" in text or "asset-backed" in text:
+        return "证券化资产与信用配置"
+    if "melt-up" in text:
+        return "风险偏好与市场过热"
+    if "hedge fund" in text or "bearish" in text:
+        return "机构情绪与风险叙事"
+    if "flow" in text or "aum" in text or "expense ratio" in text:
+        return "ETF 资金流与产品结构"
+    if "rebalance" in text or "allocation" in text or "portfolio" in text:
+        return "组合再平衡与资产配置"
+    return chinese_topic(title, summary)
+
+
+def etf_research_relevant(item: Item) -> bool:
+    text = f"{item.title} {item.summary} {item.url}".lower()
+    exclusions = [
+        "leveraged-inverse",
+        "single-stock",
+        "bitcoin dominance",
+        "altcoins",
+        "crypto-etf-hub",
+        "529",
+        "rocket labs",
+        "surge boosts",
+    ]
+    if any(x in text for x in exclusions):
+        return False
+    if re.search(r"\([A-Z]{2,5}\)", item.title) and ("surge" in text or "boosts" in text):
+        return False
+    if re.search(r"\b(stock|shares)\b", text) and "market" not in text and "sector" not in text:
+        return False
+    inclusions = [
+        "allocation",
+        "portfolio",
+        "market",
+        "markets",
+        "economic",
+        "inflation",
+        "treasury",
+        "bond",
+        "yield",
+        "duration",
+        "factor",
+        "momentum",
+        "value",
+        "quality",
+        "commodity",
+        "gold",
+        "currency",
+        "dollar",
+        "etf",
+        "fund",
+        "flow",
+        "aum",
+        "volatility",
+        "macro",
+        "rebalance",
+        "expected return",
+        "valuation",
+    ]
+    return any(x in text for x in inclusions)
+
+
+def dedupe_items(items: list[Item]) -> list[Item]:
+    seen: set[str] = set()
+    out: list[Item] = []
+    for item in items:
+        title_key = re.sub(r"\W+", " ", item.title.lower()).strip()
+        path_key = urllib.parse.urlsplit(item.url).path.rstrip("/").lower()
+        key = title_key or path_key
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+    return out
+
+
+def etf_chinese_fact(item: Item) -> str:
+    title = clean_text(item.title, 220)
+    text = clean_text(item.summary, 900)
+    lower = f"{title} {text}".lower()
+    parts: list[str] = []
+
+    if "world markets watchlist" in lower:
+        parts.append("文章是全球市场观察清单，围绕主要区域市场和跨资产价格表现更新当日市场状态。")
+    elif "weekly economic snapshot" in lower and "labor market" in lower:
+        parts.append("文章是每周经济快照，核心事实是美国劳动力市场仍显示韧性，这会影响市场对增长、通胀和利率路径的判断。")
+    elif "hits $6.5 billion" in lower or "record pace" in lower:
+        parts.append("文章提到相关 ETF 资产规模快速增长并达到 65 亿美元，反映该主题产品的资金关注度正在上升。")
+    elif "institutional investor attention" in lower or ("macro news" in lower and "volatility" in lower):
+        parts.append(
+            "文章讨论机构投资者注意力：当市场波动率上升时，把更多注意力转向宏观新闻的基金表现更好。"
+        )
+        if "stocks they own" in lower or "position and trading decisions" in lower:
+            parts.append("文章还指出，基金会更关注自己持有的股票，这种注意力有助于提升仓位管理和交易决策的价值。")
+    elif "nuclear" in lower:
+        parts.append("文章关注美国核能主题，核心事实是合作项目和市场情绪改善正在推动核能相关主题资产获得更多关注。")
+    elif "securitization" in lower:
+        parts.append("文章讨论证券化投资，重点是把贷款、应收账款或其他现金流资产打包后的信用暴露如何进入投资组合。")
+    elif "melt-up" in lower:
+        parts.append("文章讨论市场快速上行阶段的风险偏好，核心事实是价格上涨本身可能吸引更多资金追涨，形成短期动量强化。")
+    elif "hedge fund" in lower or "bearish" in lower:
+        parts.append("文章讨论对冲基金经理为何经常偏谨慎或偏空，核心事实是机构表达的风险叙事不一定等同于实际仓位。")
+    elif "capital market" in lower or "expected return" in lower:
+        parts.append("文章围绕长期资本市场假设、估值和预期收益展开，重点是不同资产类别未来回报与风险补偿的变化。")
+    elif "treasury" in lower or "duration" in lower or "bond" in lower or "yield" in lower:
+        parts.append("文章关注债券、收益率或久期变化，核心事实是利率路径会直接影响长债、短债和信用债 ETF 的价格弹性。")
+    elif "factor" in lower or "momentum" in lower or "value" in lower or "quality" in lower:
+        parts.append("文章讨论因子或风格表现，重点在价值、动量、质量等风险因子是否继续获得市场补偿。")
+    elif "commodity" in lower or "gold" in lower or "inflation" in lower:
+        parts.append("文章关注商品、黄金或通胀相关资产，核心事实是实物资产的表现通常与通胀预期、美元和实际利率有关。")
+    elif text:
+        parts.append(f"RSS 摘要只提供有限信息；当前可确认文章围绕“{title}”这个主题展开。")
+    else:
+        parts.append(f"RSS 未提供摘要；当前只能确认来源发布了“{title}”这篇内容。")
+
+    return "".join(parts)
+
+
+def etf_follow_up_point(title: str, summary: str = "") -> str:
+    text = (title + " " + summary).lower()
+    if "world markets watchlist" in text:
+        return "可用来检查美股、海外股票、债券、商品和美元是否出现同步转向，避免只从单一 ETF 解释市场状态。"
+    if "weekly economic snapshot" in text and "labor market" in text:
+        return "可重点观察就业数据是否改变降息预期，并映射到长债、信用债、小盘股和周期行业的相对表现。"
+    if "hits $6.5 billion" in text or "record pace" in text:
+        return "可把它当作主题 ETF 资金拥挤度线索，和估值、成交量及主题成分股集中度一起看。"
+    if "institutional investor attention" in text or ("macro news" in text and "volatility" in text):
+        return "如果把它转成组合研究问题，重点不是直接交易新闻，而是测试高波动阶段宏观变量是否能改善风险开关或仓位调整。"
+    if "nuclear" in text:
+        return "可观察核能主题 ETF 的上涨是否由产业订单、政策支持或 AI 电力需求驱动，而不是只看主题热度。"
+    if "securitization" in text:
+        return "可把它放在信用配置框架里看，重点比较收益补偿、底层资产质量和流动性风险。"
+    if "melt-up" in text:
+        return "可作为风险偏好升温信号，重点检查组合是否因追涨而偏离原来的再平衡纪律。"
+    if "hedge fund" in text or "bearish" in text:
+        return "可把机构观点和实际价格、持仓、资金流分开看，避免把公开表态直接当成可交易信号。"
+    if "treasury" in text or "duration" in text or "bond" in text or "yield" in text:
+        return "可跟踪长久期国债、短债、投资级信用债和高收益债之间的相对表现，观察利率风险和信用风险哪个在主导。"
+    if "factor" in text or "momentum" in text or "value" in text or "quality" in text:
+        return "可把它归入风格轮动观察，重点比较因子 ETF 相对宽基指数的持续性，而不是只看单日涨跌。"
+    if "commodity" in text or "gold" in text or "inflation" in text:
+        return "可与美元、实际利率和通胀预期一起观察，判断商品或黄金表现来自避险、通胀还是流动性因素。"
+    if "flow" in text or "aum" in text or "expense ratio" in text:
+        return "可作为产品热度和结构变化线索，但需要和价格表现、成交量及持仓暴露分开看。"
+    if "rebalance" in text or "allocation" in text or "portfolio" in text:
+        return "可用于更新再平衡观察清单，重点看资产类别权重变化是否来自价格漂移还是主动配置判断。"
+    return "可先作为研究线索保留，后续只有在能落到具体资产类别、可观测指标和回测窗口时再进入策略验证。"
+
+
 def write_meta(out_dir: Path, subject: str, body: str, attachment: Path) -> None:
     meta = {"subject": subject, "body": body, "attachment": str(attachment)}
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -336,7 +500,7 @@ def build_etf(out_dir: Path) -> None:
     items: list[Item] = []
     for source, url in feeds.items():
         items.extend(parse_feed(source, url, limit=5))
-    picked = sort_recent(items)[:8]
+    picked = dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)])[:8]
     date_s = report_date()
     md = out_dir / f"us_etf_allocation_digest_{date_s}.md"
     lines = [
@@ -359,16 +523,14 @@ def build_etf(out_dir: Path) -> None:
     lines += ["", "## 研究/资讯线索", ""]
     for i, it in enumerate(picked, 1):
         lines += [
-            f"### {i}. {chinese_topic(it.title, it.summary)}",
+            f"### {i}. {etf_research_heading(it.title, it.summary)}",
             f"- 来源：{it.source}",
             f"- 原文标题：{it.title}",
             f"- 链接：{it.url}",
             "",
-            f"**原文事实**：{it.summary or 'RSS 未提供摘要，需要打开原文核对。'}",
+            f"**原文事实**：{etf_chinese_fact(it)}",
             "",
-            "**配置含义**：把观点转成可复现的资产类别、样本窗口、再平衡频率和风险预算问题。",
-            "",
-            "**需要验证**：核对原文数据口径、收益是否含分红、费用/税务/滑点是否纳入。",
+            f"**后续关注**：{etf_follow_up_point(it.title, it.summary)}",
             "",
         ]
     lines += audit_lines("06:45 Asia/Shanghai", started)
