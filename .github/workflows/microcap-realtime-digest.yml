@@ -18,6 +18,7 @@ jobs:
       PLANNED_BJ: "11:45 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       QVERIS_API_KEY: ${{ secrets.QVERIS_API_KEY }}
+      TOP100_REALTIME_REQUIRE_STATE: "1"
     steps:
       - name: Record workflow start time
         run: echo "STARTED_BJ=$(date '+%Y-%m-%d %H:%M:%S %Z')" >> "$GITHUB_ENV"
@@ -50,6 +51,14 @@ jobs:
           restore-keys: |
             microcap-digest-${{ runner.os }}-
             top100-realtime-${{ runner.os }}-
+
+      - name: Restore tracked v2 realtime state after cache restore
+        working-directory: microcap
+        run: |
+          git ls-files \
+            'outputs/microcap_top100_mom16_biweekly_live_v2_0_base_*' \
+            'outputs/microcap_top100_mom16_hedge_zz1000_0p8x_biweekly_thursday_16y_v2_0_base_costed_nav.csv' \
+            | xargs -r git checkout --
 
       - name: Install runtime dependencies
         run: |
