@@ -47,7 +47,12 @@ def latest_workflow_run() -> dict[str, object]:
     return runs[0]
 
 
-def current_action_summary() -> str:
+def current_action_summary(summary_path: str = "") -> str:
+    if summary_path:
+        path = Path(summary_path)
+        if path.is_file():
+            return path.read_text(encoding="utf-8", errors="replace").strip()
+        return f"MNT advisory summary was not generated: missing {summary_path}"
     url = f"https://api.github.com/repos/{OWNER}/{REPO}/contents/{SUMMARY_PATH}?ref=main"
     return request_text(url, accept="application/vnd.github.raw+json").strip()
 
@@ -75,6 +80,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build a Gmail-ready MNT V7.6 advisory digest.")
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--planned", default="13:05 Asia/Shanghai")
+    parser.add_argument("--summary-path", default="")
+    parser.add_argument("--run-url", default="")
+    parser.add_argument("--microcap-exit-code", default="")
+    parser.add_argument("--source-returns-exit-code", default="")
+    parser.add_argument("--build-exit-code", default="")
     args = parser.parse_args()
 
     out_dir = Path(args.out_dir)
@@ -82,8 +92,21 @@ def main() -> int:
 
     now = datetime.now(BJ)
     date_s = now.date().isoformat()
-    run = latest_workflow_run()
-    summary = compact_markdown(repair_common_mojibake(current_action_summary()))
+    if args.summary_path:
+        run = {
+            "html_url": args.run_url,
+            "conclusion": "success"
+            if all(code == "0" for code in (args.microcap_exit_code, args.source_returns_exit_code, args.build_exit_code))
+            else "failure",
+            "event": os.environ.get("GITHUB_EVENT_NAME", "workflow"),
+            "created_at": os.environ.get("STARTED_BJ", ""),
+            "updated_at": now.isoformat(),
+            "head_sha": os.environ.get("GITHUB_SHA", ""),
+            "id": os.environ.get("GITHUB_RUN_ID", ""),
+        }
+    else:
+        run = latest_workflow_run()
+    summary = compact_markdown(repair_common_mojibake(current_action_summary(args.summary_path)))
 
     run_url = str(run.get("html_url") or "")
     conclusion = str(run.get("conclusion") or run.get("status") or "unknown")
@@ -112,6 +135,9 @@ def main() -> int:
                 f"- Run URL: {run_url}",
                 f"- Planned digest time: {args.planned}",
                 f"- Digest generated: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+                f"- Microcap v2.0 source exit code: {args.microcap_exit_code or 'n/a'}",
+                f"- Five-sleeve returns exit code: {args.source_returns_exit_code or 'n/a'}",
+                f"- Advisory build exit code: {args.build_exit_code or 'n/a'}",
                 "",
                 "## Action summary",
                 "",
@@ -134,6 +160,9 @@ def main() -> int:
             f"Conclusion: {conclusion}",
             f"Event: {event}",
             f"Run URL: {run_url}",
+            f"Microcap v2.0 source exit code: {args.microcap_exit_code or 'n/a'}",
+            f"Five-sleeve returns exit code: {args.source_returns_exit_code or 'n/a'}",
+            f"Advisory build exit code: {args.build_exit_code or 'n/a'}",
             "",
             "Action summary:",
             summary[:3500],
