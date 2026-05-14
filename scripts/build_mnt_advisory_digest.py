@@ -74,7 +74,7 @@ def repair_common_mojibake(text: str) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build a Gmail-ready MNT V7.6 advisory digest.")
     parser.add_argument("--out-dir", required=True)
-    parser.add_argument("--planned", default="14:05 Asia/Shanghai")
+    parser.add_argument("--planned", default="13:05 Asia/Shanghai")
     args = parser.parse_args()
 
     out_dir = Path(args.out_dir)

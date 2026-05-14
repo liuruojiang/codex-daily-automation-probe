@@ -2,8 +2,8 @@ name: MNT Advisory Digest
 
 on:
   schedule:
-    # 14:05 Asia/Shanghai == 06:05 UTC, after the MNT 13:45 advisory workflow.
-    - cron: "5 6 * * *"
+    # 13:05 Asia/Shanghai == 05:05 UTC, after the MNT 12:45 advisory workflow.
+    - cron: "5 5 * * *"
   workflow_dispatch:
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Build MNT advisory digest
-        run: python scripts/build_mnt_advisory_digest.py --out-dir artifacts
+        run: python scripts/build_mnt_advisory_digest.py --out-dir artifacts --planned "13:05 Asia/Shanghai"
       - name: Send Gmail
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
