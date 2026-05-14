@@ -25,8 +25,31 @@ def clean_output(text: str, max_len: int = 45000) -> str:
 
 
 def extract_line(text: str, pattern: str) -> str:
-    match = re.search(pattern, text, flags=re.I)
+    match = re.search(pattern, text, flags=re.I | re.M)
     return match.group(0).strip() if match else ""
+
+
+def extract_signal_summary(output: str) -> str:
+    keys = [
+        "strategy_version",
+        "snapshot_time",
+        "latest_anchor_trade_date",
+        "quote_trade_date",
+        "current_holding",
+        "next_holding",
+        "trade_state",
+        "current_execution_scale",
+        "official_close_confirmed_signal",
+        "quote_coverage",
+    ]
+    lines = []
+    for key in keys:
+        line = extract_line(output, rf"^{re.escape(key)}[^\n]*")
+        if line:
+            lines.append(f"- {line}")
+    if lines:
+        return "\n".join(lines)
+    return "详见附件中的 v2.0 原始实时信号输出。"
 
 
 def main() -> int:
@@ -49,18 +72,13 @@ def main() -> int:
     started = args.started or os.environ.get("STARTED_BJ", "")
     run_url = os.environ.get("GITHUB_RUN_URL", "")
     exit_code = args.exit_code or os.environ.get("SIGNAL_EXIT_CODE", "")
-    summary_hint = (
-        extract_line(output, r"current_holding[^\n]*")
-        or extract_line(output, r"next_holding[^\n]*")
-        or extract_line(output, r"trade_state[^\n]*")
-        or "详见附件中的 v1.4/v1.6/v1.8 原始实时信号输出。"
-    )
+    summary_hint = extract_signal_summary(output)
 
     md = out_dir / f"microcap_realtime_signal_digest_{date_s}.md"
     lines = [
-        f"# 微盘股实时信号对照日报 - {date_s}",
+        f"# 微盘股 v2.0 实时信号日报 - {date_s}",
         "",
-        "> 用途：这是自动化仓库中的对照版微盘股实时信号推送，用来和微盘股原仓库自己的 GitHub Actions 调度准点性做比较。",
+        "> 用途：这是自动化仓库中的微盘股 v2.0 实时信号推送，直接使用盘中/实时 quote 输出当日信号。",
         "",
         "## 调度审计",
         "",
@@ -89,16 +107,16 @@ def main() -> int:
 
     body = "\n".join(
         [
-            "微盘股实时信号对照版已生成。",
+            "微盘股 v2.0 实时信号已生成。",
             f"计划时间：{args.planned}",
             f"实际启动：{started or '未记录'}",
             f"脚本退出码：{exit_code or '未记录'}",
-            "完整输出见附件，可用于和微盘股原仓库 workflow 的触发时间比较。",
+            "完整 v2.0 实时输出见附件。",
             f"Run URL：{run_url}",
         ]
     )
     meta = {
-        "subject": f"微盘股实时信号对照日报 - {date_s}",
+        "subject": f"微盘股 v2.0 实时信号日报 - {date_s}",
         "body": body,
         "attachment": str(md),
     }
