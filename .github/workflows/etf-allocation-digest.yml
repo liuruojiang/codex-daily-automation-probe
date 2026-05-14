@@ -2,8 +2,8 @@ name: ETF Allocation Digest
 
 on:
   schedule:
-    # 06:05 Asia/Shanghai == 22:05 UTC on the previous day.
-    - cron: "5 22 * * *"
+    # 06:00 Asia/Shanghai == 22:00 UTC on the previous day.
+    - cron: "0 22 * * *"
   workflow_dispatch:
 
 permissions:

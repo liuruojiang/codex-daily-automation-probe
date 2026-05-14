@@ -2,8 +2,8 @@ name: MNT Advisory Digest
 
 on:
   schedule:
-    # 13:05 Asia/Shanghai == 05:05 UTC, after the MNT 12:45 advisory workflow.
-    - cron: "5 5 * * *"
+    # 11:30 Asia/Shanghai == 03:30 UTC.
+    - cron: "30 3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -109,7 +109,7 @@ jobs:
         run: |
           python automation/scripts/build_mnt_advisory_digest.py \
             --out-dir artifacts \
-            --planned "13:05 Asia/Shanghai" \
+            --planned "11:30 Asia/Shanghai" \
             --summary-path mnt/outputs/portfolio_v76_current/level8_action_summary.md \
             --run-url "${GITHUB_RUN_URL}" \
             --microcap-exit-code "${{ steps.microcap.outputs.exit_code }}" \
