@@ -1,9 +1,6 @@
 name: MNT Advisory Digest
 
 on:
-  schedule:
-    # 11:30 Asia/Shanghai == 03:30 UTC.
-    - cron: "30 3 * * *"
   workflow_dispatch:
 
 permissions:
