@@ -373,6 +373,9 @@ def travel_relevant(item: Item) -> bool:
         "atmos rewards summit visa",
         "amazing deal",
         "sale ends",
+        "chatgpt business",
+        "openai",
+        "ai subscription",
     ]
     if any(x in text for x in exclusions):
         return False
@@ -412,6 +415,38 @@ def travel_relevant(item: Item) -> bool:
 
 def travel_heading(title: str, summary: str = "") -> str:
     text = f"{title} {summary}".lower()
+    if "amanvari" in text:
+        return "Amanvari 将于 2026 年 8 月开业"
+    if "berkshire bets" in text and "delta" in text:
+        return "巴菲特重仓达美航空：航司稳定性与行业风险观察"
+    if "commercial flights back to naples" in text or "naples, florida" in text:
+        return "Naples 机场是否恢复商业航班：高端目的地交通可达性"
+    if "current amex offers" in text:
+        return "Amex 旅行优惠与定向返现更新"
+    if "four seasons maui" in text and "lana" in text:
+        return "毛伊岛与拉奈岛四季酒店蜜月选择"
+    if "favorite family resort" in text and "kiawah" in text:
+        return "亲子度假村选择：Kiawah、Sea Island 还是 Montage"
+    if "four seasons mallorca" in text:
+        return "马略卡四季酒店真实体验复盘"
+    if "shinta mani mustang" in text or "upper mustang" in text:
+        return "尼泊尔 Upper Mustang 与 Shinta Mani Mustang 是否值得"
+    if "taking dog" in text and "caribbean" in text:
+        return "冬季带狗去加勒比度假需要考虑什么"
+    if "caribbean recommendations" in text:
+        return "加勒比高端度假目的地推荐与筛选"
+    if "waldorf astoria amsterdam" in text:
+        return "阿姆斯特丹华尔道夫酒店体验复盘"
+    if "fairmont mayakoba" in text:
+        return "Fairmont Mayakoba 长住体验复盘"
+    if "emirates skywards" in text and "devalu" in text:
+        return "阿联酋 Skywards 再次贬值：里程价值风险"
+    if "alaska airlines elite upgrades" in text:
+        return "阿拉斯加航空精英升舱可能只到登机口确认"
+    if "airline dress codes" in text or "offensive clothing" in text:
+        return "航司着装规定与登机执行边界"
+    if "isla palenque" in text or "chiriqui" in text:
+        return "巴拿马 Isla Palenque 住后体验复盘"
     if "points and miles alive" in text:
         return "积分和里程有效期管理"
     if "spring break" in text and "kids" in text:
@@ -442,7 +477,7 @@ def travel_heading(title: str, summary: str = "") -> str:
         return "租车燃油预付促销"
     if "sapphire" in text or "chase" in text:
         return "高端信用卡旅行权益"
-    return chinese_topic(title, summary)
+    return "旅行体验案例：具体行程与服务复盘"
 
 
 def travel_chinese_fact(item: Item) -> str:
@@ -509,6 +544,18 @@ def travel_chinese_fact(item: Item) -> str:
             "Travel Codex 提到 Explora Journeys 邮轮出现 private fares，折扣最高可达 30%。"
             "Explora Journeys 属于更偏高端、慢节奏的邮轮产品，适合把邮轮当成移动酒店和目的地串联方式来评估。"
             "这类信息的重点不是折扣本身，而是邮轮是否符合你们未来多年环球旅行中的节奏：少换酒店、减少交通摩擦、但也牺牲一部分目的地自由度。"
+        )
+    if "airline dress codes" in lower or "offensive clothing" in lower:
+        return (
+            "文章讨论航司着装规定中“冒犯性服装”的执行边界。"
+            "这类规则通常写得比较模糊，实际执行取决于航司员工、机场现场判断和乘客沟通方式。"
+            "对长期旅行者来说，这不是穿衣审美问题，而是登机风险、现场争议和行程中断风险。"
+        )
+    if "isla palenque" in lower or "chiriqui" in lower:
+        return (
+            "帖子复盘巴拿马 Chiriqui 的 Isla Palenque 入住体验。"
+            "这类私人岛屿/偏远度假酒店的重点不只是房价和景观，还包括抵达交通、餐饮稳定性、活动安排、服务响应和雨季/虫蚊等现场变量。"
+            "适合纳入未来中美洲高端海岛目的地筛选清单，但需要继续核验季节、航班和真实住客评论。"
         )
     if "antagonistic about the way i travel" in lower or "just do you" in lower:
         return (
@@ -728,6 +775,284 @@ def dedupe_items(items: list[Item]) -> list[Item]:
     return out
 
 
+def canonical_url(url: str) -> str:
+    parts = urllib.parse.urlsplit(url)
+    query = urllib.parse.parse_qsl(parts.query, keep_blank_values=False)
+    query = [(k, v) for k, v in query if not k.lower().startswith("utm_") and k.lower() not in {"source", "rss"}]
+    return urllib.parse.urlunsplit(
+        (parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip("/"), urllib.parse.urlencode(query), "")
+    )
+
+
+def norm_title(title: str) -> str:
+    return re.sub(r"\W+", " ", title.lower()).strip()
+
+
+def load_digest_history(kind: str) -> dict[str, object]:
+    path = Path("digest_history") / f"{kind}.json"
+    if not path.exists():
+        return {"items": []}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"items": []}
+    return payload if isinstance(payload, dict) else {"items": []}
+
+
+def filter_previously_sent(kind: str, items: list[Item], days: int = 7) -> list[Item]:
+    history = load_digest_history(kind)
+    cutoff = now_bj().date() - timedelta(days=days)
+    sent_urls: set[str] = set()
+    sent_titles: set[str] = set()
+    for rec in history.get("items", []):
+        if not isinstance(rec, dict):
+            continue
+        sent_date = str(rec.get("sent_date", ""))
+        if sent_date and sent_date < cutoff.isoformat():
+            continue
+        if rec.get("url"):
+            sent_urls.add(canonical_url(str(rec["url"])))
+        if rec.get("title"):
+            sent_titles.add(norm_title(str(rec["title"])))
+    out: list[Item] = []
+    for item in items:
+        if canonical_url(item.url) in sent_urls:
+            continue
+        if norm_title(item.title) in sent_titles:
+            continue
+        out.append(item)
+    return out
+
+
+def update_digest_history(kind: str, items: list[Item], days: int = 10) -> None:
+    path = Path("digest_history") / f"{kind}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    history = load_digest_history(kind)
+    cutoff = now_bj().date() - timedelta(days=days)
+    records: list[dict[str, str]] = []
+    for rec in history.get("items", []):
+        if not isinstance(rec, dict):
+            continue
+        sent_date = str(rec.get("sent_date", ""))
+        if sent_date and sent_date < cutoff.isoformat():
+            continue
+        records.append({k: str(v) for k, v in rec.items() if k in {"sent_date", "source", "title", "url"}})
+    today = report_date()
+    existing = {(canonical_url(r.get("url", "")), norm_title(r.get("title", ""))) for r in records}
+    for item in items:
+        key = (canonical_url(item.url), norm_title(item.title))
+        if key in existing:
+            continue
+        records.append({"sent_date": today, "source": item.source, "title": item.title, "url": item.url})
+    path.write_text(json.dumps({"items": records}, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def meta_title_label(item: Item) -> str:
+    return "原帖标题" if item.source.startswith("r/") else "原文标题"
+
+
+def fat_fire_heading(title: str, summary: str = "") -> str:
+    text = f"{title} {summary}".lower()
+    if "$2m burnout" in text or "pulling the plug" in text:
+        return "200 万美元倦怠帖一年后：正式退休前的最后检查"
+    if "dual income with kids" in text or "burnt out" in text:
+        return "双职工有娃家庭高度倦怠：是否该降速"
+    if "pay off house" in text or "kids trusts" in text:
+        return "先还清房贷还是先给孩子设信托"
+    if "nerf gun incident" in text:
+        return "沉没成本、家庭消费和决策质量"
+    if "planning apps" in text:
+        return "高净值家庭常用规划工具清单"
+    if "iced coffee hour" in text:
+        return "fatFIRE 被播客讨论：公众认知和标签风险"
+    if "4 abilities every investor" in text:
+        return "成功投资者需要的四种能力"
+    if "not there yet" in text:
+        return "尚未达标家庭的 Chubby/FAT FIRE 规划检查"
+    if "$7m nw" in text or "fire or wait another" in text:
+        return "45 岁 700 万美元净值：现在 FIRE 还是再工作几年"
+    if "happiness" in text and "travel" in text:
+        return "频繁旅行能否带来长期满足感"
+    if "glp1" in text or "copay" in text:
+        return "GLP-1 药物自付成本与医疗保障可得性"
+    if "3 million" in text:
+        return "300 万美元里程碑后的下一步规划"
+    if "convince anyone" in text and "fire" in text:
+        return "现实生活中很难说服别人接受 FIRE"
+    if "accountants" in text and "financial advice" in text:
+        return "为什么不能把会计当作财务规划顾问"
+    if "coastal ca cities" in text:
+        return "适合高预算家庭长期居住的加州海滨城市"
+    if "financial advisor fee" in text:
+        return "临近退休是否值得为财务顾问支付 AUM 费用"
+    if "back in the game" in text:
+        return "退休多年后如何重新回到工作或创业状态"
+    if "two paths to chubbyfire" in text:
+        return "接近 ChubbyFIRE 时：降低风险还是继续冲刺"
+    if "fear of pulling the ripcord" in text or "safely retire" in text:
+        return "接近退休却不敢按下按钮：家庭现金流与医保案例"
+    if "cobra" in text:
+        return "COBRA 医保为什么可能比低保费 ACA 更合适"
+    if "high-earning chubbies" in text:
+        return "高收入 ChubbyFIRE 家庭是否真的有足够容错"
+    if "first six months" in text and "retired" in text:
+        return "退休后最难的可能是前六个月适应"
+    if "tax season" in text:
+        return "报税季一线观察：退休家庭别低估税务执行"
+    if "securitization" in text:
+        return "证券化资产如何进入退休固定收益桶"
+    if "financial quest" in text:
+        return "人生是一连串财务任务：责任与传承"
+    if "part-time physician" in text:
+        return "高收入专业人士如何把兼职作为退休过渡"
+    if "mentor monday" in text:
+        return "r/fatFIRE 导师周一：早期问题和经验池"
+    if "weekly discussion" in text:
+        return "ChubbyFIRE 每周讨论：把社区问题当风险清单"
+    return f"{chinese_topic(title, summary)}相关新条目"
+
+
+def asset_display_name(asset: "MarketAsset") -> str:
+    overrides = {
+        "QQQM": "纳斯达克100 ETF",
+        "EMXC": "新兴市场 ex China ETF",
+        "VEA": "发达市场 ETF",
+        "GLDM": "黄金ETF",
+        "VGLT": "美国长期国债ETF",
+        "PDBC": "多商品期货ETF",
+        "IBIT": "比特币现货ETF",
+        "UUP": "美元指数多头基金",
+        "DBMF": "管理期货ETF",
+        "KMLM": "管理期货ETF",
+        "RSP": "标普500等权 ETF",
+        "VWO": "新兴市场 ETF",
+        "EWJ": "日本股票 ETF",
+        "EWG": "德国股票 ETF",
+        "EWU": "英国股票 ETF",
+        "EWZ": "巴西股票 ETF",
+        "INDA": "印度股票 ETF",
+        "EWT": "台湾股票 ETF",
+        "EWY": "韩国股票 ETF",
+        "FXI": "中国大盘股 ETF",
+        "ASHR": "沪深300 A股 ETF",
+        "XLK": "美国科技行业 ETF",
+        "XLY": "美国可选消费行业 ETF",
+        "XLP": "美国必需消费行业 ETF",
+        "XLE": "美国能源行业 ETF",
+        "XLF": "美国金融行业 ETF",
+        "XLV": "美国医疗保健行业 ETF",
+        "XLI": "美国工业行业 ETF",
+        "XLB": "美国材料行业 ETF",
+        "XLRE": "美国房地产行业 ETF",
+        "XLU": "美国公用事业行业 ETF",
+        "XLC": "美国通信服务行业 ETF",
+        "SMH": "半导体产业链 ETF",
+        "IGV": "美国软件行业 ETF",
+        "BUG": "网络安全主题 ETF",
+        "XBI": "生物科技行业 ETF",
+        "KRE": "美国区域银行 ETF",
+        "XRT": "美国零售行业 ETF",
+        "XHB": "美国住宅建筑 ETF",
+        "JETS": "航空公司 ETF",
+        "IYT": "美国运输行业 ETF",
+        "URA": "铀矿和核燃料 ETF",
+        "TAN": "太阳能产业链 ETF",
+        "ICLN": "全球清洁能源 ETF",
+        "MTUM": "美国动量因子 ETF",
+        "VLUE": "美国价值因子 ETF",
+        "QUAL": "美国质量因子 ETF",
+        "USMV": "美国低波动因子 ETF",
+        "SHY": "美国短期国债 ETF",
+        "IEF": "美国7-10年国债 ETF",
+        "TIP": "美国TIPS债券 ETF",
+        "LQD": "美元投资级公司债 ETF",
+        "HYG": "美元高收益债 ETF",
+        "EMB": "美元新兴市场主权债 ETF",
+        "MUB": "美国市政债 ETF",
+        "VNQ": "美国REITs ETF",
+    }
+    if asset.code in overrides:
+        return overrides[asset.code]
+    if re.search(r"[\u4e00-\u9fff]", asset.name):
+        return asset.name
+    first = re.split(r"[。；，]", asset.description)[0].strip()
+    return first or asset.name
+
+
+def append_strategy_price_table(lines: list[str], rows: list[dict[str, object]]) -> None:
+    lines += ["| 代码 | 涨跌幅 | 名称 |", "|---|---:|---|"]
+    for row in rows:
+        asset = row["asset"]
+        assert isinstance(asset, MarketAsset)
+        lines.append(f"| {asset.code} | {fmt_change(row['change'])} | {asset_display_name(asset)} |")
+
+
+def append_mover_table(lines: list[str], rows: list[dict[str, object]]) -> None:
+    lines += ["| 排名 | 代码 | 涨跌幅 | 名称 | 说明 |", "|---:|---|---:|---|---|"]
+    for i, row in enumerate(rows, 1):
+        asset = row["asset"]
+        assert isinstance(asset, MarketAsset)
+        lines.append(
+            f"| {i} | {asset.code} | {fmt_change(row['change'])} | {asset_display_name(asset)} | {asset.description} |"
+        )
+
+
+def etf_forum_relevant(item: Item) -> bool:
+    text = f"{item.title} {item.summary}".lower()
+    if any(k in text for k in ["conference", "register now", "meetup", "moderator"]):
+        return False
+    return any(
+        k in text
+        for k in [
+            "etf",
+            "portfolio",
+            "allocation",
+            "dividend",
+            "bond",
+            "treasury",
+            "bogle",
+            "vti",
+            "vt",
+            "voo",
+            "spy",
+            "qqq",
+            "schd",
+            "smh",
+            "cash",
+            "market",
+        ]
+    )
+
+
+def etf_public_heading(title: str, summary: str = "") -> str:
+    text = f"{title} {summary}".lower()
+    if "s&p 500 snapshot" in text:
+        return "标普500七周连涨后周五回落"
+    if "treasury yields snapshot" in text:
+        return "美国国债收益率快照与久期压力"
+    if "xlk passes" in text or "100 billion" in text:
+        return "XLK 规模突破 1000 亿美元：科技 ETF 拥挤度"
+    if "emerging markets bonds" in text:
+        return "新兴市场债相对美债仍有吸引力"
+    if "4 abilities every investor" in text:
+        return "成功投资者需要的四种能力"
+    if "inflation-resilient portfolios" in text:
+        return "通胀韧性组合与多资产配置"
+    if "dram pr" in text:
+        return "DRAM 主题 ETF 是否被过度营销"
+    if "are etfs always the solution" in text:
+        return "ETF 是否总是最优解决方案"
+    if "how’s it looking" in text or "how's it looking" in text:
+        return "24 岁投资组合求评"
+    if "rate my portfolio" in text:
+        return "31 岁投资组合配置求评"
+    if "bond allocation during zirp" in text:
+        return "零利率时期是否仍应配置债券"
+    if "bonds being safe" in text and "bond market is down" in text:
+        return "债券被称为安全资产但债市为何下跌"
+    return etf_research_heading(title, summary)
+
+
 def etf_chinese_fact(item: Item) -> str:
     title = clean_text(item.title, 220)
     text = clean_text(item.summary, 3000)
@@ -889,7 +1214,9 @@ def build_fat_fire(out_dir: Path) -> None:
     for source, url in feeds.items():
         items.extend(parse_feed(source, url, limit=8))
         time.sleep(0.2)
-    picked = sort_recent(items)[:14]
+    picked = filter_previously_sent("fat-fire", sort_recent(items))[:14]
+    if len(picked) < 10:
+        picked = filter_previously_sent("fat-fire", sort_recent(items), days=1)[:14]
     picked = [x if x.source.startswith("r/") else enrich_article_item(x) for x in picked]
     date_s = report_date()
     md = out_dir / f"fat_fire_digest_{date_s}.md"
@@ -904,21 +1231,21 @@ def build_fat_fire(out_dir: Path) -> None:
         "",
         "## 今日速览",
         "",
-        "| # | 中文主题 | 来源 | 日期 | 类型 |",
+        "| # | 中文标题 | 来源 | 日期 | 类型 |",
         "|---:|---|---|---:|---|",
     ]
     for i, it in enumerate(picked, 1):
         kind = "社区讨论/案例观察" if it.source.startswith("r/") else "RSS/博客研究"
         dt = (parse_date(it.published) or datetime.now(timezone.utc)).astimezone(BJ).date()
-        lines.append(f"| {i} | {chinese_topic(it.title, it.summary)} | {it.source} | {dt} | {kind} |")
+        lines.append(f"| {i} | {fat_fire_heading(it.title, it.summary)} | {it.source} | {dt} | {kind} |")
     lines += ["", "---", "", "## 条目详情", ""]
     for i, it in enumerate(picked, 1):
         kind = "社区讨论/案例观察" if it.source.startswith("r/") else "RSS/博客研究"
-        fact_label = "帖子讨论点" if it.source.startswith("r/") else "原文事实"
+        fact_label = "帖子事实" if it.source.startswith("r/") else "原文事实"
         lines += [
-            f"### {i}. {chinese_topic(it.title, it.summary)}",
+            f"### {i}. {fat_fire_heading(it.title, it.summary)}",
             f"- 来源：{it.source}",
-            f"- 原文标题：{it.title}",
+            f"- {meta_title_label(it)}：{it.title}",
             f"- 链接：{it.url}",
             f"- 类型：{kind}",
             "",
@@ -931,7 +1258,14 @@ def build_fat_fire(out_dir: Path) -> None:
             "---",
             "",
         ]
-    lines += ["## 去重与补充审计", "", "- 去重窗口：最近 7 天原则；本云端首版无法读取历史附件，后续会加入历史 URL 记录文件。", f"- 社区条目数量：{sum(1 for x in picked if x.source.startswith('r/'))}", ""]
+    update_digest_history("fat-fire", picked)
+    lines += [
+        "## 去重与补充审计",
+        "",
+        "- 去重窗口：最近 7 天；按 canonical URL 和标题去重，历史记录写入 `digest_history/fat-fire.json`。",
+        f"- 社区条目数量：{sum(1 for x in picked if x.source.startswith('r/'))}",
+        "",
+    ]
     lines += audit_lines("07:00 Asia/Shanghai", started)
     md.write_text("\n".join(lines), encoding="utf-8")
     body = "\n".join(
@@ -961,7 +1295,9 @@ def build_travel(out_dir: Path) -> None:
     for source, url in feeds.items():
         items.extend(parse_feed(source, url, limit=10))
         time.sleep(0.2)
-    candidates = [x for x in sort_recent(items) if travel_relevant(x)]
+    candidates = filter_previously_sent("travel", [x for x in sort_recent(items) if travel_relevant(x)])
+    if len(candidates) < 12:
+        candidates = filter_previously_sent("travel", [x for x in sort_recent(items) if travel_relevant(x)], days=1)
     picked = []
     seen_travel_topics: set[str] = set()
     for item in candidates:
@@ -984,31 +1320,40 @@ def build_travel(out_dir: Path) -> None:
         "",
         "## 今日速览",
         "",
-        "| # | 中文主题 | 来源 | 日期 | 类型 |",
+        "| # | 中文标题 | 来源 | 日期 | 类型 |",
         "|---:|---|---|---:|---|",
     ]
     for i, it in enumerate(picked, 1):
         kind = "社区体验/讨论" if it.source.startswith("r/") else "RSS/旅行资讯"
         dt = (parse_date(it.published) or datetime.now(timezone.utc)).astimezone(BJ).date()
-        lines.append(f"| {i} | {chinese_topic(it.title, it.summary)} | {it.source} | {dt} | {kind} |")
+        lines.append(f"| {i} | {travel_heading(it.title, it.summary)} | {it.source} | {dt} | {kind} |")
     lines += ["", "---", "", "## 条目详情", ""]
     for i, it in enumerate(picked, 1):
-        fact_label = "帖子体验点" if it.source.startswith("r/") else "原文事实"
+        fact_label = "帖子事实" if it.source.startswith("r/") else "原文事实"
         lines += [
             f"### {i}. {travel_heading(it.title, it.summary)}",
             f"- 来源：{it.source}",
-            f"- 原文标题：{it.title}",
+            f"- {meta_title_label(it)}：{it.title}",
             f"- 链接：{it.url}",
+            f"- 类型：{'社区体验/讨论' if it.source.startswith('r/') else 'RSS/旅行资讯'}",
             "",
             f"**{fact_label}**：{travel_chinese_fact(it)}",
             "",
-            f"**对你们的意义**：{travel_implication(it.title)}",
+            f"**旅行规划含义**：{travel_implication(it.title, it.summary)}",
             "",
-            f"**可以沉淀的标准**：{travel_standard(it.title)}",
+            f"**需要沉淀/核验**：{travel_standard(it.title, it.summary)}",
             "",
             "---",
             "",
         ]
+    lines += [
+        "## 去重与修正说明",
+        "",
+        "- 去重窗口：最近 7 天；按 canonical URL 和标题去重，历史记录写入 `digest_history/travel.json`。",
+        "- `今日速览` 使用具体中文标题，英文原题只保留在条目元信息里。",
+        "",
+    ]
+    update_digest_history("travel", picked)
     lines += audit_lines("07:10 Asia/Shanghai", started)
     md.write_text("\n".join(lines), encoding="utf-8")
     body = "\n".join(
@@ -1090,7 +1435,7 @@ def build_etf_legacy(out_dir: Path) -> None:
     lines += ["", "## 研究/资讯线索", ""]
     for i, it in enumerate(picked, 1):
         lines += [
-            f"### {i}. {etf_research_heading(it.title, it.summary)}",
+            f"### {i}. {etf_public_heading(it.title, it.summary)}",
             f"- 来源：{it.source}",
             f"- 原文标题：{it.title}",
             f"- 链接：{it.url}",
@@ -1395,10 +1740,11 @@ def build_etf(out_dir: Path) -> None:
     started = now_bj()
     strategy_assets = A_STRATEGY_ASSETS + ADK_STRATEGY_ASSETS + B_STRATEGY_ASSETS + D_STRATEGY_ASSETS
     strategy_rows = fetch_asset_changes(strategy_assets)
-    core_rows = fetch_asset_changes(CORE_MARKET_ASSETS)
     mover_rows = fetch_asset_changes(MOVER_UNIVERSE)
-    top_rows = dedupe_by_category(mover_rows, reverse=True)
-    bottom_rows = dedupe_by_category(mover_rows, reverse=False)
+    positive_movers = [r for r in mover_rows if float(r["change"]) > 0]
+    negative_movers = [r for r in mover_rows if float(r["change"]) < 0]
+    top_rows = dedupe_by_category(positive_movers, reverse=True)
+    bottom_rows = dedupe_by_category(negative_movers, reverse=False)
 
     feeds = {
         "A Wealth of Common Sense": "https://awealthofcommonsense.com/feed/",
@@ -1410,11 +1756,25 @@ def build_etf(out_dir: Path) -> None:
     items: list[Item] = []
     for source, url in feeds.items():
         items.extend(parse_feed(source, url, limit=5))
-    picked = dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)])[:8]
+    picked = filter_previously_sent("etf", dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]))[:6]
+    if len(picked) < 3:
+        picked = filter_previously_sent("etf", dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]), days=1)[:6]
     picked = [enrich_article_item(x) for x in picked]
 
+    forum_feeds = {
+        "Reddit r/ETFs": "https://www.reddit.com/r/ETFs/hot/.rss",
+        "Reddit r/Bogleheads": "https://www.reddit.com/r/Bogleheads/hot/.rss",
+        "Reddit r/investing": "https://www.reddit.com/r/investing/hot/.rss",
+        "Reddit r/portfolios": "https://www.reddit.com/r/portfolios/hot/.rss",
+    }
+    forum_items: list[Item] = []
+    for source, url in forum_feeds.items():
+        forum_items.extend(parse_feed(source, url, limit=8))
+        time.sleep(0.2)
+    forum_picked = filter_previously_sent("etf", dedupe_items([x for x in sort_recent(forum_items) if etf_forum_relevant(x)]))[:6]
+
     date_s = report_date()
-    data_dates = sorted({str(r["date"]) for r in strategy_rows + core_rows + mover_rows})
+    data_dates = sorted({str(r["date"]) for r in strategy_rows + mover_rows})
     data_date_s = data_dates[-1] if data_dates else "数据不足"
     md = out_dir / f"us_etf_allocation_digest_{date_s}.md"
 
@@ -1425,60 +1785,91 @@ def build_etf(out_dir: Path) -> None:
         "",
         "## 目录",
         "- [策略相关 ETF / 指数涨跌](#策略相关-etf--指数涨跌)",
-        "- [市场核心指数涨跌](#市场核心指数涨跌)",
-        "- [前一交易日 ETF / 指数涨跌幅榜](#前一交易日-etf--指数涨跌幅榜)",
-        "- [研究/资讯线索](#研究资讯线索)",
+        "- [ETF 涨跌幅榜](#etf-涨跌幅榜)",
+        "- [重点更新](#重点更新)",
+        "- [论坛热帖补充](#论坛热帖补充)",
         "",
         "---",
         "",
         "## 一句话结论",
         "",
-        "今天的日报先看 A、ADK、B、D 四个策略直接涉及的资产，再看核心市场指数，最后看已过滤杠杆、反向、期权收益增强、单一资产和同类重复后的 ETF/指数涨跌榜。",
+        "今天只保留策略直接相关标的、去重后的 ETF 涨跌幅榜、未重复推送的研究文章和论坛热帖；删除与策略表重复的市场核心指数段。",
         "",
         "## 策略相关 ETF / 指数涨跌",
         "",
+        f"交易日：{data_date_s}",
+        "",
     ]
-    append_asset_table(lines, strategy_rows, include_strategy=True)
-
-    lines += ["", "---", "", "## 市场核心指数涨跌", ""]
-    append_asset_table(lines, core_rows)
+    append_strategy_price_table(lines, strategy_rows)
 
     lines += [
         "",
         "---",
         "",
-        "## 前一交易日 ETF / 指数涨跌幅榜",
+        "## ETF 涨跌幅榜",
         "",
-        "过滤口径：已排除杠杆、反向、期权/收益增强、单股日内目标、单一资产信托/现货商品/单一加密产品，并按主题/类别去重；每个类别只保留当日表现最极端的一只。",
+        "过滤口径：已排除杠杆、反向、期权/收益增强、单股日内目标、单一资产信托/现货商品/单一加密产品，并按主题/类别去重；涨幅榜只展示正收益标的，跌幅榜只展示负收益标的。",
         "",
         "### 涨幅前 10",
         "",
     ]
-    append_asset_table(lines, top_rows)
+    append_mover_table(lines, top_rows)
+    if len(top_rows) < 10:
+        lines += ["", f"> 当日符合过滤口径且正收益的候选不足 10 个，仅展示 {len(top_rows)} 个。", ""]
     lines += ["", "### 跌幅前 10", ""]
-    append_asset_table(lines, bottom_rows)
+    append_mover_table(lines, bottom_rows)
 
     if now_bj().weekday() == 5:
         for label, sessions in [("最近一周", 5), ("最近一个月", 21)]:
             period_rows = fetch_asset_changes(MOVER_UNIVERSE, sessions=sessions)
+            period_pos = [r for r in period_rows if float(r["change"]) > 0]
+            period_neg = [r for r in period_rows if float(r["change"]) < 0]
             lines += ["", f"### {label}涨幅前 10", ""]
-            append_asset_table(lines, dedupe_by_category(period_rows, reverse=True))
+            append_mover_table(lines, dedupe_by_category(period_pos, reverse=True))
             lines += ["", f"### {label}跌幅前 10", ""]
-            append_asset_table(lines, dedupe_by_category(period_rows, reverse=False))
+            append_mover_table(lines, dedupe_by_category(period_neg, reverse=False))
 
-    lines += ["", "---", "", "## 研究/资讯线索", ""]
+    lines += ["", "---", "", "## 重点更新", ""]
     for i, it in enumerate(picked, 1):
         lines += [
-            f"### {i}. {etf_research_heading(it.title, it.summary)}",
+            f"### {i}. {etf_public_heading(it.title, it.summary)}",
             f"- 来源：{it.source}",
             f"- 原文标题：{it.title}",
             f"- 链接：{it.url}",
+            "- 类型：RSS/研究文章",
             "",
             f"**原文事实**：{etf_chinese_fact(it)}",
             "",
-            f"**后续关注**：{etf_follow_up_point(it.title, it.summary)}",
+            f"**配置含义**：{etf_follow_up_point(it.title, it.summary)}",
+            "",
+            f"**可验证点**：围绕相关 ETF、资产类别、资金流、估值、波动率和 1/3/6 个月窗口做数据验证，不把文章观点直接当交易信号。",
             "",
         ]
+    lines += ["", "---", "", "## 论坛热帖补充", ""]
+    for i, it in enumerate(forum_picked, 1):
+        lines += [
+            f"### {i}. {etf_public_heading(it.title, it.summary)}",
+            f"- 来源：{it.source}",
+            f"- 原帖标题：{it.title}",
+            f"- 链接：{it.url}",
+            "- 类型：论坛热帖/讨论流",
+            "",
+            f"**讨论事实**：{etf_chinese_fact(it)}",
+            "",
+            f"**配置含义**：{etf_follow_up_point(it.title, it.summary)}",
+            "",
+            "**可验证点**：把社区讨论当作假设来源，后续用 ETF 收益、资金流、估值、波动率和回撤数据检验。",
+            "",
+        ]
+    update_digest_history("etf", [*picked, *forum_picked])
+    lines += [
+        "## 去重与补充审计",
+        "",
+        "- 去重窗口：最近 7 天；按 canonical URL 和标题去重，历史记录写入 `digest_history/etf.json`。",
+        f"- RSS/研究文章数量：{len(picked)}",
+        f"- 论坛热帖数量：{len(forum_picked)}",
+        "",
+    ]
     lines += audit_lines("08:00 Asia/Shanghai", started)
     md.write_text("\n".join(lines), encoding="utf-8")
 
@@ -1490,7 +1881,7 @@ def build_etf(out_dir: Path) -> None:
     )
     body = "\n".join(
         [
-            "一句话结论：ETF/资产配置日报已按策略池、核心指数、去重涨跌榜三段式生成。",
+            "一句话结论：ETF/资产配置日报已按策略相关标的、ETF 涨跌幅榜、重点更新和论坛热帖补充生成。",
             f"数据日期：{data_date_s}",
             f"涨幅靠前：{top_preview}",
             f"跌幅靠前：{bottom_preview}",
