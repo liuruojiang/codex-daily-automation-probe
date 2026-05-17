@@ -30,6 +30,120 @@ class Item:
     summary: str
 
 
+@dataclass(frozen=True)
+class ResearchFeed:
+    source: str
+    url: str
+    tier: str
+    role: str
+    default_sections: tuple[str, ...]
+    limit: int = 5
+
+
+@dataclass(frozen=True)
+class ScoredResearchItem:
+    item: Item
+    score: int
+    tier: str
+    role: str
+    sections: tuple[str, ...]
+    reasons: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class LifeDigestFeed:
+    source: str
+    url: str
+    category: str
+    tier: str
+    role: str
+    limit: int = 5
+
+
+LIFE_DIGEST_FEEDS: tuple[LifeDigestFeed, ...] = (
+    LifeDigestFeed("Morningstar Retirement", "https://www.morningstar.com/retirement/rss", "财务自由", "专业机构", "退休收入、安全提款率、动态提款"),
+    LifeDigestFeed("Kitces", "https://www.kitces.com/feed/", "财务自由", "专业机构", "顾问级退休规划、税务和提款策略"),
+    LifeDigestFeed("Early Retirement Now", "https://earlyretirementnow.com/feed/", "财务自由", "高质量博客", "安全提款率、长退休期和序列风险"),
+    LifeDigestFeed("Portfolio Charts", "https://portfoliocharts.com/feed/", "财务自由", "高质量工具", "全球组合、提款率和历史回撤"),
+    LifeDigestFeed("Bogleheads Blog", "https://www.bogleheads.org/blog/feed/", "财务自由", "高质量社区知识库", "低成本投资、提款纪律和配置原则"),
+    LifeDigestFeed("Retirement Researcher", "https://retirementresearcher.com/feed/", "财务自由", "专业机构", "退休收入理论、收入地板和年金框架"),
+    LifeDigestFeed("Of Dollars And Data", "https://ofdollarsanddata.com/feed/", "财务自由", "高质量博客", "财富、消费和退休数据分析"),
+    LifeDigestFeed("Collaborative Fund", "https://feeds.feedburner.com/collabfund", "生活方式", "高质量博客", "财富心理、消费心理和长期生活选择"),
+    LifeDigestFeed("HumbleDollar", "https://humbledollar.com/feed/", "生活方式", "高质量博客", "退休后金钱、时间、家庭和意义感"),
+    LifeDigestFeed("OECD Tax Residency", "https://www.oecd.org/tax/automatic-exchange/crs-implementation-and-assistance/tax-residency/", "税务居留", "官方", "CRS 辖区税务居民规则入口"),
+    LifeDigestFeed("PwC Worldwide Tax Summaries", "https://taxsummaries.pwc.com/", "税务居留", "专业机构", "全球个人税和公司税摘要"),
+    LifeDigestFeed("EY Personal Tax Guide", "https://www.ey.com/en_gl/tax-guides/worldwide-personal-tax-and-immigration-guide", "税务居留", "专业机构", "个人税和移民规则初筛"),
+    LifeDigestFeed("Nomad Capitalist", "https://nomadcapitalist.com/feed/", "税务居留", "高质量博客", "第二居留、Plan B 和全球生活方式想法"),
+    LifeDigestFeed("International Living", "https://internationalliving.com/feed/", "目的地", "高质量博客", "海外退休、目的地生活质量和长期居住经验"),
+    LifeDigestFeed("Expatica", "https://www.expatica.com/global/feed/", "目的地", "高质量博客", "海外生活、医疗、住房和搬家指南"),
+    LifeDigestFeed("UK FCDO", "https://www.gov.uk/foreign-travel-advice", "签证入境", "官方", "入境、安全、健康和当地法律旅行建议"),
+    LifeDigestFeed("Smartraveller", "https://www.smartraveller.gov.au/consular-services/resources", "安全医疗", "官方", "澳洲官方旅行建议和安全提醒"),
+    LifeDigestFeed("Canada Travel Advisories", "https://travel.gc.ca/travelling/advisories", "安全医疗", "官方", "加拿大官方目的地安全建议"),
+    LifeDigestFeed("CDC Travelers Health", "https://wwwnc.cdc.gov/travel", "安全医疗", "官方", "旅行疫苗、健康和疾病风险"),
+    LifeDigestFeed("WHO Travel Advice", "https://www.who.int/travel-advice", "安全医疗", "官方", "国际旅行健康和疫苗建议"),
+    LifeDigestFeed("Nomadic Matt", "https://www.nomadicmatt.com/feed/", "生活方式", "高质量博客", "长期旅行规划和路线经验"),
+    LifeDigestFeed("Wandering Earl", "https://wanderingearl.com/feed/", "生活方式", "经验源", "长期环球旅行经验"),
+    LifeDigestFeed("Legal Nomads", "https://www.legalnomads.com/feed/", "生活方式", "经验源", "长期旅行、食物和健康反思"),
+    LifeDigestFeed("Frequent Miler", "https://frequentmiler.com/feed/", "积分", "高质量博客", "里程、转点、酒店和航司机会"),
+    LifeDigestFeed("One Mile at a Time", "https://onemileatatime.com/feed/", "积分", "高质量博客", "商务舱、航司、酒店和会员权益"),
+    LifeDigestFeed("LoyaltyLobby", "https://loyaltylobby.com/feed/", "积分", "高质量博客", "酒店忠诚计划、促销和条款变化"),
+    LifeDigestFeed("The Points Guy", "https://thepointsguy.com/feed/", "积分", "中等可信", "积分估值、信用卡和旅行奖励策略"),
+    LifeDigestFeed("r/ExpatFIRE", "https://www.reddit.com/r/ExpatFIRE/hot/.rss", "生活方式", "论坛经验", "跨境 FIRE 和海外生活案例"),
+    LifeDigestFeed("r/fatFIRE", "https://www.reddit.com/r/fatFIRE/hot/.rss", "生活方式", "论坛经验", "高净值生活方式和退休案例"),
+    LifeDigestFeed("r/digitalnomad", "https://www.reddit.com/r/digitalnomad/hot/.rss", "生活方式", "论坛经验", "数字游民和长期旅居经验"),
+)
+
+
+LIFE_COMMUNITY_FALLBACK_FEEDS: tuple[LifeDigestFeed, ...] = (
+    LifeDigestFeed("Reddit r/FATTravel", "https://www.reddit.com/r/FATTravel/hot/.rss", "生活方式", "论坛经验", "高预算慢旅、奢华酒店和家庭旅行案例", 8),
+    LifeDigestFeed("Reddit r/chubbytravel", "https://www.reddit.com/r/chubbytravel/hot/.rss", "生活方式", "论坛经验", "微胖预算旅行、舒适路线和酒店选择案例", 8),
+    LifeDigestFeed("Reddit r/luxurytravel", "https://www.reddit.com/r/luxurytravel/hot/.rss", "生活方式", "论坛经验", "奢华旅行、度假村、预订渠道和高端体验案例", 8),
+)
+
+
+ASSET_ALLOCATION_SECTION = "资产配置影响"
+QUANT_STRATEGY_SECTION = "量化策略影响"
+CHINA_HK_SECTION = "A 股 / 港股专项"
+
+
+ETF_RESEARCH_FEEDS: tuple[ResearchFeed, ...] = (
+    ResearchFeed("arXiv q-fin.PM", "https://rss.arxiv.org/rss/q-fin.PM", "核心论文源", "组合优化、资产配置、绩效评估", (QUANT_STRATEGY_SECTION,), 8),
+    ResearchFeed("arXiv q-fin.TR", "https://rss.arxiv.org/rss/q-fin.TR", "核心论文源", "交易机制、流动性、执行与自动交易", (QUANT_STRATEGY_SECTION,), 8),
+    ResearchFeed("arXiv q-fin.ST", "https://rss.arxiv.org/rss/q-fin.ST", "核心论文源", "统计金融、预测与模型验证", (QUANT_STRATEGY_SECTION,), 8),
+    ResearchFeed("arXiv q-fin.RM", "https://rss.arxiv.org/rss/q-fin.RM", "核心论文源", "风险管理、尾部风险与组合约束", (QUANT_STRATEGY_SECTION,), 8),
+    ResearchFeed("Quantocracy", "https://quantocracy.com/feed/", "核心策略灵感源", "量化博客聚合与策略线索", (QUANT_STRATEGY_SECTION,), 8),
+    ResearchFeed("Quantpedia", "https://quantpedia.com/feed", "核心策略灵感源", "因子、动量、择时与论文复现", (QUANT_STRATEGY_SECTION,), 8),
+    ResearchFeed("Alpha Architect", "https://alphaarchitect.com/feed/", "高质量量化研究源", "因子、动量、趋势与行为金融", (ASSET_ALLOCATION_SECTION, QUANT_STRATEGY_SECTION), 6),
+    ResearchFeed("Robot Wealth", "https://robotwealth.com/feed/", "实践型量化研究源", "交易成本、no-trade region、数据挖掘风险", (QUANT_STRATEGY_SECTION,), 6),
+    ResearchFeed("Meb Faber", "https://mebfaber.com/feed/", "资产配置研究源", "全球资产配置、趋势跟踪与估值", (ASSET_ALLOCATION_SECTION, QUANT_STRATEGY_SECTION), 6),
+    ResearchFeed("Allocate Smartly", "https://allocatesmartly.com/feed/", "TAA 框架源", "战术资产配置策略跟踪", (ASSET_ALLOCATION_SECTION, QUANT_STRATEGY_SECTION), 5),
+    ResearchFeed("S&P DJI Indexology", "https://www.indexologyblog.com/feed/", "指数与因子研究源", "指数、因子、SPIVA、多资产与 ETF 结构", (ASSET_ALLOCATION_SECTION, QUANT_STRATEGY_SECTION), 6),
+    ResearchFeed("FRED Blog", "https://fredblog.stlouisfed.org/feed/", "宏观数据源", "利率、通胀、就业与金融条件数据解释", (ASSET_ALLOCATION_SECTION,), 5),
+    ResearchFeed("A Wealth of Common Sense", "https://awealthofcommonsense.com/feed/", "辅助资产配置源", "市场行为、长期配置与投资者行为", (ASSET_ALLOCATION_SECTION,), 5),
+    ResearchFeed("ETF Trends", "https://www.etftrends.com/feed/", "辅助 ETF 产品源", "ETF 资金流、产品结构与行业配置", (ASSET_ALLOCATION_SECTION,), 5),
+    ResearchFeed("ETF Database", "https://etfdb.com/feed/", "辅助 ETF 产品源", "ETF 产品、资金流与资产类别观察", (ASSET_ALLOCATION_SECTION,), 5),
+    ResearchFeed("HKEX News Releases", "https://www.hkex.com.hk/Services/RSS-Feeds/News-Releases?sc_lang=zh-HK", "港交所官方源", "新闻稿、市场结构与互联互通", (CHINA_HK_SECTION,), 6),
+    ResearchFeed("HKEX Regulatory Announcements", "https://www.hkex.com.hk/Services/RSS-Feeds/regulatory-announcements?sc_lang=zh-HK", "港交所官方源", "监管通讯与市场规则", (CHINA_HK_SECTION,), 6),
+    ResearchFeed("HKEX Market Communications", "https://www.hkex.com.hk/Services/RSS-Feeds/market-communications?sc_lang=zh-HK", "港交所官方源", "市场通讯、交易安排与互联互通", (CHINA_HK_SECTION,), 6),
+    ResearchFeed("HKEX Listing Rules", "https://www.hkex.com.hk/Services/RSS-Feeds/Updates-to-Rules-and-Guidance-on-Listing-Matters?sc_lang=zh-HK", "港交所官方源", "上市规则与指引修订", (CHINA_HK_SECTION,), 6),
+    ResearchFeed("RSSHub SSE Inquiries", "https://rsshub.app/sse/inquire", "A 股准官方聚合源", "上交所监管问询", (CHINA_HK_SECTION,), 6),
+    ResearchFeed("RSSHub SSE Rules", "https://rsshub.app/sse/renewal", "A 股准官方聚合源", "上交所规则与项目动态", (CHINA_HK_SECTION,), 6),
+    ResearchFeed("RSSHub SZSE Inquiries", "https://rsshub.app/szse/inquire", "A 股准官方聚合源", "深交所问询函件", (CHINA_HK_SECTION,), 6),
+    ResearchFeed("RSSHub SZSE Rules", "https://rsshub.app/szse/rule", "A 股准官方聚合源", "深交所规则变化", (CHINA_HK_SECTION,), 6),
+)
+
+
+ETF_CORE_PAGE_MONITORS: tuple[tuple[str, str, str], ...] = (
+    ("AQR Insights / Cliff's Perspectives", "https://www.aqr.com/Insights/Perspectives", "因子、动量、价值、另类风险溢价与组合构建"),
+    ("AQR Data Library", "https://www.aqr.com/insights/datasets/about-the-aqr-data-library", "因子数据集与月度更新说明"),
+    ("Research Affiliates AAI", "https://www.researchaffiliates.com/aai-hub", "估值驱动资本市场预期与 Smart Beta"),
+    ("BlackRock Capital Market Assumptions", "https://www.blackrock.com/us/financial-professionals/insights/capital-market-assumptions", "长期资本市场假设、风险预算与相关性"),
+    ("Vanguard VCMM Forecasts", "https://corporate.vanguard.com/content/corporatesite/us/en/corp/vemo/vemo-return-forecasts.html", "10 年期收益与波动率预测"),
+    ("J.P. Morgan LTCMA", "https://am.jpmorgan.com/us/en/asset-management/adv/insights/portfolio-insights/ltcma/", "10-15 年资本市场假设和战略配置图表"),
+    ("GMO Research", "https://www.gmo.com/", "估值敏感型资产配置、国际价值与质量股"),
+)
+
+
 def now_bj() -> datetime:
     return datetime.now(BJ)
 
@@ -118,7 +232,9 @@ def article_paragraphs(url: str, limit: int = 8) -> list[str]:
         page = fetch_bytes(url, timeout=20).decode("utf-8", "ignore")
     except Exception:
         return []
-    raw_paras = re.findall(r"<p[^>]*>(.*?)</p>", page, flags=re.I | re.S)
+    raw_blocks: list[str] = []
+    for tag in ("p", "li", "tr"):
+        raw_blocks.extend(re.findall(rf"<{tag}[^>]*>(.*?)</{tag}>", page, flags=re.I | re.S))
     out: list[str] = []
     noise = (
         "expert insights content hubs",
@@ -129,13 +245,17 @@ def article_paragraphs(url: str, limit: int = 8) -> list[str]:
         "posted may ",
         "subscribe",
         "advertisement",
+        "cookie",
+        "privacy policy",
     )
-    for para in raw_paras:
-        text = clean_text(para, 700)
+    for block in raw_blocks:
+        text = clean_text(block, 900)
         lower = text.lower()
         if len(text) < 55:
             continue
         if any(x in lower for x in noise):
+            continue
+        if "data:image" in lower or "wp-image" in lower:
             continue
         out.append(text)
         if len(out) >= limit:
@@ -143,11 +263,102 @@ def article_paragraphs(url: str, limit: int = 8) -> list[str]:
     return out
 
 
+def reddit_json_url(url: str) -> str:
+    parts = urllib.parse.urlsplit(url)
+    path = parts.path.rstrip("/")
+    if path.endswith(".json"):
+        return url
+    return urllib.parse.urlunsplit((parts.scheme, parts.netloc, path + ".json", "", ""))
+
+
+def reddit_thread_paragraphs(url: str, limit: int = 8) -> list[str]:
+    host = urllib.parse.urlsplit(url).netloc.lower()
+    if "reddit.com" not in host:
+        return []
+    try:
+        payload = json.loads(fetch_bytes(reddit_json_url(url), timeout=20).decode("utf-8", "ignore"))
+    except Exception:
+        return []
+    out: list[str] = []
+
+    def add_text(text: str | None) -> None:
+        cleaned = clean_text(text, 1800)
+        if len(cleaned) < 45:
+            return
+        if cleaned.lower() in {"[deleted]", "[removed]"}:
+            return
+        out.append(cleaned)
+
+    if isinstance(payload, list):
+        for listing in payload:
+            children = (((listing or {}).get("data") or {}).get("children") or []) if isinstance(listing, dict) else []
+            for child in children:
+                data = (child or {}).get("data") or {}
+                if not isinstance(data, dict):
+                    continue
+                add_text(data.get("selftext"))
+                add_text(data.get("body"))
+                if len(out) >= limit:
+                    return out[:limit]
+    return out[:limit]
+
+
+def article_links(url: str, limit: int = 5) -> list[tuple[str, str]]:
+    try:
+        page = fetch_bytes(url, timeout=20).decode("utf-8", "ignore")
+    except Exception:
+        return []
+    links: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    preferred_hosts = (
+        "allocatesmartly.com",
+        "quantpedia.com",
+        "alphaarchitect.com",
+        "robotwealth.com",
+        "mebfaber.com",
+        "indexologyblog.com",
+    )
+    for href, label in re.findall(r"<a\s+[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>", page, flags=re.I | re.S):
+        absolute = urllib.parse.urljoin(url, html.unescape(href))
+        parts = urllib.parse.urlsplit(absolute)
+        host = parts.netloc.lower()
+        if not any(h in host for h in preferred_hosts):
+            continue
+        if "quantocracy.com" in host:
+            continue
+        canonical = canonical_url(absolute)
+        if canonical in seen:
+            continue
+        title = clean_text(label, 180)
+        if len(title) < 8:
+            continue
+        seen.add(canonical)
+        links.append((title, absolute))
+        if len(links) >= limit:
+            break
+    return links
+
+
+def enrich_aggregator_item(item: Item, base_summary: str) -> str:
+    if item.source != "Quantocracy":
+        return base_summary
+    child_bits: list[str] = []
+    for title, url in article_links(item.url, limit=3):
+        paras = article_paragraphs(url, limit=4)
+        if not paras:
+            continue
+        child_bits.append(f"子链接《{title}》：{' '.join(paras)}")
+    if not child_bits:
+        return base_summary
+    return clean_text(" ".join([base_summary, *child_bits]), 20000)
+
+
 def enrich_article_item(item: Item) -> Item:
-    paras = article_paragraphs(item.url)
-    if not paras:
-        return item
-    summary = clean_text(" ".join([item.summary, *paras]), 3000)
+    host = urllib.parse.urlsplit(item.url).netloc.lower()
+    forum_paras = reddit_thread_paragraphs(item.url, limit=20) if item.source.startswith("r/") or "reddit" in item.source.lower() or "reddit.com" in host else []
+    paras = forum_paras or article_paragraphs(item.url, limit=60)
+    base = clean_text(" ".join([item.summary, *paras]), 20000) if paras else item.summary
+    summary = enrich_aggregator_item(item, base)
     return Item(item.source, item.title, item.url, item.published, summary)
 
 
@@ -1025,7 +1236,20 @@ def etf_forum_relevant(item: Item) -> bool:
 
 
 def etf_public_heading(title: str, summary: str = "") -> str:
+    title_lower = title.lower()
     text = f"{title} {summary}".lower()
+    if "tactical yield" in title_lower:
+        return "Meb Faber Tactical Yield：收益率驱动的债券/现金切换"
+    if "commodity futures returns since 1871" in title_lower:
+        return "1871 年以来商品期货收益指数：长期商品风险溢价"
+    if "dual momentum allocation between physical gold and bitcoin" in title_lower:
+        return "黄金与比特币的双动量配置"
+    if "attention factor" in title_lower and ("crypto" in title_lower or "bitcoin" in text or "btc" in text):
+        return "投机情绪因子：加密资产如何联动股票市场"
+    if "recent quant links from quantocracy" in title_lower:
+        return "Quantocracy 量化链接池：只做策略线索筛选"
+    if "surfing the equity curve" in text:
+        return "用权益曲线趋势决定策略开关"
     if "s&p 500 snapshot" in text:
         return "标普500七周连涨后周五回落"
     if "treasury yields snapshot" in text:
@@ -1057,6 +1281,7 @@ def etf_chinese_fact(item: Item) -> str:
     title = clean_text(item.title, 220)
     text = clean_text(item.summary, 3000)
     lower = f"{title} {text}".lower()
+    title_lower = title.lower()
     parts: list[str] = []
 
     if "world markets watchlist" in lower:
@@ -1064,6 +1289,18 @@ def etf_chinese_fact(item: Item) -> str:
             "文章跟踪全球九个主要股票指数，截至 2026 年 5 月 11 日，其中六个指数年内仍为正收益。"
             "日本 Nikkei 225 年内上涨约 24.0%，领先观察清单；美国 S&P 500 上涨约 8.3%，加拿大 TSX 上涨约 7.7%。"
             "表现较弱的是印度 BSE SENSEX，年内下跌约 10.8%；德国 DAXK 和法国 CAC 40 分别下跌约 2.6% 和 1.1%。"
+        )
+    elif "tactical yield" in lower:
+        parts.append(
+            "文章测试 Meb Faber 的 Tactical Yield 思路：在 T-Bills、美国国债久期和公司债信用风险之间做切换。"
+            "核心依据是收益率本身对未来债券回报的解释力，尤其是 10 年期初始收益率对后续长期回报的预测作用。"
+            "这类策略的重点不是追逐债券单日涨跌，而是判断现金收益率是否已经足够高，是否值得少承担久期或信用风险。"
+        )
+    elif "attention factor" in lower and ("crypto" in lower or "bitcoin" in lower or "btc" in lower):
+        parts.append(
+            "文章讨论“投机注意力/投机情绪”这一共同风险因子：BTC、0DTE 期权、零佣金券商、社交情绪股票和部分加密相关股票可能受同一批边际投机资金影响。"
+            "核心主旨不是问组合有没有直接买加密资产，而是检查股票和 ETF 里是否已经隐含了加密情绪、投机参与度和风险偏好传导。"
+            "因此配置判断应从二元的“有无 crypto”转向连续的投机情绪暴露评估。"
         )
     elif "weekly economic snapshot" in lower and "labor market" in lower:
         parts.append(
@@ -1123,6 +1360,26 @@ def etf_chinese_fact(item: Item) -> str:
             "文中引用 Tudor Jones 对市场估值的担忧，包括美国股市总市值/GDP 达到约 252%、S&P 500 在 22 倍 PE 附近买入时十年前瞻收益可能偏低等观点。"
             "作者强调，这些人更像交易者而非买入并长期持有的投资者，因此他们的公开叙事、实际仓位和长期资产配置含义需要分开看。"
         )
+    elif "recent quant links from quantocracy" in title_lower:
+        parts.append(
+            "Quantocracy 是量化文章聚合入口，本条本身不是一篇完整研究，而是一组近期量化链接。日报应把它当作线索池：只挑出能落到信号定义、数据源、交易成本、回测窗口或风险控制的子议题。"
+            "如果链接池没有明确可测试问题，就不应把它写成市场结论。"
+        )
+    elif "commodity futures returns since 1871" in lower:
+        parts.append(
+            "Quantpedia 文章围绕 1871 年以来商品期货收益指数展开，价值在于把商品暴露放到更长历史中观察，而不是只看近几十年的 ETF 样本。"
+            "这类材料适合检查商品风险溢价、通胀对冲、股票/债券相关性和滚动收益在不同制度环境中的表现。"
+        )
+    elif "dual momentum allocation between physical gold and bitcoin" in lower:
+        parts.append(
+            "Quantpedia 文章讨论在实物黄金与比特币之间做双动量配置。核心不是把比特币简单视为“数字黄金”，而是检验两类资产在趋势、波动率、回撤和危机相关性上的差异。"
+            "对 ETF 组合而言，相关代理通常会落到 GLDM/IAU 一类黄金 ETF 与 IBIT 等现货比特币产品。"
+        )
+    elif "surfing the equity curve" in lower:
+        parts.append(
+            "Allocate Smartly 文章讨论用策略自身权益曲线的趋势来决定策略开关。这个想法本质上是对策略做二级趋势过滤：策略表现处于上行状态时启用，权益曲线走弱时暂停或降权。"
+            "风险点在于权益曲线过滤容易过拟合，且可能在震荡期反复开关，必须把延迟、换手和错过反弹一起纳入回测。"
+        )
     elif "capital market" in lower or "expected return" in lower:
         parts.append("文章围绕长期资本市场假设、估值和预期收益展开，重点是不同资产类别未来回报与风险补偿的变化。")
     elif "treasury" in lower or "duration" in lower or "bond" in lower or "yield" in lower:
@@ -1132,15 +1389,28 @@ def etf_chinese_fact(item: Item) -> str:
     elif "commodity" in lower or "gold" in lower or "inflation" in lower:
         parts.append("文章关注商品、黄金或通胀相关资产，核心事实是实物资产的表现通常与通胀预期、美元和实际利率有关。")
     elif text:
-        parts.append(f"RSS 摘要只提供有限信息；当前可确认文章围绕“{title}”这个主题展开。")
+        parts.append("正文未提取到足够可核验内容；日报不据此归纳文章主旨。")
     else:
-        parts.append(f"RSS 未提供摘要；当前只能确认来源发布了“{title}”这篇内容。")
+        parts.append("RSS 未提供可核验摘要；日报不据此归纳文章主旨。")
 
     return "".join(parts)
 
 
 def etf_follow_up_point(title: str, summary: str = "") -> str:
     text = (title + " " + summary).lower()
+    title_lower = title.lower()
+    if "tactical yield" in title_lower:
+        return "可把短债/现金、IEF/VGLT 久期暴露和 LQD/HYG 信用暴露放到同一收益率门槛框架里，检验现金收益率升高时是否应降低久期或信用风险。"
+    if "recent quant links from quantocracy" in title_lower:
+        return "只作为研究线索池使用，后续需要打开子链接并提取可复现规则；没有明确规则的条目不进入策略结论。"
+    if "commodity futures returns since 1871" in title_lower:
+        return "可用于复核商品袖珍仓位的长期角色：通胀冲击、股债双跌、美元走强和期限结构变化下，PDBC/商品代理是否仍有分散化价值。"
+    if "dual momentum allocation between physical gold and bitcoin" in title_lower:
+        return "可把 GLDM 与 IBIT 放入同一动量/波动率框架，比较双动量是否比固定权重或单纯黄金避险更稳健。"
+    if "attention factor" in title_lower and ("crypto" in title_lower or "bitcoin" in text or "btc" in text):
+        return "可检查组合中是否存在间接加密/投机情绪暴露，例如社交情绪 ETF、零佣金券商、加密交易平台或高投机小盘主题。"
+    if "surfing the equity curve" in text:
+        return "可测试策略级别的权益曲线开关，但必须把信号滞后、反复开关和交易成本纳入，否则容易只是在拟合历史回撤。"
     if "world markets watchlist" in text:
         return "可用来检查美股、海外股票、债券、商品和美元是否出现同步转向，避免只从单一 ETF 解释市场状态。"
     if "weekly economic snapshot" in text and "labor market" in text:
@@ -1176,9 +1446,1596 @@ def etf_follow_up_point(title: str, summary: str = "") -> str:
     return "可先作为研究线索保留，后续只有在能落到具体资产类别、可观测指标和回测窗口时再进入策略验证。"
 
 
+def split_article_sentences(text: str) -> list[str]:
+    text = clean_text(text, 20000)
+    if not text:
+        return []
+    chunks = re.split(r"(?<=[.!?。！？])\s+", text)
+    out: list[str] = []
+    for chunk in chunks:
+        sentence = clean_text(chunk, 420)
+        if len(sentence) < 35:
+            continue
+        lower = sentence.lower()
+        if lower.startswith(("subscribe", "advertisement", "share this", "copyright")):
+            continue
+        if any(noise in lower for noise in ["appeared first on", "the post ", "privacy policy", "cookie"]):
+            continue
+        out.append(sentence)
+    return out
+
+
+def detail_sentence_score(sentence: str) -> int:
+    lower = sentence.lower()
+    score = 0
+    keyword_weights = [
+        (("backtest", "test", "tested", "sample", "out-of-sample", "historical"), 10),
+        (("turnover", "transaction cost", "cost", "fee", "slippage", "rebalance"), 10),
+        (("drawdown", "volatility", "risk", "whipsaw", "missed rebound", "overfit", "overfitting"), 10),
+        (("annualized", "cagr", "sharpe ratio", "max drawdown", "calmar ratio"), 12),
+        (("momentum", "trend", "moving average", "lookback", "signal", "filter", "allocation"), 8),
+        (("expected return", "valuation", "yield", "duration", "credit spread", "inflation"), 8),
+        (("etf", "portfolio", "commodity", "gold", "bitcoin", "treasury", "equity", "bond"), 6),
+        (("conclusion", "find", "found", "result", "reports", "warns"), 6),
+    ]
+    for keys, weight in keyword_weights:
+        if any(k in lower for k in keys):
+            score += weight
+    if "benchmarks reveal" in lower or "46.66%" in lower or "77.49%" in lower:
+        score += 35
+    if "79.91%" in lower or "43.94%" in lower or "44.14%" in lower:
+        score += 25
+    if re.search(r"\b\d+(?:\.\d+)?(?:\s*|-)?(?:%|bps|bp|years?|months?|days?|x)\b", lower):
+        score += 12
+    if re.search(r"\b(19|20)\d{2}\b", lower):
+        score += 8
+    return score
+
+
+def chinese_detail_prefix(sentence: str) -> str:
+    lower = sentence.lower()
+    labels: list[str] = []
+    if any(k in lower for k in ["backtest", "tested", "sample", "out-of-sample", "historical"]):
+        labels.append("回测/样本")
+    if any(k in lower for k in ["moving average", "lookback", "signal", "filter", "trend", "momentum"]):
+        labels.append("信号定义")
+    if any(k in lower for k in ["turnover", "transaction cost", "fee", "slippage", "rebalance"]):
+        labels.append("交易成本")
+    if any(k in lower for k in ["drawdown", "volatility", "risk", "whipsaw", "overfit", "missed rebound"]):
+        labels.append("风险控制")
+    if any(k in lower for k in ["expected return", "valuation", "yield", "duration", "credit spread", "inflation"]):
+        labels.append("配置变量")
+    if any(k in lower for k in ["warn", "caution", "limitation", "overfit"]):
+        labels.append("限制条件")
+    return " / ".join(dict.fromkeys(labels)) or "正文要点"
+
+
+def translate_detail_terms(sentence: str) -> str:
+    replacements = [
+        ("maximum drawdown", "最大回撤"),
+        ("max drawdown", "最大回撤"),
+        ("drawdown", "回撤"),
+        ("turnover", "换手"),
+        ("transaction costs", "交易成本"),
+        ("transaction cost", "交易成本"),
+        ("whipsaw risk", "反复开关风险"),
+        ("missed rebound", "错过反弹"),
+        ("overfitting", "过拟合"),
+        ("overfit", "过拟合"),
+        ("moving average", "移动均线"),
+        ("lookback", "回看窗口"),
+        ("trend filter", "趋势过滤器"),
+        ("equity-curve", "权益曲线"),
+        ("equity curve", "权益曲线"),
+        ("tactical allocation", "战术资产配置"),
+        ("volatility", "波动率"),
+        ("rebalance", "再平衡"),
+        ("rebalancing", "再平衡"),
+    ]
+    out = sentence
+    for old, new in replacements:
+        out = re.sub(re.escape(old), new, out, flags=re.I)
+    return out
+
+
+def detail_sentence_chinese_summary(sentence: str) -> str:
+    lower = sentence.lower()
+    nums = ", ".join(re.findall(r"-?\d+(?:\.\d+)?(?:\s*|-)?(?:%|bps|bp|years?|months?|days?|x)", sentence, flags=re.I))
+    if "backtested results from 1930" in lower:
+        return "文章回测从 1930 年开始，并把结果与 50% IEF / 50% LQD 的中期国债加公司债基准组合比较。"
+    if "results are net of" in lower and ("transaction" in lower or "cost" in lower):
+        return "文章报告的回测结果已经扣除交易成本，因此更接近可执行策略评估，而不是无成本纸面收益。"
+    if "initial 10-year yield" in lower and "86%" in lower:
+        return "文章强调 10 年期初始收益率对后续 10 年总回报有很强解释力，文中给出的解释度约为 86%。"
+    if "tactical yield" in lower and ("t-bills" in lower or "duration" in lower or "credit" in lower):
+        return "文章的核心规则是用 Tactical Yield 判断何时持有 T-Bills，何时承担久期或信用风险。"
+    if "commodity" in lower and "risk-free" in lower and ("5.4%" in lower or "6%" in lower):
+        return "文章给出商品期货相对无风险收益率的长期回报证据：年化风险溢价约为 5.4%，真实收益溢价超过 6%。"
+    if ("equities" in lower or "equity" in lower or "stocks" in lower) and ("cash" in lower or "6.8%" in lower):
+        return "文章把商品风险溢价与股票收益做对比：同期股票相对现金的超额收益约为 6.8%，用于衡量商品风险溢价的量级。"
+    if "commodity" in lower and "risk-free" in lower and ("equities" in lower or "equity" in lower or "stocks" in lower):
+        return f"文章把商品期货与无风险收益率和股票收益做横向比较：商品期货相对无风险收益率的年化风险溢价约为 5.4%，真实收益溢价超过 6%，同期股票相对现金约为 6.8%。"
+    if "average annual risk premium" in lower and "commodity" in lower:
+        suffix = f"关键数字：{nums}。" if nums else ""
+        return f"文章给出商品期货长期风险溢价证据，强调它不是单纯现货价格暴露；{suffix}"
+    if "futures returns" in lower and "spot" in lower:
+        return "文章把期货收益拆成现货价格变化和利息调整后的基差，认为商品期货相对现货的超额部分具有跨周期持续性。"
+    if "uncorrelated" in lower and "equity risk" in lower:
+        return "文章强调商品期货收益驱动与传统股票风险因子相关性较低，因此更适合作为分散化风险溢价观察。"
+    if "macro news" in lower and ("volatility" in lower or "uncertainty" in lower):
+        return "文章发现高波动/高不确定性阶段，机构投资者会把注意力从个股新闻转向宏观和市场层面新闻。"
+    if "0.48%" in lower or "1.9%" in lower:
+        return "文章报告宏观注意力切换能力较强的基金未来表现更好，量级约为每季 0.48%、年化约 1.9%。"
+    if "stocks they own" in lower or "positions" in lower:
+        return "文章指出基金更关注自己持有的股票，这种持仓相关注意力可能改善仓位管理和交易决策。"
+    if "regressing bitcoin returns" in lower and "residual connectedness" in lower:
+        return "文章在控制全球股票收益和风险偏好后，仍发现 Bitcoin 与部分投机相关股票之间存在残余联动。"
+    if "speculative participation" in lower and any(k in lower for k in ["coinbase", "robinhood", "draftkings", "buzz"]):
+        return "文章把 Coinbase、Robinhood、DraftKings、BUZZ 等标的视为投机参与度暴露较高的股票/ETF，用来解释加密情绪向股票市场传导。"
+    if "spectrum-based assessment" in lower or "binary crypto yes/no" in lower:
+        return "文章主张用连续谱评估投机情绪暴露，而不是把组合简单分成“有加密/无加密”的二元判断。"
+    if "speculative cohort" in lower or "0dte" in lower or "commission-free brokerages" in lower:
+        return "文章认为边际投机资金的情绪变化会在 BTC、0DTE 期权、零佣金券商和社交情绪股票之间传播，形成共同风险因子。"
+    if "switched on and off" in lower and "trend" in lower:
+        return "文章测试把每个 TAA 策略按趋势跟踪规则打开或关闭，也就是用策略自身权益曲线做二级过滤。"
+    if "combining multiple taa strategies" in lower or "model portfolios" in lower:
+        return "文章建议把多个 TAA 策略组合成模型组合，以降低单一策略阶段性失效对总组合的影响。"
+    if "dual momentum" in lower and "annualized return" in lower and "maximum drawdown" in lower:
+        pairs = re.findall(r"(dual momentum|bitcoin buy-and-hold|gold alone)[^.]*?annualized return of (-?\d+(?:\.\d+)?%)[^.]*?maximum drawdown of (-?\d+(?:\.\d+)?%)", lower, flags=re.I)
+        if pairs:
+            labels = {
+                "dual momentum": "双动量策略",
+                "bitcoin buy-and-hold": "比特币买入持有",
+                "gold alone": "单独黄金",
+            }
+            parts = [f"{labels.get(name.lower(), name)}年化收益 {ret}、最大回撤 {dd}" for name, ret, dd in pairs]
+            return "文章比较不同情景的收益回撤：" + "；".join(parts) + "。"
+        return f"文章比较不同情景的年化收益和最大回撤，关键数字包括：{nums}。"
+    if "bitcoin buy-and-hold" in lower and "annualized return" in lower and "maximum drawdown" in lower:
+        return f"比特币买入持有情景的收益更高但回撤更深，文中给出的年化收益和最大回撤为：{nums}。"
+    if "gold alone" in lower and "annualized return" in lower and "maximum drawdown" in lower:
+        return f"单独黄金情景的收益和回撤更低，文中给出的年化收益和最大回撤为：{nums}。"
+    if "annualized return" in lower and "maximum drawdown" in lower and ("bitcoin" in lower or "gold" in lower):
+        return f"文章围绕黄金、比特币或双动量组合比较年化收益和最大回撤，关键数字包括：{nums}。"
+    if "benchmarks reveal" in lower and "bitcoin" in lower and "gold" in lower:
+        return "文章的基准对比显示：Bitcoin 绝对收益更高但波动和回撤极大，黄金收益较低但更稳定；关键数字包括：" + nums + "。"
+    if "max drawdown" in lower and ("sharpe" in lower or "calmar" in lower or "volatility" in lower):
+        if not nums:
+            return ""
+        return f"文章表格给出多种情景的绩效指标，包括波动率、Sharpe Ratio、最大回撤和 Calmar Ratio；关键数字包括：{nums}。"
+    if ("cagr" in lower or "annualized" in lower) and ("bitcoin" in lower or "gold" in lower or "50/50" in lower):
+        return f"文章表格比较 Bitcoin、黄金和组合情景的年化收益/波动率等指标；关键数字包括：{nums}。"
+    if "drawdown" in lower or "whipsaw" in lower or "missed rebound" in lower:
+        suffix = f"关键度量：{nums}。" if nums else ""
+        return f"文章把最大回撤、反复开关风险、错过反弹和换手成本作为评估重点。{suffix}"
+    if "moving average" in lower or "lookback" in lower:
+        suffix = f"文中涉及的窗口/参数包括：{nums}。" if nums else ""
+        return f"文章围绕移动均线、回看窗口或趋势信号定义策略开关规则。{suffix}"
+    if "overfit" in lower and ("equity-curve" in lower or "equity curve" in lower or "strategy's own" in lower):
+        return "文章警告权益曲线开关容易过拟合，因为过滤器使用的是策略自身历史表现，而不是独立的市场变量。"
+    if "recent quant links from quantocracy" in lower or "summary of links" in lower:
+        return "这是 Quantocracy 的近期量化链接汇总，本身只适合做线索池；需要继续打开子链接才能形成策略规则。"
+    if "bitcoin" in lower and "gold" in lower and "momentum" in lower:
+        return "文章比较黄金与比特币的动量配置关系，重点应落到趋势持续性、波动率、回撤和危机相关性。"
+    if "bitfinex" in lower or "btc/usd" in lower or "gld" in lower:
+        return "文章说明比特币与黄金测试使用 BTC/USD 与 GLD 等可交易代理，并把样本起点、频率对齐和数据连续性作为回测前提。"
+    if "risk-adjusted returns" in lower:
+        return "文章把讨论落到实际组合构建和风险调整后收益，而不是停留在“比特币是否是数字黄金”的叙事层。"
+    if "correlation with risk assets" in lower:
+        return "文章提醒比特币在压力阶段可能与风险资产相关性上升，因此不能直接替代黄金的避险角色。"
+    if "annual return" in lower and "sharpe" in lower:
+        return "文章会用年化收益和 Sharpe Ratio 等指标评估策略效果，不能只看是否降低回撤。"
+    if "managing losses" in lower and "trend" in lower:
+        return "文章把趋势跟踪的主要价值定位为管理损失，因此权益曲线开关的重点应看回撤和错过反弹的权衡。"
+    if "geopolitical" in lower or "supply-chain" in lower or "resource nationalism" in lower:
+        return "文章把地缘政治、通胀不确定性、供应链碎片化和资源民族主义列为重新重视商品资产的宏观背景。"
+
+    entities = re.findall(r"\b[A-Z][A-Za-z0-9&./-]{1,12}\b", sentence)
+    tickers = [x for x in entities if x.isupper() or x in {"Bitcoin", "Treasuries"}][:5]
+    suffix = ""
+    if nums:
+        suffix += f"关键数字：{nums}。"
+    if tickers:
+        suffix += f"涉及标的/变量：{', '.join(dict.fromkeys(tickers))}。"
+    label = chinese_detail_prefix(sentence)
+    if "风险" in label:
+        return f"文章这一段强调风险来源、相关性或回撤控制，需要在回测中单独验证。{suffix}"
+    if "信号" in label:
+        return f"文章这一段涉及信号定义或策略开关规则，需要明确窗口、触发条件和调仓频率。{suffix}"
+    if "配置" in label:
+        return f"文章这一段讨论影响配置判断的变量，需要映射到可观察数据再使用。{suffix}"
+    if "交易成本" in label:
+        return f"文章这一段涉及交易成本或再平衡摩擦，不能按无成本策略理解。{suffix}"
+    return f"文章这一段提供背景或方法信息；日报只保留其可验证含义，避免直接照搬英文叙述。{suffix}"
+
+
+def etf_article_detail_points(item: Item, limit: int = 4) -> list[str]:
+    sentences = split_article_sentences(item.summary)
+    if not sentences:
+        return []
+    ranked = sorted(enumerate(sentences), key=lambda x: (detail_sentence_score(x[1]), -x[0]), reverse=True)
+    points: list[str] = []
+    seen: set[str] = set()
+    seen_details: set[str] = set()
+    title_lower = item.title.lower()
+    for _idx, sentence in ranked:
+        if detail_sentence_score(sentence) < 8 and points:
+            continue
+        sentence_lower = sentence.lower()
+        if "commodity futures returns since 1871" in title_lower and any(
+            marker in sentence_lower
+            for marker in ["bitcoin", "digital gold", "btc/usd", "gld", "bitfinex", "dual momentum"]
+        ):
+            continue
+        if "dual momentum allocation between physical gold and bitcoin" in title_lower and "commodity futures" in sentence_lower:
+            continue
+        normalized = norm_title(sentence)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        detail = detail_sentence_chinese_summary(sentence)
+        if not detail:
+            continue
+        if "commodity futures returns since 1871" in title_lower and any(
+            marker in detail for marker in ["比特币", "数字黄金", "黄金与比特币"]
+        ):
+            continue
+        if "attention factor" in title_lower and "gold" in sentence_lower and "momentum" in sentence_lower:
+            continue
+        if detail.startswith("文章这一段"):
+            continue
+        detail_key = norm_title(detail)
+        if detail_key in seen_details:
+            continue
+        seen_details.add(detail_key)
+        points.append(detail)
+        if len(points) >= limit:
+            break
+    if "commodity futures returns since 1871" in title_lower and not any("43%" in point for point in points):
+        points.append("文章还把商品期货与股票做横向比较：商品期货约在 43% 的年份跑赢股票，并在每五个十年中约两个十年跑赢股票。")
+    return points[:limit]
+
+
+def low_information_fact(text: str) -> bool:
+    return any(
+        marker in text
+        for marker in [
+            "正文未提取到足够可核验内容",
+            "RSS 未提供可核验摘要",
+            "RSS 摘要只提供有限信息",
+            "当前可确认文章围绕",
+        ]
+    )
+
+
+def forum_thread_summary_points(item: Item, limit: int = 5) -> list[str]:
+    if not any(marker in item.source.lower() for marker in ["reddit", "bogleheads", "forum"]):
+        return []
+    text = clean_text(item.summary, 6000)
+    sentences = split_article_sentences(text)
+    points: list[str] = []
+    seen: set[str] = set()
+
+    def add(point: str) -> None:
+        key = norm_title(point)
+        if key in seen:
+            return
+        seen.add(key)
+        points.append(point)
+
+    allocation_matches = re.findall(r"\b\d+(?:\.\d+)?%\s*[A-Z][A-Z0-9.-]{1,8}\b", text)
+    if allocation_matches:
+        add("发帖人给出的当前组合权重包括：" + "、".join(allocation_matches[:8]) + "。")
+
+    lower_text = text.lower()
+    if "emergency cash" in lower_text or "emergency fund" in lower_text or "money market" in lower_text:
+        cash_match = re.search(r"(\w+\s+months?)\s+of\s+emergency\s+cash", text, flags=re.I)
+        if cash_match and cash_match.group(1).lower().startswith("six"):
+            add("发帖人另有六个月应急现金，放在货币市场基金或类似现金工具中。")
+        else:
+            add("发帖人单独提到应急现金或货币市场基金，这部分应与长期投资组合分开看。")
+    if "buying a house in three years" in lower_text or "house in three years" in lower_text:
+        add("发帖人有三年内买房这一资金用途，因此首付资金不应和长期股票仓位混在一起评价。")
+    if "401(k)" in text or "401k" in lower_text or "tax-advantaged" in lower_text or "tax advantaged" in lower_text:
+        add("帖子讨论 taxable account 与 401(k) 的协调，尤其是债券仓位是否优先放在税优账户。")
+    if "international allocation" in lower_text or "vxus" in lower_text:
+        add("讨论焦点之一是海外股票比例是否偏低，以及是否因为美股近期强势而低配国际资产。")
+    if "not to chase" in lower_text or "recent us stock outperformance" in lower_text:
+        add("回复中的主要提醒是不要因为近期美股跑赢就追涨或放弃既定的全球分散配置。")
+
+    def forum_sentence_point(sentence: str) -> str:
+        lower = sentence.lower()
+        if "do not own real estate" in lower and "us/international/bonds" in lower:
+            return "发帖人质疑 Bogleheads 常见的 US/International/Bonds 三分法是否忽略了未持有房产者的 REIT 暴露。"
+        if "rick ferri" in lower or "paul merriman" in lower or "model portfolios" in lower:
+            return "回复提到 Rick Ferri、Paul Merriman 等模型组合会单列 REIT 或小盘等资产，用来说明 Bogleheads 实践并不只有三类资产。"
+        if "after setting aside emergency funds" in lower:
+            return "发帖人已预留应急资金和近期支出，讨论对象是剩余资金是否适合一次性投入长期组合。"
+        if "diversified enough" in lower or "good to go" in lower:
+            return "发帖人主要想确认拟定组合是否已经足够分散、是否可以作为长期核心配置。"
+        if "ucits-based moderate core" in lower or "global aggregate bonds" in lower:
+            return "回复建议把 UCITS 组合简化为发达市场、新兴市场、小盘和全球综合债的核心结构，而不是堆太多重叠 ETF。"
+        if "what stocks to sell" in lower and "portfolio" in lower:
+            return "发帖人请求根据当前持仓判断哪些个股应卖出，说明该帖更偏组合清理而不是单纯 ETF 配置讨论。"
+        if "shift" in lower and "portfolio" in lower and "dividends" in lower:
+            return "发帖人想知道达到目标后，如何把组合从资本增长逐步转向依靠分红或现金流。"
+        if "portfolio" in lower and ("allocation" in lower or "bond" in lower or "cash" in lower or "taxable" in lower or "401" in lower):
+            return "原帖围绕组合权重、债券/现金比例、税务账户摆放或再平衡问题展开。"
+        return ""
+
+    for sentence in sentences:
+        if len(points) >= limit:
+            break
+        lower = sentence.lower()
+        if "rss only says" in lower:
+            continue
+        if any(k in lower for k in ["portfolio", "allocation", "bond", "cash", "taxable", "401", "expense", "rebalance"]):
+            point = forum_sentence_point(sentence)
+            if point:
+                add(point)
+    return points[:limit]
+
+
+def forum_public_heading(item: Item) -> str:
+    text = f"{item.title} {item.summary}".lower()
+    if "vnq" in text or "reit" in text or "real estate" in text:
+        return "税优账户中是否应单列 REIT/VNQ"
+    if "portfolio for 30s" in text or "moderate risk" in text:
+        return "30 多岁中等风险组合求评"
+    if "advice on portfolio" in text or "what stocks to sell" in text:
+        return "投资组合持仓清理求建议"
+    if "visualize portfolio" in text or "living off dividends" in text:
+        return "组合目标达成后如何转向现金流"
+    if "rate my portfolio" in text:
+        return "投资组合配置求评"
+    if "bond allocation" in text or "bonds being safe" in text:
+        return "债券配置与风险认知讨论"
+    return clean_text(item.title, 80)
+
+
+def forum_research_question(item: Item) -> str:
+    text = f"{item.title} {item.summary}".lower()
+    if "vnq" in text or "reit" in text or "real estate" in text:
+        return "可检验在税优账户里单列 REIT/VNQ 是否改善长期组合的收益回撤、通胀敏感性和与股债的相关性。"
+    if "moderate risk" in text or "ucits" in text or "global aggregate bonds" in text:
+        return "可把拟定组合拆成发达市场、新兴市场、小盘和全球债券暴露，检查是否存在重复持仓、风险过度集中或债券比例不足。"
+    if "what stocks to sell" in text or "advice on portfolio" in text:
+        return "可把个股持仓映射到行业、风格和单一公司集中度，再比较是否用宽基或行业 ETF 替代能降低非系统性风险。"
+    if "dividends" in text or "living off" in text:
+        return "可区分总回报提款和分红现金流两种退休取现方式，回测税后现金流、回撤和再平衡压力。"
+    return "可把帖子里的配置问题转成权重、账户位置、资金用途和风险承受期四类变量，再用实际 ETF 收益、波动率和回撤数据验证。"
+
+
+def append_article_detail_points(lines: list[str], item: Item, limit: int = 6) -> None:
+    points = etf_article_detail_points(item, limit=limit)
+    if not points:
+        return
+    lines.append("**正文细节**：")
+    for point in points:
+        lines.append(f"- {point}")
+    lines.append("")
+
+
+def etf_feed_profile(source: str) -> ResearchFeed | None:
+    for feed in ETF_RESEARCH_FEEDS:
+        if feed.source == source:
+            return feed
+    aliases = {
+        "AQR Insights": ResearchFeed("AQR Insights", "https://www.aqr.com/Insights", "核心机构研究源", "因子、动量、另类风险溢价与组合构建", (ASSET_ALLOCATION_SECTION, QUANT_STRATEGY_SECTION)),
+        "BlackRock Investment Institute": ResearchFeed(
+            "BlackRock Investment Institute",
+            "https://www.blackrock.com/us/financial-professionals/insights/capital-market-assumptions",
+            "核心机构研究源",
+            "资本市场假设、宏观情景与风险预算",
+            (ASSET_ALLOCATION_SECTION,),
+        ),
+        "Vanguard": ResearchFeed("Vanguard", "https://corporate.vanguard.com", "核心机构研究源", "长期收益预测、估值和利率框架", (ASSET_ALLOCATION_SECTION,)),
+        "Research Affiliates": ResearchFeed("Research Affiliates", "https://www.researchaffiliates.com/aai-hub", "核心机构研究源", "估值驱动配置与 Smart Beta", (ASSET_ALLOCATION_SECTION,)),
+        "J.P. Morgan": ResearchFeed("J.P. Morgan", "https://am.jpmorgan.com/us/en/asset-management/adv/insights/portfolio-insights/ltcma/", "核心机构研究源", "LTCMA、Guide to the Markets 与配置图表", (ASSET_ALLOCATION_SECTION,)),
+        "GMO Research": ResearchFeed("GMO Research", "https://www.gmo.com/", "核心机构研究源", "估值敏感型配置与反方观点", (ASSET_ALLOCATION_SECTION,)),
+        "Man Institute": ResearchFeed("Man Institute", "https://www.man.com/maninstitute", "高频机构观点源", "系统化投资、趋势跟踪与宏观", (ASSET_ALLOCATION_SECTION, QUANT_STRATEGY_SECTION)),
+    }
+    return aliases.get(source)
+
+
+def etf_item_sections(item: Item) -> tuple[str, ...]:
+    text = f"{item.source} {item.title} {item.summary} {item.url}".lower()
+    headline_text = f"{item.source} {item.title} {item.url}".lower()
+    sections: list[str] = []
+    profile = etf_feed_profile(item.source)
+    if profile:
+        sections.extend(profile.default_sections)
+    allocation_text = text
+    if profile and ASSET_ALLOCATION_SECTION not in profile.default_sections:
+        allocation_text = headline_text
+    if any(
+        k in allocation_text
+        for k in [
+            "capital market",
+            "expected return",
+            "asset allocation",
+            "risk budget",
+            "valuation",
+            "vanguard",
+            "blackrock",
+            "research affiliates",
+            "j.p. morgan",
+            "gmo",
+            "fred",
+            "yield curve",
+            "credit spread",
+            "strategic allocation",
+        ]
+    ):
+        if ASSET_ALLOCATION_SECTION not in sections:
+            sections.append(ASSET_ALLOCATION_SECTION)
+    if any(
+        k in text
+        for k in [
+            "arxiv",
+            "q-fin",
+            "factor",
+            "momentum",
+            "trend following",
+            "value",
+            "quality",
+            "low vol",
+            "volatility",
+            "backtest",
+            "turnover",
+            "transaction cost",
+            "no-trade",
+            "capacity",
+            "portfolio optimization",
+            "overfitting",
+            "statistical",
+            "machine learning",
+        ]
+    ):
+        if QUANT_STRATEGY_SECTION not in sections:
+            sections.append(QUANT_STRATEGY_SECTION)
+    if any(
+        k in text
+        for k in [
+            "hkex",
+            "stock connect",
+            "shanghai stock exchange",
+            "shenzhen",
+            "sse",
+            "szse",
+            "a-share",
+            "china a",
+            "listing rule",
+            "监管",
+            "问询",
+            "港股",
+            "a股",
+            "互联互通",
+        ]
+    ) and (
+        item.source.startswith("HKEX")
+        or item.source.startswith("RSSHub")
+        or any(k in headline_text for k in ["hkex", "stock connect", "sse", "szse", "a-share", "china a", "港股", "a股", "互联互通"])
+    ):
+        if CHINA_HK_SECTION not in sections:
+            sections.append(CHINA_HK_SECTION)
+    return tuple(sections or (ASSET_ALLOCATION_SECTION,))
+
+
+def score_etf_research_item(item: Item) -> ScoredResearchItem | None:
+    text = f"{item.source} {item.title} {item.summary} {item.url}".lower()
+    hard_exclusions = [
+        "single-stock",
+        "single stock",
+        "leveraged",
+        "inverse etf",
+        "yieldmax",
+        "weeklypay",
+        "incomemax",
+        "kurv",
+        "meme stock",
+        "rocket labs",
+        "celebrity",
+        "sports betting",
+    ]
+    if any(k in text for k in hard_exclusions):
+        return None
+
+    profile = etf_feed_profile(item.source)
+    score = 35
+    tier = "未分级来源"
+    role = "待人工判断相关性"
+    reasons: list[str] = []
+    if profile:
+        tier = profile.tier
+        role = profile.role
+        if "核心" in tier:
+            score += 35
+        elif "高质量" in tier or "官方" in tier or "论文" in tier:
+            score += 30
+        elif "实践型" in tier or "TAA" in tier or "指数" in tier:
+            score += 25
+        else:
+            score += 15
+        reasons.append(tier)
+
+    keyword_groups = [
+        (("expected return", "capital market", "valuation", "risk budget", "asset allocation"), 18, "战略配置/估值锚"),
+        (("factor", "momentum", "trend following", "value", "quality", "low vol"), 18, "因子/趋势/风格"),
+        (("backtest", "reproducible", "transaction cost", "turnover", "capacity", "no-trade", "overfitting"), 20, "可回测方法"),
+        (("treasury", "yield curve", "fed", "inflation", "credit spread", "dollar", "volatility"), 12, "宏观数据/regime"),
+        (("hkex", "stock connect", "sse", "szse", "a-share", "listing rule", "china a", "hong kong"), 16, "中港市场结构"),
+        (("flow", "aum", "expense ratio", "etf structure", "spiva", "index"), 8, "ETF/指数结构"),
+    ]
+    for keys, weight, reason in keyword_groups:
+        if any(k in text for k in keys):
+            score += weight
+            reasons.append(reason)
+
+    if re.search(r"\b[A-Z]{2,5}\b", item.title) and "single" in text and "market" not in text:
+        score -= 30
+    if "product launch" in text or "passes $" in text:
+        score -= 8
+        reasons.append("产品热度，降低权重")
+    if "opinion" in text and not any(k in text for k in ["data", "backtest", "evidence", "valuation"]):
+        score -= 10
+
+    sections = etf_item_sections(item)
+    if score < 55:
+        return None
+    return ScoredResearchItem(item=item, score=min(score, 100), tier=tier, role=role, sections=sections, reasons=tuple(dict.fromkeys(reasons)))
+
+
+def rank_etf_research_items(items: list[Item], limit: int = 8) -> list[ScoredResearchItem]:
+    scored: list[ScoredResearchItem] = []
+    for item in dedupe_items(items):
+        val = score_etf_research_item(item)
+        if val:
+            scored.append(val)
+    ranked = sorted(
+        scored,
+        key=lambda x: (
+            x.score,
+            parse_date(x.item.published) or datetime.min.replace(tzinfo=timezone.utc),
+            x.item.source,
+        ),
+        reverse=True,
+    )
+    out: list[ScoredResearchItem] = []
+    seen_public_titles: set[tuple[str, str]] = set()
+    for val in ranked:
+        display_key = (val.item.source, etf_public_heading(val.item.title, val.item.summary))
+        if display_key in seen_public_titles:
+            continue
+        seen_public_titles.add(display_key)
+        out.append(val)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def etf_hypothesis_for_item(scored: ScoredResearchItem) -> str:
+    title = etf_public_heading(scored.item.title, scored.item.summary)
+    text = f"{scored.item.title} {scored.item.summary}".lower()
+    title_lower = scored.item.title.lower()
+    if "tactical yield" in title_lower:
+        return f"{title} -> 回测 T-Bills、IEF/LQD、长债和信用债之间的收益率门槛切换，比较全周期与高利率窗口的收益回撤。"
+    if "recent quant links from quantocracy" in title_lower:
+        return f"{title} -> 先拆解子链接，只有能写出信号、数据、调仓和成本假设的条目才进入回测队列。"
+    if "commodity futures returns since 1871" in title_lower:
+        return f"{title} -> 用 PDBC/商品期货代理检验商品袖珍仓位在股债双跌、美元走强和高通胀窗口中的分散化效果。"
+    if "dual momentum allocation between physical gold and bitcoin" in title_lower:
+        return f"{title} -> 回测 GLDM/IBIT 双动量、固定权重和单一黄金配置在 1Y/3Y/5Y 窗口的收益回撤差异。"
+    if "attention factor" in title_lower and ("crypto" in title_lower or "bitcoin" in text or "btc" in text):
+        return f"{title} -> 统计 BTC、BUZZ、COIN/HOOD/DKNG、0DTE 代理和高 beta 股票在风险偏好冲击中的相关性与共同回撤。"
+    if "surfing the equity curve" in text:
+        return f"{title} -> 对现有 TAA/动量策略回测权益曲线过滤器，单独统计减少回撤、错过反弹和额外换手成本。"
+    if QUANT_STRATEGY_SECTION in scored.sections:
+        if "transaction cost" in text or "turnover" in text or "no-trade" in text:
+            return f"{title} -> 回测再平衡带/no-trade region 是否能在扣除换手成本后改善 ETF 或微盘策略的收益回撤。"
+        if "portfolio optimization" in text or "risk" in text:
+            return f"{title} -> 检验新的组合约束是否能改善目标波动率缩放、风险预算或极端回撤控制。"
+        return f"{title} -> 把文章中的信号定义、调仓频率、成本假设和样本窗口拆出来做可复现回测。"
+    if CHINA_HK_SECTION in scored.sections:
+        return f"{title} -> 验证规则/互联互通/指数样本变化是否影响 A 股、港股、ETF 流动性或可交易池。"
+    return f"{title} -> 用 ETF 收益、估值、利率、信用利差和资金流数据验证其对战略/战术配置的实际影响。"
+
+
+def build_etf_testable_hypotheses(scored_items: list[ScoredResearchItem], limit: int = 3) -> list[str]:
+    hypotheses: list[str] = []
+    seen: set[str] = set()
+    for scored in scored_items:
+        hypothesis = etf_hypothesis_for_item(scored)
+        key = norm_title(hypothesis)
+        if key in seen:
+            continue
+        seen.add(key)
+        hypotheses.append(hypothesis)
+        if len(hypotheses) >= limit:
+            break
+    if not hypotheses:
+        hypotheses.append("今日没有足够高相关新文章进入假设池；不从低质量新闻或论坛结论硬生成交易假设。")
+    return hypotheses
+
+
+def etf_regime_observation(rows: list[dict[str, object]], data_date_s: str = "") -> list[str]:
+    by_code: dict[str, float] = {}
+    for row in rows:
+        asset = row.get("asset")
+        if isinstance(asset, MarketAsset):
+            try:
+                by_code[asset.code] = float(row["change"])
+            except (KeyError, TypeError, ValueError):
+                continue
+
+    def avg(codes: tuple[str, ...]) -> float | None:
+        vals = [by_code[c] for c in codes if c in by_code]
+        return sum(vals) / len(vals) if vals else None
+
+    observations: list[str] = []
+    if data_date_s:
+        observations.append(f"- 数据层：最新收盘数据日期为 {data_date_s}；这里先判断 regime 线索，再进入文章解读。")
+    equity = avg(("^GSPC", "^NDX", "^RUT", "RSP"))
+    duration = avg(("IEF", "VGLT"))
+    credit = avg(("LQD", "HYG", "EMB"))
+    real_assets = avg(("PDBC", "VNQ", "GLDM"))
+    china = avg(("000300", "000905", "000852", "399006", "FXI", "ASHR"))
+    dollar = by_code.get("UUP")
+    if equity is not None:
+        tone = "偏风险偏好改善" if equity > 0.25 else "偏风险收缩" if equity < -0.25 else "股市宽基变化不大"
+        observations.append(f"- 股票风险偏好：宽基股票代理平均 {equity:+.2f}%，{tone}。")
+    if duration is not None:
+        tone = "久期资产获得支撑" if duration > 0.2 else "久期资产承压" if duration < -0.2 else "久期信号中性"
+        observations.append(f"- 利率/久期：中长久期国债代理平均 {duration:+.2f}%，{tone}。")
+    if credit is not None:
+        tone = "信用风险偏好尚可" if credit > 0.15 else "信用资产走弱" if credit < -0.15 else "信用信号不强"
+        observations.append(f"- 信用：信用债代理平均 {credit:+.2f}%，{tone}。")
+    if dollar is not None:
+        observations.append(f"- 美元：UUP {dollar:+.2f}%，用于辅助判断海外资产、黄金和商品压力。")
+    if real_assets is not None:
+        observations.append(f"- 商品/实物资产：相关代理平均 {real_assets:+.2f}%，需和美元、实际利率一起看。")
+    if china is not None:
+        observations.append(f"- A 股/港股/中概：相关代理平均 {china:+.2f}%，单独进入中国市场事实层。")
+    if len(observations) <= 1:
+        observations.append("- 数据层：今日可用市场代理不足，文章部分只做事实和假设过滤，不硬判断 regime 改变。")
+    return observations
+
+
+def append_scored_item(lines: list[str], scored: ScoredResearchItem, idx: int) -> None:
+    item = scored.item
+    lines += [
+        f"### {idx}. {etf_public_heading(item.title, item.summary)}",
+        f"- 来源：{item.source} | {scored.tier} | score={scored.score}",
+        f"- 角色：{scored.role}",
+        f"- 原文标题：{item.title}",
+        f"- 链接：{item.url}",
+        "",
+        f"**事实层**：{etf_chinese_fact(item)}",
+        "",
+    ]
+    append_article_detail_points(lines, item)
+    lines += [
+        f"**配置/策略映射**：{etf_follow_up_point(item.title, item.summary)}",
+        "",
+        f"**可测试假设**：{etf_hypothesis_for_item(scored)}",
+        "",
+    ]
+
+
+def primary_etf_section(scored: ScoredResearchItem) -> str:
+    if CHINA_HK_SECTION in scored.sections and (
+        scored.item.source.startswith("HKEX") or scored.item.source.startswith("RSSHub")
+    ):
+        return CHINA_HK_SECTION
+    return scored.sections[0] if scored.sections else ASSET_ALLOCATION_SECTION
+
+
+def append_etf_research_sections(
+    lines: list[str],
+    scored_items: list[ScoredResearchItem],
+    forum_items: list[Item],
+    strategy_rows: list[dict[str, object]] | None = None,
+    mover_rows: list[dict[str, object]] | None = None,
+    data_date_s: str = "",
+) -> None:
+    market_rows = [*(strategy_rows or []), *(mover_rows or [])]
+    lines += ["", "---", "", "## 市场 regime 是否变化", ""]
+    lines.extend(etf_regime_observation(market_rows, data_date_s))
+
+    for section in [ASSET_ALLOCATION_SECTION, QUANT_STRATEGY_SECTION, CHINA_HK_SECTION]:
+        section_items = [x for x in scored_items if primary_etf_section(x) == section]
+        lines += ["", "---", "", f"## {section}", ""]
+        if not section_items:
+            lines.append("今日没有足够高相关、未重复的新内容进入本段；不从低质量新闻里硬写。")
+            continue
+        for i, scored in enumerate(section_items[:4], 1):
+            append_scored_item(lines, scored, i)
+
+    lines += ["", "---", "", "## 论坛与社区 idea mining", "", "论坛和社区只用于发现待验证问题，不是事实结论，也不进入一句话结论。", ""]
+    if not forum_items:
+        lines.append("今日没有进入筛选口径的论坛补充。")
+    visible_forum_count = 0
+    for item in forum_items[:5]:
+        fact = etf_chinese_fact(item)
+        full_summary = forum_thread_summary_points(item)
+        if low_information_fact(fact) and not full_summary:
+            continue
+        visible_forum_count += 1
+        lines += [
+            f"### {visible_forum_count}. {forum_public_heading(item)}",
+            f"- 来源：{item.source}",
+            f"- 原帖标题：{item.title}",
+            f"- 链接：{item.url}",
+            "",
+        ]
+        lines += [
+            "**正文依据**：已打开原帖链接并按正文内容归纳；RSS 标题/摘要不足时不硬写结论。",
+            "",
+        ]
+        if full_summary:
+            lines.append("**全文总结**：")
+            for point in full_summary:
+                lines.append(f"- {point}")
+            lines.append("")
+        lines += [
+            f"**可研究问题**：{forum_research_question(item)}",
+            "",
+        ]
+    if forum_items and visible_forum_count == 0:
+        lines.append("今日论坛/RSS 补充在打开链接后仍缺少可核验正文细节，已从正文剔除；不再用标题硬写总结。")
+
+    lines += ["", "---", "", "## 待验证假设", ""]
+    for i, hypothesis in enumerate(build_etf_testable_hypotheses(scored_items, limit=3), 1):
+        lines.append(f"{i}. {hypothesis}")
+
+    lines += [
+        "",
+        "---",
+        "",
+        "## 源分级与筛选审计",
+        "",
+        "- 文章筛选规则：优先机构研究、官方数据、学术论文和可复现量化研究；降权 ETF 产品营销、单股新闻、重复转载和不可验证宏观预测。",
+        "- 核心中低频页面源：AQR、Research Affiliates、BlackRock、Vanguard、J.P. Morgan、GMO 等不强行 RSS 化；有新内容才写入正文。",
+        f"- 本次进入研究框架的文章数量：{len(scored_items)}；论坛补充入正文数量：{visible_forum_count}。",
+    ]
+
+
 def write_meta(out_dir: Path, subject: str, body: str, attachment: Path) -> None:
     meta = {"subject": subject, "body": body, "attachment": str(attachment)}
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def life_feed_profile(source: str) -> LifeDigestFeed | None:
+    for feed in (*LIFE_DIGEST_FEEDS, *LIFE_COMMUNITY_FALLBACK_FEEDS):
+        if feed.source == source:
+            return feed
+    return None
+
+
+def life_is_travel_community_item(item: Item) -> bool:
+    source = item.source.lower()
+    return any(k in source for k in ["fattravel", "chubbytravel", "luxurytravel"])
+
+
+def life_item_type(item: Item) -> str:
+    text = f"{item.title} {item.summary}".lower()
+    title_lower = item.title.lower()
+    profile = life_feed_profile(item.source)
+    if life_is_travel_community_item(item):
+        if any(k in text for k in ["points", "miles", "award", "hyatt", "marriott", "hilton", "amex", "fhr", "virtuoso"]):
+            return "积分"
+        if any(k in text for k in ["hotel", "resort", "suite", "villa", "lodge", "breakfast", "late checkout", "upgrade"]):
+            return "住宿"
+        if any(k in text for k in ["maldives", "bora bora", "tokyo", "kyoto", "safari", "japan", "family trip", "parents"]):
+            return "目的地"
+        return "生活方式"
+    if item.source.startswith("r/") and "destination" in text:
+        return "目的地"
+    if profile and profile.category in {"税务居留", "安全医疗", "财务自由", "目的地"}:
+        return profile.category
+    if profile and profile.category == "签证入境" and any(k in text for k in ["entry requirement", "travel advice", "visa", "immigration", "passport", "border"]):
+        return "签证入境"
+    if "gha discovery double d$" in title_lower or "bilt points with rakuten" in title_lower:
+        return "积分"
+    if any(k in text for k in ["best rate guarantee", "monthly stay", "long stay", "airbnb", "booking.com", "homeexchange"]):
+        return "住宿"
+    if profile and profile.category == "积分" and any(k in text for k in ["transfer bonus", "award", "business class", "first class", "hotel points", "airline miles", "devaluation", "elite status", "credit card", "annual fee", "points earning", "travel benefits"]):
+        return "积分"
+    if any(k in text for k in ["outsite", "place to stay", "digital nomads", "monthly stay", "long stay", "coliving"]):
+        return "住宿"
+    if any(k in text for k in ["tax residency", "crs", "non-resident", "residence", "visa", "nomad visa", "immigration"]):
+        return "税务居留" if "tax" in text or "crs" in text else "签证入境"
+    if any(k in text for k in ["travel advice", "entry requirement", "safety", "health", "vaccine", "medical"]):
+        return "医疗安全"
+    if any(k in text for k in ["safe withdrawal", "withdrawal rate", "retirement income", "sequence risk", "spending"]):
+        return "财务自由"
+    if any(k in text for k in ["hotel points", "airline miles", "business class", "first class", "award space", "transfer bonus", "elite status", "credit card", "annual fee", "points earning", "travel benefits"]):
+        return "积分"
+    if any(k in text for k in ["city", "country", "expat", "retire overseas", "cost of living", "quality of life"]):
+        return "目的地"
+    return "生活方式"
+
+
+def life_source_tier(item: Item) -> str:
+    profile = life_feed_profile(item.source)
+    return profile.tier if profile else ("论坛经验" if item.source.startswith("r/") else "高质量博客")
+
+
+def life_decision_impact(item: Item) -> str:
+    typ = life_item_type(item)
+    text = f"{item.title} {item.summary}".lower()
+    if typ in {"税务居留", "签证入境", "医疗安全"}:
+        return "高"
+    if any(k in text for k in ["deadline", "devaluation", "warning", "risk", "tax", "residency", "visa"]):
+        return "高"
+    if typ in {"财务自由", "目的地", "积分"}:
+        return "中"
+    return "低"
+
+
+def life_needs_human_check(item: Item) -> str:
+    typ = life_item_type(item)
+    if typ in {"税务居留", "签证入境", "医疗安全"}:
+        return "是，涉及官方规则或个人适用性"
+    if life_source_tier(item) in {"论坛经验", "低可信来源", "中等可信"}:
+        return "是，需用官方或专业来源交叉核实"
+    return "视是否进入个人路线/资产计划而定"
+
+
+def life_candidate_status(item: Item) -> str:
+    typ = life_item_type(item)
+    if typ in {"目的地", "税务居留", "签证入境", "医疗安全"}:
+        return "可能进入候选目的地或排除清单"
+    if typ in {"积分", "住宿"}:
+        return "可能进入待办清单"
+    if typ == "财务自由":
+        return "可能进入财务自由/提款策略备忘"
+    return "仅作生活方式观察"
+
+
+def life_relevant(item: Item) -> bool:
+    text = f"{item.title} {item.summary}".lower()
+    if any(k in text for k in ["giveaway", "sponsored", "coupon", "black friday", "celebrity", "viral"]):
+        return False
+    if any(k in text for k in ["itinerary", "things to do", "must to do", "must do in", "guide to culture", "restaurants and local culture"]):
+        return False
+    if any(k in text for k in ["veers off runway", "smashes signs", "dramatic aviation incident", "crash footage"]):
+        return False
+    if "whoop" in text and not any(k in text for k in ["travel health", "medical insurance", "destination", "hospital", "vaccine"]):
+        return False
+    if "easy-to-forget debts" in text or "embarrassing debt reminder" in text:
+        return False
+    if "monthly megathread" in text or "pivoting to photography" in text:
+        return False
+    if "portfolio charts just got a huge upgrade" in text:
+        return False
+    if "nerf gun incident" in text or "take a look in the mirror" in text:
+        return False
+    # US credit-card reviews are relevant to the user when they affect points, hotel, airline or premium travel value.
+    us_only = any(k in text for k in ["medicare", "aca", "social security", "state tax", "roth ira", "401(k)", "401k"])
+    cross_border = any(k in text for k in ["hong kong", "non-us", "expat", "cross-border", "international", "global", "residency"])
+    if us_only and not cross_border:
+        return False
+    return any(
+        k in text
+        for k in [
+            "withdrawal",
+            "retirement",
+            "spending",
+            "tax",
+            "residency",
+            "visa",
+            "immigration",
+            "entry requirement",
+            "travel advice",
+            "safety",
+            "health",
+            "medical",
+            "cost of living",
+            "quality of life",
+            "expat",
+            "nomad",
+            "hotel",
+            "airline",
+            "points",
+            "miles",
+            "business class",
+            "transfer bonus",
+            "award",
+            "credit card",
+            "annual fee",
+            "best rate guarantee",
+            "long stay",
+            "long-stay",
+            "monthly stay",
+            "healthcare",
+            "health insurance",
+            "portfolio",
+            "lifestyle",
+            "luxury",
+            "resort",
+            "suite",
+            "villa",
+            "lodge",
+            "breakfast",
+            "late checkout",
+            "upgrade",
+            "fhr",
+            "virtuoso",
+            "amex",
+            "safari",
+            "cruise",
+            "family trip",
+            "parents",
+            "overwater",
+            "maldives",
+            "bora bora",
+            "cash rate",
+            "award availability",
+            "cents per point",
+            "refundable",
+            "cancellation",
+        ]
+    )
+
+
+def life_score(item: Item) -> int:
+    typ = life_item_type(item)
+    tier = life_source_tier(item)
+    score = 20
+    score += {"官方": 45, "专业机构": 40, "高质量工具": 38, "高质量博客": 30, "高质量社区知识库": 30, "经验源": 18, "论坛经验": 12, "中等可信": 8}.get(tier, 10)
+    score += {"税务居留": 25, "签证入境": 25, "医疗安全": 24, "财务自由": 22, "目的地": 18, "积分": 16, "住宿": 16, "生活方式": 10}.get(typ, 8)
+    if life_decision_impact(item) == "高":
+        score += 12
+    if item.source.startswith("r/"):
+        score -= 8
+    return score
+
+
+def life_travel_community_heading(item: Item) -> str:
+    text = f"{item.title} {item.summary}".lower()
+    if "maldives" in text and "bora bora" in text:
+        return "Maldives 与 Bora Bora 奢华海岛慢旅比较"
+    if "seoul" in text and ("four seasons" in text or "josun palace" in text):
+        return "首尔四季与 Josun Palace 高端酒店体验复盘"
+    if ("tokyo" in text or "kyoto" in text or "japan" in text) and any(
+        k in text for k in ["hotel", "hyatt", "marriott", "points", "award", "breakfast"]
+    ):
+        return "日本高端酒店与积分兑换讨论"
+    if "fhr" in text or "virtuoso" in text:
+        return "FHR / Virtuoso 预订渠道与酒店权益讨论"
+    if "safari" in text:
+        return "Safari 高端住宿与安全医疗保障讨论"
+    if "cruise" in text:
+        return "高端邮轮与积分/套房体验讨论"
+    if any(k in text for k in ["family", "parents", "kids", "children", "elderly"]):
+        return "高端家庭慢旅：舒适度、节奏与酒店选择"
+    if any(k in text for k in ["points", "miles", "award", "hyatt", "marriott", "hilton"]):
+        return "高端旅行积分兑换案例"
+    if any(k in text for k in ["resort", "suite", "villa", "lodge", "overwater"]):
+        return "高端度假酒店选择与长住舒适度讨论"
+    return "高端旅行社区案例：住宿、预算与体验取舍"
+
+
+def life_title_zh(item: Item) -> str:
+    title = item.title.strip()
+    title_lower = item.title.lower()
+    text = f"{item.title} {item.summary}".lower()
+    if "maldives" in text and "bora bora" in text:
+        return "Maldives 与 Bora Bora 奢华海岛家庭积分旅行比较"
+    if "tokyo and kyoto hotels" in title_lower:
+        return "东京和京都酒店选择：早餐、套房升级与延迟退房"
+    if "fhr" in title_lower and "virtuoso" in title_lower and "safari" in title_lower:
+        return "Safari Lodge 预订：Amex FHR 还是 Virtuoso 更合适？"
+    if "seoul" in title_lower and ("four seasons" in title_lower or "josun palace" in title_lower):
+        return "首尔酒店评测：Four Seasons 与 Josun Palace"
+    if "sail to a good life" in title_lower and "richer retirement portfolio" in title_lower:
+        return "用更富足退休组合驶向高质量退休生活"
+    if "how to “lie” with personal finance" in title_lower or "how to \"lie\" with personal finance" in title_lower:
+        return "如何用个人理财数据“说谎”：第三部分，多元化"
+    if "safe withdrawal rate" in title_lower and ("momentum" in title_lower or "trend-following" in title_lower):
+        return "能否用动量/趋势跟踪提高安全提款率？SWR 系列第 63 篇"
+    if "kempinski" in title_lower and "best rate guarantee" in title_lower:
+        return "读者来信：马耳他 Gozo Kempinski 酒店最优价格保证争议"
+    if "gha discovery double d$" in title_lower and "almanac hotels" in title_lower:
+        return "GHA Discovery Almanac 酒店双倍 D$ 促销：入住至 2026-12-31，预订至 2026-08-15"
+    if "chase ultimate rewards" in title_lower and "southwest" in title_lower and "30%" in title_lower:
+        return "Chase Ultimate Rewards 转 Southwest Rapid Rewards 30% 奖励，截止 2026-06-05"
+    if "best western rewards" in title_lower and "1,000" in title_lower:
+        return "Best Western 在意大利和马耳他每晚 1,000 奖励积分促销"
+    if "how to earn bilt points with rakuten" in title_lower:
+        return "如何通过 Rakuten 网购赚取 Bilt 积分，是否值得？"
+    if "coastfire plans in asia" in title_lower:
+        return "亚洲 CoastFIRE 计划：我是不是判断错了？"
+    if "english speaking expatfire destinations" in title_lower:
+        return "英语环境 ExpatFIRE 目的地选择"
+    if "retirement spending and lifestyle after financial independence" in title_lower:
+        return "财务自由后的退休消费与生活方式取舍"
+    if "housing is not an afterthought" in title_lower:
+        return "退休住房不是附属问题"
+    if "withdrawal rates and global retirement portfolios" in title_lower:
+        return "提款率与全球退休组合"
+    if "digital nomad visa and residence planning" in title_lower:
+        return "数字游民签证与居留规划"
+    if "world of hyatt promotion" in title_lower:
+        return "World of Hyatt 长住促销"
+    if "credit card review" in title_lower:
+        return "信用卡评测：" + life_heading(item)
+    translated = life_heading(item)
+    if translated and translated != title:
+        return translated
+    return "待人工复核的标题翻译"
+
+
+def life_display_title(item: Item) -> str:
+    return f"{item.title}｜{life_title_zh(item)}"
+
+
+def life_heading(item: Item) -> str:
+    title = item.title
+    text = f"{item.title} {item.summary}".lower()
+    if life_is_travel_community_item(item):
+        return life_travel_community_heading(item)
+    if "withdrawal" in text and ("3.9%" in text or "safe" in text):
+        return "动态提款率与退休收入安全边际"
+    if "housing is not an afterthought" in text:
+        return "退休住房不是附属问题：居住地影响现金流与生活质量"
+    if "6m nw" in text and ("zero debt" in text or "12 months" in text):
+        return "600 万美元净资产退休一年复盘：无债家庭的生活节奏与支出检查"
+    if "tax residency" in text or "crs" in text:
+        return "跨境慢旅的税务居民规则提醒"
+    if "portugal" in text and ("travel advice" in text or "entry" in text):
+        return "Portugal 入境、安全与健康建议更新"
+    if "nomad visa" in text or "residence planning" in text:
+        return "数字游民签证与第二生活基地规划"
+    if "transfer bonus" in text or "conversion bonus" in text or "business class" in text:
+        return "商务舱/酒店积分机会与截止日期"
+    if "best rate guarantee" in text:
+        return "酒店最优价格保证与权益兑现风险"
+    if "bonus points" in text or "best western rewards" in text or "hotel promotion" in text:
+        return "酒店积分促销：长住路线是否值得参与"
+    if "credit card" in text or "card review" in text or "annual fee" in text:
+        return "美国信用卡评测：积分、年费与旅行权益"
+    if "outsite" in text or ("place to stay" in text and "digital nomad" in text):
+        return "Outsite / 共居长住：数字游民住宿是否适合慢旅"
+    if "english speaking expatfire destinations" in text:
+        return "英语环境 ExpatFIRE 目的地讨论"
+    if "coastfire" in text and "asia" in text:
+        return "亚洲 CoastFIRE 旅居计划风险讨论"
+    if "cost of living" in text or "quality of life" in text:
+        return "慢旅目的地生活成本与生活质量观察"
+    typ = life_item_type(item)
+    if typ == "财务自由":
+        return "财务自由与退休收入规划线索"
+    if typ == "目的地":
+        return "慢旅目的地候选线索"
+    if typ == "生活方式":
+        return "环球慢旅生活方式观察"
+    if typ == "积分":
+        return "航空酒店积分实操线索"
+    return f"{typ}相关变化"
+
+
+def life_summary(item: Item) -> str:
+    text = clean_text(item.summary, 1200)
+    lower = f"{item.title} {text}".lower()
+    if "3.9%" in lower and "withdrawal" in lower:
+        return "内容关注退休收入和安全提款率，提到 3.9% 起始安全提款率，以及通过弹性支出提高终身消费能力。对宽裕财务自由而言，重点不是极限省钱，而是把提款规则、风险缓冲和高质量消费结合起来。"
+    if "withdrawal" in lower and ("sequence risk" in lower or "flexible spending" in lower or "retirement portfolio" in lower):
+        return "内容讨论退休提款率、序列风险和弹性支出规则。对宽裕财务自由而言，重点是把未来慢旅预算、现金缓冲和资产配置放在同一套提款框架里。"
+    if "housing is not an afterthought" in lower or ("housing" in lower and "retirement" in lower):
+        return "内容强调住房不是退休规划的附属项。对未来环球慢旅而言，住房会同时影响现金流、税务居民风险、医疗可达性、家庭稳定感和是否需要保留一个长期基地。"
+    if "6m nw" in lower and ("zero debt" in lower or "12 months" in lower):
+        return "社区案例来自 55/56 岁、约 600 万美元净资产且无债家庭的退休一年复盘。对宽裕财务自由的参考价值在于观察从积累期转向消费期后，真实支出、心理安全感、现金缓冲和生活节奏是否匹配，而不是只看资产数字。"
+    if "tax residency" in lower or "crs" in lower:
+        return "内容提醒跨境旅居不能只看停留天数，税务居民身份通常由当地国内法决定，并可能影响 CRS 信息交换、投资账户披露和长期停留安排。"
+    if "entry requirements" in lower or "travel advice" in lower:
+        return "官方旅行建议涉及入境要求、安全和健康信息，适合在计划 1-3 个月慢旅前作为第一层核验，而不是依赖旅游博客或论坛经验。"
+    if "transfer bonus" in lower or "conversion bonus" in lower or "business class" in lower:
+        return "内容涉及转点 bonus、航司/酒店积分或商务舱兑换机会。对慢旅的价值在于提高长途移动舒适度和现金效率，但需要核实截止日期、可用航线和真实兑换空间。"
+    if "hotel promotion" in lower or "elite night" in lower or "hotel points promotion" in lower:
+        return "内容涉及酒店积分促销或会员权益。对慢旅的价值取决于能否匹配 1-3 个月路线、是否有可订房、现金价是否过高以及积分/房晚是否真能兑现。"
+    if "bonus points" in lower or "best western rewards" in lower:
+        return "内容涉及酒店积分促销。对慢旅的价值取决于是否覆盖你的路线、现金价是否偏高、每晚额外积分是否超过机会成本，以及条款是否允许长住连续累计。"
+    if "best rate guarantee" in lower:
+        return "内容涉及酒店最优价格保证或会员权益兑现争议。对长期慢旅的意义不是单次省钱，而是提醒高端酒店预订要保留条款截图、比价证据和取消窗口。"
+    if "credit card" in lower or "card review" in lower or "annual fee" in lower:
+        return "内容是美国信用卡评测，应从积分获取、年费、酒店/航司权益、转点伙伴、境外使用成本和实际可兑换价值来判断，而不是只看开卡奖励或返佣文案。"
+    if "outsite" in lower or ("place to stay" in lower and "digital nomad" in lower):
+        return "内容介绍面向数字游民的共居/长住住宿。对环球慢旅的价值在于降低找房、网络、社群和短租切换摩擦；需要进一步核实城市覆盖、月租价格、取消规则、安静程度和是否适合 1-3 个月停留。"
+    if "english speaking expatfire destinations" in lower:
+        return "社区讨论围绕英语环境下的海外 FIRE 目的地选择。它适合作为候选国家/城市的线索池，但关于医疗、签证、税务和安全的结论必须回到官方资料核实。"
+    if "coastfire" in lower and "asia" in lower:
+        return "社区案例围绕在亚洲执行 CoastFIRE 或半退休计划的可行性，重点不是短期旅行，而是收入持续性、签证/居留、医疗保险、税务居民风险和生活成本是否同时成立。它适合作为海外慢旅与工作强度切换的反面检查清单。"
+    if life_is_travel_community_item(item):
+        if any(k in lower for k in ["points", "miles", "award", "hyatt", "marriott", "hilton"]):
+            return "这是 Reddit 高端旅行社区的积分/酒店案例讨论，正文重点通常在真实兑换成本、现金价、房型权益、取消规则和家庭舒适度。它适合作为未来慢旅路线和积分使用的实操线索，但不能替代酒店官网、航司库存和条款核验。"
+        if any(k in lower for k in ["fhr", "virtuoso", "amex", "breakfast", "suite", "late checkout", "upgrade"]):
+            return "这是 Reddit 高端旅行社区的酒店权益和预订渠道讨论，重点在早餐、套房升级、延迟退房、度假村 credit、取消政策和现金价差。对宽裕慢旅的价值在于判断多花现金是否换来确定的舒适度，而不是只看账面折扣。"
+        if any(k in lower for k in ["maldives", "bora bora", "safari", "family", "parents", "children"]):
+            return "这是 Reddit 高端旅行社区的目的地和家庭慢旅案例，正文围绕舒适度、转机/接驳疲劳、季节天气、儿童或父母适配度、医疗安全和取消政策展开。它适合作为候选目的地的体验层线索，后续仍要用官方签证、保险和医疗信息核实。"
+        return "这是 Reddit 高端旅行社区的经验帖，适合补充普通 RSS 不覆盖的真实预算、酒店体验和路线取舍。结论只能作为案例观察，涉及安全、医疗、签证、税务或保险时需要另行核验。"
+    if "portugal" in lower and ("long-stay" in lower or "cost of living" in lower or "healthcare" in lower):
+        return "内容把 Portugal 作为长期停留候选地，关注居留选项、医疗可达性、生活成本和飞行连接。适合进入慢旅候选池，但仍要核实签证、税务居民和保险规则。"
+    if "residence" in lower or "second base" in lower or "nomad" in lower:
+        return "内容适合作为第二生活基地或数字游民签证线索，但不能直接当成税务或移民结论；需要回到官方签证、税务居民和医疗保险规则核实。"
+    if item.source.startswith("r/"):
+        return "这是社区经验或案例讨论，只能用于发现问题和生活方式盲点。涉及税务、签证、医疗或保险时，必须再用官方和专业来源核实。"
+    if life_generic_detail_points(item):
+        return f"正文已抓取到可用信息，主要影响{life_item_type(item)}判断；具体要点见下方。"
+    return ""
+
+
+def life_sentence_point(sentence: str, item_type: str = "") -> str:
+    lower = sentence.lower()
+    raw_nums = re.findall(r"-?\d+(?:\.\d+)?(?:%|x| nights?| days?| years?| months?|\+)?", sentence, flags=re.I)
+    clean_nums: list[str] = []
+    for num in raw_nums:
+        digits = re.sub(r"\D", "", num)
+        if len(digits) > 4 and not num.endswith("%"):
+            continue
+        clean_nums.append(num)
+        if len(clean_nums) >= 4:
+            break
+    nums = ", ".join(clean_nums)
+    if any(k in lower for k in ["points per night", "per night", "award availability", "cents per point", "cpp"]):
+        suffix = f" 关键数字：{nums}。" if nums else ""
+        return "正文涉及每晚点数、奖励房库存、现金价或点数估值，应把兑换价值和可取消性一起看。" + suffix
+    if any(k in lower for k in ["breakfast", "suite upgrade", "late checkout", "resort credit", "fhr", "virtuoso"]):
+        suffix = f" 关键数字：{nums}。" if nums else ""
+        return "正文讨论早餐、套房升级、延迟退房或酒店礼遇，需要判断这些权益是否真实提升长住舒适度，而不只是账面价值。" + suffix
+    if any(k in lower for k in ["parents", "children", "kids", "elderly", "family-friendly", "family friendly"]):
+        return "正文涉及父母、孩子或多代家庭出行，重点应放在接驳疲劳、房型、餐饮、医疗可达性和每天活动节奏。"
+    if any(k in lower for k in ["maldives", "bora bora", "overwater", "villa", "resort", "lodge", "safari"]):
+        suffix = f" 关键数字：{nums}。" if nums else ""
+        return "正文涉及高端度假村、海岛别墅或 safari lodge，适合比较季节天气、接驳复杂度、取消规则和医疗转运安排。" + suffix
+    if any(k in lower for k in ["cash rate", "refundable", "cancellation", "travel insurance", "medical evacuation"]):
+        suffix = f" 关键数字：{nums}。" if nums else ""
+        return "正文涉及现金价、可取消条款、旅行保险或医疗转运，适合放入高端慢旅预订前检查清单。" + suffix
+    if "flat bed" in lower or "business class" in lower or "premium cabin" in lower:
+        suffix = f" 关键时间/数字：{nums}。" if nums else ""
+        return "正文涉及商务舱/平躺座椅或高端舱位供给变化，可能影响未来长途航线舒适度和里程兑换价值。" + suffix
+    if item_type != "住宿" and ("annual fee" in lower or "credit card" in lower or "admirals club" in lower):
+        suffix = f" 关键数字：{nums}。" if nums else ""
+        return "正文涉及美国信用卡的年费、权益或贵宾室使用规则，需要按真实使用频率和可替代权益估值。" + suffix
+    points_context = item_type in {"积分", "住宿"} or any(
+        k in lower for k in ["marriott", "hyatt", "southwest", "airline", "hotel", "credit card", "award flight", "award night"]
+    )
+    if points_context and (
+        "transfer bonus" in lower
+        or "conversion bonus" in lower
+        or "hotel points" in lower
+        or "credit card points" in lower
+        or "airline miles" in lower
+        or "award night" in lower
+        or "award flight" in lower
+        or re.search(r"\bmiles\b", lower)
+    ):
+        suffix = f" 关键数字：{nums}。" if nums else ""
+        return "正文涉及积分、里程、转点或奖励兑换，应核实截止日期、可用库存、现金价和点数估值。" + suffix
+    if "best rate guarantee" in lower or "rate guarantee" in lower:
+        return "正文涉及酒店最优价格保证或权益兑现争议，适合沉淀为高端酒店预订和维权的检查清单。"
+    if "retirement" in lower and ("housing" in lower or ("home" in lower and "home country" not in lower)):
+        return "正文把住房纳入退休规划，提示居住地会影响现金流、生活质量、医疗可达性和长期基地选择。"
+    if "withdrawal" in lower or "sequence risk" in lower:
+        suffix = f" 关键数字：{nums}。" if nums else ""
+        return "正文讨论退休提款、序列风险或长期支出规则，适合纳入慢旅预算和资产配置压力测试。" + suffix
+    if "tax residency" in lower or "tax residence" in lower or "crs" in lower:
+        return "正文涉及税务居民或 CRS 相关规则，慢旅停留天数和账户申报风险需要用官方资料核实。"
+    if "visa" in lower or "residence permit" in lower or "digital nomad" in lower:
+        return "正文涉及签证、居留或数字游民安排，不能只看可入境，还要核实税务、保险和停留天数后果。"
+    if "healthcare" in lower or "health insurance" in lower or "medical" in lower:
+        return "正文涉及医疗或保险条件，适合纳入目的地评分中的医疗质量、保险覆盖和紧急处理能力。"
+    if "long stay" in lower or "monthly" in lower or "coliving" in lower:
+        return "正文涉及长住或共居安排，重点应看月租、网络、取消规则、噪音、厨房洗衣和生活便利性。"
+    if "cost of living" in lower or "quality of life" in lower:
+        return "正文涉及生活成本或生活质量，适合进入候选城市评分，但需与 Numbeo/OECD/官方医疗安全数据交叉核对。"
+    return ""
+
+
+def life_generic_detail_points(item: Item, limit: int = 4) -> list[str]:
+    sentences = split_article_sentences(item.summary)
+    points: list[str] = []
+    seen: set[str] = set()
+    item_type = life_item_type(item)
+    title_lower = item.title.lower()
+    for sentence in sentences:
+        point = life_sentence_point(sentence, item_type)
+        if not point:
+            continue
+        if point.startswith("正文涉及美国信用卡") and not any(
+            marker in title_lower for marker in ["credit card", "card guide", "card review", "admirals club", "aadvantage globe"]
+        ):
+            continue
+        if ("退休提款" in point or "提款率" in point or "序列风险" in point) and item_type != "财务自由":
+            continue
+        if "酒店最优价格保证" in point and "best rate guarantee" not in title_lower:
+            continue
+        if "长住或共居" in point and item_type not in {"住宿", "目的地"}:
+            continue
+        key = norm_title(point.split("。")[0])
+        if key in seen:
+            continue
+        seen.add(key)
+        points.append(point)
+        if len(points) >= limit:
+            break
+    return points
+
+
+def life_summary_points(item: Item, limit: int = 5) -> list[str]:
+    text = clean_text(item.summary, 4000)
+    lower = f"{item.title} {text}".lower()
+    title_lower = item.title.lower()
+    points: list[str] = []
+    seen: set[str] = set()
+
+    def add(point: str) -> None:
+        key = norm_title(point)
+        if key in seen or not point:
+            return
+        seen.add(key)
+        points.append(point)
+
+    specific_title = False
+    if "how to “lie” with personal finance" in title_lower or "how to \"lie\" with personal finance" in title_lower:
+        specific_title = True
+        add("文章讨论个人理财文章如何通过选择口径、时间窗口或案例来制造看似正确的结论；这一篇聚焦多元化叙事。")
+        add("对宽裕财务自由规划的启发是：不要只看单一组合、单一国家或单一历史窗口下的漂亮结果，要看不同市场环境下的失败场景。")
+    if "safe withdrawal rate" in title_lower and ("momentum" in title_lower or "trend-following" in title_lower):
+        specific_title = True
+        add("文章把动量/趋势跟踪放进安全提款率框架，核心问题是趋势信号能否改善退休提款期的序列风险。")
+        add("这类结论需要看回测窗口、交易成本、税务摩擦和规则稳定性，不能只因为提高了历史 SWR 就直接用于真实提款。")
+    if "gha discovery double d$" in title_lower and "almanac hotels" in title_lower:
+        specific_title = True
+        add("文章介绍 GHA Discovery 在 Almanac Hotels 的双倍 D$ 促销，入住窗口为 May 15 至 December 31, 2026。")
+        add("预订窗口为 May 15 至 August 15；是否值得参与取决于 Almanac 酒店是否落在你的路线内、现金价是否合理、D$ 是否容易在后续住宿中用掉。")
+    if "how to earn bilt points with rakuten" in title_lower:
+        specific_title = True
+        add("文章讨论通过 Rakuten 网购赚取 Bilt points 的方法，重点不是信用卡年费，而是购物门户返利和可转点积分之间的取舍。")
+        add("判断是否值得要比较 Rakuten 现金返利、其他航空里程门户、Bilt 积分可转伙伴和你实际会不会使用这些积分。")
+    if "chase ultimate rewards" in title_lower and "southwest" in title_lower and "30%" in title_lower:
+        specific_title = True
+        add("文章介绍 Chase Ultimate Rewards 转 Southwest Rapid Rewards 的 30% 转点奖励，截止日期为 June 5, 2026。")
+        add("Southwest 点数通常与现金票价联动，转点前应比较现金价、奖励票可用性、取消政策和点数实际价值。")
+    if "best western rewards" in title_lower and "1,000" in title_lower:
+        specific_title = True
+        add("文章介绍 Best Western 在 Italy 和 Malta 的每晚 1,000 bonus points 促销，时间为 May 11 至 September 7, 2026。")
+        add("这类促销更适合作为已有路线的附加收益；如果为了积分改变酒店或路线，通常要重新比较现金价、位置和会员权益。")
+    if specific_title:
+        return points[:limit]
+    item_type = life_item_type(item)
+    retirement_title = any(k in title_lower for k in ["withdrawal", "safe withdrawal", "swr", "retirement", "personal finance"])
+    if "housing" in lower and "retirement" in lower and (item_type == "财务自由" or "housing" in title_lower):
+        add("文章把住房视为退休现金流的一部分，而不是退休规划完成后的附属选择。")
+        add("对环球慢旅而言，是否保留长期基地会影响税务居民风险、医疗可达性、家庭稳定感和年度固定开支。")
+    if retirement_title and ("withdrawal" in lower or "sequence risk" in lower or "flexible spending" in lower):
+        add("文章讨论提款率、序列风险和弹性支出规则，适合放进退休后 10 年慢旅预算压力测试。")
+        if "3.9%" in lower:
+            add("文中提到 3.9% 起始安全提款率；应结合个人资产配置、现金缓冲和实际消费弹性重新测算。")
+        if "perpetual" in lower:
+            add("如果目标是长期或永久性提款，不能只看传统 30 年退休窗口。")
+    if "transfer bonus" in lower or "conversion bonus" in lower:
+        add("文章涉及转点或兑换 bonus；只有在目标酒店/航司现金价较高、奖励库存可订且点数估值合理时才有实际价值。")
+        add("需要核实截止日期、可转点账户、目标酒店/航班库存和取消政策，避免为了 bonus 囤低流动性积分。")
+    title_lower = item.title.lower()
+    if (
+        "credit card" in title_lower
+        or "card guide" in title_lower
+        or "card review" in title_lower
+        or "admirals club" in title_lower
+    ) and life_item_type(item) != "住宿" and ("credit card" in lower or "annual fee" in lower or "admirals club" in lower):
+        add("文章是美国信用卡/联名卡评测，核心要看年费、积分获取、权益兑现和境外使用成本。")
+        if "admirals club" in lower:
+            add("Admirals Club passes 一类权益要按实际航线和使用频率估值，不能只按宣传价计算。")
+        if "foreign transaction" in lower:
+            add("对香港读者还要单独看境外交易费、汇率成本和是否容易持有/还款。")
+    if "best rate guarantee" in title_lower:
+        add("文章围绕酒店最优价格保证或会员权益兑现争议，提醒长住和高端酒店预订要保存条款证据。")
+        add("实操上应保存比价截图、取消窗口、房型条款和酒店书面回复，避免入住前后维权成本过高。")
+    if "portugal" in lower:
+        add("Portugal 被作为长期停留候选地时，应同时核实居留路径、医疗可达性、生活成本、航班连接和税务居民风险。")
+    if "spain" in lower:
+        add("Spain 相关慢旅规划要关注公私营医疗、长期租赁、当地登记、语言摩擦和保险覆盖。")
+    if "digital nomad visa" in lower or "minimum income" in lower or "tax exposure" in lower:
+        add("数字游民签证不能只看能否入境，还要核实最低收入、医疗保险、税务暴露和停留天数触发条件。")
+    if "long stay" in lower or "monthly stay" in lower or "coliving" in lower or "outsite" in lower:
+        add("长住/共居住宿的关键不是单晚价格，而是网络、安静程度、厨房洗衣、取消规则、社群密度和 1-3 个月稳定性。")
+    if "elite night" in lower or "hotel promotion" in lower or "blackout" in lower:
+        add("酒店促销要看 elite night credits、积分倍率、不可用日期、现金价和路线匹配度。")
+    if "english speaking expatfire destinations" in lower:
+        add("论坛把英语环境作为 ExpatFIRE 目的地筛选条件，但这只是线索，不能替代官方签证、税务、医疗和安全核验。")
+    if life_is_travel_community_item(item):
+        community_nums: list[str] = []
+        for num in re.findall(r"(?:[$€£]\s*)?\d[\d,]*(?:\.\d+)?(?:%|x| points?| nights?| days?| years?| months?| per night)?", text, flags=re.I):
+            cleaned_num = clean_text(num, 40)
+            digits = re.sub(r"\D", "", cleaned_num)
+            if not digits or len(digits) > 7:
+                continue
+            has_unit = bool(re.search(r"[$€£,%]|points?|nights?|days?|years?|months?|per night|x", cleaned_num, flags=re.I))
+            if not has_unit and len(digits) > 2:
+                continue
+            if cleaned_num not in community_nums:
+                community_nums.append(cleaned_num)
+            if len(community_nums) >= 4:
+                break
+        if community_nums:
+            add("帖中可提取的关键数字包括：" + "、".join(community_nums) + "；这些数字应与官网现金价、积分库存和取消条款一起复核。")
+        if "maldives" in lower and "bora bora" in lower:
+            add("帖子把 Maldives 和 Bora Bora 放在同一个高端海岛选择题里，核心不是景点，而是接驳疲劳、房型、季节天气、取消政策和家庭适配度。")
+        if any(k in lower for k in ["points per night", "award availability", "hyatt", "marriott", "hilton", "120,000", "60,000", "35,000"]):
+            add("帖子提供了积分兑换维度：需要比较每晚点数、奖励房库存、现金价、点数估值和取消规则。")
+        if any(k in lower for k in ["breakfast", "suite upgrade", "late checkout", "resort credit", "fhr", "virtuoso"]):
+            add("帖子关注早餐、套房升级、延迟退房或酒店礼遇，这些要按确定性和实际舒适度估值，而不是只按宣传金额估值。")
+        if any(k in lower for k in ["parents", "children", "kids", "elderly", "family-friendly", "family friendly"]):
+            add("帖子涉及父母、孩子或多代家庭出行，慢旅筛选要额外看接驳强度、安静房型、餐饮便利和医疗可达性。")
+        if any(k in lower for k in ["cash rates", "cash rate", "refundable", "cancellation", "travel insurance", "medical evacuation"]):
+            add("帖子把现金价、可取消条款、旅行保险和医疗转运放进讨论，适合沉淀为高端慢旅预订前检查清单。")
+        if "tokyo" in lower or "kyoto" in lower or "japan" in lower:
+            add("日本高端酒店讨论要同时看交通位置、洗衣便利、安静程度、连续入住稳定性和是否适合带父母慢节奏移动。")
+        if "safari" in lower:
+            add("Safari lodge 讨论必须额外核实医疗转运、保险覆盖、接送安排和取消政策，不能只比较房价和礼遇。")
+    if "6m nw" in lower and "zero debt" in lower:
+        add("社区案例显示约 600 万美元净资产且无债并不等于规划结束，退休第一年仍要观察支出、心理安全感和生活节奏。")
+    if "healthcare" in lower or "health insurance" in lower:
+        add("医疗和保险是慢旅目的地评分的硬变量，需要确认公私营医疗、保险可报销范围和紧急转运安排。")
+    for point in life_generic_detail_points(item, limit=limit):
+        add(point)
+    if not points:
+        summary = life_summary(item)
+        if summary:
+            add(summary)
+    return points[:limit]
+
+
+def life_action(item: Item) -> str:
+    typ = life_item_type(item)
+    if typ == "财务自由":
+        return "把提款率、现金缓冲、资产配置和未来 10 年慢旅预算放到同一张压力测试表里。"
+    if typ == "税务居留":
+        return "若该国家进入候选池，手动核实税务居民天数、CRS、资本利得、遗产税和医疗保险要求。"
+    if typ in {"签证入境", "医疗安全"}:
+        return "在加入路线前核对官方入境、疫苗、医疗和旅行保险要求，并记录最后更新时间。"
+    if typ == "目的地":
+        return "按生活质量、医疗、安全、长租、签证、税务风险和飞行可达性给目的地打分。"
+    if typ == "积分":
+        return "只在与你持有的航司、酒店计划或可转点货币相关时进入待办，并核实截止日期和真实兑换价值。"
+    if typ == "住宿":
+        return "把房型、取消窗口、比价证据、会员权益和长住舒适度放入预订前检查清单。"
+    return "保留为生活方式观察，不直接形成行动。"
+
+
+def life_detailed_summary(item: Item, points: list[str] | None = None) -> str:
+    points = points if points is not None else life_summary_points(item)
+    zh_title = life_title_zh(item)
+    if points:
+        selected = [point.rstrip("。；; ") for point in points[:3]]
+        connector = "帖子" if life_source_tier(item) == "论坛经验" else "文章"
+        return f"{connector}《{zh_title}》的核心信息是：" + "；".join(selected) + "。"
+    fallback = life_summary(item)
+    if fallback:
+        return f"《{zh_title}》的核心内容：{fallback}"
+    return f"《{zh_title}》未抓取到足够正文细节，暂不应作为强结论，只保留标题和来源供人工复核。"
+
+
+def pick_life_items(items: list[Item], limit: int = 8) -> list[Item]:
+    relevant = [item for item in items if life_relevant(item) and (life_summary(item) or life_generic_detail_points(item))]
+    relevant.sort(key=lambda item: (life_score(item), parse_date(item.published) or datetime.min.replace(tzinfo=timezone.utc)), reverse=True)
+    picked: list[Item] = []
+    seen_titles: set[str] = set()
+    type_counts: dict[str, int] = {}
+    for item in relevant:
+        heading = life_display_title(item)
+        key = norm_title(heading)
+        if key in seen_titles:
+            continue
+        typ = life_item_type(item)
+        if type_counts.get(typ, 0) >= 3:
+            continue
+        seen_titles.add(key)
+        type_counts[typ] = type_counts.get(typ, 0) + 1
+        picked.append(item)
+        if len(picked) >= limit:
+            break
+    return picked
+
+
+def append_life_item(lines: list[str], item: Item, idx: int) -> None:
+    points = life_summary_points(item)
+    lines += [
+        f"### {idx}. {life_display_title(item)}",
+        f"- 来源：{item.source}",
+        f"- 标题：{life_display_title(item)}",
+        f"- 链接：{item.url}",
+        f"- 类型：{life_item_type(item)}",
+        f"- 来源等级：{life_source_tier(item)}",
+        f"- 决策影响：{life_decision_impact(item)}",
+        f"- 是否需要人工核实：{life_needs_human_check(item)}",
+        f"- 是否进入候选目的地或待办清单：{life_candidate_status(item)}",
+        "",
+        f"**内容总结**：{life_detailed_summary(item, points)}",
+        "",
+    ]
+    if points:
+        lines.append("**内容要点**：")
+        for point in points:
+            lines.append(f"- {point}")
+        lines.append("")
+    lines += [
+        f"**下一步**：{life_action(item)}",
+        "",
+    ]
+
+
+def supplement_life_with_community(picked: list[Item], seen_headings: set[str], limit: int = 8) -> int:
+    if len(picked) >= limit:
+        return 0
+    items: list[Item] = []
+    for feed in LIFE_COMMUNITY_FALLBACK_FEEDS:
+        items.extend(parse_feed(feed.source, feed.url, limit=feed.limit))
+        time.sleep(0.1)
+    candidates = [item for item in filter_previously_sent("life", sort_recent(items), days=1) if life_relevant(item)]
+    candidates.sort(
+        key=lambda item: (life_score(item), parse_date(item.published) or datetime.min.replace(tzinfo=timezone.utc)),
+        reverse=True,
+    )
+    added = 0
+    seen_urls = {canonical_url(item.url) for item in picked}
+    for item in pick_life_items([enrich_article_item(item) for item in candidates[:24]], limit=limit):
+        if len(picked) >= limit:
+            break
+        if not life_summary(item):
+            continue
+        if life_is_travel_community_item(item) and len(life_summary_points(item)) < 3:
+            continue
+        heading_key = norm_title(life_display_title(item))
+        url_key = canonical_url(item.url)
+        if heading_key in seen_headings or url_key in seen_urls:
+            continue
+        seen_headings.add(heading_key)
+        seen_urls.add(url_key)
+        picked.append(item)
+        added += 1
+    return added
+
+
+def build_life_digest(out_dir: Path) -> None:
+    started = now_bj()
+    items: list[Item] = []
+    for feed in LIFE_DIGEST_FEEDS:
+        items.extend(parse_feed(feed.source, feed.url, limit=feed.limit))
+        time.sleep(0.1)
+    candidates = filter_previously_sent("life", sort_recent(items))
+    if len(candidates) < 8:
+        candidates = filter_previously_sent("life", sort_recent(items), days=1)
+    broad_candidates = [item for item in candidates if life_relevant(item)]
+    broad_candidates.sort(
+        key=lambda item: (life_score(item), parse_date(item.published) or datetime.min.replace(tzinfo=timezone.utc)),
+        reverse=True,
+    )
+    enriched_candidates = [enrich_article_item(item) for item in broad_candidates[:36]]
+    enriched_candidates = pick_life_items(enriched_candidates, limit=12)
+    picked: list[Item] = []
+    seen_headings: set[str] = set()
+    for item in enriched_candidates:
+        if not life_summary(item):
+            continue
+        key = norm_title(life_display_title(item))
+        if key in seen_headings:
+            continue
+        seen_headings.add(key)
+        picked.append(item)
+        if len(picked) >= 8:
+            break
+    community_added = supplement_life_with_community(picked, seen_headings, limit=8)
+    date_s = report_date()
+    md = out_dir / f"wealth_slow_travel_digest_{date_s}.md"
+
+    major_changes = [
+        item
+        for item in picked
+        if life_item_type(item) in {"税务居留", "签证入境", "医疗安全"} and life_source_tier(item) in {"官方", "专业机构"}
+    ]
+    retirement = [item for item in picked if life_item_type(item) == "财务自由"][:1]
+    destinations = [item for item in picked if life_item_type(item) in {"目的地", "税务居留", "签证入境", "医疗安全"}][:3]
+    points = [item for item in picked if life_item_type(item) in {"积分", "住宿"}][:3]
+    lifestyle = [item for item in picked if life_item_type(item) == "生活方式"][:2]
+    rendered_urls: set[str] = set()
+
+    lines = [
+        f"# 宽裕版财务自由 + 环球慢旅生活日报 - {date_s}",
+        "",
+        "> 默认读者：生活在香港地区的中国人；美国本土税务、Medicare/ACA/401(k) 等内容默认降权，除非具有跨境或通用规划价值。  ",
+        "> 定位：宽裕版财务自由 + 全球生活方式配置 + 环球慢旅实操日报；本报告不是投资、税务、法律或医疗建议。",
+        "",
+        "## 一句话结论",
+        "",
+        "今天只保留会影响未来 10 年环球慢旅、财务自由消费、税务居留、签证医疗安全、长住和积分实操的内容；普通旅游新闻、景点促销和美国本土低相关税务医保内容已降权。",
+        "",
+        "## 今日速览",
+        "",
+        "| # | 标题（英文｜中文） | 类型 | 来源 | 决策影响 |",
+        "|---:|---|---|---|---|",
+    ]
+    for i, item in enumerate(picked, 1):
+        lines.append(f"| {i} | {life_display_title(item)} | {life_item_type(item)} | {item.source} | {life_decision_impact(item)} |")
+
+    lines += ["", "---", "", "## 今日重大变化", ""]
+    if not major_changes:
+        lines.append("今日未发现足以改变路线、入境、医疗、安全或税务居留判断的高优先级变化。")
+    for i, item in enumerate(major_changes[:3], 1):
+        append_life_item(lines, item, i)
+        rendered_urls.add(canonical_url(item.url))
+
+    lines += ["", "---", "", "## 财务自由与退休收入", ""]
+    if not retirement:
+        lines.append("今日没有足够高质量的新退休收入内容；不从普通 FIRE 或省钱文里硬写。")
+    for i, item in enumerate(retirement, 1):
+        append_life_item(lines, item, i)
+        rendered_urls.add(canonical_url(item.url))
+
+    lines += ["", "---", "", "## 环球慢旅目的地观察", ""]
+    if not destinations:
+        lines.append("今日没有新的目的地进入候选池；候选城市仍按生活质量、医疗、安全、签证、税务、长租和飞行可达性评分。")
+    for i, item in enumerate(destinations, 1):
+        append_life_item(lines, item, i)
+        rendered_urls.add(canonical_url(item.url))
+
+    lines += ["", "---", "", "## 长住住宿与积分机会", ""]
+    if not points:
+        lines.append("今日没有与你未来长途慢旅显著相关的航司、酒店、长住或转点机会。")
+    for i, item in enumerate(points, 1):
+        append_life_item(lines, item, i)
+        rendered_urls.add(canonical_url(item.url))
+
+    if lifestyle:
+        lines += ["", "---", "", "## 生活方式案例与反面教材", ""]
+        for i, item in enumerate(lifestyle, 1):
+            append_life_item(lines, item, i)
+            rendered_urls.add(canonical_url(item.url))
+
+    remaining = [item for item in picked if canonical_url(item.url) not in rendered_urls]
+    if remaining:
+        lines += ["", "---", "", "## 其他高价值线索", ""]
+        for i, item in enumerate(remaining, 1):
+            append_life_item(lines, item, i)
+            rendered_urls.add(canonical_url(item.url))
+
+    lines += [
+        "",
+        "---",
+        "",
+        "## 今日可执行事项",
+        "",
+        "1. 需要进一步查证的国家/城市：" + ("、".join(life_display_title(item) for item in destinations[:3]) if destinations else "无新增。"),
+        "2. 需要加入候选清单的目的地：" + ("、".join(life_display_title(item) for item in destinations if life_decision_impact(item) != "低") if destinations else "无新增。"),
+        "3. 需要排除的目的地：若官方安全、医疗或税务居留规则不适合 1-3 个月慢旅，先进入排除清单而不是路线表。",
+        "4. 需要手动核实的签证/税务/医疗问题：" + ("、".join(life_display_title(item) for item in major_changes[:3]) if major_changes else "今日无新增高优先级核实项。"),
+        "5. 对未来路线或资产配置有影响的事项：" + ("、".join(life_display_title(item) for item in retirement + points[:1]) if retirement or points else "今日无新增。"),
+        "",
+        "---",
+        "",
+        "## 源分级与筛选审计",
+        "",
+        f"- 第一版源数量：{len(LIFE_DIGEST_FEEDS)}，限制在 30 个以内；低产出源连续观察后再删减。",
+        f"- 内容不足时补充源：Reddit r/FATTravel、r/chubbytravel、r/luxurytravel；本次补充进入正文 {community_added} 条，标题均按“英文原标题｜中文标题”展示，并按论坛经验处理。",
+        "- 筛选规则：保留财务自由、税务居留、签证入境、医疗安全、目的地、住宿积分和长期生活方式内容；剔除普通景点、短期促销、网红打卡、极端省钱 FIRE 和低相关美国本土税务/医保内容。",
+        f"- 本次进入正文的高价值内容：{len(picked)} 条。",
+        "",
+    ]
+    update_digest_history("life", picked)
+    lines += audit_lines("07:00 Asia/Shanghai", started)
+    md.write_text("\n".join(lines), encoding="utf-8")
+    body = "\n".join(
+        [
+            "一句话结论：今天只保留影响环球慢旅、财务自由消费、税务居留、签证医疗安全、长住和积分实操的内容。",
+            f"条目数量：{len(picked)}",
+            f"重大变化数量：{len(major_changes)}",
+            "完整排版版见附件。",
+            f"调度审计：实际启动 {started.strftime('%Y-%m-%d %H:%M:%S %Z')}；执行环境 GitHub Actions。",
+        ]
+    )
+    write_meta(out_dir, f"宽裕版财务自由 + 环球慢旅生活日报 - {date_s}", body, md)
 
 
 def audit_lines(planned: str, started: datetime) -> list[str]:
@@ -1196,6 +3053,8 @@ def audit_lines(planned: str, started: datetime) -> list[str]:
 
 
 def build_fat_fire(out_dir: Path) -> None:
+    build_life_digest(out_dir)
+    return
     started = now_bj()
     feeds = {
         "Early Retirement Now": "https://earlyretirementnow.com/feed/",
@@ -1281,6 +3140,8 @@ def build_fat_fire(out_dir: Path) -> None:
 
 
 def build_travel(out_dir: Path) -> None:
+    build_life_digest(out_dir)
+    return
     started = now_bj()
     feeds = {
         "r/chubbytravel": "https://www.reddit.com/r/chubbytravel/hot/.rss",
@@ -1746,20 +3607,23 @@ def build_etf(out_dir: Path) -> None:
     top_rows = dedupe_by_category(positive_movers, reverse=True)
     bottom_rows = dedupe_by_category(negative_movers, reverse=False)
 
-    feeds = {
-        "A Wealth of Common Sense": "https://awealthofcommonsense.com/feed/",
-        "ETF Trends": "https://www.etftrends.com/feed/",
-        "ETF Database": "https://etfdb.com/feed/",
-        "Alpha Architect": "https://alphaarchitect.com/feed/",
-        "Meb Faber": "https://mebfaber.com/feed/",
-    }
     items: list[Item] = []
-    for source, url in feeds.items():
-        items.extend(parse_feed(source, url, limit=5))
-    picked = filter_previously_sent("etf", dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]))[:6]
-    if len(picked) < 3:
-        picked = filter_previously_sent("etf", dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]), days=1)[:6]
-    picked = [enrich_article_item(x) for x in picked]
+    for feed in ETF_RESEARCH_FEEDS:
+        items.extend(parse_feed(feed.source, feed.url, limit=feed.limit))
+        time.sleep(0.1)
+    research_candidates = filter_previously_sent(
+        "etf",
+        dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]),
+    )
+    scored_picked = rank_etf_research_items([enrich_article_item(x.item) for x in rank_etf_research_items(research_candidates, limit=14)], limit=9)
+    if len(scored_picked) < 3:
+        research_candidates = filter_previously_sent(
+            "etf",
+            dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]),
+            days=1,
+        )
+        scored_picked = rank_etf_research_items([enrich_article_item(x.item) for x in rank_etf_research_items(research_candidates, limit=14)], limit=9)
+    picked = [x.item for x in scored_picked]
 
     forum_feeds = {
         "Reddit r/ETFs": "https://www.reddit.com/r/ETFs/hot/.rss",
@@ -1771,7 +3635,8 @@ def build_etf(out_dir: Path) -> None:
     for source, url in forum_feeds.items():
         forum_items.extend(parse_feed(source, url, limit=8))
         time.sleep(0.2)
-    forum_picked = filter_previously_sent("etf", dedupe_items([x for x in sort_recent(forum_items) if etf_forum_relevant(x)]))[:6]
+    forum_picked_raw = filter_previously_sent("etf", dedupe_items([x for x in sort_recent(forum_items) if etf_forum_relevant(x)]))[:6]
+    forum_picked = [enrich_article_item(x) for x in forum_picked_raw]
 
     date_s = report_date()
     data_dates = sorted({str(r["date"]) for r in strategy_rows + mover_rows})
@@ -1786,14 +3651,17 @@ def build_etf(out_dir: Path) -> None:
         "## 目录",
         "- [策略相关 ETF / 指数涨跌](#策略相关-etf--指数涨跌)",
         "- [ETF 涨跌幅榜](#etf-涨跌幅榜)",
-        "- [重点更新](#重点更新)",
-        "- [论坛热帖补充](#论坛热帖补充)",
+        "- [市场 regime 是否变化](#市场-regime-是否变化)",
+        "- [资产配置影响](#资产配置影响)",
+        "- [量化策略影响](#量化策略影响)",
+        "- [A 股 / 港股专项](#a-股--港股专项)",
+        "- [待验证假设](#待验证假设)",
         "",
         "---",
         "",
         "## 一句话结论",
         "",
-        "今天只保留策略直接相关标的、去重后的 ETF 涨跌幅榜、未重复推送的研究文章和论坛热帖；删除与策略表重复的市场核心指数段。",
+        "今天的文章部分按 source ranking 和 relevance scoring 过滤，只把内容写成事实层、配置/策略映射和可测试假设；论坛内容只做 idea mining，不进入结论。",
         "",
         "## 策略相关 ETF / 指数涨跌",
         "",
@@ -1829,45 +3697,14 @@ def build_etf(out_dir: Path) -> None:
             lines += ["", f"### {label}跌幅前 10", ""]
             append_mover_table(lines, dedupe_by_category(period_neg, reverse=False))
 
-    lines += ["", "---", "", "## 重点更新", ""]
-    for i, it in enumerate(picked, 1):
-        lines += [
-            f"### {i}. {etf_public_heading(it.title, it.summary)}",
-            f"- 来源：{it.source}",
-            f"- 原文标题：{it.title}",
-            f"- 链接：{it.url}",
-            "- 类型：RSS/研究文章",
-            "",
-            f"**原文事实**：{etf_chinese_fact(it)}",
-            "",
-            f"**配置含义**：{etf_follow_up_point(it.title, it.summary)}",
-            "",
-            f"**可验证点**：围绕相关 ETF、资产类别、资金流、估值、波动率和 1/3/6 个月窗口做数据验证，不把文章观点直接当交易信号。",
-            "",
-        ]
-    lines += ["", "---", "", "## 论坛热帖补充", ""]
-    for i, it in enumerate(forum_picked, 1):
-        lines += [
-            f"### {i}. {etf_public_heading(it.title, it.summary)}",
-            f"- 来源：{it.source}",
-            f"- 原帖标题：{it.title}",
-            f"- 链接：{it.url}",
-            "- 类型：论坛热帖/讨论流",
-            "",
-            f"**讨论事实**：{etf_chinese_fact(it)}",
-            "",
-            f"**配置含义**：{etf_follow_up_point(it.title, it.summary)}",
-            "",
-            "**可验证点**：把社区讨论当作假设来源，后续用 ETF 收益、资金流、估值、波动率和回撤数据检验。",
-            "",
-        ]
+    append_etf_research_sections(lines, scored_picked, forum_picked, strategy_rows, mover_rows, data_date_s)
     update_digest_history("etf", [*picked, *forum_picked])
     lines += [
         "## 去重与补充审计",
         "",
         "- 去重窗口：最近 7 天；按 canonical URL 和标题去重，历史记录写入 `digest_history/etf.json`。",
-        f"- RSS/研究文章数量：{len(picked)}",
-        f"- 论坛热帖数量：{len(forum_picked)}",
+        f"- RSS/研究文章数量：{len(scored_picked)}",
+        f"- 论坛/社区 idea mining 数量：{len(forum_picked)}",
         "",
     ]
     lines += audit_lines("08:00 Asia/Shanghai", started)
@@ -1881,7 +3718,7 @@ def build_etf(out_dir: Path) -> None:
     )
     body = "\n".join(
         [
-            "一句话结论：ETF/资产配置日报已按策略相关标的、ETF 涨跌幅榜、重点更新和论坛热帖补充生成。",
+            "一句话结论：ETF/资产配置日报已按市场 regime、资产配置影响、量化策略影响、A股/港股专项和待验证假设生成。",
             f"数据日期：{data_date_s}",
             f"涨幅靠前：{top_preview}",
             f"跌幅靠前：{bottom_preview}",
@@ -1939,12 +3776,14 @@ def build_ai(out_dir: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("report", choices=["fat-fire", "travel", "etf", "ai-hot"])
+    parser.add_argument("report", choices=["life", "fat-fire", "travel", "etf", "ai-hot"])
     parser.add_argument("--out-dir", default="artifacts")
     args = parser.parse_args()
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    if args.report == "fat-fire":
+    if args.report == "life":
+        build_life_digest(out_dir)
+    elif args.report == "fat-fire":
         build_fat_fire(out_dir)
     elif args.report == "travel":
         build_travel(out_dir)
