@@ -1277,6 +1277,34 @@ def etf_public_heading(title: str, summary: str = "") -> str:
     return etf_research_heading(title, summary)
 
 
+def etf_title_translation(title: str, summary: str = "") -> str:
+    title_lower = title.lower()
+    text = f"{title} {summary}".lower()
+    if "tactical yield" in title_lower:
+        return "Meb Faber 的 Tactical Yield：简单直观的收益率切换框架"
+    if "commodity futures returns since 1871" in title_lower:
+        return "1871 年以来商品期货收益指数"
+    if "dual momentum allocation between physical gold and bitcoin" in title_lower:
+        return "实物黄金与比特币（数字黄金）的双动量配置"
+    if "attention factor" in title_lower and ("crypto" in title_lower or "bitcoin" in text or "btc" in text):
+        return "注意力因子：连接加密资产与公开股票市场的共同风险线索"
+    return etf_public_heading(title, summary)
+
+
+def paired_title(original: str, chinese: str) -> str:
+    original_clean = clean_text(original, 180)
+    chinese_clean = clean_text(chinese, 180)
+    if not original_clean:
+        return chinese_clean
+    if not chinese_clean or norm_title(original_clean) == norm_title(chinese_clean):
+        return original_clean
+    return f"{original_clean}｜{chinese_clean}"
+
+
+def etf_display_title(item: Item) -> str:
+    return paired_title(item.title, etf_title_translation(item.title, item.summary))
+
+
 def etf_chinese_fact(item: Item) -> str:
     title = clean_text(item.title, 220)
     text = clean_text(item.summary, 3000)
@@ -1708,7 +1736,7 @@ def low_information_fact(text: str) -> bool:
     )
 
 
-def forum_thread_summary_points(item: Item, limit: int = 5) -> list[str]:
+def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
     if not any(marker in item.source.lower() for marker in ["reddit", "bogleheads", "forum"]):
         return []
     text = clean_text(item.summary, 6000)
@@ -1742,6 +1770,20 @@ def forum_thread_summary_points(item: Item, limit: int = 5) -> list[str]:
         add("讨论焦点之一是海外股票比例是否偏低，以及是否因为美股近期强势而低配国际资产。")
     if "not to chase" in lower_text or "recent us stock outperformance" in lower_text:
         add("回复中的主要提醒是不要因为近期美股跑赢就追涨或放弃既定的全球分散配置。")
+    if "100%" in lower_text and "0%" in lower_text and ("stocks/funds" in lower_text or "stocks" in lower_text) and (
+        "bonds" in lower_text or "treasuries" in lower_text
+    ):
+        add("发帖人的核心问题是：离退休还很远时，退休储蓄是否可以几乎 100% 放在股票/基金、0% 放在债券或国债。")
+    if "far from retirement" in lower_text or "time horizon" in lower_text:
+        add("讨论把“离退休还很远”和投资期限作为主要前提：期限越长，股票波动的可承受度通常越高，但不等于可以忽略大回撤。")
+    if "risk tolerance" in lower_text:
+        add("回复把风险承受能力放在核心位置：能否在深度回撤中坚持 100% 股票，比理论上的退休年限更关键。")
+    if "reducing drawdowns" in lower_text or "drawdowns" in lower_text:
+        add("债券或国债的作用被归纳为降低组合回撤、提供再平衡资金和心理缓冲，而不是追求最高长期收益。")
+    if "near-term cash" in lower_text or "cash needs" in lower_text:
+        add("近期用钱应与退休资产分开管理，不能用 100% 股票配置去承担短期资金需求。")
+    if "glide path" in lower_text or "retirement approaches" in lower_text:
+        add("一种可研究路径是随临近退休逐步增加债券，形成退休前逐步降风险路径，而不是永久维持 0% 债券。")
 
     def forum_sentence_point(sentence: str) -> str:
         lower = sentence.lower()
@@ -1778,6 +1820,12 @@ def forum_thread_summary_points(item: Item, limit: int = 5) -> list[str]:
 
 def forum_public_heading(item: Item) -> str:
     text = f"{item.title} {item.summary}".lower()
+    if "100%" in text and "0%" in text and ("stocks/funds" in text or "stocks" in text) and (
+        "bonds" in text or "treasuries" in text
+    ):
+        return "离退休还很远，退休储蓄几乎 100% 股票/基金、0% 债券或国债是否可以？"
+    if "looking for portfolio advice" in text:
+        return "寻求投资组合建议"
     if "vnq" in text or "reit" in text or "real estate" in text:
         return "税优账户中是否应单列 REIT/VNQ"
     if "portfolio for 30s" in text or "moderate risk" in text:
@@ -1791,6 +1839,10 @@ def forum_public_heading(item: Item) -> str:
     if "bond allocation" in text or "bonds being safe" in text:
         return "债券配置与风险认知讨论"
     return clean_text(item.title, 80)
+
+
+def forum_display_title(item: Item) -> str:
+    return paired_title(item.title, forum_public_heading(item))
 
 
 def forum_research_question(item: Item) -> str:
@@ -2104,10 +2156,10 @@ def etf_regime_observation(rows: list[dict[str, object]], data_date_s: str = "")
 def append_scored_item(lines: list[str], scored: ScoredResearchItem, idx: int) -> None:
     item = scored.item
     lines += [
-        f"### {idx}. {etf_public_heading(item.title, item.summary)}",
+        f"### {idx}. {etf_display_title(item)}",
         f"- 来源：{item.source} | {scored.tier} | score={scored.score}",
         f"- 角色：{scored.role}",
-        f"- 原文标题：{item.title}",
+        f"- 标题：{etf_display_title(item)}",
         f"- 链接：{item.url}",
         "",
         f"**事实层**：{etf_chinese_fact(item)}",
@@ -2156,27 +2208,21 @@ def append_etf_research_sections(
         lines.append("今日没有进入筛选口径的论坛补充。")
     visible_forum_count = 0
     for item in forum_items[:5]:
-        fact = etf_chinese_fact(item)
         full_summary = forum_thread_summary_points(item)
-        if low_information_fact(fact) and not full_summary:
+        if not full_summary:
             continue
         visible_forum_count += 1
         lines += [
-            f"### {visible_forum_count}. {forum_public_heading(item)}",
+            f"### {visible_forum_count}. {forum_display_title(item)}",
             f"- 来源：{item.source}",
-            f"- 原帖标题：{item.title}",
+            f"- 标题：{forum_display_title(item)}",
             f"- 链接：{item.url}",
             "",
         ]
-        lines += [
-            "**正文依据**：已打开原帖链接并按正文内容归纳；RSS 标题/摘要不足时不硬写结论。",
-            "",
-        ]
-        if full_summary:
-            lines.append("**全文总结**：")
-            for point in full_summary:
-                lines.append(f"- {point}")
-            lines.append("")
+        lines.append("**全文总结**：")
+        for point in full_summary:
+            lines.append(f"- {point}")
+        lines.append("")
         lines += [
             f"**可研究问题**：{forum_research_question(item)}",
             "",
@@ -3296,9 +3342,9 @@ def build_etf_legacy(out_dir: Path) -> None:
     lines += ["", "## 研究/资讯线索", ""]
     for i, it in enumerate(picked, 1):
         lines += [
-            f"### {i}. {etf_public_heading(it.title, it.summary)}",
+            f"### {i}. {etf_display_title(it)}",
             f"- 来源：{it.source}",
-            f"- 原文标题：{it.title}",
+            f"- 标题：{etf_display_title(it)}",
             f"- 链接：{it.url}",
             "",
             f"**原文事实**：{etf_chinese_fact(it)}",

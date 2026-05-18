@@ -417,6 +417,57 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("税优账户中是否应单列 REIT/VNQ", rendered)
         self.assertNotRegex(rendered, re.compile(r"[A-Za-z][A-Za-z ,'-]{80,}"))
 
+    def test_etf_article_title_displays_original_and_chinese_translation(self) -> None:
+        item = self.item(
+            "Quantpedia",
+            "Dual Momentum Allocation Between Physical Gold and Bitcoin (Digital Gold)",
+            (
+                "The dual momentum strategy produced an annualized return of 32.4% with a maximum drawdown of -28.6%. "
+                "Bitcoin buy-and-hold delivered a higher annualized return of 48.1% but suffered a maximum drawdown of -83.4%."
+            ),
+            "https://quantpedia.com/dual-momentum-allocation-between-physical-gold-and-bitcoin-digital-gold/",
+        )
+        scored = dr.rank_etf_research_items([item], limit=1)[0]
+        lines: list[str] = []
+
+        dr.append_scored_item(lines, scored, 1)
+        rendered = "\n".join(lines)
+
+        self.assertIn(
+            "Dual Momentum Allocation Between Physical Gold and Bitcoin (Digital Gold)｜实物黄金与比特币（数字黄金）的双动量配置",
+            rendered,
+        )
+        self.assertIn("标题：Dual Momentum Allocation Between Physical Gold and Bitcoin (Digital Gold)｜实物黄金与比特币（数字黄金）的双动量配置", rendered)
+        self.assertNotIn("- 原文标题：", rendered)
+
+    def test_bogleheads_forum_title_translation_and_detailed_summary(self) -> None:
+        item = self.item(
+            "Reddit r/Bogleheads",
+            "Is it ok to have basically 100% of my retirement savings in stocks/funds and 0% bonds/treasuries if I'm far from retirement?",
+            (
+                "The original poster is far from retirement and asks whether keeping basically 100% of retirement savings "
+                "in stocks/funds and 0% in bonds or Treasuries is reasonable. Replies discuss time horizon, risk tolerance, "
+                "the role of bonds in reducing drawdowns, separating near-term cash needs from retirement assets, and using "
+                "a glide path to add bonds as retirement approaches."
+            ),
+            "https://www.reddit.com/r/Bogleheads/comments/1tg3apt/is_it_ok_to_have_basically_100_of_my_retirement/",
+        )
+        lines: list[str] = []
+
+        dr.append_etf_research_sections(lines, [], [item], [], [], "2026-05-15")
+        rendered = "\n".join(lines)
+
+        self.assertIn(
+            "Is it ok to have basically 100% of my retirement savings in stocks/funds and 0% bonds/treasuries if I'm far from retirement?｜离退休还很远，退休储蓄几乎 100% 股票/基金、0% 债券或国债是否可以？",
+            rendered,
+        )
+        self.assertIn("全文总结", rendered)
+        self.assertIn("100% 股票/基金、0% 债券或国债", rendered)
+        self.assertIn("离退休还很远", rendered)
+        self.assertIn("风险承受能力", rendered)
+        self.assertIn("临近退休", rendered)
+        self.assertNotIn("已打开原帖链接并按正文内容归纳", rendered)
+
 
 if __name__ == "__main__":
     unittest.main()
