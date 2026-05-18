@@ -2,8 +2,8 @@ name: Microcap Realtime Digest
 
 on:
   schedule:
-    # 11:30 Asia/Shanghai == 03:30 UTC.
-    - cron: "30 3 * * *"
+    # 11:00 Asia/Shanghai == 03:00 UTC.
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 75
     env:
       TZ: Asia/Shanghai
-      PLANNED_BJ: "11:30 Asia/Shanghai"
+      PLANNED_BJ: "11:00 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       QVERIS_API_KEY: ${{ secrets.QVERIS_API_KEY }}
     steps:
