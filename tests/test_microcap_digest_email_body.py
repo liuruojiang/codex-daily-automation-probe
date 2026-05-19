@@ -30,6 +30,9 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                             "strategy_version: v2.0",
                             "snapshot_time: 2026-05-19 15:31:56+08:00",
                             "current_holding: long_microcap_short_zz1000",
+                            "microcap_mom: +12.3400%",
+                            "hedge_mom: +4.5600%",
+                            "momentum_gap: +7.7800%",
                         ]
                     ),
                     encoding="utf-8",
@@ -70,11 +73,15 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                     sys.argv = old_argv
 
                 meta = json.loads((out_dir / "metadata.json").read_text(encoding="utf-8"))
+                v20_summary = digest.extract_signal_summary(result_v20.read_text(encoding="utf-8"))
 
         self.assertIn("# ", meta["body"])
         self.assertIn("## ", meta["body"])
         self.assertIn("strategy_version: v2.0", meta["body"])
         self.assertIn("strategy_version: v2.3", meta["body"])
+        self.assertIn("microcap_mom: +12.3400%", v20_summary)
+        self.assertIn("hedge_mom: +4.5600%", v20_summary)
+        self.assertIn("momentum_gap: +7.7800%", v20_summary)
         self.assertNotIn("见附件", meta["body"])
         self.assertFalse(meta.get("attachment"))
 
