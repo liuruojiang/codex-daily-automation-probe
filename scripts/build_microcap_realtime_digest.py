@@ -168,22 +168,13 @@ def main() -> int:
             "```",
             "",
         ]
-    md.write_text("\n".join(lines), encoding="utf-8")
+    digest_text = "\n".join(lines)
+    md.write_text(digest_text, encoding="utf-8")
 
-    body = "\n".join(
-        [
-            f"微盘股 {title_versions} 实时信号已生成。",
-            f"计划时间：{args.planned}",
-            f"实际启动：{started or '未记录'}",
-            f"脚本退出码：{exit_summary}",
-            f"完整 {title_versions} 实时输出见附件。",
-            f"Run URL：{run_url}",
-        ]
-    )
     meta = {
         "subject": f"微盘股 {title_versions} 实时信号日报 - {date_s}",
-        "body": body,
-        "attachment": str(md),
+        "body": digest_text,
+        "attachment": None,
     }
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     return 0
