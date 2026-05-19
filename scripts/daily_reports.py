@@ -877,6 +877,14 @@ def travel_standard(title: str, summary: str = "") -> str:
 def etf_research_heading(title: str, summary: str = "") -> str:
     title_l = title.lower()
     text = (title + " " + summary).lower()
+    if "active etfs win the liquidity race" in title_l:
+        return "主动 ETF 流动性、成交量与买卖价差"
+    if "economic policy uncertainty and aggregate economic activity in india" in title_l:
+        return "印度经济政策不确定性与经济活动"
+    if "stock market prediction using node transformer" in title_l:
+        return "Node Transformer + BERT 情绪分析的股市预测论文"
+    if "shortening hong kong stock settlement cycle" in text or "縮短香港股票現貨市場結算週期" in title_l:
+        return "港股现货结算周期缩短咨询"
     if "world markets watchlist" in title_l:
         return "全球市场与跨区域股票表现"
     if "weekly economic snapshot" in title_l:
@@ -1288,6 +1296,14 @@ def etf_title_translation(title: str, summary: str = "") -> str:
         return "实物黄金与比特币（数字黄金）的双动量配置"
     if "attention factor" in title_lower and ("crypto" in title_lower or "bitcoin" in text or "btc" in text):
         return "注意力因子：连接加密资产与公开股票市场的共同风险线索"
+    if "active etfs win the liquidity race" in title_lower:
+        return "主动 ETF 流动性、成交量与买卖价差"
+    if "economic policy uncertainty and aggregate economic activity in india" in title_lower:
+        return "印度经济政策不确定性与经济活动"
+    if "stock market prediction using node transformer" in title_lower:
+        return "Node Transformer + BERT 情绪分析的股市预测论文"
+    if "縮短香港股票現貨市場結算週期" in title or "shortening hong kong stock settlement cycle" in text:
+        return "港股现货结算周期缩短咨询"
     return etf_public_heading(title, summary)
 
 
@@ -1408,6 +1424,26 @@ def etf_chinese_fact(item: Item) -> str:
             "Allocate Smartly 文章讨论用策略自身权益曲线的趋势来决定策略开关。这个想法本质上是对策略做二级趋势过滤：策略表现处于上行状态时启用，权益曲线走弱时暂停或降权。"
             "风险点在于权益曲线过滤容易过拟合，且可能在震荡期反复开关，必须把延迟、换手和错过反弹一起纳入回测。"
         )
+    elif "active etfs win the liquidity race" in title_lower:
+        parts.append(
+            "文章讨论主动 ETF 相比传统共同基金在交易流动性上的优势，重点变量包括盘中交易、成交量、买卖价差和 ETF 包装本身带来的交易便利。"
+            "它不是资本市场预期文章，不能据此推断股债长期收益；更适合放在 ETF 产品结构、交易执行和流动性评估框架里。"
+        )
+    elif "economic policy uncertainty and aggregate economic activity in india" in title_lower:
+        parts.append(
+            "FRED Blog 文章讨论印度经济政策不确定性与总体经济活动之间的关系，属于宏观数据解释而不是因子轮动研究。"
+            "对资产配置的用途是观察印度/新兴市场风险溢价、增长预期和政策不确定性是否影响区域股票或债券配置。"
+        )
+    elif "stock market prediction using node transformer" in title_lower:
+        parts.append(
+            "arXiv 论文标题显示其研究 Node Transformer 架构结合 BERT 情绪分析用于股市预测。"
+            "日报只能把它作为机器学习预测方法线索；在没有复现代码、样本外结果和交易成本验证前，不能把它写成有效因子结论。"
+        )
+    elif "縮短香港股票現貨市場結算週期" in title or "shortening hong kong stock settlement cycle" in lower:
+        parts.append(
+            "HKEX 发布缩短香港股票现货市场结算周期的咨询文件。核心事实是交易后结算安排可能变化，影响券商、托管、资金调拨和跨市场交易流程。"
+            "这属于市场结构和交易规则变化，不应被写成一般资产配置观点。"
+        )
     elif "capital market" in lower or "expected return" in lower:
         parts.append("文章围绕长期资本市场假设、估值和预期收益展开，重点是不同资产类别未来回报与风险补偿的变化。")
     elif "treasury" in lower or "duration" in lower or "bond" in lower or "yield" in lower:
@@ -1427,6 +1463,14 @@ def etf_chinese_fact(item: Item) -> str:
 def etf_follow_up_point(title: str, summary: str = "") -> str:
     text = (title + " " + summary).lower()
     title_lower = title.lower()
+    if "active etfs win the liquidity race" in title_lower:
+        return "可把它用于 ETF 执行质量观察：比较主动 ETF 与同类基金的成交量、买卖价差、折溢价和大额申赎压力，而不是推导长期资产收益。"
+    if "economic policy uncertainty and aggregate economic activity in india" in title_lower:
+        return "可作为印度/新兴市场宏观风险变量，后续应和 INDA、EPI、印度债券或新兴市场 ETF 的收益、波动和资金流交叉验证。"
+    if "stock market prediction using node transformer" in title_lower:
+        return "只作为机器学习预测论文线索；需要先复现数据、样本外窗口、交易成本和基准比较，不能直接进入组合信号。"
+    if "縮短香港股票現貨市場結算週期" in title or "shortening hong kong stock settlement cycle" in text:
+        return "可跟踪结算周期变化对港股 ETF、互联互通、现金调拨和交易执行的影响，尤其是跨市场再平衡时的资金占用。"
     if "tactical yield" in title_lower:
         return "可把短债/现金、IEF/VGLT 久期暴露和 LQD/HYG 信用暴露放到同一收益率门槛框架里，检验现金收益率升高时是否应降低久期或信用风险。"
     if "recent quant links from quantocracy" in title_lower:
@@ -1678,6 +1722,8 @@ def detail_sentence_chinese_summary(sentence: str) -> str:
 
 
 def etf_article_detail_points(item: Item, limit: int = 4) -> list[str]:
+    if "recent quant links from quantocracy" in item.title.lower():
+        return ["这是 Quantocracy 的近期量化链接汇总，本身只适合做线索池；需要继续打开子链接才能形成策略规则。"]
     sentences = split_article_sentences(item.summary)
     if not sentences:
         return []
@@ -1734,6 +1780,48 @@ def low_information_fact(text: str) -> bool:
             "当前可确认文章围绕",
         ]
     )
+
+
+def generic_etf_fact(text: str) -> bool:
+    return any(
+        marker in text
+        for marker in [
+            "文章围绕长期资本市场假设、估值和预期收益展开",
+            "文章关注债券、收益率或久期变化",
+            "文章讨论因子或风格表现",
+            "文章关注商品、黄金或通胀相关资产",
+        ]
+    )
+
+
+def etf_title_has_specific_signal(item: Item) -> bool:
+    title = item.title.lower()
+    text = f"{item.title} {item.summary}".lower()
+    return any(
+        marker in title
+        for marker in [
+            "tactical yield",
+            "commodity futures returns since 1871",
+            "dual momentum allocation between physical gold and bitcoin",
+            "attention factor",
+            "surfing the equity curve",
+            "selecting taa strategies based on recent performance",
+            "world markets watchlist",
+            "active etfs win the liquidity race",
+            "economic policy uncertainty and aggregate economic activity in india",
+            "stock market prediction using node transformer",
+            "recent quant links from quantocracy",
+        ]
+    ) or "縮短香港股票現貨市場結算週期" in item.title or "shortening hong kong stock settlement cycle" in text
+
+
+def etf_has_enough_summary_evidence(item: Item) -> bool:
+    fact = etf_chinese_fact(item)
+    if low_information_fact(fact) or generic_etf_fact(fact):
+        return False
+    if etf_title_has_specific_signal(item):
+        return True
+    return len(etf_article_detail_points(item, limit=2)) >= 2
 
 
 def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
@@ -1826,7 +1914,8 @@ def forum_public_heading(item: Item) -> str:
         return "离退休还很远，退休储蓄几乎 100% 股票/基金、0% 债券或国债是否可以？"
     if "looking for portfolio advice" in text:
         return "寻求投资组合建议"
-    if "vnq" in text or "reit" in text or "real estate" in text:
+    title_lower = item.title.lower()
+    if "vnq" in title_lower or "reit" in title_lower or "real estate" in title_lower:
         return "税优账户中是否应单列 REIT/VNQ"
     if "portfolio for 30s" in text or "moderate risk" in text:
         return "30 多岁中等风险组合求评"
@@ -1843,6 +1932,25 @@ def forum_public_heading(item: Item) -> str:
 
 def forum_display_title(item: Item) -> str:
     return paired_title(item.title, forum_public_heading(item))
+
+
+def forum_has_specific_summary_evidence(item: Item, points: list[str] | None = None) -> bool:
+    points = points if points is not None else forum_thread_summary_points(item)
+    text = f"{item.title} {item.summary}".lower()
+    if not points:
+        return False
+    allocation_matches = re.findall(r"\b\d+(?:\.\d+)?%\s*[A-Z][A-Z0-9.-]{1,8}\b", item.summary)
+    if allocation_matches:
+        if len(allocation_matches) < 2:
+            return False
+        return len(points) >= 2
+    if "100%" in text and "0%" in text and ("bonds" in text or "treasuries" in text):
+        return len(points) >= 3
+    if any(k in text for k in ["vnq", "reit", "real estate", "buying a house", "emergency cash", "401(k)", "401k"]):
+        return len(points) >= 2
+    if "dca" in text and ("treasury" in text or "treasuries" in text):
+        return len(points) >= 2
+    return False
 
 
 def forum_research_question(item: Item) -> str:
@@ -2038,10 +2146,12 @@ def score_etf_research_item(item: Item) -> ScoredResearchItem | None:
     return ScoredResearchItem(item=item, score=min(score, 100), tier=tier, role=role, sections=sections, reasons=tuple(dict.fromkeys(reasons)))
 
 
-def rank_etf_research_items(items: list[Item], limit: int = 8) -> list[ScoredResearchItem]:
+def rank_etf_research_items(items: list[Item], limit: int = 8, require_evidence: bool = False) -> list[ScoredResearchItem]:
     scored: list[ScoredResearchItem] = []
     for item in dedupe_items(items):
         val = score_etf_research_item(item)
+        if val and require_evidence and not etf_has_enough_summary_evidence(item):
+            continue
         if val:
             scored.append(val)
     ranked = sorted(
@@ -2070,6 +2180,14 @@ def etf_hypothesis_for_item(scored: ScoredResearchItem) -> str:
     title = etf_public_heading(scored.item.title, scored.item.summary)
     text = f"{scored.item.title} {scored.item.summary}".lower()
     title_lower = scored.item.title.lower()
+    if "active etfs win the liquidity race" in title_lower:
+        return f"{title} -> 比较主动 ETF 与同类指数 ETF/共同基金的成交量、买卖价差、折溢价和大额交易冲击。"
+    if "economic policy uncertainty and aggregate economic activity in india" in title_lower:
+        return f"{title} -> 测试印度政策不确定性指标与 INDA/EPI、美元和新兴市场 ETF 回撤之间的关系。"
+    if "stock market prediction using node transformer" in title_lower:
+        return f"{title} -> 先复现论文数据和样本外预测，再加入交易成本、延迟和基准比较。"
+    if "縮短香港股票現貨市場結算週期" in scored.item.title or "shortening hong kong stock settlement cycle" in text:
+        return f"{title} -> 验证结算周期缩短对港股 ETF、互联互通资金调拨和跨市场再平衡执行的影响。"
     if "tactical yield" in title_lower:
         return f"{title} -> 回测 T-Bills、IEF/LQD、长债和信用债之间的收益率门槛切换，比较全周期与高利率窗口的收益回撤。"
     if "recent quant links from quantocracy" in title_lower:
@@ -2209,7 +2327,7 @@ def append_etf_research_sections(
     visible_forum_count = 0
     for item in forum_items[:5]:
         full_summary = forum_thread_summary_points(item)
-        if not full_summary:
+        if not forum_has_specific_summary_evidence(item, full_summary):
             continue
         visible_forum_count += 1
         lines += [
@@ -3722,14 +3840,22 @@ def build_etf(out_dir: Path) -> None:
         "etf",
         dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]),
     )
-    scored_picked = rank_etf_research_items([enrich_article_item(x.item) for x in rank_etf_research_items(research_candidates, limit=14)], limit=9)
+    scored_picked = rank_etf_research_items(
+        [enrich_article_item(x.item) for x in rank_etf_research_items(research_candidates, limit=14)],
+        limit=9,
+        require_evidence=True,
+    )
     if len(scored_picked) < 3:
         research_candidates = filter_previously_sent(
             "etf",
             dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]),
             days=1,
         )
-        scored_picked = rank_etf_research_items([enrich_article_item(x.item) for x in rank_etf_research_items(research_candidates, limit=14)], limit=9)
+        scored_picked = rank_etf_research_items(
+            [enrich_article_item(x.item) for x in rank_etf_research_items(research_candidates, limit=14)],
+            limit=9,
+            require_evidence=True,
+        )
     picked = [x.item for x in scored_picked]
 
     forum_feeds = {

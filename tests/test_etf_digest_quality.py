@@ -468,6 +468,55 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("临近退休", rendered)
         self.assertNotIn("已打开原帖链接并按正文内容归纳", rendered)
 
+    def test_low_evidence_article_is_dropped_instead_of_hard_written_mapping(self) -> None:
+        item = self.item(
+            "Robot Wealth",
+            "Everything Everywhere All at Once",
+            "Subscribe to the newsletter. Related links mention factor momentum and portfolio risk.",
+            "https://robotwealth.com/everything-everywhere-all-at-once/",
+        )
+
+        scored = dr.rank_etf_research_items([item], limit=5, require_evidence=True)
+
+        self.assertEqual(scored, [])
+
+    def test_active_etf_liquidity_title_is_not_mislabeled_as_capital_market_assumptions(self) -> None:
+        item = self.item(
+            "ETF Trends",
+            "Goldman Sachs: Active ETFs Win the Liquidity Race",
+            (
+                "The article discusses active ETFs, liquidity, trading volume, bid-ask spreads, and how the ETF wrapper "
+                "can provide intraday access compared with mutual funds. Sidebar text mentions yields and unrelated model portfolios."
+            ),
+            "https://www.etftrends.com/future-etfs-content-hub/goldman-sachs-active-etfs-win-liquidity-race/",
+        )
+        scored = dr.rank_etf_research_items([item], limit=5, require_evidence=True)
+        lines: list[str] = []
+
+        self.assertEqual(len(scored), 1)
+        dr.append_scored_item(lines, scored[0], 1)
+        rendered = "\n".join(lines)
+
+        self.assertIn("主动 ETF 流动性", rendered)
+        self.assertIn("买卖价差", rendered)
+        self.assertNotIn("长期资本市场假设与估值", rendered)
+        self.assertNotIn("最大回撤", rendered)
+
+    def test_generic_forum_post_is_skipped_without_thread_specific_summary(self) -> None:
+        item = self.item(
+            "Reddit r/ETFs",
+            "ETFs to invest in",
+            "Replies mention risk tolerance and retirement in passing, but no concrete portfolio, tickers, cash need, or allocation question.",
+            "https://www.reddit.com/r/ETFs/comments/example/etfs_to_invest_in/",
+        )
+        lines: list[str] = []
+
+        dr.append_etf_research_sections(lines, [], [item], [], [], "2026-05-18")
+        rendered = "\n".join(lines)
+
+        self.assertNotIn("ETFs to invest in", rendered)
+        self.assertIn("已从正文剔除", rendered)
+
 
 if __name__ == "__main__":
     unittest.main()
