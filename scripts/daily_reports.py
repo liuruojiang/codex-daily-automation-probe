@@ -2307,6 +2307,51 @@ def life_source_tier(item: Item) -> str:
     return profile.tier if profile else ("论坛经验" if item.source.startswith("r/") else "高质量博客")
 
 
+def life_title_has_decision_signal(item: Item) -> bool:
+    title = item.title.lower()
+    return any(
+        k in title
+        for k in [
+            "withdrawal",
+            "retirement",
+            "portfolio",
+            "tax residency",
+            "crs",
+            "travel advice",
+            "entry requirement",
+            "visa",
+            "residence",
+            "resident",
+            "cost of living",
+            "healthcare",
+            "health insurance",
+            "long-stay",
+            "long stay",
+            "digital nomad",
+            "transfer bonus",
+            "conversion bonus",
+            "award chart",
+            "award night",
+            "award flight",
+            "hotel status",
+            "hotel promotion",
+            "best rate guarantee",
+            "lifemiles",
+            "world of hyatt",
+            "credit card",
+            "card guide",
+            "card review",
+            "annual fee",
+            "admirals club",
+            "points",
+            "miles",
+            "fhr",
+            "virtuoso",
+            "under canvas",
+        ]
+    )
+
+
 def life_decision_impact(item: Item) -> str:
     typ = life_item_type(item)
     text = f"{item.title} {item.summary}".lower()
@@ -2341,6 +2386,12 @@ def life_candidate_status(item: Item) -> str:
 
 def life_relevant(item: Item) -> bool:
     text = f"{item.title} {item.summary}".lower()
+    if (
+        life_source_tier(item) not in {"官方", "专业机构"}
+        and not life_is_travel_community_item(item)
+        and not life_title_has_decision_signal(item)
+    ):
+        return False
     if any(k in text for k in ["giveaway", "sponsored", "coupon", "black friday", "celebrity", "viral"]):
         return False
     if any(k in text for k in ["itinerary", "things to do", "must to do", "must do in", "guide to culture", "restaurants and local culture"]):
@@ -2505,6 +2556,32 @@ def life_title_zh(item: Item) -> str:
         return "数字游民签证与居留规划"
     if "world of hyatt promotion" in title_lower:
         return "World of Hyatt 长住促销"
+    if "world of hyatt updates award chart" in title_lower:
+        return "World of Hyatt 奖励表更新：部分兑换成本最高上调 67%"
+    if "last call" in title_lower and "hyatt award chart" in title_lower:
+        return "Hyatt 奖励表与酒店类别调整 5 月 20 日生效：旧价预订最后窗口"
+    if "wells fargo rewards transfer partners" in title_lower:
+        return "Wells Fargo Rewards 转点伙伴与积分兑换方法"
+    if "credit card transfer bonuses" in title_lower:
+        return "5 月信用卡转点奖励：Marriott 55%、Southwest 30%、Aeroplan 25% 等"
+    if "avianca lifemiles" in title_lower and "fraud" in title_lower:
+        return "Avianca LifeMiles 风控/欺诈标记争议：里程兑换执行风险"
+    if "french" in title_lower and "palace" in title_lower and "hotel status" in title_lower:
+        return "法国 Palace 酒店评级更新：3 家失去资格、约 5 家受益"
+    if "6 nights in shanghai" in title_lower:
+        return "上海 6 晚高端住宿与行程取舍"
+    if "caribbean/mexico" in title_lower and "anniversary" in title_lower:
+        return "加勒比/墨西哥 10 周年纪念旅行：高端度假选择"
+    if "grand hotel tremezzo" in title_lower:
+        return "Lake Como Grand Hotel Tremezzo 住宿评测"
+    if "alternatives to aman" in title_lower:
+        return "Aman 替代酒店选择：高端住宿体验与价格取舍"
+    if "park hyatt vienna" in title_lower:
+        return "Park Hyatt Vienna 住宿评测"
+    if "rosewood vienna" in title_lower:
+        return "Rosewood Vienna 住宿评测"
+    if "family friendly national parks" in title_lower and "under canvas" in title_lower:
+        return "适合家庭的美国国家公园高端住宿：Under Canvas 是否合适？"
     if "credit card review" in title_lower:
         return "信用卡评测：" + life_heading(item)
     translated = life_heading(item)
@@ -2724,6 +2801,14 @@ def life_summary_points(item: Item, limit: int = 5) -> list[str]:
         points.append(point)
 
     specific_title = False
+    if "tax residency" in title_lower or "crs jurisdictions" in title_lower:
+        specific_title = True
+        add("内容聚焦 CRS 参与辖区的税务居民规则；跨境慢旅不能只看入境停留天数，还要看当地国内法如何认定税务居民。")
+        add("对香港读者和未来环球慢旅而言，重点是记录每个候选国家的税务居民触发条件、CRS 信息交换、资本利得和账户申报后果。")
+    if "portugal travel advice" in title_lower:
+        specific_title = True
+        add("这是 Portugal 官方旅行建议更新线索，应作为入境、安全和健康要求的第一层核验来源。")
+        add("进入路线规划前，需要复核入境要求、安全提示、医疗/保险要求和页面最后更新时间，而不是依赖旅游博客经验。")
     if "how to “lie” with personal finance" in title_lower or "how to \"lie\" with personal finance" in title_lower:
         specific_title = True
         add("文章讨论个人理财文章如何通过选择口径、时间窗口或案例来制造看似正确的结论；这一篇聚焦多元化叙事。")
@@ -2740,6 +2825,53 @@ def life_summary_points(item: Item, limit: int = 5) -> list[str]:
         specific_title = True
         add("文章讨论通过 Rakuten 网购赚取 Bilt points 的方法，重点不是信用卡年费，而是购物门户返利和可转点积分之间的取舍。")
         add("判断是否值得要比较 Rakuten 现金返利、其他航空里程门户、Bilt 积分可转伙伴和你实际会不会使用这些积分。")
+    if "transfer bonus" in title_lower:
+        specific_title = True
+        add("文章涉及转点或兑换 bonus；只有在目标酒店/航司现金价较高、奖励库存可订且点数估值合理时才有实际价值。")
+        add("需要核实截止日期、可转点账户、目标酒店/航班库存和取消政策，避免为了 bonus 囤低流动性积分。")
+    if "admirals club" in title_lower or "credit card guide" in title_lower or "card review" in title_lower:
+        specific_title = True
+        add("文章是美国信用卡/联名卡评测，核心要看年费、积分获取、权益兑现和境外使用成本。")
+        if "admirals club" in lower:
+            add("Admirals Club passes 一类权益要按实际航线和使用频率估值，不能只按宣传价计算。")
+        if "foreign transaction" in lower:
+            add("对香港读者还要单独看境外交易费、汇率成本和是否容易持有/还款。")
+    if "world of hyatt updates award chart" in title_lower:
+        specific_title = True
+        add("文章讨论 World of Hyatt 奖励表调整，标题明确指出部分兑换成本最高上调 67%；这属于酒店积分贬值或重新定价风险。")
+        add("对慢旅和酒店积分策略的影响是：若已有确定 Hyatt 住宿计划，需要在生效前核实具体酒店、日期、点数变化、取消和改订规则，而不是盲目囤点。")
+    if "last call" in title_lower and "hyatt award chart" in title_lower:
+        specific_title = True
+        add("文章提醒 Hyatt 奖励表和酒店类别调整将在 May 20 生效，核心是旧价预订窗口即将关闭。")
+        add("实操价值在于：如果已有确定 Hyatt 住宿计划，应在生效前逐家核实新旧点数、现金价、取消规则和是否允许后续改订。")
+    if "wells fargo rewards transfer partners" in title_lower:
+        specific_title = True
+        add("文章梳理 Wells Fargo Rewards 的转点伙伴和积分兑换方式，重点是把银行积分转成航司/酒店积分后的实际可用性。")
+        add("判断价值时应比较转点比例、目标伙伴奖励库存、现金价、税费、取消政策和你是否能在未来路线中真实使用。")
+    if "credit card transfer bonuses" in title_lower:
+        specific_title = True
+        add("文章汇总 5 月信用卡转点奖励，标题列出的关键优惠包括 Marriott 55%、Southwest 30%、Aeroplan 25% 等。")
+        add("转点前应逐项核实截止日期、目标积分价值、奖励库存和现金价；除非已有明确用途，否则 bonus 本身不构成转点理由。")
+    if "avianca lifemiles" in title_lower and "fraud" in title_lower:
+        specific_title = True
+        add("文章来自读者评论，核心是 Avianca LifeMiles 在账户风控、欺诈标记或客服处理上的执行风险，而不是普通转点促销。")
+        add("对里程策略的启发是：低价里程和复杂兑换可能伴随账户审核、出票失败、客服沟通和关键行程中断风险，重要行程不应只依赖单一里程计划。")
+    if "french" in title_lower and "palace" in title_lower and "hotel status" in title_lower:
+        specific_title = True
+        add("文章讨论法国 Palace 酒店评级变化，标题给出的关键信息是 3 家酒店失去资格、约 5 家酒店受益。")
+        add("对高端慢旅的价值在于把 Palace 评级当作酒店质量和定价信号之一，但仍要结合位置、真实房价、会员权益、取消规则和个人路线判断。")
+    if "6 nights in shanghai" in title_lower:
+        specific_title = True
+        add("帖子围绕上海 6 晚停留展开，适合作为高端城市慢旅的住宿和行程取舍案例。")
+        add("需要重点比较酒店位置、交通半径、早餐/升级权益、现金价或积分价、洗衣便利和每天移动强度；涉及具体酒店结论时仍要回到官网价格和近期评价核实。")
+    if "family friendly national parks" in title_lower and "under canvas" in title_lower:
+        specific_title = True
+        add("帖子讨论适合家庭的美国国家公园目的地，并特别提到 Under Canvas 这类高端露营/住宿选择。")
+        add("对家庭慢旅的关键不是景点清单，而是孩子适配度、天气、营地位置、夜间舒适度、取消规则、医疗可达性和是否值得为体验支付溢价。")
+    if "sail to a good life" in title_lower and "richer retirement portfolio" in title_lower:
+        specific_title = True
+        add("Portfolio Charts 文章围绕“更富足退休组合”展开，重点是退休组合不只追求最低可行提款率，还要提高长期生活质量和支出弹性。")
+        add("对宽裕版财务自由而言，关键问题是资产配置能否支持更高质量消费、长期慢旅预算和心理安全边际，而不是只证明退休数字勉强够用。")
     if "chase ultimate rewards" in title_lower and "southwest" in title_lower and "30%" in title_lower:
         specific_title = True
         add("文章介绍 Chase Ultimate Rewards 转 Southwest Rapid Rewards 的 30% 转点奖励，截止日期为 June 5, 2026。")
@@ -2825,13 +2957,25 @@ def life_summary_points(item: Item, limit: int = 5) -> list[str]:
         add("社区案例显示约 600 万美元净资产且无债并不等于规划结束，退休第一年仍要观察支出、心理安全感和生活节奏。")
     if "healthcare" in lower or "health insurance" in lower:
         add("医疗和保险是慢旅目的地评分的硬变量，需要确认公私营医疗、保险可报销范围和紧急转运安排。")
+    if (
+        not specific_title
+        and life_source_tier(item) not in {"官方", "专业机构"}
+        and not life_is_travel_community_item(item)
+        and not life_title_has_decision_signal(item)
+    ):
+        return []
     for point in life_generic_detail_points(item, limit=limit):
         add(point)
-    if not points:
-        summary = life_summary(item)
-        if summary:
-            add(summary)
     return points[:limit]
+
+
+def life_has_enough_summary_evidence(item: Item) -> bool:
+    points = life_summary_points(item)
+    if len(points) >= 2:
+        return True
+    if len(points) >= 1 and life_source_tier(item) in {"官方", "专业机构"} and life_item_type(item) in {"税务居留", "签证入境", "医疗安全"}:
+        return True
+    return False
 
 
 def life_action(item: Item) -> str:
@@ -2865,7 +3009,7 @@ def life_detailed_summary(item: Item, points: list[str] | None = None) -> str:
 
 
 def pick_life_items(items: list[Item], limit: int = 8) -> list[Item]:
-    relevant = [item for item in items if life_relevant(item) and (life_summary(item) or life_generic_detail_points(item))]
+    relevant = [item for item in items if life_relevant(item) and life_has_enough_summary_evidence(item)]
     relevant.sort(key=lambda item: (life_score(item), parse_date(item.published) or datetime.min.replace(tzinfo=timezone.utc)), reverse=True)
     picked: list[Item] = []
     seen_titles: set[str] = set()
@@ -2930,7 +3074,7 @@ def supplement_life_with_community(picked: list[Item], seen_headings: set[str], 
     for item in pick_life_items([enrich_article_item(item) for item in candidates[:24]], limit=limit):
         if len(picked) >= limit:
             break
-        if not life_summary(item):
+        if not life_has_enough_summary_evidence(item):
             continue
         if life_is_travel_community_item(item) and len(life_summary_points(item)) < 3:
             continue
@@ -2964,7 +3108,7 @@ def build_life_digest(out_dir: Path) -> None:
     picked: list[Item] = []
     seen_headings: set[str] = set()
     for item in enriched_candidates:
-        if not life_summary(item):
+        if not life_has_enough_summary_evidence(item):
             continue
         key = norm_title(life_display_title(item))
         if key in seen_headings:
@@ -3100,89 +3244,6 @@ def audit_lines(planned: str, started: datetime) -> list[str]:
 
 def build_fat_fire(out_dir: Path) -> None:
     build_life_digest(out_dir)
-    return
-    started = now_bj()
-    feeds = {
-        "Early Retirement Now": "https://earlyretirementnow.com/feed/",
-        "JL Collins": "https://jlcollinsnh.com/feed/",
-        "Bogleheads Blog": "https://www.bogleheads.org/blog/feed/",
-        "Of Dollars And Data": "https://ofdollarsanddata.com/feed/",
-        "A Wealth of Common Sense": "https://awealthofcommonsense.com/feed/",
-        "Go Curry Cracker": "https://www.gocurrycracker.com/feed/",
-        "Financial Samurai": "https://www.financialsamurai.com/feed/",
-        "White Coat Investor": "https://www.whitecoatinvestor.com/feed/",
-        "HumbleDollar": "https://humbledollar.com/feed/",
-        "r/fatFIRE": "https://www.reddit.com/r/fatFIRE/hot/.rss",
-        "r/ChubbyFIRE": "https://www.reddit.com/r/ChubbyFIRE/hot/.rss",
-    }
-    items: list[Item] = []
-    for source, url in feeds.items():
-        items.extend(parse_feed(source, url, limit=8))
-        time.sleep(0.2)
-    picked = filter_previously_sent("fat-fire", sort_recent(items))[:14]
-    if len(picked) < 10:
-        picked = filter_previously_sent("fat-fire", sort_recent(items), days=1)[:14]
-    picked = [x if x.source.startswith("r/") else enrich_article_item(x) for x in picked]
-    date_s = report_date()
-    md = out_dir / f"fat_fire_digest_{date_s}.md"
-    lines = [
-        f"# FAT FIRE 与高净值财务自由简报 - {date_s}",
-        "",
-        "> 本报告是高净值财务自由研究摘要，不构成投资、税务或法律建议。",
-        "",
-        "## 一句话结论",
-        "",
-        "今天优先关注税务阈值、退休现金流、集中持仓退出和高净值家庭生活方式风险；RSS 不足或重复时已纳入 Reddit 社区讨论作案例观察。",
-        "",
-        "## 今日速览",
-        "",
-        "| # | 中文标题 | 来源 | 日期 | 类型 |",
-        "|---:|---|---|---:|---|",
-    ]
-    for i, it in enumerate(picked, 1):
-        kind = "社区讨论/案例观察" if it.source.startswith("r/") else "RSS/博客研究"
-        dt = (parse_date(it.published) or datetime.now(timezone.utc)).astimezone(BJ).date()
-        lines.append(f"| {i} | {fat_fire_heading(it.title, it.summary)} | {it.source} | {dt} | {kind} |")
-    lines += ["", "---", "", "## 条目详情", ""]
-    for i, it in enumerate(picked, 1):
-        kind = "社区讨论/案例观察" if it.source.startswith("r/") else "RSS/博客研究"
-        fact_label = "帖子事实" if it.source.startswith("r/") else "原文事实"
-        lines += [
-            f"### {i}. {fat_fire_heading(it.title, it.summary)}",
-            f"- 来源：{it.source}",
-            f"- {meta_title_label(it)}：{it.title}",
-            f"- 链接：{it.url}",
-            f"- 类型：{kind}",
-            "",
-            f"**{fact_label}**：{fat_fire_chinese_fact(it)}",
-            "",
-            f"**FAT FIRE 含义**：{fat_fire_implication(it.title, it.summary)}",
-            "",
-            f"**需要验证**：{fat_fire_validation(it.title, it.summary)}",
-            "",
-            "---",
-            "",
-        ]
-    update_digest_history("fat-fire", picked)
-    lines += [
-        "## 去重与补充审计",
-        "",
-        "- 去重窗口：最近 7 天；按 canonical URL 和标题去重，历史记录写入 `digest_history/fat-fire.json`。",
-        f"- 社区条目数量：{sum(1 for x in picked if x.source.startswith('r/'))}",
-        "",
-    ]
-    lines += audit_lines("07:00 Asia/Shanghai", started)
-    md.write_text("\n".join(lines), encoding="utf-8")
-    body = "\n".join(
-        [
-            "一句话结论：今天关注税务阈值、退休现金流、集中持仓退出和生活方式风险。",
-            f"条目数量：{len(picked)}",
-            f"社区案例数量：{sum(1 for x in picked if x.source.startswith('r/'))}",
-            "完整排版版见附件。",
-            f"调度审计：实际启动 {started.strftime('%Y-%m-%d %H:%M:%S %Z')}；执行环境 GitHub Actions。",
-        ]
-    )
-    write_meta(out_dir, f"FAT FIRE 与高净值财务自由简报 - {date_s}", body, md)
 
 
 def build_travel(out_dir: Path) -> None:

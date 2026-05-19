@@ -392,6 +392,101 @@ class WealthSlowTravelDigestTests(unittest.TestCase):
         self.assertNotIn("Kempinski 酒店最优价格保证", rendered)
         self.assertNotIn("提款率", rendered)
 
+    def test_hyatt_award_chart_title_and_summary_are_not_mislabeled_as_credit_card(self) -> None:
+        item = self.item(
+            "The Points Guy",
+            "Last call: Hyatt award chart and category changes take effect May 20",
+            "Hyatt award chart and category changes take effect May 20. Travelers should compare old and new points, cash rates, cancellation terms and whether speculative bookings can be changed later.",
+            "https://example.com/hyatt-category-changes",
+        )
+        lines: list[str] = []
+
+        dr.append_life_item(lines, item, 1)
+        rendered = "\n".join(lines)
+
+        self.assertIn("Hyatt 奖励表与酒店类别调整 5 月 20 日生效：旧价预订最后窗口", rendered)
+        self.assertIn("May 20", rendered)
+        self.assertIn("旧价预订窗口", rendered)
+        self.assertIn("新旧点数", rendered)
+        self.assertNotIn("美国信用卡评测", rendered)
+        self.assertNotIn("Safari", rendered)
+
+    def test_life_digest_drops_weak_template_only_items_instead_of_hard_writing(self) -> None:
+        weak_item = self.item(
+            "r/fatFIRE",
+            "Happiness/content-ness traveling a lot.",
+            "RSS teaser only.",
+            "https://www.reddit.com/r/fatFIRE/comments/example/travel_happiness/",
+        )
+
+        self.assertEqual(dr.life_summary_points(weak_item), [])
+        self.assertFalse(dr.life_has_enough_summary_evidence(weak_item))
+
+        original_parse_feed = dr.parse_feed
+        original_update_history = dr.update_digest_history
+        original_report_date = dr.report_date
+        original_enrich = dr.enrich_article_item
+        original_sleep = dr.time.sleep
+
+        try:
+            dr.parse_feed = lambda source, url, limit=12: [weak_item] if source == "r/fatFIRE" else []
+            dr.update_digest_history = lambda *args, **kwargs: None
+            dr.report_date = lambda: "2026-05-17"
+            dr.enrich_article_item = lambda item: item
+            dr.time.sleep = lambda *_args, **_kwargs: None
+            with tempfile.TemporaryDirectory() as tmp:
+                out_dir = Path(tmp)
+                dr.build_life_digest(out_dir)
+                report = (out_dir / "wealth_slow_travel_digest_2026-05-17.md").read_text(encoding="utf-8")
+        finally:
+            dr.parse_feed = original_parse_feed
+            dr.update_digest_history = original_update_history
+            dr.report_date = original_report_date
+            dr.enrich_article_item = original_enrich
+            dr.time.sleep = original_sleep
+
+        self.assertNotIn("Happiness/content-ness traveling a lot.", report)
+        self.assertNotIn("信托/遗产/慈善", report)
+        self.assertNotIn("税务阈值、退休现金流、集中持仓退出", report)
+
+    def test_fat_fire_entrypoint_uses_combined_life_digest_not_legacy_template(self) -> None:
+        original_parse_feed = dr.parse_feed
+        original_update_history = dr.update_digest_history
+        original_report_date = dr.report_date
+        original_enrich = dr.enrich_article_item
+        original_sleep = dr.time.sleep
+        original_filter = dr.filter_previously_sent
+        item = self.item(
+            "Portfolio Charts",
+            "Sail to a Good Life With the Richer Retirement Portfolio",
+            "Retirement portfolio design should support a richer retirement, higher quality spending and more durable long-term retirement lifestyle.",
+            "https://portfoliocharts.com/example-fat-fire-entrypoint-test",
+        )
+
+        try:
+            dr.parse_feed = lambda source, url, limit=12: [item] if source == "Portfolio Charts" else []
+            dr.update_digest_history = lambda *args, **kwargs: None
+            dr.report_date = lambda: "2026-05-17"
+            dr.enrich_article_item = lambda x: x
+            dr.filter_previously_sent = lambda kind, items, days=7: items
+            dr.time.sleep = lambda *_args, **_kwargs: None
+            with tempfile.TemporaryDirectory() as tmp:
+                out_dir = Path(tmp)
+                dr.build_fat_fire(out_dir)
+                report = (out_dir / "wealth_slow_travel_digest_2026-05-17.md").read_text(encoding="utf-8")
+                self.assertFalse((out_dir / "fat_fire_digest_2026-05-17.md").exists())
+        finally:
+            dr.parse_feed = original_parse_feed
+            dr.update_digest_history = original_update_history
+            dr.report_date = original_report_date
+            dr.enrich_article_item = original_enrich
+            dr.filter_previously_sent = original_filter
+            dr.time.sleep = original_sleep
+
+        self.assertIn("宽裕版财务自由 + 环球慢旅生活日报", report)
+        self.assertIn("更富足退休组合", report)
+        self.assertNotIn("今天优先关注税务阈值、退休现金流、集中持仓退出", report)
+
     def test_reddit_named_sources_are_enriched_from_thread_body(self) -> None:
         item = self.item(
             "r/ExpatFIRE",
