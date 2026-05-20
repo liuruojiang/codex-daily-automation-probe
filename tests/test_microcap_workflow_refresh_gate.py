@@ -22,6 +22,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         )
         self.assertIn("if: steps.refresh_state.outputs.exit_code == '0'", text)
         self.assertIn("name: Record refresh failure for digest", text)
+        self.assertEqual(text.count('TOP100_REALTIME_REQUIRE_STATE: "1"'), 2)
 
 
 if __name__ == "__main__":
