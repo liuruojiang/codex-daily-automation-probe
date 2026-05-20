@@ -4,6 +4,8 @@ import sys
 import unittest
 import re
 import json
+import os
+import tempfile
 from pathlib import Path
 
 
@@ -17,6 +19,59 @@ import daily_reports as dr  # noqa: E402
 class EtfDigestQualityTests(unittest.TestCase):
     def item(self, source: str, title: str, summary: str = "", url: str = "https://example.com/x") -> dr.Item:
         return dr.Item(source=source, title=title, url=url, published="2026-05-15T12:00:00+00:00", summary=summary)
+
+    def test_etf_dedupe_keeps_recently_sent_items_out_beyond_one_day(self) -> None:
+        old_item = self.item(
+            "Quantpedia",
+            "Dual Momentum Allocation Between Physical Gold and Bitcoin (Digital Gold)",
+            "Gold and bitcoin dual momentum allocation.",
+            "https://quantpedia.com/dual-momentum-allocation-between-physical-gold-and-bitcoin-digital-gold/",
+        )
+        new_item = self.item(
+            "AQR Insights",
+            "Fresh Trend Following Research Note",
+            "New trend-following evidence.",
+            "https://www.aqr.com/insights/fresh-trend-following-research-note",
+        )
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            history_dir = tmp_path / "digest_history"
+            history_dir.mkdir()
+            (history_dir / "etf.json").write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "sent_date": "2026-05-18",
+                                "source": old_item.source,
+                                "title": old_item.title,
+                                "url": old_item.url,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            os.chdir(tmp_path)
+            try:
+                filtered = dr.filter_previously_sent("etf", [old_item, new_item], days=dr.ETF_DEDUPE_DAYS)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual([item.url for item in filtered], [new_item.url])
+
+    def test_etf_research_freshness_filter_drops_stale_rss_items(self) -> None:
+        original_now_bj = dr.now_bj
+        dr.now_bj = lambda: dr.datetime(2026, 5, 20, 7, 0, tzinfo=dr.BJ)
+        try:
+            fresh = dr.Item("Quantpedia", "Fresh item", "https://example.com/fresh", "2026-05-19T16:00:00+00:00", "")
+            stale = dr.Item("Quantpedia", "Stale item", "https://example.com/stale", "2026-05-18T00:00:00+00:00", "")
+            filtered = dr.filter_recent_published([fresh, stale], dr.ETF_ARTICLE_MAX_AGE_HOURS)
+        finally:
+            dr.now_bj = original_now_bj
+
+        self.assertEqual([item.title for item in filtered], ["Fresh item"])
 
     def test_relevance_score_prefers_research_over_noisy_product_news(self) -> None:
         quant = self.item(

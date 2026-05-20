@@ -143,6 +143,10 @@ ETF_CORE_PAGE_MONITORS: tuple[tuple[str, str, str], ...] = (
     ("GMO Research", "https://www.gmo.com/", "估值敏感型资产配置、国际价值与质量股"),
 )
 
+ETF_ARTICLE_MAX_AGE_HOURS = 36
+ETF_DEDUPE_DAYS = 45
+ETF_HISTORY_DAYS = 60
+
 
 def now_bj() -> datetime:
     return datetime.now(BJ)
@@ -364,6 +368,11 @@ def enrich_article_item(item: Item) -> Item:
 
 def sort_recent(items: list[Item]) -> list[Item]:
     return sorted(items, key=lambda x: parse_date(x.published) or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+
+
+def filter_recent_published(items: list[Item], max_age_hours: int) -> list[Item]:
+    cutoff = now_bj().astimezone(timezone.utc) - timedelta(hours=max_age_hours)
+    return [item for item in items if (parse_date(item.published) or datetime.min.replace(tzinfo=timezone.utc)) >= cutoff]
 
 
 def chinese_topic(title: str, summary: str = "") -> str:
@@ -3836,26 +3845,20 @@ def build_etf(out_dir: Path) -> None:
     for feed in ETF_RESEARCH_FEEDS:
         items.extend(parse_feed(feed.source, feed.url, limit=feed.limit))
         time.sleep(0.1)
+    research_pool = filter_recent_published(
+        dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]),
+        ETF_ARTICLE_MAX_AGE_HOURS,
+    )
     research_candidates = filter_previously_sent(
         "etf",
-        dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]),
+        research_pool,
+        days=ETF_DEDUPE_DAYS,
     )
     scored_picked = rank_etf_research_items(
         [enrich_article_item(x.item) for x in rank_etf_research_items(research_candidates, limit=14)],
         limit=9,
         require_evidence=True,
     )
-    if len(scored_picked) < 3:
-        research_candidates = filter_previously_sent(
-            "etf",
-            dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]),
-            days=1,
-        )
-        scored_picked = rank_etf_research_items(
-            [enrich_article_item(x.item) for x in rank_etf_research_items(research_candidates, limit=14)],
-            limit=9,
-            require_evidence=True,
-        )
     picked = [x.item for x in scored_picked]
 
     forum_feeds = {
@@ -3868,7 +3871,11 @@ def build_etf(out_dir: Path) -> None:
     for source, url in forum_feeds.items():
         forum_items.extend(parse_feed(source, url, limit=8))
         time.sleep(0.2)
-    forum_picked_raw = filter_previously_sent("etf", dedupe_items([x for x in sort_recent(forum_items) if etf_forum_relevant(x)]))[:6]
+    forum_picked_raw = filter_previously_sent(
+        "etf",
+        dedupe_items([x for x in sort_recent(forum_items) if etf_forum_relevant(x)]),
+        days=ETF_DEDUPE_DAYS,
+    )[:6]
     forum_picked = [enrich_article_item(x) for x in forum_picked_raw]
 
     date_s = report_date()
@@ -3931,11 +3938,12 @@ def build_etf(out_dir: Path) -> None:
             append_mover_table(lines, dedupe_by_category(period_neg, reverse=False))
 
     append_etf_research_sections(lines, scored_picked, forum_picked, strategy_rows, mover_rows, data_date_s)
-    update_digest_history("etf", [*picked, *forum_picked])
+    update_digest_history("etf", [*picked, *forum_picked], days=ETF_HISTORY_DAYS)
     lines += [
         "## 去重与补充审计",
         "",
-        "- 去重窗口：最近 7 天；按 canonical URL 和标题去重，历史记录写入 `digest_history/etf.json`。",
+        f"- 去重窗口：最近 {ETF_DEDUPE_DAYS} 天；按 canonical URL 和标题去重，历史记录写入 `digest_history/etf.json`。",
+        f"- RSS/研究文章新鲜度：只使用最近 {ETF_ARTICLE_MAX_AGE_HOURS} 小时内发布的条目；不足 3 篇时不再放宽到旧文。",
         f"- RSS/研究文章数量：{len(scored_picked)}",
         f"- 论坛/社区 idea mining 数量：{len(forum_picked)}",
         "",
