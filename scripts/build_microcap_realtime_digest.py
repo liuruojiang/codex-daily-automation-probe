@@ -4,7 +4,7 @@ import argparse
 import json
 import os
 import re
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -27,6 +27,54 @@ def clean_output(text: str, max_len: int = 45000) -> str:
 def extract_line(text: str, pattern: str) -> str:
     match = re.search(pattern, text, flags=re.I | re.M)
     return match.group(0).strip() if match else ""
+
+
+def extract_value(text: str, key: str) -> str:
+    line = extract_line(text, rf"^{re.escape(key)}\s*:[^\n]*")
+    if ":" not in line:
+        return ""
+    return line.split(":", 1)[1].strip()
+
+
+def parse_iso_date(value: str) -> date | None:
+    match = re.search(r"\d{4}-\d{2}-\d{2}", value.strip())
+    if not match:
+        return None
+    try:
+        return date.fromisoformat(match.group(0))
+    except ValueError:
+        return None
+
+
+def previous_weekday(value: date) -> date:
+    value = value - timedelta(days=1)
+    while value.weekday() >= 5:
+        value = value - timedelta(days=1)
+    return value
+
+
+def classify_signal_output(output: str, exit_code: str) -> tuple[str, str]:
+    code = exit_code.strip().lower()
+    if code and code not in {"0", "none", "unknown"}:
+        return "FAILED", f"script exit code is {exit_code}"
+    if "realtime_signal" not in output:
+        return "FAILED", "realtime_signal marker is missing"
+
+    anchor = parse_iso_date(extract_value(output, "latest_anchor_trade_date"))
+    quote_trade_date = parse_iso_date(extract_value(output, "quote_trade_date"))
+    if anchor and quote_trade_date and anchor < quote_trade_date:
+        expected_anchor = previous_weekday(quote_trade_date)
+        if anchor < expected_anchor:
+            return "STALE", f"anchor {anchor.isoformat()} is older than expected {expected_anchor.isoformat()}"
+    return "OK", ""
+
+
+def worst_status(statuses: list[str]) -> str:
+    if any(status == "FAILED" for status in statuses):
+        return "FAILED"
+    if any(status == "STALE" for status in statuses):
+        return "STALE"
+    return "OK"
 
 
 def extract_signal_summary(output: str) -> str:
@@ -113,6 +161,7 @@ def main() -> int:
         raw = result_path.read_text(encoding="utf-8", errors="replace") if result_path.exists() else "未找到实时信号输出文件。"
         output = clean_output(raw)
         exit_code = exit_codes.get(version, default_exit_code)
+        status, status_note = classify_signal_output(output, exit_code)
         results.append(
             {
                 "version": version,
@@ -120,23 +169,33 @@ def main() -> int:
                 "output": output,
                 "summary": extract_signal_summary(output),
                 "exit_code": exit_code,
+                "status": status,
+                "status_note": status_note,
             }
         )
+
+    if not results:
+        raise ValueError("at least one realtime signal result is required")
 
     date_s = now_bj().date().isoformat()
     finished = now_bj().strftime("%Y-%m-%d %H:%M:%S %Z")
     started = args.started or os.environ.get("STARTED_BJ", "")
     run_url = os.environ.get("GITHUB_RUN_URL", "")
-    if not results:
-        raise ValueError("at least one realtime signal result is required")
     title_versions = " / ".join(item["version"] for item in results)
     exit_summary = "；".join(f"{item['version']}={item['exit_code'] or '未记录'}" for item in results)
+    digest_status = worst_status([item["status"] for item in results])
+    status_summary = "；".join(
+        f"{item['version']}={item['status']}{'：' + item['status_note'] if item['status_note'] else ''}"
+        for item in results
+    )
 
     md = out_dir / f"microcap_realtime_signal_digest_{date_s}.md"
     lines = [
         f"# 微盘股 {title_versions} 实时信号日报 - {date_s}",
         "",
-        f"> 用途：这是自动化仓库中的微盘股 {title_versions} 实时信号推送，直接使用盘中/实时 quote 输出当日信号。",
+        f"> Digest status: {digest_status}. {status_summary}",
+        "",
+        f"> 用途：这是自动化仓库中的微盘股 {title_versions} 实时信号推送。STALE 状态仍会发送当前可计算信号，但不能当作完整刷新后的官方实时信号。",
         "",
         "## 调度审计",
         "",
@@ -152,9 +211,11 @@ def main() -> int:
         "",
     ]
     for item in results:
+        status_note = f" - {item['status_note']}" if item["status_note"] else ""
         lines += [
             f"### {item['version']}",
             "",
+            f"- {item['version']} status: {item['status']}{status_note}",
             f"- 退出码：{item['exit_code'] or '未记录'}",
             f"- 原始输出：`{item['path']}`",
             "",
@@ -175,7 +236,7 @@ def main() -> int:
     md.write_text(digest_text, encoding="utf-8")
 
     meta = {
-        "subject": f"微盘股 {title_versions} 实时信号日报 - {date_s}",
+        "subject": f"[{digest_status}] 微盘股 {title_versions} 实时信号日报 - {date_s}",
         "body": digest_text,
         "attachment": None,
     }

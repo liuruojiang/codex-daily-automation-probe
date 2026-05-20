@@ -85,6 +85,56 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertNotIn("见附件", meta["body"])
         self.assertFalse(meta.get("attachment"))
 
+    def test_stale_anchor_is_sent_with_visible_warning(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            result_v20 = tmp_path / "v20.txt"
+            out_dir = tmp_path / "artifacts"
+            result_v20.write_text(
+                "\n".join(
+                    [
+                        "realtime_signal",
+                        "strategy_version: v2.0",
+                        "snapshot_time: 2026-05-20 14:52:59+08:00",
+                        "latest_anchor_trade_date: 2026-05-15",
+                        "quote_trade_date: 2026-05-20",
+                        "current_holding: long_microcap_short_zz1000",
+                        "next_holding: long_microcap_short_zz1000",
+                        "trade_state: hold",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            old_argv = sys.argv
+            try:
+                sys.argv = [
+                    "build_microcap_realtime_digest.py",
+                    "--result",
+                    f"v2.0={result_v20}",
+                    "--out-dir",
+                    str(out_dir),
+                    "--planned",
+                    "11:00 Asia/Shanghai",
+                    "--started",
+                    "2026-05-20 14:50:18 CST",
+                    "--exit-code",
+                    "v2.0=0",
+                ]
+                self.assertEqual(digest.main(), 0)
+            finally:
+                sys.argv = old_argv
+
+            meta = json.loads((out_dir / "metadata.json").read_text(encoding="utf-8"))
+
+        self.assertIn("[STALE]", meta["subject"])
+        self.assertIn("Digest status: STALE", meta["body"])
+        self.assertIn("v2.0 status: STALE", meta["body"])
+        self.assertIn("anchor 2026-05-15 is older than expected 2026-05-19", meta["body"])
+        self.assertIn("current_holding: long_microcap_short_zz1000", meta["body"])
+
 
 if __name__ == "__main__":
     unittest.main()
