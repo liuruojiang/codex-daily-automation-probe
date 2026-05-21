@@ -2500,6 +2500,8 @@ def life_item_type(item: Item) -> str:
         return "签证入境"
     if life_is_hyatt_award_chart_item(item) or life_is_emirates_devaluation_item(item) or life_is_all_americas_sale_item(item):
         return "积分"
+    if life_is_specific_credit_card_item(item):
+        return "积分"
     if life_is_travel_community_item(item):
         if any(k in text for k in ["points", "miles", "award", "hyatt", "marriott", "hilton", "amex", "fhr", "virtuoso"]):
             return "积分"
@@ -2767,6 +2769,29 @@ def life_is_thailand_visa_item(item: Item) -> bool:
     return "thailand" in title and "visa-free" in title
 
 
+def life_is_priority_pass_credit_card_item(item: Item) -> bool:
+    title = item.title.lower()
+    return "priority pass" in title and ("credit card" in title or "credit cards" in title)
+
+
+def life_is_fanatics_amex_credit_card_item(item: Item) -> bool:
+    title = item.title.lower()
+    return "fanatics" in title and "amex membership rewards" in title and "credit card" in title
+
+
+def life_is_hilton_amex_card_offer_item(item: Item) -> bool:
+    title = item.title.lower()
+    return "hilton american express" in title and "card" in title and "bonus points" in title
+
+
+def life_is_specific_credit_card_item(item: Item) -> bool:
+    return (
+        life_is_priority_pass_credit_card_item(item)
+        or life_is_fanatics_amex_credit_card_item(item)
+        or life_is_hilton_amex_card_offer_item(item)
+    )
+
+
 def life_title_zh(item: Item) -> str:
     title = item.title.strip()
     title_lower = item.title.lower()
@@ -2781,6 +2806,12 @@ def life_title_zh(item: Item) -> str:
         return "Accor ALL 美洲最高 40% 折扣和 2x/3x 积分，需在 May 21 前预订"
     if life_is_thailand_visa_item(item):
         return "泰国结束 60 天免签停留：长期旅居需重新核实签证路径"
+    if life_is_priority_pass_credit_card_item(item):
+        return "Priority Pass 机场贵宾室权益信用卡：年费、访客和使用频率要逐项核算"
+    if life_is_fanatics_amex_credit_card_item(item):
+        return "Fanatics 将加入 Amex Membership Rewards 转点伙伴并推出新信用卡"
+    if life_is_hilton_amex_card_offer_item(item):
+        return "Hilton American Express 新卡奖励：最高 175,000 点，需核算年费和真实兑换价值"
     if "maldives" in text and "bora bora" in text:
         return "Maldives 与 Bora Bora 奢华海岛家庭积分旅行比较"
     if "tokyo and kyoto hotels" in title_lower:
@@ -2870,6 +2901,12 @@ def life_heading(item: Item) -> str:
         return "Accor ALL 美洲促销：折扣、倍数积分与预订截止日"
     if life_is_thailand_visa_item(item):
         return "泰国 60 天免签停留变化"
+    if life_is_priority_pass_credit_card_item(item):
+        return "信用卡贵宾室权益：Priority Pass 使用价值"
+    if life_is_fanatics_amex_credit_card_item(item):
+        return "信用卡与转点伙伴：Fanatics 加入 Amex Membership Rewards"
+    if life_is_hilton_amex_card_offer_item(item):
+        return "Hilton American Express 信用卡奖励"
     if "withdrawal" in text and ("3.9%" in text or "safe" in text):
         return "动态提款率与退休收入安全边际"
     if "housing is not an afterthought" in text:
@@ -2921,6 +2958,12 @@ def life_summary(item: Item) -> str:
         return "文章讨论 Accor ALL 美洲促销：最高 40% 折扣、2x/3x points、入住窗口 June 4 至 December 17, 2026，并要求在 May 21 前预订。判断价值时要比较现金价、预付/取消条款、适用酒店和路线匹配度。"
     if life_is_thailand_visa_item(item):
         return "帖子讨论 Thailand 结束 60-day visa-free stay 对数字游民和长期旅居者的影响。重点是重新核实官方入境规则、visa run 风险、保险要求和长住可行性，而不是 Portugal 或 Spain 的目的地建议。"
+    if life_is_priority_pass_credit_card_item(item):
+        return "文章比较提供 Priority Pass airport lounge access 的信用卡，重点不是酒店积分促销，而是年费、访客权益、餐厅额度、注册要求和你实际进入贵宾室的频率。对经常跨洲飞行或在美国机场中转的人，这类权益要按真实使用次数折算，而不是按宣传估值照单全收。"
+    if life_is_fanatics_amex_credit_card_item(item):
+        return "文章讨论 Fanatics 将加入 Amex Membership Rewards 转点伙伴，并计划推出一张新信用卡。核心问题是转点比例、Fanatics 积分的真实使用场景、新卡年费和开卡奖励是否能形成可兑现价值；它不是普通酒店积分促销，也不应被写成住宿折扣。"
+    if life_is_hilton_amex_card_offer_item(item):
+        return "文章讨论 Hilton American Express 信用卡新 offer，最高可获得 175,000 Hilton bonus points。判断价值时要同时看年费、消费门槛、免费房晚券、Hilton 会籍、点数真实兑换价值和你未来是否有 Hilton 住宿路线，而不是把 bonus points 直接归类为酒店促销。"
     if "3.9%" in lower and "withdrawal" in lower:
         return "内容关注退休收入和安全提款率，提到 3.9% 起始安全提款率，以及通过弹性支出提高终身消费能力。对宽裕财务自由而言，重点不是极限省钱，而是把提款规则、风险缓冲和高质量消费结合起来。"
     if "withdrawal" in lower and ("sequence risk" in lower or "flexible spending" in lower or "retirement portfolio" in lower):
@@ -3096,6 +3139,18 @@ def life_summary_points(item: Item, limit: int = 5) -> list[str]:
         specific_title = True
         add("帖子主题是 Thailand ends 60-day visa-free stay；对数字游民和长期旅居者，核心影响是停留天数和入境路径需要重新核实。")
         add("进入路线规划前应查泰国官方入境规则、visa run 风险、旅行保险要求和是否仍适合 1-3 个月慢旅。")
+    if life_is_priority_pass_credit_card_item(item):
+        specific_title = True
+        add("文章主题是提供 Priority Pass airport lounge access 的信用卡；核心比较项是年费、访客权益、餐厅额度、注册要求和贵宾室网络覆盖。")
+        add("这类权益的真实价值取决于你每年实际使用次数、常用机场是否有可用贵宾室、是否带同行者，以及权益是否足以抵消信用卡年费。")
+    if life_is_fanatics_amex_credit_card_item(item):
+        specific_title = True
+        add("文章主题是 Fanatics 将加入 Amex Membership Rewards 转点伙伴，并推出一张新的联名或相关信用卡。")
+        add("判断价值时要看 Amex 到 Fanatics 的转点比例、Fanatics 积分的真实兑换用途、新卡年费、开卡奖励和你是否真的会消费相关商品。")
+    if life_is_hilton_amex_card_offer_item(item):
+        specific_title = True
+        add("文章主题是 Hilton American Express 信用卡新 offer，标题给出的核心数字是最高 175,000 Hilton bonus points。")
+        add("评估重点包括年费、消费门槛、免费房晚券、Hilton 会籍、点数真实兑换价值和未来路线中是否有 Hilton 住宿需求。")
     if "tax residency" in title_lower or "crs jurisdictions" in title_lower:
         specific_title = True
         add("内容聚焦 CRS 参与辖区的税务居民规则；跨境慢旅不能只看入境停留天数，还要看当地国内法如何认定税务居民。")

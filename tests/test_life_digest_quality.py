@@ -471,6 +471,48 @@ class WealthSlowTravelDigestTests(unittest.TestCase):
                 ["Portugal", "Spain"],
                 "签证入境",
             ),
+            (
+                self.item(
+                    "The Points Guy",
+                    "10 credit cards that offer Priority Pass airport lounge access",
+                    (
+                        "These credit cards offer Priority Pass airport lounge access. The article compares annual fees, "
+                        "guest access, restaurant credits, enrollment requirements and whether the lounge benefit offsets the card cost."
+                    ),
+                    "https://thepointsguy.com/credit-cards/priority-pass-cards/",
+                ),
+                ["Priority Pass", "credit card", "lounge"],
+                ["酒店积分促销"],
+                "积分",
+            ),
+            (
+                self.item(
+                    "The Points Guy",
+                    "Fanatics to join Amex Membership Rewards as a transfer partner — and launch a new credit card",
+                    (
+                        "Fanatics will join Amex Membership Rewards as a transfer partner and launch a new credit card. "
+                        "The value depends on transfer ratio, Fanatics redemption utility, card annual fee and whether points are useful."
+                    ),
+                    "https://thepointsguy.com/news/fanatics-amex-transfer-partner-credit-card/",
+                ),
+                ["Fanatics", "Amex Membership Rewards", "credit card"],
+                ["酒店积分促销"],
+                "积分",
+            ),
+            (
+                self.item(
+                    "The Points Guy",
+                    "New Hilton American Express card offers: Earn up to 175,000 bonus points",
+                    (
+                        "New Hilton American Express card offers let applicants earn up to 175,000 bonus points. "
+                        "Travelers should compare annual fees, free night certificates, Hilton status, spending requirements and real redemption value."
+                    ),
+                    "https://thepointsguy.com/credit-cards/hilton-amex-offers/",
+                ),
+                ["Hilton", "American Express", "175,000"],
+                ["酒店积分促销"],
+                "积分",
+            ),
         ]
 
         for case in cases:
