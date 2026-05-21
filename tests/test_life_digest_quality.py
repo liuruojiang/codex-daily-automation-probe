@@ -411,6 +411,84 @@ class WealthSlowTravelDigestTests(unittest.TestCase):
         self.assertNotIn("美国信用卡评测", rendered)
         self.assertNotIn("Safari", rendered)
 
+    def test_life_digest_title_specific_items_are_not_polluted_by_unrelated_sidebar_terms(self) -> None:
+        cases = [
+            (
+                self.item(
+                    "Frequent Miler",
+                    "First impressions of Hyatt award chart changes: A tremor rather than a seismic shift",
+                    (
+                        "Hyatt award chart changes moved some hotels up and some down. The author says the change is "
+                        "a tremor rather than a seismic shift and travelers should compare old and new award categories, "
+                        "cash rates, points per night and cancellation flexibility. Related sidebar mentions transfer bonus."
+                    ),
+                    "https://frequentmiler.com/hyatt-award-chart-tremor/",
+                ),
+                ["Hyatt", "award chart", "category"],
+                ["business class", "transfer bonus"],
+            ),
+            (
+                self.item(
+                    "One Mile at a Time",
+                    "Mixed Bag: Emirates Skywards Devalues Miles Again, With One Silver Lining",
+                    (
+                        "Emirates Skywards increased award costs again, so travelers need more miles for some redemptions. "
+                        "The silver lining is that some partner or booking rules may still leave limited value. "
+                        "Hotel breakfast and suite upgrade text appears in related links."
+                    ),
+                    "https://onemileatatime.com/news/emirates-skywards-devalues-miles/",
+                ),
+                ["Emirates", "Skywards", "devalue"],
+                ["breakfast", "suite upgrade"],
+            ),
+            (
+                self.item(
+                    "LoyaltyLobby",
+                    "EXTENDED: ALL Americas Up To 40% Off Sale + 2X/3X Points For Stays June 4 - December 17, 2026 (Book By May 21)",
+                    (
+                        "Accor ALL extended an Americas sale with up to 40% off and 2x or 3x points for stays from "
+                        "June 4 to December 17, 2026, booked by May 21. Travelers should compare prepaid terms, cash rates, "
+                        "eligible hotels and whether the route actually includes the Americas."
+                    ),
+                    "https://loyaltylobby.com/all-americas-sale/",
+                ),
+                ["ALL", "40%", "May 21"],
+                ["business class", "transfer bonus"],
+                "积分",
+            ),
+            (
+                self.item(
+                    "r/digitalnomad",
+                    "Thailand ends 60-day visa-free stay",
+                    (
+                        "Thailand is ending the 60-day visa-free stay. Digital nomads discuss checking the official "
+                        "entry rules, visa run risk, travel insurance and whether long stays remain practical. "
+                        "Related discussion mentions Portugal and Spain."
+                    ),
+                    "https://www.reddit.com/r/digitalnomad/comments/example/thailand_ends_60day_visafree_stay/",
+                ),
+                ["Thailand", "60", "visa"],
+                ["Portugal", "Spain"],
+                "签证入境",
+            ),
+        ]
+
+        for case in cases:
+            if len(case) == 3:
+                item, expected_terms, forbidden_terms = case
+                expected_type = None
+            else:
+                item, expected_terms, forbidden_terms, expected_type = case
+            lines: list[str] = []
+            dr.append_life_item(lines, item, 1)
+            rendered = "\n".join(lines)
+            for term in expected_terms:
+                self.assertIn(term, rendered)
+            for term in forbidden_terms:
+                self.assertNotIn(term, rendered)
+            if expected_type:
+                self.assertEqual(dr.life_item_type(item), expected_type)
+
     def test_life_digest_drops_weak_template_only_items_instead_of_hard_writing(self) -> None:
         weak_item = self.item(
             "r/fatFIRE",

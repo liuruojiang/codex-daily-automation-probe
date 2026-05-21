@@ -2496,6 +2496,10 @@ def life_item_type(item: Item) -> str:
     text = f"{item.title} {item.summary}".lower()
     title_lower = item.title.lower()
     profile = life_feed_profile(item.source)
+    if life_is_thailand_visa_item(item):
+        return "签证入境"
+    if life_is_hyatt_award_chart_item(item) or life_is_emirates_devaluation_item(item) or life_is_all_americas_sale_item(item):
+        return "积分"
     if life_is_travel_community_item(item):
         if any(k in text for k in ["points", "miles", "award", "hyatt", "marriott", "hilton", "amex", "fhr", "virtuoso"]):
             return "积分"
@@ -2743,10 +2747,40 @@ def life_travel_community_heading(item: Item) -> str:
     return "高端旅行社区案例：住宿、预算与体验取舍"
 
 
+def life_is_hyatt_award_chart_item(item: Item) -> bool:
+    title = item.title.lower()
+    return "hyatt" in title and "award chart" in title
+
+
+def life_is_emirates_devaluation_item(item: Item) -> bool:
+    title = item.title.lower()
+    return "emirates skywards" in title and any(k in title for k in ["devalue", "devalues", "devaluation"])
+
+
+def life_is_all_americas_sale_item(item: Item) -> bool:
+    title = item.title.lower()
+    return "all americas" in title and "40% off" in title
+
+
+def life_is_thailand_visa_item(item: Item) -> bool:
+    title = item.title.lower()
+    return "thailand" in title and "visa-free" in title
+
+
 def life_title_zh(item: Item) -> str:
     title = item.title.strip()
     title_lower = item.title.lower()
     text = f"{item.title} {item.summary}".lower()
+    if "last call" in title_lower and "hyatt award chart" in title_lower:
+        return "Hyatt 奖励表与酒店类别调整 5 月 20 日生效：旧价预订最后窗口"
+    if life_is_hyatt_award_chart_item(item):
+        return "Hyatt 奖励表调整初评：小幅震动而非大地震"
+    if life_is_emirates_devaluation_item(item):
+        return "Emirates Skywards 再次贬值里程，但仍有一个有限亮点"
+    if life_is_all_americas_sale_item(item):
+        return "Accor ALL 美洲最高 40% 折扣和 2x/3x 积分，需在 May 21 前预订"
+    if life_is_thailand_visa_item(item):
+        return "泰国结束 60 天免签停留：长期旅居需重新核实签证路径"
     if "maldives" in text and "bora bora" in text:
         return "Maldives 与 Bora Bora 奢华海岛家庭积分旅行比较"
     if "tokyo and kyoto hotels" in title_lower:
@@ -2828,6 +2862,14 @@ def life_heading(item: Item) -> str:
     text = f"{item.title} {item.summary}".lower()
     if life_is_travel_community_item(item):
         return life_travel_community_heading(item)
+    if life_is_hyatt_award_chart_item(item):
+        return "Hyatt 奖励表调整初评"
+    if life_is_emirates_devaluation_item(item):
+        return "Emirates Skywards 里程再次贬值"
+    if life_is_all_americas_sale_item(item):
+        return "Accor ALL 美洲促销：折扣、倍数积分与预订截止日"
+    if life_is_thailand_visa_item(item):
+        return "泰国 60 天免签停留变化"
     if "withdrawal" in text and ("3.9%" in text or "safe" in text):
         return "动态提款率与退休收入安全边际"
     if "housing is not an afterthought" in text:
@@ -2871,6 +2913,14 @@ def life_heading(item: Item) -> str:
 def life_summary(item: Item) -> str:
     text = clean_text(item.summary, 1200)
     lower = f"{item.title} {text}".lower()
+    if life_is_hyatt_award_chart_item(item):
+        return "文章讨论 Hyatt 奖励房类别和 award chart 调整，核心是比较新旧 category、每晚点数、现金价和取消/改订弹性。它不是转点 bonus 文章，也不应被写成商务舱机会。"
+    if life_is_emirates_devaluation_item(item):
+        return "文章讨论 Emirates Skywards 里程再次贬值，重点是部分兑换需要更多 miles，仍需单独核实哪些航线、舱位或伙伴规则保留价值。它不是酒店早餐或套房升级权益文章。"
+    if life_is_all_americas_sale_item(item):
+        return "文章讨论 Accor ALL 美洲促销：最高 40% 折扣、2x/3x points、入住窗口 June 4 至 December 17, 2026，并要求在 May 21 前预订。判断价值时要比较现金价、预付/取消条款、适用酒店和路线匹配度。"
+    if life_is_thailand_visa_item(item):
+        return "帖子讨论 Thailand 结束 60-day visa-free stay 对数字游民和长期旅居者的影响。重点是重新核实官方入境规则、visa run 风险、保险要求和长住可行性，而不是 Portugal 或 Spain 的目的地建议。"
     if "3.9%" in lower and "withdrawal" in lower:
         return "内容关注退休收入和安全提款率，提到 3.9% 起始安全提款率，以及通过弹性支出提高终身消费能力。对宽裕财务自由而言，重点不是极限省钱，而是把提款规则、风险缓冲和高质量消费结合起来。"
     if "withdrawal" in lower and ("sequence risk" in lower or "flexible spending" in lower or "retirement portfolio" in lower):
@@ -3030,6 +3080,22 @@ def life_summary_points(item: Item, limit: int = 5) -> list[str]:
         points.append(point)
 
     specific_title = False
+    if life_is_hyatt_award_chart_item(item):
+        specific_title = True
+        add("文章主题是 Hyatt award chart / category changes；应比较新旧 category、每晚点数、现金价和取消/改订弹性。")
+        add("作者把这次变化形容为 tremor rather than a seismic shift，说明它更像局部奖励房重新定价，而不是整个 Hyatt 体系的全面贬值。")
+    if life_is_emirates_devaluation_item(item):
+        specific_title = True
+        add("文章主题是 Emirates Skywards miles devaluation；重点是部分兑换需要更多 miles，里程购买力下降。")
+        add("标题里的 silver lining 只表示仍可能有少数规则或兑换场景保留价值，不能抵消整体贬值风险。")
+    if life_is_all_americas_sale_item(item):
+        specific_title = True
+        add("文章主题是 Accor ALL Americas sale：最高 40% off，并提供 2x/3x points。")
+        add("关键时间窗是 stays June 4 - December 17, 2026，book by May 21；需要核实预付/取消条款、适用酒店和路线匹配度。")
+    if life_is_thailand_visa_item(item):
+        specific_title = True
+        add("帖子主题是 Thailand ends 60-day visa-free stay；对数字游民和长期旅居者，核心影响是停留天数和入境路径需要重新核实。")
+        add("进入路线规划前应查泰国官方入境规则、visa run 风险、旅行保险要求和是否仍适合 1-3 个月慢旅。")
     if "tax residency" in title_lower or "crs jurisdictions" in title_lower:
         specific_title = True
         add("内容聚焦 CRS 参与辖区的税务居民规则；跨境慢旅不能只看入境停留天数，还要看当地国内法如何认定税务居民。")
