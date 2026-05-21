@@ -165,6 +165,49 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertEqual([x.url for x in picked], [renderable.url])
 
+    def test_etf_forum_selector_recovers_when_unrendered_same_day_candidates_polluted_history(self) -> None:
+        original_now_bj = dr.now_bj
+        dr.now_bj = lambda: dr.datetime(2026, 5, 21, 7, 0, tzinfo=dr.BJ)
+        renderable = dr.Item(
+            "Reddit r/ETFs",
+            "SCHG vs QQQM for long term?",
+            "https://www.reddit.com/r/ETFs/comments/example/schg_vs_qqqm/",
+            "2026-05-21T01:00:00+00:00",
+            (
+                "The post compares portfolio allocation choices between SCHG and QQQM. "
+                "Replies discuss whether the overlap creates concentrated growth exposure, "
+                "whether the choice belongs in a long-term core portfolio, and how this affects rebalance decisions."
+            ),
+        )
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            history_dir = tmp_path / "digest_history"
+            history_dir.mkdir()
+            (history_dir / "etf.json").write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "sent_date": "2026-05-21",
+                                "source": renderable.source,
+                                "title": renderable.title,
+                                "url": renderable.url,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            os.chdir(tmp_path)
+            try:
+                picked = dr.select_etf_forum_items([renderable], limit=3)
+            finally:
+                os.chdir(original_cwd)
+                dr.now_bj = original_now_bj
+
+        self.assertEqual([x.url for x in picked], [renderable.url])
+
     def test_relevance_score_prefers_research_over_noisy_product_news(self) -> None:
         quant = self.item(
             "Quantpedia",

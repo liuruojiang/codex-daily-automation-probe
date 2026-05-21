@@ -2271,6 +2271,17 @@ def select_etf_forum_items(items: list[Item], limit: int = 6) -> list[Item]:
         out.append(item)
         if len(out) >= limit:
             break
+    if out:
+        return out
+    recovery = [x for x in (enrich_article_item(item) for item in relevant[: max(limit * 3, 18)]) if renderable_forum_item(x)]
+    for item in recovery:
+        key = (canonical_url(item.url), norm_title(item.title))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+        if len(out) >= limit:
+            break
     return out
 
 
