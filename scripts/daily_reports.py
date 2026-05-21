@@ -144,7 +144,12 @@ ETF_CORE_PAGE_MONITORS: tuple[tuple[str, str, str], ...] = (
 )
 
 ETF_ARTICLE_MAX_AGE_HOURS = 36
+ETF_ARTICLE_BACKFILL_MAX_AGE_HOURS = 14 * 24
+ETF_MIN_RESEARCH_ITEMS = 3
 ETF_DEDUPE_DAYS = 45
+ETF_BACKFILL_DEDUPE_DAYS = 7
+ETF_FORUM_BACKFILL_DEDUPE_DAYS = 1
+ETF_MIN_FORUM_ITEMS = 2
 ETF_HISTORY_DAYS = 60
 
 
@@ -1355,6 +1360,14 @@ def etf_chinese_fact(item: Item) -> str:
             "核心主旨不是问组合有没有直接买加密资产，而是检查股票和 ETF 里是否已经隐含了加密情绪、投机参与度和风险偏好传导。"
             "因此配置判断应从二元的“有无 crypto”转向连续的投机情绪暴露评估。"
         )
+    elif "volatility forecasts lead to better portfolios" in lower or (
+        "graph neural networks" in lower and "realized volatility" in lower and "portfolio performance" in lower
+    ):
+        parts.append(
+            "文章检验更好的波动率预测是否真的能转化为更好的组合表现，而不是只停留在预测误差更低。"
+            "样本层面，摘要给出 2015-2025 年 465 只 S&P 500 股票的周度已实现波动率，并把 HAR、LSTM 基准与基于滚动相关性、行业相似度和供应链网络特征的 GraphSAGE 模型比较。"
+            "对 ETF/组合研究的意义在于：这类论文只有在能改善权重、目标波动率缩放或风险预算后的样本外收益回撤时，才有配置价值。"
+        )
     elif "weekly economic snapshot" in lower and "labor market" in lower:
         parts.append(
             "文章的核心是美国劳动力市场仍然强于预期：4 月新增就业 11.5 万，高于市场预期的 4.6 万。"
@@ -1622,6 +1635,10 @@ def translate_detail_terms(sentence: str) -> str:
 def detail_sentence_chinese_summary(sentence: str) -> str:
     lower = sentence.lower()
     nums = ", ".join(re.findall(r"-?\d+(?:\.\d+)?(?:\s*|-)?(?:%|bps|bp|years?|months?|days?|x)", sentence, flags=re.I))
+    if "weekly realized" in lower and "465" in lower and "s&p 500" in lower:
+        return "论文摘要给出明确样本：使用 2015-2025 年 465 只 S&P 500 股票的周度已实现波动率，检验波动率预测能否改善组合表现。"
+    if "graphsage" in lower or ("har" in lower and "lstm" in lower and "baselines" in lower):
+        return "论文把 HAR、LSTM 等基准模型与 GraphSAGE 网络模型比较，网络特征包括滚动相关性、行业相似度和供应链关系。"
     if "backtested results from 1930" in lower:
         return "文章回测从 1930 年开始，并把结果与 50% IEF / 50% LQD 的中期国债加公司债基准组合比较。"
     if "results are net of" in lower and ("transaction" in lower or "cost" in lower):
@@ -1819,6 +1836,7 @@ def etf_title_has_specific_signal(item: Item) -> bool:
             "active etfs win the liquidity race",
             "economic policy uncertainty and aggregate economic activity in india",
             "stock market prediction using node transformer",
+            "volatility forecasts lead to better portfolios",
             "recent quant links from quantocracy",
         ]
     ) or "縮短香港股票現貨市場結算週期" in item.title or "shortening hong kong stock settlement cycle" in text
@@ -1865,6 +1883,12 @@ def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
         add("帖子讨论 taxable account 与 401(k) 的协调，尤其是债券仓位是否优先放在税优账户。")
     if "international allocation" in lower_text or "vxus" in lower_text:
         add("讨论焦点之一是海外股票比例是否偏低，以及是否因为美股近期强势而低配国际资产。")
+    if "schg" in lower_text and "qqqm" in lower_text:
+        add("帖子围绕 SCHG 与 QQQM 的长期持有选择展开，核心是成长风格 ETF 与纳斯达克 100 ETF 的重叠和集中度。")
+    if "overlap" in lower_text and ("concentrated" in lower_text or "growth exposure" in lower_text):
+        add("回复关注两只 ETF 的持仓重叠是否会造成成长股暴露过度集中，而不是简单比较近期收益。")
+    if "long-term core" in lower_text or "long term core" in lower_text or "rebalance" in lower_text:
+        add("讨论还涉及这类 ETF 是否适合作为长期核心仓位，以及未来再平衡时如何处理风格漂移。")
     if "not to chase" in lower_text or "recent us stock outperformance" in lower_text:
         add("回复中的主要提醒是不要因为近期美股跑赢就追涨或放弃既定的全球分散配置。")
     if "100%" in lower_text and "0%" in lower_text and ("stocks/funds" in lower_text or "stocks" in lower_text) and (
@@ -1956,6 +1980,8 @@ def forum_has_specific_summary_evidence(item: Item, points: list[str] | None = N
     if "100%" in text and "0%" in text and ("bonds" in text or "treasuries" in text):
         return len(points) >= 3
     if any(k in text for k in ["vnq", "reit", "real estate", "buying a house", "emergency cash", "401(k)", "401k"]):
+        return len(points) >= 2
+    if "schg" in text and "qqqm" in text:
         return len(points) >= 2
     if "dca" in text and ("treasury" in text or "treasuries" in text):
         return len(points) >= 2
@@ -2185,6 +2211,69 @@ def rank_etf_research_items(items: list[Item], limit: int = 8, require_evidence:
     return out
 
 
+def enrich_ranked_research_items(candidates: list[Item], limit: int) -> list[ScoredResearchItem]:
+    pre_ranked = rank_etf_research_items(candidates, limit=max(limit * 2, 14))
+    enriched = [enrich_article_item(x.item) for x in pre_ranked]
+    return rank_etf_research_items(enriched, limit=limit, require_evidence=True)
+
+
+def combine_scored_research_items(
+    primary: list[ScoredResearchItem], backfill: list[ScoredResearchItem], limit: int
+) -> list[ScoredResearchItem]:
+    out: list[ScoredResearchItem] = []
+    seen: set[tuple[str, str]] = set()
+    for scored in [*primary, *backfill]:
+        key = (canonical_url(scored.item.url), norm_title(scored.item.title))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(scored)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def select_etf_research_items(items: list[Item], limit: int = 9) -> list[ScoredResearchItem]:
+    relevant = dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)])
+    recent_pool = filter_recent_published(relevant, ETF_ARTICLE_MAX_AGE_HOURS)
+    primary_candidates = filter_previously_sent("etf", recent_pool, days=ETF_DEDUPE_DAYS)
+    primary = enrich_ranked_research_items(primary_candidates, limit=limit)
+    if len(primary) >= ETF_MIN_RESEARCH_ITEMS:
+        return primary
+
+    backfill_pool = filter_recent_published(relevant, ETF_ARTICLE_BACKFILL_MAX_AGE_HOURS)
+    backfill_candidates = filter_previously_sent("etf", backfill_pool, days=ETF_BACKFILL_DEDUPE_DAYS)
+    backfill = enrich_ranked_research_items(backfill_candidates, limit=limit)
+    return combine_scored_research_items(primary, backfill, limit=limit)
+
+
+def renderable_forum_item(item: Item) -> bool:
+    points = forum_thread_summary_points(item)
+    return forum_has_specific_summary_evidence(item, points)
+
+
+def select_etf_forum_items(items: list[Item], limit: int = 6) -> list[Item]:
+    relevant = dedupe_items([x for x in sort_recent(items) if etf_forum_relevant(x)])
+    primary_raw = filter_previously_sent("etf", relevant, days=ETF_DEDUPE_DAYS)[: max(limit * 2, 12)]
+    primary = [x for x in (enrich_article_item(item) for item in primary_raw) if renderable_forum_item(x)]
+    if len(primary) >= ETF_MIN_FORUM_ITEMS:
+        return primary[:limit]
+
+    backfill_raw = filter_previously_sent("etf", relevant, days=ETF_FORUM_BACKFILL_DEDUPE_DAYS)[: max(limit * 3, 18)]
+    backfill = [x for x in (enrich_article_item(item) for item in backfill_raw) if renderable_forum_item(x)]
+    out: list[Item] = []
+    seen: set[tuple[str, str]] = set()
+    for item in [*primary, *backfill]:
+        key = (canonical_url(item.url), norm_title(item.title))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+        if len(out) >= limit:
+            break
+    return out
+
+
 def etf_hypothesis_for_item(scored: ScoredResearchItem) -> str:
     title = etf_public_heading(scored.item.title, scored.item.summary)
     text = f"{scored.item.title} {scored.item.summary}".lower()
@@ -2316,7 +2405,7 @@ def append_etf_research_sections(
     strategy_rows: list[dict[str, object]] | None = None,
     mover_rows: list[dict[str, object]] | None = None,
     data_date_s: str = "",
-) -> None:
+) -> int:
     market_rows = [*(strategy_rows or []), *(mover_rows or [])]
     lines += ["", "---", "", "## 市场 regime 是否变化", ""]
     lines.extend(etf_regime_observation(market_rows, data_date_s))
@@ -2371,6 +2460,8 @@ def append_etf_research_sections(
         "- 核心中低频页面源：AQR、Research Affiliates、BlackRock、Vanguard、J.P. Morgan、GMO 等不强行 RSS 化；有新内容才写入正文。",
         f"- 本次进入研究框架的文章数量：{len(scored_items)}；论坛补充入正文数量：{visible_forum_count}。",
     ]
+
+    return visible_forum_count
 
 
 def write_meta(out_dir: Path, subject: str, body: str, attachment: Path) -> None:
@@ -3845,20 +3936,7 @@ def build_etf(out_dir: Path) -> None:
     for feed in ETF_RESEARCH_FEEDS:
         items.extend(parse_feed(feed.source, feed.url, limit=feed.limit))
         time.sleep(0.1)
-    research_pool = filter_recent_published(
-        dedupe_items([x for x in sort_recent(items) if etf_research_relevant(x)]),
-        ETF_ARTICLE_MAX_AGE_HOURS,
-    )
-    research_candidates = filter_previously_sent(
-        "etf",
-        research_pool,
-        days=ETF_DEDUPE_DAYS,
-    )
-    scored_picked = rank_etf_research_items(
-        [enrich_article_item(x.item) for x in rank_etf_research_items(research_candidates, limit=14)],
-        limit=9,
-        require_evidence=True,
-    )
+    scored_picked = select_etf_research_items(items, limit=9)
     picked = [x.item for x in scored_picked]
 
     forum_feeds = {
@@ -3871,12 +3949,7 @@ def build_etf(out_dir: Path) -> None:
     for source, url in forum_feeds.items():
         forum_items.extend(parse_feed(source, url, limit=8))
         time.sleep(0.2)
-    forum_picked_raw = filter_previously_sent(
-        "etf",
-        dedupe_items([x for x in sort_recent(forum_items) if etf_forum_relevant(x)]),
-        days=ETF_DEDUPE_DAYS,
-    )[:6]
-    forum_picked = [enrich_article_item(x) for x in forum_picked_raw]
+    forum_picked = select_etf_forum_items(forum_items, limit=6)
 
     date_s = report_date()
     data_dates = sorted({str(r["date"]) for r in strategy_rows + mover_rows})
@@ -3937,17 +4010,18 @@ def build_etf(out_dir: Path) -> None:
             lines += ["", f"### {label}跌幅前 10", ""]
             append_mover_table(lines, dedupe_by_category(period_neg, reverse=False))
 
-    append_etf_research_sections(lines, scored_picked, forum_picked, strategy_rows, mover_rows, data_date_s)
+    forum_rendered_count = append_etf_research_sections(lines, scored_picked, forum_picked, strategy_rows, mover_rows, data_date_s)
     update_digest_history("etf", [*picked, *forum_picked], days=ETF_HISTORY_DAYS)
     lines += [
         "## 去重与补充审计",
         "",
         f"- 去重窗口：最近 {ETF_DEDUPE_DAYS} 天；按 canonical URL 和标题去重，历史记录写入 `digest_history/etf.json`。",
-        f"- RSS/研究文章新鲜度：只使用最近 {ETF_ARTICLE_MAX_AGE_HOURS} 小时内发布的条目；不足 3 篇时不再放宽到旧文。",
+        f"- RSS/研究文章新鲜度：优先使用最近 {ETF_ARTICLE_MAX_AGE_HOURS} 小时内发布的条目；若高证据文章不足 {ETF_MIN_RESEARCH_ITEMS} 篇，按严格证据门槛回填近 {ETF_ARTICLE_BACKFILL_MAX_AGE_HOURS // 24} 天文章。",
         f"- RSS/研究文章数量：{len(scored_picked)}",
-        f"- 论坛/社区 idea mining 数量：{len(forum_picked)}",
+        f"- 论坛/社区 idea mining 数量：{forum_rendered_count}",
         "",
     ]
+    lines.append(f"- 回填去重：文章回填排除最近 {ETF_BACKFILL_DEDUPE_DAYS} 天已推送内容；论坛回填排除最近 {ETF_FORUM_BACKFILL_DEDUPE_DAYS} 天已推送内容，并只统计真正进入正文的帖子。")
     lines += audit_lines("08:00 Asia/Shanghai", started)
     md.write_text("\n".join(lines), encoding="utf-8")
 

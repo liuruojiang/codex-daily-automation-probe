@@ -73,6 +73,98 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertEqual([item.title for item in filtered], ["Fresh item"])
 
+    def test_etf_research_selector_backfills_high_evidence_items_when_primary_is_empty(self) -> None:
+        original_now_bj = dr.now_bj
+        dr.now_bj = lambda: dr.datetime(2026, 5, 21, 7, 0, tzinfo=dr.BJ)
+        fresh_low_evidence = dr.Item(
+            "ETF Trends",
+            "Fresh ETF market color",
+            "https://example.com/fresh-color",
+            "2026-05-20T18:00:00+00:00",
+            "Subscribe for more market updates. Related ETFs moved today.",
+        )
+        older_high_evidence = dr.Item(
+            "Quantpedia",
+            "Commodity Futures Returns Since 1871",
+            "https://quantpedia.com/commodity-futures-returns-since-1871/",
+            "2026-05-16T12:00:00+00:00",
+            (
+                "The article reports an average annual risk premium for commodity futures "
+                "relative to the risk-free rate of 5.4%, a real return premium above 6%, "
+                "and compares it with equities earning about 6.8% over cash."
+            ),
+        )
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            os.chdir(tmp)
+            try:
+                picked = dr.select_etf_research_items([fresh_low_evidence, older_high_evidence], limit=3)
+            finally:
+                os.chdir(original_cwd)
+                dr.now_bj = original_now_bj
+
+        self.assertEqual([x.item.url for x in picked], [older_high_evidence.url])
+
+    def test_arxiv_volatility_forecast_abstract_counts_as_specific_evidence(self) -> None:
+        item = dr.Item(
+            "arXiv q-fin.PM",
+            "Do Better Volatility Forecasts Lead to Better Portfolios? Evidence from Graph Neural Networks",
+            "https://arxiv.org/abs/2605.19278",
+            "2026-05-20T12:00:00+00:00",
+            (
+                "This paper tests whether graph neural networks improve realized volatility forecasts "
+                "and whether those forecasts improve portfolio performance. Using weekly realized "
+                "volatility for 465 S&P 500 equities from 2015-2025, HAR and LSTM baselines are "
+                "compared against GraphSAGE models built on rolling correlation, sector similarity, "
+                "and supply-chain network features."
+            ),
+        )
+
+        self.assertTrue(dr.etf_has_enough_summary_evidence(item))
+
+    def test_etf_forum_selector_backfills_renderable_threads_with_short_dedupe(self) -> None:
+        original_now_bj = dr.now_bj
+        dr.now_bj = lambda: dr.datetime(2026, 5, 21, 7, 0, tzinfo=dr.BJ)
+        renderable = dr.Item(
+            "Reddit r/ETFs",
+            "SCHG vs QQQM for long term?",
+            "https://www.reddit.com/r/ETFs/comments/example/schg_vs_qqqm/",
+            "2026-05-19T12:00:00+00:00",
+            (
+                "The post compares portfolio allocation choices between SCHG and QQQM. "
+                "Replies discuss whether the overlap creates concentrated growth exposure, "
+                "whether the choice belongs in a long-term core portfolio, and how this affects rebalance decisions."
+            ),
+        )
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            history_dir = tmp_path / "digest_history"
+            history_dir.mkdir()
+            (history_dir / "etf.json").write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "sent_date": "2026-05-19",
+                                "source": renderable.source,
+                                "title": renderable.title,
+                                "url": renderable.url,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            os.chdir(tmp_path)
+            try:
+                picked = dr.select_etf_forum_items([renderable], limit=3)
+            finally:
+                os.chdir(original_cwd)
+                dr.now_bj = original_now_bj
+
+        self.assertEqual([x.url for x in picked], [renderable.url])
+
     def test_relevance_score_prefers_research_over_noisy_product_news(self) -> None:
         quant = self.item(
             "Quantpedia",
@@ -571,6 +663,24 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertNotIn("ETFs to invest in", rendered)
         self.assertIn("已从正文剔除", rendered)
+
+
+    def test_forum_renderer_returns_actual_visible_count(self) -> None:
+        item = self.item(
+            "Reddit r/ETFs",
+            "SCHG vs QQQM for long term?",
+            (
+                "The post compares portfolio allocation choices between SCHG and QQQM. "
+                "Replies discuss whether the overlap creates concentrated growth exposure, "
+                "whether the choice belongs in a long-term core portfolio, and how this affects rebalance decisions."
+            ),
+            "https://www.reddit.com/r/ETFs/comments/example/schg_vs_qqqm/",
+        )
+        lines: list[str] = []
+
+        visible_count = dr.append_etf_research_sections(lines, [], [item], [], [], "2026-05-18")
+
+        self.assertEqual(visible_count, 1)
 
 
 if __name__ == "__main__":
