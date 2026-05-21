@@ -2498,6 +2498,8 @@ def life_item_type(item: Item) -> str:
     profile = life_feed_profile(item.source)
     if life_is_thailand_visa_item(item):
         return "签证入境"
+    if life_is_world_hyatt_award_cost_increase_item(item):
+        return "积分"
     if life_is_hyatt_award_chart_item(item) or life_is_emirates_devaluation_item(item) or life_is_all_americas_sale_item(item):
         return "积分"
     if life_is_specific_credit_card_item(item):
@@ -2751,7 +2753,12 @@ def life_travel_community_heading(item: Item) -> str:
 
 def life_is_hyatt_award_chart_item(item: Item) -> bool:
     title = item.title.lower()
-    return "hyatt" in title and "award chart" in title
+    return "hyatt" in title and "award chart" in title and not life_is_world_hyatt_award_cost_increase_item(item)
+
+
+def life_is_world_hyatt_award_cost_increase_item(item: Item) -> bool:
+    title = item.title.lower()
+    return "world of hyatt updates award chart" in title and "67%" in title
 
 
 def life_is_emirates_devaluation_item(item: Item) -> bool:
@@ -2798,6 +2805,8 @@ def life_title_zh(item: Item) -> str:
     text = f"{item.title} {item.summary}".lower()
     if "last call" in title_lower and "hyatt award chart" in title_lower:
         return "Hyatt 奖励表与酒店类别调整 5 月 20 日生效：旧价预订最后窗口"
+    if life_is_world_hyatt_award_cost_increase_item(item):
+        return "World of Hyatt 奖励表已更新：部分兑换成本最高上调 67%"
     if life_is_hyatt_award_chart_item(item):
         return "Hyatt 奖励表调整初评：小幅震动而非大地震"
     if life_is_emirates_devaluation_item(item):
@@ -2893,6 +2902,8 @@ def life_heading(item: Item) -> str:
     text = f"{item.title} {item.summary}".lower()
     if life_is_travel_community_item(item):
         return life_travel_community_heading(item)
+    if life_is_world_hyatt_award_cost_increase_item(item):
+        return "World of Hyatt 奖励表上调：最高 67% 成本增加"
     if life_is_hyatt_award_chart_item(item):
         return "Hyatt 奖励表调整初评"
     if life_is_emirates_devaluation_item(item):
@@ -2950,6 +2961,8 @@ def life_heading(item: Item) -> str:
 def life_summary(item: Item) -> str:
     text = clean_text(item.summary, 1200)
     lower = f"{item.title} {text}".lower()
+    if life_is_world_hyatt_award_cost_increase_item(item):
+        return "文章讨论 World of Hyatt 奖励表正式更新，标题明确给出的核心变化是部分兑换成本最高上调 67%。这属于酒店积分体系重新定价或贬值风险，重点应放在具体酒店、日期、新旧点数差异、现金价、取消/改订规则，以及是否需要提前锁定已有住宿计划。"
     if life_is_hyatt_award_chart_item(item):
         return "文章讨论 Hyatt 奖励房类别和 award chart 调整，核心是比较新旧 category、每晚点数、现金价和取消/改订弹性。它不是转点 bonus 文章，也不应被写成商务舱机会。"
     if life_is_emirates_devaluation_item(item):
@@ -3123,6 +3136,10 @@ def life_summary_points(item: Item, limit: int = 5) -> list[str]:
         points.append(point)
 
     specific_title = False
+    if life_is_world_hyatt_award_cost_increase_item(item):
+        specific_title = True
+        add("文章主题是 World of Hyatt 奖励表正式更新；标题给出的关键数字是部分兑换成本最高上调 67%。")
+        add("对酒店积分策略的影响是：若已有 Hyatt 住宿计划，需要逐家核实具体酒店、日期、新旧点数、现金价、取消和改订规则。")
     if life_is_hyatt_award_chart_item(item):
         specific_title = True
         add("文章主题是 Hyatt award chart / category changes；应比较新旧 category、每晚点数、现金价和取消/改订弹性。")

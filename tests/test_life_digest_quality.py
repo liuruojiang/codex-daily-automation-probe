@@ -430,6 +430,20 @@ class WealthSlowTravelDigestTests(unittest.TestCase):
             (
                 self.item(
                     "One Mile at a Time",
+                    "Now Live: World Of Hyatt Updates Award Chart, Costs Increase By Up To 67%",
+                    (
+                        "World of Hyatt has updated its award chart and some redemption costs increase by up to 67%. "
+                        "Travelers should compare affected hotels, dates, cash rates, old points, new points and cancellation rules."
+                    ),
+                    "https://onemileatatime.com/news/world-of-hyatt-updates-award-chart-costs-increase/",
+                ),
+                ["World of Hyatt", "67%", "新旧点数"],
+                ["Tremor", "小幅震动"],
+                "积分",
+            ),
+            (
+                self.item(
+                    "One Mile at a Time",
                     "Mixed Bag: Emirates Skywards Devalues Miles Again, With One Silver Lining",
                     (
                         "Emirates Skywards increased award costs again, so travelers need more miles for some redemptions. "
