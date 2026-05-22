@@ -17,6 +17,8 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('"akshare==1.18.46"', text)
         self.assertIn("scripts/realtime_state_bundle.py refresh --root .", text)
         self.assertIn("--max-workers 2", text)
+        self.assertIn("microcap_top100_mom16_biweekly_live_v2_0.py --max-workers 2", text)
+        self.assertIn('"信号"', text)
         self.assertIn("name: Run v2.0 realtime signal", text)
         self.assertIn("name: Run v2.3 realtime signal", text)
         self.assertLess(
