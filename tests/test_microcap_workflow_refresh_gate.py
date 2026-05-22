@@ -13,6 +13,8 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         text = WORKFLOW.read_text(encoding="utf-8")
 
         self.assertIn("name: Refresh Top100 realtime state", text)
+        self.assertIn('"pandas<3"', text)
+        self.assertIn('"akshare==1.18.46"', text)
         self.assertIn("scripts/realtime_state_bundle.py refresh --root .", text)
         self.assertIn("name: Run v2.0 realtime signal", text)
         self.assertIn("name: Run v2.3 realtime signal", text)
