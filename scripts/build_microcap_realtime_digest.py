@@ -57,6 +57,14 @@ def classify_signal_output(output: str, exit_code: str) -> tuple[str, str]:
     code = exit_code.strip().lower()
     if code and code not in {"0", "none", "unknown"}:
         return "FAILED", f"script exit code is {exit_code}"
+    if "preflight_failed" in output:
+        reason = extract_value(output, "reason")
+        if reason:
+            return "FAILED", reason
+        refresh_code = extract_value(output, "refresh_exit_code")
+        if refresh_code:
+            return "FAILED", f"state refresh failed with exit code {refresh_code}"
+        return "FAILED", "state refresh failed before realtime signal ran"
     if "realtime_signal" not in output:
         return "FAILED", "realtime_signal marker is missing"
 

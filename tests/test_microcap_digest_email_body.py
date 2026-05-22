@@ -135,6 +135,23 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertIn("anchor 2026-05-15 is older than expected 2026-05-19", meta["body"])
         self.assertIn("current_holding: long_microcap_short_zz1000", meta["body"])
 
+    def test_preflight_refresh_failure_uses_refresh_reason(self) -> None:
+        status, note = digest.classify_signal_output(
+            "\n".join(
+                [
+                    "preflight_failed",
+                    "refresh_exit_code: 1",
+                    "reason: Top100 realtime state refresh failed, so the v2_0 realtime signal was not run.",
+                    "refresh_log: microcap/realtime_state_refresh_result.txt",
+                ]
+            ),
+            "unknown",
+        )
+
+        self.assertEqual(status, "FAILED")
+        self.assertIn("state refresh failed", note)
+        self.assertNotIn("marker is missing", note)
+
 
 if __name__ == "__main__":
     unittest.main()

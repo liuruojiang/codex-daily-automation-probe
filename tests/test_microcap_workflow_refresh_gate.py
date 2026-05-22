@@ -20,11 +20,16 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             text.index("name: Refresh Top100 realtime state"),
             text.index("name: Run v2.0 realtime signal"),
         )
-        self.assertIn("if: steps.refresh_state.outputs.exit_code == '0'", text)
+        self.assertNotIn("if: steps.refresh_state.outputs.exit_code == '0'", text)
+        self.assertEqual(text.count("if: always()"), 6)
         self.assertIn("name: Record refresh failure for digest", text)
         self.assertEqual(text.count('TOP100_REALTIME_REQUIRE_STATE: "1"'), 2)
         self.assertEqual(text.count("timeout --foreground 8m python -u microcap_top100"), 2)
         self.assertNotIn("timeout --foreground 30m python -u microcap_top100", text)
+        self.assertIn(
+            "if: steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0'",
+            text,
+        )
 
 
 if __name__ == "__main__":

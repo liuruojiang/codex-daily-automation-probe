@@ -76,7 +76,7 @@ jobs:
           done
 
       - name: Run v2.0 realtime signal
-        if: steps.refresh_state.outputs.exit_code == '0'
+        if: always()
         id: signals_v20
         working-directory: microcap
         shell: bash
@@ -91,7 +91,7 @@ jobs:
           exit 0
 
       - name: Run v2.3 realtime signal
-        if: steps.refresh_state.outputs.exit_code == '0'
+        if: always()
         id: signals_v23
         working-directory: microcap
         shell: bash
@@ -173,5 +173,5 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Fail job when realtime signal script failed
-        if: steps.refresh_state.outputs.exit_code != '0' || steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0'
+        if: steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0'
         run: exit 1
