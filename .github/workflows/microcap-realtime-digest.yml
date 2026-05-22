@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          timeout --foreground 60m python -u scripts/realtime_state_bundle.py refresh --root . --max-workers 8 2>&1 | tee realtime_state_refresh_result.txt
+          timeout --foreground 60m python -u scripts/realtime_state_bundle.py refresh --root . --max-workers 2 2>&1 | tee realtime_state_refresh_result.txt
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
           echo "REFRESH_STATE_EXIT_CODE=${status}" >> "${GITHUB_ENV}"
