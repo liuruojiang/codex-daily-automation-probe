@@ -20,6 +20,21 @@ class EtfDigestQualityTests(unittest.TestCase):
     def item(self, source: str, title: str, summary: str = "", url: str = "https://example.com/x") -> dr.Item:
         return dr.Item(source=source, title=title, url=url, published="2026-05-15T12:00:00+00:00", summary=summary)
 
+    def test_h20955_uses_csindex_total_return_series(self) -> None:
+        asset = next(asset for asset in dr.A_STRATEGY_ASSETS if asset.code == "H20955")
+        self.assertEqual(asset.source, "csindex")
+        self.assertEqual(asset.symbol, "H20955")
+        self.assertNotIn("代理", asset.description)
+
+        original = dr.csindex_daily_rows
+        try:
+            dr.csindex_daily_rows = lambda symbol, lmt=80: [("2026-05-21", 22658.01), ("2026-05-22", 22562.82)]
+            date_s, change = dr.asset_change(asset)
+            self.assertEqual(date_s, "2026-05-22")
+            self.assertAlmostEqual(change, -0.420116329721798)
+        finally:
+            dr.csindex_daily_rows = original
+
     def test_etf_dedupe_keeps_recently_sent_items_out_beyond_one_day(self) -> None:
         old_item = self.item(
             "Quantpedia",

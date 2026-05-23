@@ -161,8 +161,11 @@ def report_date() -> str:
     return now_bj().date().isoformat()
 
 
-def fetch_bytes(url: str, timeout: int = 30) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
+def fetch_bytes(url: str, timeout: int = 30, headers: dict[str, str] | None = None) -> bytes:
+    req_headers = {"User-Agent": UA}
+    if headers:
+        req_headers.update(headers)
+    req = urllib.request.Request(url, headers=req_headers)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return resp.read()
 
@@ -3883,6 +3886,38 @@ def eastmoney_daily_rows(secid: str, lmt: int = 80) -> list[tuple[str, float]]:
     return rows
 
 
+def csindex_daily_rows(index_code: str, lmt: int = 80) -> list[tuple[str, float]]:
+    end_dt = now_bj().date() + timedelta(days=3)
+    start_dt = end_dt - timedelta(days=max(lmt * 3, 30))
+    url = (
+        "https://www.csindex.com.cn/csindex-home/perf/index-perf"
+        f"?indexCode={urllib.parse.quote(index_code, safe='')}"
+        f"&startDate={start_dt:%Y%m%d}&endDate={end_dt:%Y%m%d}"
+    )
+    headers = {
+        "Host": "www.csindex.com.cn",
+        "Referer": "https://www.csindex.com.cn/",
+        "User-Agent": UA,
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
+    try:
+        payload = json.loads(fetch_bytes(url, timeout=20, headers=headers).decode("utf-8"))
+        data = payload.get("data") or []
+    except Exception:
+        return []
+    rows: list[tuple[str, float]] = []
+    for item in data:
+        try:
+            raw_date = str(item["tradeDate"])
+            close = float(item["close"])
+            date_s = f"{raw_date[0:4]}-{raw_date[4:6]}-{raw_date[6:8]}"
+        except (KeyError, TypeError, ValueError):
+            continue
+        rows.append((date_s, close))
+    return rows[-lmt:]
+
+
 def change_from_rows(rows: list[tuple[str, float]], sessions: int = 1) -> tuple[str, float] | None:
     if len(rows) <= sessions:
         return None
@@ -3898,6 +3933,8 @@ def asset_change(asset: MarketAsset, sessions: int = 1) -> tuple[str, float] | N
         rows = yahoo_daily_rows(asset.symbol, "6mo" if sessions > 5 else "1mo")
     elif asset.source == "eastmoney":
         rows = eastmoney_daily_rows(asset.symbol, max(80, sessions + 10))
+    elif asset.source == "csindex":
+        rows = csindex_daily_rows(asset.symbol, max(80, sessions + 10))
     else:
         return None
     return change_from_rows(rows, sessions=sessions)
@@ -3956,7 +3993,7 @@ def dedupe_by_category(rows: list[dict[str, object]], reverse: bool) -> list[dic
 
 
 A_STRATEGY_ASSETS = [
-    MarketAsset("H20955", "中证红利低波100全收益", "eastmoney", "1.000827", "A策略使用的红利低波权益指数；日涨跌用中证红利低波动100价格指数代理。", "A策略"),
+    MarketAsset("H20955", "中证红利低波100全收益", "csindex", "H20955", "A策略使用的红利低波权益全收益指数；日涨跌取中证指数官网 H20955。", "A策略"),
     MarketAsset("399606", "创业板指数", "eastmoney", "0.399606", "A策略权益池里的创业板宽基指数。", "A策略"),
     MarketAsset("H00016", "上证50全收益", "eastmoney", "1.000016", "A策略使用的大盘蓝筹指数；日涨跌用上证50价格指数代理。", "A策略"),
     MarketAsset("H00852", "中证1000全收益", "eastmoney", "1.000852", "A策略使用的小盘成长宽基指数；日涨跌用中证1000价格指数代理。", "A策略"),
