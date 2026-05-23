@@ -22,7 +22,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 tmp_path = Path(tmp)
                 result_v20 = tmp_path / "v20.txt"
                 result_v23 = tmp_path / "v23.txt"
-                result_v24 = tmp_path / "v24.txt"
+                result_v25 = tmp_path / "v25.txt"
                 out_dir = tmp_path / "artifacts"
                 result_v20.write_text(
                     "\n".join(
@@ -49,11 +49,11 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                     ),
                     encoding="utf-8",
                 )
-                result_v24.write_text(
+                result_v25.write_text(
                     "\n".join(
                         [
                             "realtime_signal",
-                            "strategy_version: v2.4",
+                            "strategy_version: v2.5",
                             "snapshot_time: 2026-05-19 15:36:11+08:00",
                             "current_holding: long_microcap_short_zz1000",
                             "next_holding: long_microcap_short_zz1000",
@@ -71,7 +71,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                         "--result",
                         f"v2.3={result_v23}",
                         "--result",
-                        f"v2.4={result_v24}",
+                        f"v2.5={result_v25}",
                         "--out-dir",
                         str(out_dir),
                         "--planned",
@@ -83,7 +83,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                         "--exit-code",
                         "v2.3=0",
                         "--exit-code",
-                        "v2.4=0",
+                        "v2.5=0",
                     ]
                     self.assertEqual(digest.main(), 0)
                 finally:
@@ -96,7 +96,8 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertIn("## ", meta["body"])
         self.assertIn("strategy_version: v2.0", meta["body"])
         self.assertIn("strategy_version: v2.3", meta["body"])
-        self.assertIn("strategy_version: v2.4", meta["body"])
+        self.assertIn("strategy_version: v2.5", meta["body"])
+        self.assertNotIn("strategy_version: v2.4", meta["body"])
         self.assertIn("microcap_mom: +12.3400%", v20_summary)
         self.assertIn("hedge_mom: +4.5600%", v20_summary)
         self.assertIn("momentum_gap: +7.7800%", v20_summary)

@@ -21,11 +21,12 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('"信号"', text)
         self.assertIn("name: Run v2.0 realtime signal", text)
         self.assertIn("name: Run v2.3 realtime signal", text)
-        self.assertIn("name: Run v2.4 realtime signal", text)
-        self.assertIn("microcap_top100_mom16_biweekly_live_v2_4.py", text)
-        self.assertIn("--result v2.4=microcap/realtime_signal_v2_4_result.txt", text)
-        self.assertIn("--exit-code \"v2.4=${SIGNAL_V2_4_EXIT_CODE:-unknown}\"", text)
-        self.assertIn("microcap/realtime_signal_v2_4_result.txt", text)
+        self.assertIn("name: Run v2.5 realtime signal", text)
+        self.assertIn("microcap_top100_mom16_biweekly_live_v2_5.py", text)
+        self.assertIn("--result v2.5=microcap/realtime_signal_v2_5_result.txt", text)
+        self.assertIn("--exit-code \"v2.5=${SIGNAL_V2_5_EXIT_CODE:-unknown}\"", text)
+        self.assertIn("microcap/realtime_signal_v2_5_result.txt", text)
+        self.assertNotIn("v2.4", text)
         self.assertLess(
             text.index("name: Refresh Top100 realtime state"),
             text.index("name: Run v2.0 realtime signal"),
@@ -33,12 +34,12 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertNotIn("if: steps.refresh_state.outputs.exit_code == '0'", text)
         self.assertEqual(text.count("if: always()"), 7)
         self.assertIn("name: Record refresh failure for digest", text)
-        self.assertIn("for version in v2_0 v2_3 v2_4", text)
+        self.assertIn("for version in v2_0 v2_3 v2_5", text)
         self.assertEqual(text.count('TOP100_REALTIME_REQUIRE_STATE: "1"'), 3)
         self.assertEqual(text.count("timeout --foreground 8m python -u microcap_top100"), 3)
         self.assertNotIn("timeout --foreground 30m python -u microcap_top100", text)
         self.assertIn(
-            "if: steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0' || steps.signals_v24.outputs.exit_code != '0'",
+            "if: steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0' || steps.signals_v25.outputs.exit_code != '0'",
             text,
         )
 
