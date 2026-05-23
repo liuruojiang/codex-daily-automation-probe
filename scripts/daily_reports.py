@@ -244,7 +244,7 @@ def reddit_listing_url(subreddit: str, sort: str, limit: int = 12) -> str:
     query = {"limit": str(limit)}
     if sort == "top":
         query["t"] = "week"
-    return f"https://www.reddit.com/r/{urllib.parse.quote(subreddit)}/{sort}.json?{urllib.parse.urlencode(query)}"
+    return f"https://api.reddit.com/r/{urllib.parse.quote(subreddit)}/{sort}?{urllib.parse.urlencode(query)}"
 
 
 def reddit_listing_items_from_payload(payload: object, default_subreddit: str = "") -> list[Item]:
@@ -338,18 +338,26 @@ def reddit_json_url(url: str) -> str:
     parts = urllib.parse.urlsplit(url)
     path = parts.path.rstrip("/")
     if path.endswith(".json"):
-        return url
-    return urllib.parse.urlunsplit((parts.scheme, parts.netloc, path + ".json", "", ""))
+        path = path[:-5]
+    return urllib.parse.urlunsplit(("https", "api.reddit.com", path, "", ""))
 
 
 def reddit_thread_payload(url: str) -> object | None:
     host = urllib.parse.urlsplit(url).netloc.lower()
     if "reddit.com" not in host:
         return None
-    try:
-        return json.loads(fetch_bytes(reddit_json_url(url), timeout=20).decode("utf-8", "ignore"))
-    except Exception:
-        return None
+    candidates = [reddit_json_url(url)]
+    parts = urllib.parse.urlsplit(url)
+    legacy_path = parts.path.rstrip("/")
+    if not legacy_path.endswith(".json"):
+        legacy_path += ".json"
+    candidates.append(urllib.parse.urlunsplit((parts.scheme or "https", parts.netloc or "www.reddit.com", legacy_path, "", "")))
+    for candidate in dict.fromkeys(candidates):
+        try:
+            return json.loads(fetch_bytes(candidate, timeout=20).decode("utf-8", "ignore"))
+        except Exception:
+            continue
+    return None
 
 
 def reddit_thread_metadata(url: str) -> tuple[int, int] | None:
