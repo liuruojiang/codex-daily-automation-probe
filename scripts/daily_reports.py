@@ -145,11 +145,12 @@ ETF_CORE_PAGE_MONITORS: tuple[tuple[str, str, str], ...] = (
 
 ETF_ARTICLE_MAX_AGE_HOURS = 36
 ETF_ARTICLE_BACKFILL_MAX_AGE_HOURS = 14 * 24
-ETF_MIN_RESEARCH_ITEMS = 3
+ETF_MIN_RESEARCH_ITEMS = 5
 ETF_DEDUPE_DAYS = 45
 ETF_BACKFILL_DEDUPE_DAYS = 7
 ETF_FORUM_BACKFILL_DEDUPE_DAYS = 1
-ETF_MIN_FORUM_ITEMS = 2
+ETF_MIN_FORUM_ITEMS = 5
+ETF_FORUM_DISPLAY_LIMIT = 8
 ETF_HISTORY_DAYS = 60
 
 
@@ -239,6 +240,64 @@ def parse_feed(source: str, url: str, limit: int = 12) -> list[Item]:
     return out
 
 
+def reddit_listing_url(subreddit: str, sort: str, limit: int = 12) -> str:
+    query = {"limit": str(limit)}
+    if sort == "top":
+        query["t"] = "week"
+    return f"https://www.reddit.com/r/{urllib.parse.quote(subreddit)}/{sort}.json?{urllib.parse.urlencode(query)}"
+
+
+def reddit_listing_items_from_payload(payload: object, default_subreddit: str = "") -> list[Item]:
+    children = (((payload or {}).get("data") or {}).get("children") or []) if isinstance(payload, dict) else []
+    out: list[Item] = []
+    for child in children:
+        data = (child or {}).get("data") or {}
+        if not isinstance(data, dict) or data.get("stickied"):
+            continue
+        title = clean_text(str(data.get("title") or ""), 220)
+        permalink = str(data.get("permalink") or "")
+        if not title or not permalink:
+            continue
+        subreddit = clean_text(str(data.get("subreddit") or default_subreddit), 60)
+        score = int(data.get("score") or 0)
+        comments = int(data.get("num_comments") or 0)
+        created = data.get("created_utc")
+        published = ""
+        try:
+            published = datetime.fromtimestamp(float(created), timezone.utc).isoformat()
+        except Exception:
+            pass
+        summary_bits = [
+            clean_text(str(data.get("selftext") or ""), 900),
+            f"互动数据：score/upvotes {score}；comments/replies {comments}。",
+        ]
+        out.append(
+            Item(
+                source=f"Reddit r/{subreddit}（score/upvotes {score}；comments/replies {comments}）",
+                title=title,
+                url="https://www.reddit.com" + permalink,
+                published=published,
+                summary=clean_text(" ".join(bit for bit in summary_bits if bit), 1200),
+            )
+        )
+    out.sort(key=forum_engagement_score, reverse=True)
+    return out
+
+
+def fetch_reddit_listing_items(subreddit: str, sort: str = "hot", limit: int = 12) -> list[Item]:
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 ETFAllocationDigest/1.0"
+        )
+    }
+    try:
+        payload = json.loads(fetch_bytes(reddit_listing_url(subreddit, sort, limit), timeout=20, headers=headers).decode("utf-8", "ignore"))
+    except Exception:
+        return []
+    return reddit_listing_items_from_payload(payload, default_subreddit=subreddit)
+
+
 def article_paragraphs(url: str, limit: int = 8) -> list[str]:
     try:
         page = fetch_bytes(url, timeout=20).decode("utf-8", "ignore")
@@ -283,13 +342,40 @@ def reddit_json_url(url: str) -> str:
     return urllib.parse.urlunsplit((parts.scheme, parts.netloc, path + ".json", "", ""))
 
 
-def reddit_thread_paragraphs(url: str, limit: int = 8) -> list[str]:
+def reddit_thread_payload(url: str) -> object | None:
     host = urllib.parse.urlsplit(url).netloc.lower()
     if "reddit.com" not in host:
-        return []
+        return None
     try:
-        payload = json.loads(fetch_bytes(reddit_json_url(url), timeout=20).decode("utf-8", "ignore"))
+        return json.loads(fetch_bytes(reddit_json_url(url), timeout=20).decode("utf-8", "ignore"))
     except Exception:
+        return None
+
+
+def reddit_thread_metadata(url: str) -> tuple[int, int] | None:
+    payload = reddit_thread_payload(url)
+    if not isinstance(payload, list) or not payload:
+        return None
+    try:
+        data = payload[0]["data"]["children"][0]["data"]
+        return int(data.get("score") or 0), int(data.get("num_comments") or 0)
+    except Exception:
+        return None
+
+
+def reddit_source_with_engagement(source: str, url: str) -> str:
+    if "score/upvotes" in source:
+        return source
+    meta = reddit_thread_metadata(url)
+    if meta is None:
+        return source
+    score, comments = meta
+    return f"{source}（score/upvotes {score}；comments/replies {comments}）"
+
+
+def reddit_thread_paragraphs(url: str, limit: int = 8) -> list[str]:
+    payload = reddit_thread_payload(url)
+    if payload is None:
         return []
     out: list[str] = []
 
@@ -367,11 +453,13 @@ def enrich_aggregator_item(item: Item, base_summary: str) -> str:
 
 def enrich_article_item(item: Item) -> Item:
     host = urllib.parse.urlsplit(item.url).netloc.lower()
-    forum_paras = reddit_thread_paragraphs(item.url, limit=20) if item.source.startswith("r/") or "reddit" in item.source.lower() or "reddit.com" in host else []
+    is_reddit = item.source.startswith("r/") or "reddit" in item.source.lower() or "reddit.com" in host
+    forum_paras = reddit_thread_paragraphs(item.url, limit=20) if is_reddit else []
     paras = forum_paras or article_paragraphs(item.url, limit=60)
     base = clean_text(" ".join([item.summary, *paras]), 20000) if paras else item.summary
     summary = enrich_aggregator_item(item, base)
-    return Item(item.source, item.title, item.url, item.published, summary)
+    source = reddit_source_with_engagement(item.source, item.url) if is_reddit else item.source
+    return Item(source, item.title, item.url, item.published, summary)
 
 
 def sort_recent(items: list[Item]) -> list[Item]:
@@ -1944,13 +2032,25 @@ def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
 
 def forum_public_heading(item: Item) -> str:
     text = f"{item.title} {item.summary}".lower()
+    title_lower = item.title.lower()
+    if "what" in title_lower and "etf" in title_lower and "don" in title_lower and "selling" in title_lower:
+        return "你不打算长期卖出的 ETF 是哪只？"
+    if "90/10 split" in title_lower:
+        return "按 WSJ 评论调整为 90/10 股债配置是否合适？"
+    if "24m" in title_lower and "new to investing" in title_lower:
+        return "24 岁投资新手组合求评"
+    if "rate my ind brokerage automatic contributions" in title_lower:
+        return "个人券商账户自动定投配置求评"
+    if "beginner portfolio help" in title_lower:
+        return "新手投资组合求助"
+    if "best way to migrate" in title_lower and "boglehead portfolio" in title_lower:
+        return "如何把多个混乱组合迁移成 Bogleheads 风格组合"
     if "100%" in text and "0%" in text and ("stocks/funds" in text or "stocks" in text) and (
         "bonds" in text or "treasuries" in text
     ):
         return "离退休还很远，退休储蓄几乎 100% 股票/基金、0% 债券或国债是否可以？"
     if "looking for portfolio advice" in text:
         return "寻求投资组合建议"
-    title_lower = item.title.lower()
     if "vnq" in title_lower or "reit" in title_lower or "real estate" in title_lower:
         return "税优账户中是否应单列 REIT/VNQ"
     if "portfolio for 30s" in text or "moderate risk" in text:
@@ -1963,11 +2063,26 @@ def forum_public_heading(item: Item) -> str:
         return "投资组合配置求评"
     if "bond allocation" in text or "bonds being safe" in text:
         return "债券配置与风险认知讨论"
-    return clean_text(item.title, 80)
+    return f"{chinese_topic(item.title, item.summary)}论坛讨论"
 
 
 def forum_display_title(item: Item) -> str:
-    return paired_title(item.title, forum_public_heading(item))
+    original = clean_text(item.title, 180)
+    chinese = clean_text(forum_public_heading(item), 180)
+    if not original:
+        return chinese
+    if not chinese or norm_title(original) == norm_title(chinese):
+        return original
+    return f"{original}（{chinese}）"
+
+
+def forum_engagement_score(item: Item) -> int:
+    text = f"{item.source} {item.summary}".lower()
+    score_match = re.search(r"(?:score/upvotes|score|upvotes?)\s*[:：]?\s*([\d,]+)", text)
+    comments_match = re.search(r"(?:comments/replies|comments?|replies)\s*[:：]?\s*([\d,]+)", text)
+    score = int(score_match.group(1).replace(",", "")) if score_match else 0
+    comments = int(comments_match.group(1).replace(",", "")) if comments_match else 0
+    return score + comments * 3
 
 
 def forum_has_specific_summary_evidence(item: Item, points: list[str] | None = None) -> bool:
@@ -2255,15 +2370,24 @@ def renderable_forum_item(item: Item) -> bool:
     return forum_has_specific_summary_evidence(item, points)
 
 
-def select_etf_forum_items(items: list[Item], limit: int = 6) -> list[Item]:
-    relevant = dedupe_items([x for x in sort_recent(items) if etf_forum_relevant(x)])
+def select_etf_forum_items(items: list[Item], limit: int = ETF_FORUM_DISPLAY_LIMIT) -> list[Item]:
+    relevant = dedupe_items([x for x in items if etf_forum_relevant(x)])
+    relevant.sort(
+        key=lambda x: (
+            forum_engagement_score(x),
+            parse_date(x.published) or datetime.min.replace(tzinfo=timezone.utc),
+        ),
+        reverse=True,
+    )
     primary_raw = filter_previously_sent("etf", relevant, days=ETF_DEDUPE_DAYS)[: max(limit * 2, 12)]
     primary = [x for x in (enrich_article_item(item) for item in primary_raw) if renderable_forum_item(x)]
+    primary.sort(key=forum_engagement_score, reverse=True)
     if len(primary) >= ETF_MIN_FORUM_ITEMS:
         return primary[:limit]
 
     backfill_raw = filter_previously_sent("etf", relevant, days=ETF_FORUM_BACKFILL_DEDUPE_DAYS)[: max(limit * 3, 18)]
     backfill = [x for x in (enrich_article_item(item) for item in backfill_raw) if renderable_forum_item(x)]
+    backfill.sort(key=forum_engagement_score, reverse=True)
     out: list[Item] = []
     seen: set[tuple[str, str]] = set()
     for item in [*primary, *backfill]:
@@ -2277,6 +2401,7 @@ def select_etf_forum_items(items: list[Item], limit: int = 6) -> list[Item]:
     if out:
         return out
     recovery = [x for x in (enrich_article_item(item) for item in relevant[: max(limit * 3, 18)]) if renderable_forum_item(x)]
+    recovery.sort(key=forum_engagement_score, reverse=True)
     for item in recovery:
         key = (canonical_url(item.url), norm_title(item.title))
         if key in seen:
@@ -2437,7 +2562,7 @@ def append_etf_research_sections(
     if not forum_items:
         lines.append("今日没有进入筛选口径的论坛补充。")
     visible_forum_count = 0
-    for item in forum_items[:5]:
+    for item in forum_items[:ETF_FORUM_DISPLAY_LIMIT]:
         full_summary = forum_thread_summary_points(item)
         if not forum_has_specific_summary_evidence(item, full_summary):
             continue
@@ -4125,17 +4250,25 @@ def build_etf(out_dir: Path) -> None:
     scored_picked = select_etf_research_items(items, limit=9)
     picked = [x.item for x in scored_picked]
 
-    forum_feeds = {
-        "Reddit r/ETFs": "https://www.reddit.com/r/ETFs/hot/.rss",
-        "Reddit r/Bogleheads": "https://www.reddit.com/r/Bogleheads/hot/.rss",
-        "Reddit r/investing": "https://www.reddit.com/r/investing/hot/.rss",
-        "Reddit r/portfolios": "https://www.reddit.com/r/portfolios/hot/.rss",
-    }
     forum_items: list[Item] = []
-    for source, url in forum_feeds.items():
-        forum_items.extend(parse_feed(source, url, limit=8))
+    for subreddit in ["ETFs", "Bogleheads", "investing", "portfolios"]:
+        hot_items = fetch_reddit_listing_items(subreddit, "hot", limit=12)
+        forum_items.extend(hot_items)
+        if len([item for item in hot_items if etf_forum_relevant(item)]) < ETF_MIN_FORUM_ITEMS:
+            forum_items.extend(fetch_reddit_listing_items(subreddit, "top", limit=12))
+        forum_items.extend(parse_feed(f"Reddit r/{subreddit}", f"https://www.reddit.com/r/{subreddit}/hot/.rss", limit=12))
         time.sleep(0.2)
-    forum_picked = select_etf_forum_items(forum_items, limit=6)
+    if not forum_items:
+        forum_feeds = {
+            "Reddit r/ETFs": "https://www.reddit.com/r/ETFs/hot/.rss",
+            "Reddit r/Bogleheads": "https://www.reddit.com/r/Bogleheads/hot/.rss",
+            "Reddit r/investing": "https://www.reddit.com/r/investing/hot/.rss",
+            "Reddit r/portfolios": "https://www.reddit.com/r/portfolios/hot/.rss",
+        }
+        for source, url in forum_feeds.items():
+            forum_items.extend(parse_feed(source, url, limit=12))
+            time.sleep(0.2)
+    forum_picked = select_etf_forum_items(forum_items, limit=ETF_FORUM_DISPLAY_LIMIT)
 
     date_s = report_date()
     data_dates = sorted({str(r["date"]) for r in strategy_rows + mover_rows})

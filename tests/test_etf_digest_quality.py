@@ -663,7 +663,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         rendered = "\n".join(lines)
 
         self.assertIn(
-            "Is it ok to have basically 100% of my retirement savings in stocks/funds and 0% bonds/treasuries if I'm far from retirement?｜离退休还很远，退休储蓄几乎 100% 股票/基金、0% 债券或国债是否可以？",
+            "Is it ok to have basically 100% of my retirement savings in stocks/funds and 0% bonds/treasuries if I'm far from retirement?（离退休还很远，退休储蓄几乎 100% 股票/基金、0% 债券或国债是否可以？）",
             rendered,
         )
         self.assertIn("全文总结", rendered)
@@ -672,6 +672,44 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("风险承受能力", rendered)
         self.assertIn("临近退休", rendered)
         self.assertNotIn("已打开原帖链接并按正文内容归纳", rendered)
+
+    def test_reddit_json_listing_preserves_engagement_for_forum_backfill(self) -> None:
+        payload = {
+            "data": {
+                "children": [
+                    {
+                        "data": {
+                            "subreddit": "ETFs",
+                            "title": "SCHG vs QQQM for long term?",
+                            "permalink": "/r/ETFs/comments/example/schg_vs_qqqm/",
+                            "score": 184,
+                            "num_comments": 71,
+                            "created_utc": 1_700_000_000,
+                            "selftext": "Portfolio allocation question comparing SCHG and QQQM.",
+                        }
+                    }
+                ]
+            }
+        }
+
+        item = dr.reddit_listing_items_from_payload(payload, "ETFs")[0]
+
+        self.assertEqual(item.source, "Reddit r/ETFs（score/upvotes 184；comments/replies 71）")
+        self.assertIn("https://www.reddit.com/r/ETFs/comments/example/schg_vs_qqqm/", item.url)
+        self.assertGreater(dr.forum_engagement_score(item), 184)
+
+    def test_forum_display_title_does_not_repeat_english_as_translation(self) -> None:
+        item = self.item(
+            "Reddit r/ETFs（score/upvotes 46；comments/replies 145）",
+            "What’s a ETF you don’t plan on selling anytime soon?",
+            "Discussion asks which ETF belongs in a long-term portfolio allocation.",
+            "https://www.reddit.com/r/ETFs/comments/example/long_term_etf/",
+        )
+
+        self.assertEqual(
+            dr.forum_display_title(item),
+            "What’s a ETF you don’t plan on selling anytime soon?（你不打算长期卖出的 ETF 是哪只？）",
+        )
 
     def test_low_evidence_article_is_dropped_instead_of_hard_written_mapping(self) -> None:
         item = self.item(
