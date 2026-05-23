@@ -12,6 +12,11 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
     def test_microcap_workflow_refreshes_state_before_signals(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
 
+        self.assertIn("# 10:00 Asia/Shanghai == 02:00 UTC.", text)
+        self.assertIn('- cron: "0 2 * * *"', text)
+        self.assertIn('PLANNED_BJ: "10:00 Asia/Shanghai"', text)
+        self.assertNotIn('10:30 Asia/Shanghai', text)
+        self.assertNotIn('- cron: "30 2 * * *"', text)
         self.assertIn("name: Refresh Top100 realtime state", text)
         self.assertIn('"pandas<3"', text)
         self.assertIn('"akshare==1.18.46"', text)

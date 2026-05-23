@@ -2,8 +2,8 @@ name: Microcap Realtime Digest
 
 on:
   schedule:
-    # 10:30 Asia/Shanghai == 02:30 UTC.
-    - cron: "30 2 * * *"
+    # 10:00 Asia/Shanghai == 02:00 UTC.
+    - cron: "0 2 * * *"
   workflow_dispatch:
 
 permissions:
@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 75
     env:
       TZ: Asia/Shanghai
-      PLANNED_BJ: "10:30 Asia/Shanghai"
+      PLANNED_BJ: "10:00 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Record workflow start time
