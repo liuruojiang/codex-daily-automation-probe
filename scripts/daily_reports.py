@@ -368,7 +368,7 @@ def reddit_source_with_engagement(source: str, url: str) -> str:
         return source
     meta = reddit_thread_metadata(url)
     if meta is None:
-        return source
+        return f"{source}（score/upvotes 未抓取；comments/replies 未抓取）"
     score, comments = meta
     return f"{source}（score/upvotes {score}；comments/replies {comments}）"
 
@@ -1123,15 +1123,18 @@ def load_digest_history(kind: str) -> dict[str, object]:
     return payload if isinstance(payload, dict) else {"items": []}
 
 
-def filter_previously_sent(kind: str, items: list[Item], days: int = 7) -> list[Item]:
+def filter_previously_sent(kind: str, items: list[Item], days: int = 7, ignore_dates: set[str] | None = None) -> list[Item]:
     history = load_digest_history(kind)
     cutoff = now_bj().date() - timedelta(days=days)
+    ignore_dates = ignore_dates or set()
     sent_urls: set[str] = set()
     sent_titles: set[str] = set()
     for rec in history.get("items", []):
         if not isinstance(rec, dict):
             continue
         sent_date = str(rec.get("sent_date", ""))
+        if sent_date in ignore_dates:
+            continue
         if sent_date and sent_date < cutoff.isoformat():
             continue
         if rec.get("url"):
@@ -2379,13 +2382,14 @@ def select_etf_forum_items(items: list[Item], limit: int = ETF_FORUM_DISPLAY_LIM
         ),
         reverse=True,
     )
-    primary_raw = filter_previously_sent("etf", relevant, days=ETF_DEDUPE_DAYS)[: max(limit * 2, 12)]
+    today = report_date()
+    primary_raw = filter_previously_sent("etf", relevant, days=ETF_DEDUPE_DAYS, ignore_dates={today})[: max(limit * 2, 12)]
     primary = [x for x in (enrich_article_item(item) for item in primary_raw) if renderable_forum_item(x)]
     primary.sort(key=forum_engagement_score, reverse=True)
     if len(primary) >= ETF_MIN_FORUM_ITEMS:
         return primary[:limit]
 
-    backfill_raw = filter_previously_sent("etf", relevant, days=ETF_FORUM_BACKFILL_DEDUPE_DAYS)[: max(limit * 3, 18)]
+    backfill_raw = filter_previously_sent("etf", relevant, days=ETF_FORUM_BACKFILL_DEDUPE_DAYS, ignore_dates={today})[: max(limit * 3, 18)]
     backfill = [x for x in (enrich_article_item(item) for item in backfill_raw) if renderable_forum_item(x)]
     backfill.sort(key=forum_engagement_score, reverse=True)
     out: list[Item] = []

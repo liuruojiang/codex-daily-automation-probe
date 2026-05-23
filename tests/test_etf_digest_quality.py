@@ -711,6 +711,17 @@ class EtfDigestQualityTests(unittest.TestCase):
             "What’s a ETF you don’t plan on selling anytime soon?（你不打算长期卖出的 ETF 是哪只？）",
         )
 
+    def test_reddit_source_marks_missing_engagement_fields(self) -> None:
+        original = dr.reddit_thread_metadata
+        try:
+            dr.reddit_thread_metadata = lambda url: None
+            self.assertEqual(
+                dr.reddit_source_with_engagement("Reddit r/ETFs", "https://www.reddit.com/r/ETFs/comments/example/x/"),
+                "Reddit r/ETFs（score/upvotes 未抓取；comments/replies 未抓取）",
+            )
+        finally:
+            dr.reddit_thread_metadata = original
+
     def test_low_evidence_article_is_dropped_instead_of_hard_written_mapping(self) -> None:
         item = self.item(
             "Robot Wealth",
