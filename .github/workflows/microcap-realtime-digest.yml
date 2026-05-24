@@ -10,7 +10,49 @@ permissions:
   contents: read
 
 jobs:
+  check-trading-day:
+    runs-on: ubuntu-latest
+    outputs:
+      SHOULD_RUN_MICROCAP: ${{ steps.calendar.outputs.SHOULD_RUN_MICROCAP }}
+    env:
+      TZ: Asia/Shanghai
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Check A-share trading day
+        id: calendar
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "pandas<3" "akshare==1.18.46"
+          python - <<'PY' | tee calendar.env
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+
+          import akshare as ak
+          import pandas as pd
+
+          today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+          should_run = False
+          try:
+              trade_dates = ak.tool_trade_date_hist_sina()
+              dates = set(pd.to_datetime(trade_dates["trade_date"]).dt.date)
+              should_run = today in dates
+          except Exception as exc:
+              print(f"A_SHARE_CALENDAR_ERROR={type(exc).__name__}: {exc}")
+              should_run = False
+          print(f"A_SHARE_TODAY={today.isoformat()}")
+          if should_run:
+              print("SHOULD_RUN_MICROCAP=true")
+          else:
+              print("SHOULD_RUN_MICROCAP=false")
+          PY
+          cat calendar.env >> "$GITHUB_OUTPUT"
+
   send:
+    needs: check-trading-day
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 75
     env:
