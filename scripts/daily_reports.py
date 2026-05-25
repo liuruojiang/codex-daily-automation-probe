@@ -2054,6 +2054,8 @@ def forum_public_heading(item: Item) -> str:
         return "个人券商账户自动定投配置求评"
     if "beginner portfolio help" in title_lower:
         return "新手投资组合求助"
+    if "26m" in title_lower and "etf advice" in title_lower:
+        return "26 岁投资者 ETF 配置求建议"
     if "best way to migrate" in title_lower and "boglehead portfolio" in title_lower:
         return "如何把多个混乱组合迁移成 Bogleheads 风格组合"
     if "100%" in text and "0%" in text and ("stocks/funds" in text or "stocks" in text) and (
@@ -2115,6 +2117,87 @@ def forum_has_specific_summary_evidence(item: Item, points: list[str] | None = N
     if "dca" in text and ("treasury" in text or "treasuries" in text):
         return len(points) >= 2
     return False
+
+
+def forum_engagement_label(item: Item) -> str:
+    text = f"{item.source} {item.summary}".lower()
+    score_match = re.search(r"(?:score/upvotes|score|upvotes?)\s*[:：]?\s*([\d,]+)", text)
+    comments_match = re.search(r"(?:comments/replies|comments?|replies)\s*[:：]?\s*([\d,]+)", text)
+    bits: list[str] = []
+    if score_match:
+        bits.append(f"点赞/评分 {score_match.group(1)}")
+    if comments_match:
+        bits.append(f"回复 {comments_match.group(1)}")
+    return "、".join(bits)
+
+
+def forum_has_topic_signal(item: Item) -> bool:
+    title = item.title.lower()
+    text = f"{item.title} {item.summary}".lower()
+    if not etf_forum_relevant(item):
+        return False
+    if re.fullmatch(r"\s*(?:best\s+)?etfs?\s+to\s+invest\s+in\s*", title):
+        return False
+    title_markers = [
+        "portfolio",
+        "allocation",
+        "boglehead",
+        "schg",
+        "qqqm",
+        "vti",
+        "vxus",
+        "bond",
+        "rebalance",
+        "rate my",
+        "beginner portfolio",
+        "etf advice",
+        "don",
+        "selling",
+    ]
+    summary_markers = [
+        "portfolio",
+        "allocation",
+        "risk tolerance",
+        "rebalance",
+        "contribution",
+        "long-term",
+        "market cycles",
+        "boglehead",
+        "tax",
+        "vti",
+        "vxus",
+        "schg",
+        "qqqm",
+    ]
+    title_hit = any(marker in title for marker in title_markers)
+    summary_hits = sum(1 for marker in summary_markers if marker in text)
+    return title_hit or summary_hits >= 2
+
+
+def forum_has_lightweight_summary_evidence(item: Item, points: list[str] | None = None) -> bool:
+    points = points if points is not None else forum_thread_summary_points(item)
+    if forum_has_specific_summary_evidence(item, points):
+        return True
+    if not forum_has_topic_signal(item):
+        return False
+    return forum_engagement_score(item) >= 100 or bool(points)
+
+
+def forum_lightweight_summary_points(item: Item, limit: int = 4) -> list[str]:
+    points = forum_thread_summary_points(item, limit=limit)
+    if forum_has_specific_summary_evidence(item, points):
+        return points[:limit]
+    if not forum_has_lightweight_summary_evidence(item, points):
+        return points[:limit]
+
+    out = list(points)
+    heading = forum_public_heading(item)
+    if heading and not any(heading in point for point in out):
+        out.append(f"标题和摘要显示，该帖围绕“{heading}”征集社区观点，适合作为 ETF/资产配置日报的待验证选题。")
+    engagement = forum_engagement_label(item)
+    if engagement:
+        out.append(f"来源显示该帖互动较高（{engagement}）；收录目的只是补充社区关注点，不把回复当作投资结论。")
+    return out[:limit]
 
 
 def forum_research_question(item: Item) -> str:
@@ -2378,7 +2461,7 @@ def select_etf_research_items(items: list[Item], limit: int = 9) -> list[ScoredR
 
 def renderable_forum_item(item: Item) -> bool:
     points = forum_thread_summary_points(item)
-    return forum_has_specific_summary_evidence(item, points)
+    return forum_has_lightweight_summary_evidence(item, points)
 
 
 def select_etf_forum_items(items: list[Item], limit: int = ETF_FORUM_DISPLAY_LIMIT) -> list[Item]:
@@ -2576,7 +2659,9 @@ def append_etf_research_sections(
     visible_forum_count = 0
     for item in forum_items[:ETF_FORUM_DISPLAY_LIMIT]:
         full_summary = forum_thread_summary_points(item)
-        if not forum_has_specific_summary_evidence(item, full_summary):
+        has_specific_summary = forum_has_specific_summary_evidence(item, full_summary)
+        summary_points = full_summary if has_specific_summary else forum_lightweight_summary_points(item)
+        if not forum_has_lightweight_summary_evidence(item, summary_points):
             continue
         visible_forum_count += 1
         lines += [
@@ -2586,8 +2671,8 @@ def append_etf_research_sections(
             f"- 链接：{item.url}",
             "",
         ]
-        lines.append("**全文总结**：")
-        for point in full_summary:
+        lines.append("**全文总结**：" if has_specific_summary else "**线索摘要**：")
+        for point in summary_points:
             lines.append(f"- {point}")
         lines.append("")
         lines += [

@@ -756,6 +756,61 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertNotIn("长期资本市场假设与估值", rendered)
         self.assertNotIn("最大回撤", rendered)
 
+    def test_forum_renderer_keeps_high_engagement_lightweight_forum_backfill(self) -> None:
+        forum_items = [
+            self.item(
+                "Reddit r/ETFs（score/upvotes 610；comments/replies 240）",
+                "What’s a ETF you don’t plan on selling anytime soon?",
+                "Community thread asks which ETF belongs in a long-term portfolio and why holders would keep it through market cycles.",
+                "https://www.reddit.com/r/ETFs/comments/example/long_term_etf/",
+            ),
+            self.item(
+                "Reddit r/Bogleheads（score/upvotes 420；comments/replies 130）",
+                "Beginner Portfolio Help",
+                "A beginner asks for portfolio help with broad ETF allocation, risk tolerance, and whether VTI and VXUS are enough.",
+                "https://www.reddit.com/r/Bogleheads/comments/example/beginner_portfolio_help/",
+            ),
+            self.item(
+                "Reddit r/portfolios（score/upvotes 315；comments/replies 98）",
+                "Rate My Portfolio",
+                "Poster asks the community to rate a portfolio allocation and discuss ETF diversification and rebalance choices.",
+                "https://www.reddit.com/r/portfolios/comments/example/rate_my_portfolio/",
+            ),
+            self.item(
+                "Reddit r/ETFs（score/upvotes 290；comments/replies 80）",
+                "26M ETF Advice",
+                "A 26-year-old asks for ETF advice on a core portfolio, contribution plan, and long-term risk level.",
+                "https://www.reddit.com/r/ETFs/comments/example/26m_etf_advice/",
+            ),
+            self.item(
+                "Reddit r/ETFs（score/upvotes 184；comments/replies 71）",
+                "SCHG vs QQQM for long term?",
+                "Question compares SCHG and QQQM for a long-term portfolio and asks about overlap, growth exposure, and rebalance decisions.",
+                "https://www.reddit.com/r/ETFs/comments/example/schg_vs_qqqm/",
+            ),
+            self.item(
+                "Reddit r/Bogleheads（score/upvotes 160；comments/replies 55）",
+                "Best way to migrate multiple portfolios filled with crap to a Boglehead portfolio",
+                "Thread asks how to migrate several messy portfolios into a Boglehead ETF allocation without creating tax and timing problems.",
+                "https://www.reddit.com/r/Bogleheads/comments/example/migrate_to_boglehead/",
+            ),
+        ]
+        lines: list[str] = []
+
+        visible_count = dr.append_etf_research_sections(lines, [], forum_items, [], [], "2026-05-25")
+        rendered = "\n".join(lines)
+
+        self.assertEqual(visible_count, 6)
+        self.assertIn("线索摘要", rendered)
+        self.assertIn("What’s a ETF you don’t plan on selling anytime soon?（你不打算长期卖出的 ETF 是哪只？）", rendered)
+        self.assertIn("Beginner Portfolio Help（新手投资组合求助）", rendered)
+        self.assertIn("Rate My Portfolio（投资组合配置求评）", rendered)
+        self.assertIn("26M ETF Advice", rendered)
+        self.assertIn("SCHG vs QQQM for long term?", rendered)
+        self.assertIn("Best way to migrate multiple portfolios filled with crap to a Boglehead portfolio（如何把多个混乱组合迁移成 Bogleheads 风格组合）", rendered)
+        self.assertIn("论坛补充入正文数量：6", rendered)
+        self.assertNotRegex(rendered, re.compile(r"[A-Za-z][A-Za-z ,'-]{100,}"))
+
     def test_generic_forum_post_is_skipped_without_thread_specific_summary(self) -> None:
         item = self.item(
             "Reddit r/ETFs",
