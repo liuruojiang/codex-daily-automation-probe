@@ -26,10 +26,11 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('"pandas<3"', text)
         self.assertIn('"akshare==1.18.46"', text)
         self.assertIn("scripts/realtime_state_bundle.py refresh --root .", text)
-        self.assertIn("--max-workers 2", text)
         refresh_step = text[
             text.index("name: Refresh Top100 realtime state") : text.index("name: Record refresh failure for digest")
         ]
+        self.assertIn("--max-workers 1", refresh_step)
+        self.assertNotIn("--max-workers 2", refresh_step)
         self.assertNotIn("microcap_top100_mom16_biweekly_live_v2_0.py", refresh_step)
         self.assertNotIn("&& python", refresh_step)
         self.assertIn("name: Run v2.0 realtime signal", text)
