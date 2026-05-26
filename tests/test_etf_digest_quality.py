@@ -830,6 +830,30 @@ class EtfDigestQualityTests(unittest.TestCase):
         )
         self.assertNotIn("Does this make sense? Overengineered portfolio, or a robust and rational one?（资产配置/ETF论坛讨论）", rendered)
 
+    def test_forum_title_translation_covers_current_lightweight_backfill_titles(self) -> None:
+        cases = {
+            "Would SPMO + VFMO as a U.S. portfolio core make sense to add a little risk instead of the typical VOO as the core?": "用 SPMO + VFMO 作为美股核心、比典型 VOO 核心多承担一点风险是否合理？",
+            "Advice on how to improve my portfolio (25M)": "25 岁男性如何改进当前投资组合？",
+            "18 with $1,000; what do I do?": "18 岁有 1,000 美元，应该怎么开始投资？",
+            "Rate the portfolio and give advice pls": "请评价这个投资组合并给些建议",
+            "Portfolio age 33": "33 岁投资组合求评",
+            "Roth vs Traditional 401k": "Roth 401(k) 与传统 401(k) 如何选择？",
+            "Sold everything to rebalance my ETF portfolio.": "为重新平衡 ETF 组合卖出全部持仓是否合适？",
+        }
+
+        for title, expected_translation in cases.items():
+            with self.subTest(title=title):
+                item = self.item(
+                    "Reddit r/ETFs（score/upvotes 40；comments/replies 80）",
+                    title,
+                    "Forum thread discusses portfolio allocation, ETF core holdings, account choice, risk tolerance, and rebalance decisions.",
+                    "https://www.reddit.com/r/ETFs/comments/example/current_backfill/",
+                )
+                rendered_title = dr.forum_display_title(item)
+
+                self.assertEqual(rendered_title, f"{title}（{expected_translation}）")
+                self.assertNotIn("论坛讨论", rendered_title)
+
     def test_generic_forum_post_is_skipped_without_thread_specific_summary(self) -> None:
         item = self.item(
             "Reddit r/ETFs",

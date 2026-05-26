@@ -2046,6 +2046,21 @@ def forum_public_heading(item: Item) -> str:
     title_lower = item.title.lower()
     if "does this make sense" in title_lower and "overengineered portfolio" in title_lower:
         return "这样配置合理吗？组合是否过度设计，还是稳健理性的方案？"
+    if "spmo" in title_lower and "vfmo" in title_lower and "voo" in title_lower:
+        return "用 SPMO + VFMO 作为美股核心、比典型 VOO 核心多承担一点风险是否合理？"
+    if "advice on how to improve my portfolio" in title_lower and "25m" in title_lower:
+        return "25 岁男性如何改进当前投资组合？"
+    if re.search(r"\b18\b", title_lower) and "$1,000" in title_lower and "what do i do" in title_lower:
+        return "18 岁有 1,000 美元，应该怎么开始投资？"
+    if "rate the portfolio" in title_lower and "advice" in title_lower:
+        return "请评价这个投资组合并给些建议"
+    age_match = re.search(r"\bportfolio\s+age\s+(\d{2})\b", title_lower)
+    if age_match:
+        return f"{age_match.group(1)} 岁投资组合求评"
+    if "roth" in title_lower and "traditional" in title_lower and "401" in title_lower:
+        return "Roth 401(k) 与传统 401(k) 如何选择？"
+    if "sold everything" in title_lower and "rebalance" in title_lower and "etf portfolio" in title_lower:
+        return "为重新平衡 ETF 组合卖出全部持仓是否合适？"
     if "what" in title_lower and "etf" in title_lower and "don" in title_lower and "selling" in title_lower:
         return "你不打算长期卖出的 ETF 是哪只？"
     if "90/10 split" in title_lower:
