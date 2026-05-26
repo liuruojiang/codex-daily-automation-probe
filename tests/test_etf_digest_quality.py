@@ -811,6 +811,25 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("论坛补充入正文数量：6", rendered)
         self.assertNotRegex(rendered, re.compile(r"[A-Za-z][A-Za-z ,'-]{100,}"))
 
+    def test_forum_title_translation_is_specific_not_generic_topic_label(self) -> None:
+        item = self.item(
+            "Reddit r/portfolios（score/upvotes 45；comments/replies 75）",
+            "Does this make sense? Overengineered portfolio, or a robust and rational one?",
+            "Poster asks whether a multi-ETF portfolio allocation is overengineered or robust, rational, and suitable for long-term rebalancing.",
+            "https://www.reddit.com/r/portfolios/comments/example/overengineered_portfolio/",
+        )
+        lines: list[str] = []
+
+        visible_count = dr.append_etf_research_sections(lines, [], [item], [], [], "2026-05-26")
+        rendered = "\n".join(lines)
+
+        self.assertEqual(visible_count, 1)
+        self.assertIn(
+            "Does this make sense? Overengineered portfolio, or a robust and rational one?（这样配置合理吗？组合是否过度设计，还是稳健理性的方案？）",
+            rendered,
+        )
+        self.assertNotIn("Does this make sense? Overengineered portfolio, or a robust and rational one?（资产配置/ETF论坛讨论）", rendered)
+
     def test_generic_forum_post_is_skipped_without_thread_specific_summary(self) -> None:
         item = self.item(
             "Reddit r/ETFs",

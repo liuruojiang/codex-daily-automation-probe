@@ -2044,6 +2044,8 @@ def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
 def forum_public_heading(item: Item) -> str:
     text = f"{item.title} {item.summary}".lower()
     title_lower = item.title.lower()
+    if "does this make sense" in title_lower and "overengineered portfolio" in title_lower:
+        return "这样配置合理吗？组合是否过度设计，还是稳健理性的方案？"
     if "what" in title_lower and "etf" in title_lower and "don" in title_lower and "selling" in title_lower:
         return "你不打算长期卖出的 ETF 是哪只？"
     if "90/10 split" in title_lower:
