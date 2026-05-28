@@ -143,6 +143,12 @@ ETF_CORE_PAGE_MONITORS: tuple[tuple[str, str, str], ...] = (
     ("GMO Research", "https://www.gmo.com/", "估值敏感型资产配置、国际价值与质量股"),
 )
 
+ETF_EXTERNAL_FORUM_FEEDS: tuple[tuple[str, str, int], ...] = (
+    ("Bogleheads.org Forum", "https://www.bogleheads.org/forum/feed.php", 18),
+    ("Rational Reminder Community", "https://community.rationalreminder.ca/latest.rss", 12),
+)
+BOGLEBLOG_BEST_OF_BOGLEHEADS_URL = "https://bogleblog.com/best-of-bogleheads-forum/"
+
 ETF_ARTICLE_MAX_AGE_HOURS = 36
 ETF_ARTICLE_BACKFILL_MAX_AGE_HOURS = 14 * 24
 ETF_MIN_RESEARCH_ITEMS = 5
@@ -443,6 +449,59 @@ def article_links(url: str, limit: int = 5) -> list[tuple[str, str]]:
         if len(links) >= limit:
             break
     return links
+
+
+def bogleblog_bestof_forum_items(limit: int = 8) -> list[Item]:
+    try:
+        page = fetch_bytes(
+            BOGLEBLOG_BEST_OF_BOGLEHEADS_URL,
+            timeout=20,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125 Safari/537.36"},
+        ).decode("utf-8", "ignore")
+    except Exception:
+        page = ""
+    items: list[Item] = []
+    seen: set[str] = set()
+    def add_item(title: str, absolute: str) -> None:
+        if len(items) >= limit:
+            return
+        canonical = canonical_url(absolute)
+        if canonical in seen:
+            return
+        title = clean_text(title, 180)
+        if len(title) < 8:
+            return
+        seen.add(canonical)
+        summary = (
+            "Bogleblog curated Bogleheads forum index item about portfolio allocation, ETF core holdings, "
+            "Bogleheads-style diversification, and rebalancing."
+        )
+        items.append(Item("Bogleblog Best of Bogleheads Forum", title, absolute, "", summary))
+
+    for href, label in re.findall(r"<a\s+[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>", page, flags=re.I | re.S):
+        absolute = urllib.parse.urljoin(BOGLEBLOG_BEST_OF_BOGLEHEADS_URL, html.unescape(href))
+        parts = urllib.parse.urlsplit(absolute)
+        if "bogleheads.org" not in parts.netloc.lower() or "/forum/" not in parts.path:
+            continue
+        if "viewtopic" not in parts.path:
+            continue
+        title = clean_text(label, 180)
+        if title.startswith("http"):
+            before = clean_text(page[max(0, page.find(href) - 220) : page.find(href)], 220)
+            match = re.search(r"(?:<li>|>|^)([^<>:]{8,120}):?\s*(?:I found|This|https|$)", before, flags=re.I)
+            title = clean_text(match.group(1), 180) if match else title
+        add_item(title, absolute)
+        if len(items) >= limit:
+            break
+    if not items:
+        static_links = [
+            ("Transition to 3 Fund Portfolio", "https://www.bogleheads.org/forum/viewtopic.php?t=407430"),
+            ("Lazy Portfolios", "https://www.bogleheads.org/wiki/Lazy_portfolios"),
+            ("Overall index of portfolios", "https://www.bogleheads.org/wiki/Template:Portfolios"),
+        ]
+        for title, url in static_links:
+            add_item(title, url)
+    return items
 
 
 def enrich_aggregator_item(item: Item, base_summary: str) -> str:
@@ -1336,6 +1395,8 @@ def etf_forum_relevant(item: Item) -> bool:
     text = f"{item.title} {item.summary}".lower()
     if any(k in text for k in ["conference", "register now", "meetup", "moderator"]):
         return False
+    if "spam" in text and ("mods" in text or "this sub" in text):
+        return False
     return any(
         k in text
         for k in [
@@ -2063,9 +2124,15 @@ def forum_public_heading(item: Item) -> str:
         "what should i change or upgrade on my portfolio?": "我的投资组合应该调整或升级什么？",
         "so where do i convert to bonds?": "我应该在什么位置转向债券？",
         "re-balance question": "关于投资组合再平衡的问题",
+        "age 22 any recommendations?": "22 岁投资组合有什么建议？",
+        "the latest morningstar report shows how to invest in 2026": "Morningstar 最新报告：2026 年应如何投资？",
+        "transition to 3 fund portfolio": "过渡到三基金组合",
+        "overall index of portfolios": "投资组合样本总索引",
+        "lazy portfolios": "懒人投资组合样本",
         "22m taxable brokerage portfolio review, inquisitive about barbell growth and macro diversifier strategy": "22 岁男性应税券商账户组合求评：杠铃式成长与宏观分散策略是否合适？",
         "recently opened self-managed brokerage and my roth ira strategy": "新开自主管理券商账户与 Roth IRA 策略求评",
         "help diversify portfolio": "如何让投资组合更加分散？",
+        "personal investments • re: dividend investing or not?": "个人投资：是否应该做股息投资？",
     }
     if title_lower in exact_title_translations:
         return exact_title_translations[title_lower]
@@ -2105,6 +2172,8 @@ def forum_public_heading(item: Item) -> str:
         return "Roth 401(k) 与传统 401(k) 如何选择？"
     if "sold everything" in title_lower and "rebalance" in title_lower and "etf portfolio" in title_lower:
         return "为重新平衡 ETF 组合卖出全部持仓是否合适？"
+    if "dividend investing or not" in title_lower:
+        return "是否应该做股息投资？"
     if "what" in title_lower and "etf" in title_lower and "don" in title_lower and "selling" in title_lower:
         return "你不打算长期卖出的 ETF 是哪只？"
     if "90/10 split" in title_lower:
@@ -2648,6 +2717,71 @@ def extend_forum_items_to_minimum(
         if len(out) >= minimum:
             break
     return out
+
+
+def is_non_reddit_forum_item(item: Item) -> bool:
+    return "reddit" not in item.source.lower()
+
+
+def ensure_non_reddit_forum_mix(
+    picked: list[Item],
+    candidates: list[Item],
+    min_non_reddit: int = 2,
+    limit: int = ETF_FORUM_DISPLAY_LIMIT,
+) -> list[Item]:
+    out = list(picked[:limit])
+    if sum(1 for item in out if is_non_reddit_forum_item(item)) >= min_non_reddit:
+        return out
+    seen = {(canonical_url(item.url), norm_title(item.title)) for item in out}
+    additions: list[Item] = []
+    for item in candidates:
+        if not is_non_reddit_forum_item(item):
+            continue
+        key = (canonical_url(item.url), norm_title(item.title))
+        if key in seen:
+            continue
+        enriched = item if renderable_forum_item(item) else enrich_article_item(item)
+        if not renderable_forum_item(enriched):
+            continue
+        seen.add(key)
+        additions.append(enriched)
+        if sum(1 for x in out if is_non_reddit_forum_item(x)) + len(additions) >= min_non_reddit:
+            break
+    for item in additions:
+        if len(out) < limit:
+            out.append(item)
+        else:
+            replace_idx = next((idx for idx in range(len(out) - 1, -1, -1) if not is_non_reddit_forum_item(out[idx])), -1)
+            if replace_idx == -1:
+                break
+            out[replace_idx] = item
+    return out[:limit]
+
+
+def collect_etf_forum_items() -> list[Item]:
+    forum_items: list[Item] = []
+    for subreddit in ["ETFs", "Bogleheads", "investing", "portfolios"]:
+        hot_items = fetch_reddit_listing_items(subreddit, "hot", limit=12)
+        forum_items.extend(hot_items)
+        if len([item for item in hot_items if etf_forum_relevant(item)]) < ETF_MIN_FORUM_ITEMS:
+            forum_items.extend(fetch_reddit_listing_items(subreddit, "top", limit=12))
+        forum_items.extend(parse_feed(f"Reddit r/{subreddit}", f"https://www.reddit.com/r/{subreddit}/hot/.rss", limit=12))
+        time.sleep(0.2)
+    for source, url, limit in ETF_EXTERNAL_FORUM_FEEDS:
+        forum_items.extend(parse_feed(source, url, limit=limit))
+        time.sleep(0.2)
+    forum_items.extend(bogleblog_bestof_forum_items(limit=8))
+    if not forum_items:
+        forum_feeds = {
+            "Reddit r/ETFs": "https://www.reddit.com/r/ETFs/hot/.rss",
+            "Reddit r/Bogleheads": "https://www.reddit.com/r/Bogleheads/hot/.rss",
+            "Reddit r/investing": "https://www.reddit.com/r/investing/hot/.rss",
+            "Reddit r/portfolios": "https://www.reddit.com/r/portfolios/hot/.rss",
+        }
+        for source, url in forum_feeds.items():
+            forum_items.extend(parse_feed(source, url, limit=12))
+            time.sleep(0.2)
+    return forum_items
 
 
 def etf_hypothesis_for_item(scored: ScoredResearchItem) -> str:
@@ -4489,24 +4623,7 @@ def build_etf(out_dir: Path) -> None:
     scored_picked = select_etf_research_items(items, limit=9)
     picked = [x.item for x in scored_picked]
 
-    forum_items: list[Item] = []
-    for subreddit in ["ETFs", "Bogleheads", "investing", "portfolios"]:
-        hot_items = fetch_reddit_listing_items(subreddit, "hot", limit=12)
-        forum_items.extend(hot_items)
-        if len([item for item in hot_items if etf_forum_relevant(item)]) < ETF_MIN_FORUM_ITEMS:
-            forum_items.extend(fetch_reddit_listing_items(subreddit, "top", limit=12))
-        forum_items.extend(parse_feed(f"Reddit r/{subreddit}", f"https://www.reddit.com/r/{subreddit}/hot/.rss", limit=12))
-        time.sleep(0.2)
-    if not forum_items:
-        forum_feeds = {
-            "Reddit r/ETFs": "https://www.reddit.com/r/ETFs/hot/.rss",
-            "Reddit r/Bogleheads": "https://www.reddit.com/r/Bogleheads/hot/.rss",
-            "Reddit r/investing": "https://www.reddit.com/r/investing/hot/.rss",
-            "Reddit r/portfolios": "https://www.reddit.com/r/portfolios/hot/.rss",
-        }
-        for source, url in forum_feeds.items():
-            forum_items.extend(parse_feed(source, url, limit=12))
-            time.sleep(0.2)
+    forum_items = collect_etf_forum_items()
     history_forum_items = forum_history_backfill_items(limit=60)
     forum_items.extend(history_forum_items)
     forum_picked = select_etf_forum_items(forum_items, limit=ETF_FORUM_DISPLAY_LIMIT)
@@ -4516,6 +4633,7 @@ def build_etf(out_dir: Path) -> None:
         minimum=ETF_MIN_FORUM_ITEMS,
         limit=ETF_FORUM_DISPLAY_LIMIT,
     )
+    forum_picked = ensure_non_reddit_forum_mix(forum_picked, forum_items, min_non_reddit=2, limit=ETF_FORUM_DISPLAY_LIMIT)
 
     date_s = report_date()
     data_dates = sorted({str(r["date"]) for r in strategy_rows + mover_rows})

@@ -180,6 +180,64 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertEqual([x.url for x in picked], [renderable.url])
 
+    def test_bogleblog_bestof_index_yields_bogleheads_forum_items(self) -> None:
+        original_fetch = dr.fetch_bytes
+
+        def fake_fetch(url: str, timeout: int = 30, headers: dict[str, str] | None = None) -> bytes:
+            self.assertEqual(url, dr.BOGLEBLOG_BEST_OF_BOGLEHEADS_URL)
+            return b"""
+            <html><body>
+              <a href="https://www.bogleheads.org/forum/viewtopic.php?t=407430">Transition to 3 Fund Portfolio</a>
+              <a href="https://www.bogleheads.org/forum/viewtopic.php?t=287967">Overall index of portfolios</a>
+              <a href="https://example.com/not-forum">Ignore me</a>
+            </body></html>
+            """
+
+        try:
+            dr.fetch_bytes = fake_fetch
+            items = dr.bogleblog_bestof_forum_items(limit=5)
+        finally:
+            dr.fetch_bytes = original_fetch
+
+        self.assertEqual(len(items), 2)
+        self.assertEqual(items[0].source, "Bogleblog Best of Bogleheads Forum")
+        self.assertIn("Transition to 3 Fund Portfolio", dr.forum_display_title(items[0]))
+        self.assertIn("三基金组合", dr.forum_display_title(items[0]))
+        self.assertTrue(all(dr.etf_forum_relevant(item) for item in items))
+
+    def test_collect_etf_forum_items_includes_non_reddit_forums_and_curated_index(self) -> None:
+        original_parse_feed = dr.parse_feed
+        original_fetch_reddit = dr.fetch_reddit_listing_items
+        original_bogleblog = dr.bogleblog_bestof_forum_items
+        try:
+            dr.fetch_reddit_listing_items = lambda subreddit, sort="hot", limit=12: []
+            dr.parse_feed = lambda source, url, limit=12: [
+                self.item(
+                    source,
+                    "Bogleheads living in South Korea - How are we doing?",
+                    "Forum thread discusses Bogleheads portfolio allocation and long-term ETF core holdings.",
+                    url,
+                )
+            ] if source == "Bogleheads.org Forum" else []
+            dr.bogleblog_bestof_forum_items = lambda limit=8: [
+                self.item(
+                    "Bogleblog Best of Bogleheads Forum",
+                    "Transition to 3 Fund Portfolio",
+                    "Curated Bogleheads forum index item about portfolio allocation, ETF core holdings, and rebalancing.",
+                    "https://www.bogleheads.org/forum/viewtopic.php?t=407430",
+                )
+            ]
+
+            items = dr.collect_etf_forum_items()
+        finally:
+            dr.parse_feed = original_parse_feed
+            dr.fetch_reddit_listing_items = original_fetch_reddit
+            dr.bogleblog_bestof_forum_items = original_bogleblog
+
+        sources = {item.source for item in items}
+        self.assertIn("Bogleheads.org Forum", sources)
+        self.assertIn("Bogleblog Best of Bogleheads Forum", sources)
+
     def test_etf_forum_selector_recovers_when_unrendered_same_day_candidates_polluted_history(self) -> None:
         original_now_bj = dr.now_bj
         dr.now_bj = lambda: dr.datetime(2026, 5, 21, 7, 0, tzinfo=dr.BJ)
@@ -860,6 +918,9 @@ class EtfDigestQualityTests(unittest.TestCase):
             "What should i Change or upgrade on my portfolio?": "我的投资组合应该调整或升级什么？",
             "So where do I convert to bonds?": "我应该在什么位置转向债券？",
             "Re-balance question": "关于投资组合再平衡的问题",
+            "Age 22 any recommendations?": "22 岁投资组合有什么建议？",
+            "The Latest Morningstar Report Shows How to Invest in 2026": "Morningstar 最新报告：2026 年应如何投资？",
+            "Personal Investments • Re: Dividend investing or not?": "个人投资：是否应该做股息投资？",
             "22M taxable brokerage portfolio review, inquisitive about barbell growth and macro diversifier strategy": "22 岁男性应税券商账户组合求评：杠铃式成长与宏观分散策略是否合适？",
             "Recently Opened Self-Managed Brokerage and my Roth IRA Strategy": "新开自主管理券商账户与 Roth IRA 策略求评",
             "Help diversify portfolio": "如何让投资组合更加分散？",
@@ -977,6 +1038,38 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertGreaterEqual(len(extended), dr.ETF_MIN_FORUM_ITEMS)
         self.assertLessEqual(len(extended), 10)
         self.assertEqual(extended[0].title, picked[0].title)
+
+    def test_ensure_non_reddit_forum_mix_keeps_external_forums_when_available(self) -> None:
+        picked = [
+            self.item(
+                "Reddit r/ETFs（score/upvotes 100；comments/replies 50）",
+                f"Portfolio Feedback for a {age} year old",
+                "Post gives a portfolio allocation and asks for risk tolerance, ETF core, and rebalance feedback.",
+                f"https://www.reddit.com/r/ETFs/comments/example/reddit_{age}/",
+            )
+            for age in range(31, 41)
+        ]
+        candidates = [
+            self.item(
+                "Bogleheads.org Forum",
+                "Bogleheads living in South Korea - How are we doing?",
+                "Forum thread discusses Bogleheads portfolio allocation, ETF core holdings, and rebalancing.",
+                "https://www.bogleheads.org/forum/viewtopic.php?t=500001",
+            ),
+            self.item(
+                "Bogleblog Best of Bogleheads Forum",
+                "Transition to 3 Fund Portfolio",
+                "Curated Bogleheads forum index item about portfolio allocation, ETF core holdings, and rebalancing.",
+                "https://www.bogleheads.org/forum/viewtopic.php?t=407430",
+            ),
+        ]
+
+        mixed = dr.ensure_non_reddit_forum_mix(picked, candidates, min_non_reddit=2, limit=10)
+
+        self.assertEqual(len(mixed), 10)
+        self.assertGreaterEqual(sum(1 for item in mixed if "reddit" not in item.source.lower()), 2)
+        self.assertIn("Bogleheads.org Forum", {item.source for item in mixed})
+        self.assertIn("Bogleblog Best of Bogleheads Forum", {item.source for item in mixed})
 
     def test_generic_forum_post_is_skipped_without_thread_specific_summary(self) -> None:
         item = self.item(
