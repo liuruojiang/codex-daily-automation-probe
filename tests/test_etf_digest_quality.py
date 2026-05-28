@@ -858,6 +858,11 @@ class EtfDigestQualityTests(unittest.TestCase):
             "How’s the portfolio looking now? 26M": "26 岁男性：现在这个投资组合看起来怎么样？",
             "How to get over the FOMO from all the other investing subreddits?": "如何克服其他投资社区带来的错失恐惧？",
             "What should i Change or upgrade on my portfolio?": "我的投资组合应该调整或升级什么？",
+            "So where do I convert to bonds?": "我应该在什么位置转向债券？",
+            "Re-balance question": "关于投资组合再平衡的问题",
+            "22M taxable brokerage portfolio review, inquisitive about barbell growth and macro diversifier strategy": "22 岁男性应税券商账户组合求评：杠铃式成长与宏观分散策略是否合适？",
+            "Recently Opened Self-Managed Brokerage and my Roth IRA Strategy": "新开自主管理券商账户与 Roth IRA 策略求评",
+            "Help diversify portfolio": "如何让投资组合更加分散？",
         }
 
         for title, expected_translation in cases.items():
