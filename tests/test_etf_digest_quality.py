@@ -948,6 +948,31 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertGreaterEqual(len(picked), dr.ETF_MIN_FORUM_ITEMS)
         self.assertTrue(all(dr.renderable_forum_item(item) for item in picked))
 
+    def test_extend_forum_items_to_minimum_uses_history_after_selector_stays_sparse(self) -> None:
+        picked = [
+            self.item(
+                "Reddit r/portfolios（score/upvotes 未抓取；comments/replies 未抓取）",
+                "Portfolio Feedback for a 31 year old",
+                "Post gives a portfolio allocation and asks for risk tolerance, ETF core, and rebalance feedback.",
+                "https://www.reddit.com/r/portfolios/comments/example/live_31/",
+            )
+        ]
+        history_items = [
+            self.item(
+                "Reddit r/Bogleheads",
+                f"Portfolio Feedback for a {age} year old",
+                dr.forum_history_backfill_summary(f"Portfolio Feedback for a {age} year old"),
+                f"https://www.reddit.com/r/Bogleheads/comments/example/history_extend_{age}/",
+            )
+            for age in range(32, 42)
+        ]
+
+        extended = dr.extend_forum_items_to_minimum(picked, history_items, minimum=dr.ETF_MIN_FORUM_ITEMS, limit=10)
+
+        self.assertGreaterEqual(len(extended), dr.ETF_MIN_FORUM_ITEMS)
+        self.assertLessEqual(len(extended), 10)
+        self.assertEqual(extended[0].title, picked[0].title)
+
     def test_generic_forum_post_is_skipped_without_thread_specific_summary(self) -> None:
         item = self.item(
             "Reddit r/ETFs",

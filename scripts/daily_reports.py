@@ -2566,6 +2566,13 @@ def renderable_forum_item(item: Item) -> bool:
     return forum_has_lightweight_summary_evidence(item, points)
 
 
+def renderable_or_enriched_forum_item(item: Item) -> Item | None:
+    if renderable_forum_item(item):
+        return item
+    enriched = enrich_article_item(item)
+    return enriched if renderable_forum_item(enriched) else None
+
+
 def select_etf_forum_items(items: list[Item], limit: int = ETF_FORUM_DISPLAY_LIMIT) -> list[Item]:
     relevant = dedupe_items([x for x in items if etf_forum_relevant(x)])
     relevant.sort(
@@ -2577,13 +2584,13 @@ def select_etf_forum_items(items: list[Item], limit: int = ETF_FORUM_DISPLAY_LIM
     )
     today = report_date()
     primary_raw = filter_previously_sent("etf", relevant, days=ETF_DEDUPE_DAYS, ignore_dates={today})[: max(limit * 2, 12)]
-    primary = [x for x in (enrich_article_item(item) for item in primary_raw) if renderable_forum_item(x)]
+    primary = [x for x in (renderable_or_enriched_forum_item(item) for item in primary_raw) if x is not None]
     primary.sort(key=forum_engagement_score, reverse=True)
     if len(primary) >= ETF_MIN_FORUM_ITEMS:
         return primary[:limit]
 
     backfill_raw = filter_previously_sent("etf", relevant, days=ETF_FORUM_BACKFILL_DEDUPE_DAYS, ignore_dates={today})[: max(limit * 3, 18)]
-    backfill = [x for x in (enrich_article_item(item) for item in backfill_raw) if renderable_forum_item(x)]
+    backfill = [x for x in (renderable_or_enriched_forum_item(item) for item in backfill_raw) if x is not None]
     backfill.sort(key=forum_engagement_score, reverse=True)
     out: list[Item] = []
     seen: set[tuple[str, str]] = set()
@@ -2597,7 +2604,9 @@ def select_etf_forum_items(items: list[Item], limit: int = ETF_FORUM_DISPLAY_LIM
             break
     if len(out) >= ETF_MIN_FORUM_ITEMS:
         return out
-    recovery = [x for x in (enrich_article_item(item) for item in relevant[: max(limit * 3, 18)]) if renderable_forum_item(x)]
+    recovery = [
+        x for x in (renderable_or_enriched_forum_item(item) for item in relevant[: max(limit * 3, 18)]) if x is not None
+    ]
     recovery.sort(key=forum_engagement_score, reverse=True)
     for item in recovery:
         key = (canonical_url(item.url), norm_title(item.title))
@@ -2606,6 +2615,32 @@ def select_etf_forum_items(items: list[Item], limit: int = ETF_FORUM_DISPLAY_LIM
         seen.add(key)
         out.append(item)
         if len(out) >= limit:
+            break
+    return out
+
+
+def extend_forum_items_to_minimum(
+    picked: list[Item],
+    candidates: list[Item],
+    minimum: int = ETF_MIN_FORUM_ITEMS,
+    limit: int = ETF_FORUM_DISPLAY_LIMIT,
+) -> list[Item]:
+    out = list(picked[:limit])
+    if len(out) >= minimum:
+        return out
+    seen = {(canonical_url(item.url), norm_title(item.title)) for item in out}
+    for item in candidates:
+        if len(out) >= limit:
+            break
+        key = (canonical_url(item.url), norm_title(item.title))
+        if key in seen:
+            continue
+        enriched = item if renderable_forum_item(item) else enrich_article_item(item)
+        if not renderable_forum_item(enriched):
+            continue
+        seen.add(key)
+        out.append(enriched)
+        if len(out) >= minimum:
             break
     return out
 
@@ -4467,8 +4502,15 @@ def build_etf(out_dir: Path) -> None:
         for source, url in forum_feeds.items():
             forum_items.extend(parse_feed(source, url, limit=12))
             time.sleep(0.2)
-    forum_items.extend(forum_history_backfill_items(limit=40))
+    history_forum_items = forum_history_backfill_items(limit=60)
+    forum_items.extend(history_forum_items)
     forum_picked = select_etf_forum_items(forum_items, limit=ETF_FORUM_DISPLAY_LIMIT)
+    forum_picked = extend_forum_items_to_minimum(
+        forum_picked,
+        history_forum_items,
+        minimum=ETF_MIN_FORUM_ITEMS,
+        limit=ETF_FORUM_DISPLAY_LIMIT,
+    )
 
     date_s = report_date()
     data_dates = sorted({str(r["date"]) for r in strategy_rows + mover_rows})
