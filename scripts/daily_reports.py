@@ -149,8 +149,8 @@ ETF_MIN_RESEARCH_ITEMS = 5
 ETF_DEDUPE_DAYS = 45
 ETF_BACKFILL_DEDUPE_DAYS = 7
 ETF_FORUM_BACKFILL_DEDUPE_DAYS = 1
-ETF_MIN_FORUM_ITEMS = 5
-ETF_FORUM_DISPLAY_LIMIT = 8
+ETF_MIN_FORUM_ITEMS = 8
+ETF_FORUM_DISPLAY_LIMIT = 10
 ETF_HISTORY_DAYS = 60
 
 
@@ -2044,8 +2044,47 @@ def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
 def forum_public_heading(item: Item) -> str:
     text = f"{item.title} {item.summary}".lower()
     title_lower = item.title.lower()
+    exact_title_translations = {
+        "my parents have paid their financial advisor roughly $47k in fees over 15 years for market returns": "父母 15 年来为接近市场回报向财务顾问支付约 4.7 万美元费用",
+        "my sister has been an edward jones broker for more than two decades and not one family member has even $1 invested there.": "姐姐做了二十多年 Edward Jones 经纪人，但家人没有一美元投在那里",
+        "real estate or s&p 500. honestly, what‘s the better investment for you?": "房地产还是标普 500：对你来说哪个投资更好？",
+        "s&p 500 index not so diversified": "标普 500 指数是否并没有那么分散？",
+        "psa- mega ipos are nothing to worry about as an index investor": "提醒：作为指数投资者不必过度担心大型 IPO",
+        "people who bought stocks early when they were still risky, unpopular, or getting hated on, what made you buy?": "早期买入仍有风险、不受欢迎或被嫌弃股票的人，当初为什么买？",
+        "protecting ourselves from spacex ipo": "如何防范 SpaceX IPO 对指数组合的影响？",
+        "spacex ipo and nasdaq violating its own methodology": "SpaceX IPO 与纳斯达克是否违背自身指数方法论",
+        "should i stop contributing to 401k and ira": "我是否应该停止向 401(k) 和 IRA 供款？",
+        "how much cash is too much?": "现金持有多少算太多？",
+        "what would the collapse of the bond market mean for stocks?": "债券市场崩溃对股票意味着什么？",
+        "i don't want to rebalance, what's your take?": "我不想再平衡组合，你怎么看？",
+        "19yo incoming college freshman; doubled money earned from internship last summer within first year of investing": "19 岁准大学新生：入市第一年把去年实习收入翻倍",
+        "how’s the portfolio looking now? 26m": "26 岁男性：现在这个投资组合看起来怎么样？",
+        "how to get over the fomo from all the other investing subreddits?": "如何克服其他投资社区带来的错失恐惧？",
+        "what should i change or upgrade on my portfolio?": "我的投资组合应该调整或升级什么？",
+    }
+    if title_lower in exact_title_translations:
+        return exact_title_translations[title_lower]
     if "does this make sense" in title_lower and "overengineered portfolio" in title_lower:
         return "这样配置合理吗？组合是否过度设计，还是稳健理性的方案？"
+    feedback_age_match = re.search(r"\bportfolio\s+feedback\s+for\s+a\s+(\d{2})\s+year\s+old\b", title_lower)
+    if feedback_age_match:
+        return f"{feedback_age_match.group(1)} 岁投资组合反馈求评"
+    if "managing portfolio investments over time" in title_lower and "signals" in title_lower:
+        return "如何长期管理组合投资：信号、直觉还是策略？"
+    living_match = re.search(r"\bbogleheads?\s+living\s+in\s+(.+?)\s+-\s+how\s+are\s+we\s+doing\b", title_lower)
+    if living_match:
+        place_map = {
+            "south korea": "韩国",
+            "korea": "韩国",
+            "canada": "加拿大",
+            "uk": "英国",
+            "the uk": "英国",
+            "japan": "日本",
+            "singapore": "新加坡",
+            "australia": "澳大利亚",
+        }
+        place = place_map.get(living_match.group(1).strip(), living_match.group(1).strip().title())
+        return f"生活在{place}的 Bogleheads：我们的配置做得怎么样？"
     if "spmo" in title_lower and "vfmo" in title_lower and "voo" in title_lower:
         return "用 SPMO + VFMO 作为美股核心、比典型 VOO 核心多承担一点风险是否合理？"
     if "advice on how to improve my portfolio" in title_lower and "25m" in title_lower:
@@ -2093,7 +2132,13 @@ def forum_public_heading(item: Item) -> str:
         return "投资组合配置求评"
     if "bond allocation" in text or "bonds being safe" in text:
         return "债券配置与风险认知讨论"
-    return f"{chinese_topic(item.title, item.summary)}论坛讨论"
+    if "portfolio" in text:
+        return "投资组合配置问题求评"
+    if "bogle" in text:
+        return "Bogleheads 配置问题求评"
+    if "401" in text or "ira" in text or "roth" in text:
+        return "税务账户与退休账户配置问题"
+    return f"{chinese_topic(item.title, item.summary)}相关问题"
 
 
 def forum_display_title(item: Item) -> str:
@@ -2510,7 +2555,7 @@ def select_etf_forum_items(items: list[Item], limit: int = ETF_FORUM_DISPLAY_LIM
         out.append(item)
         if len(out) >= limit:
             break
-    if out:
+    if len(out) >= ETF_MIN_FORUM_ITEMS:
         return out
     recovery = [x for x in (enrich_article_item(item) for item in relevant[: max(limit * 3, 18)]) if renderable_forum_item(x)]
     recovery.sort(key=forum_engagement_score, reverse=True)

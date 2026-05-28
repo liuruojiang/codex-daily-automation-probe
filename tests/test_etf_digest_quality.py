@@ -839,6 +839,25 @@ class EtfDigestQualityTests(unittest.TestCase):
             "Portfolio age 33": "33 岁投资组合求评",
             "Roth vs Traditional 401k": "Roth 401(k) 与传统 401(k) 如何选择？",
             "Sold everything to rebalance my ETF portfolio.": "为重新平衡 ETF 组合卖出全部持仓是否合适？",
+            "Portfolio Feedback for a 31 year old": "31 岁投资组合反馈求评",
+            "Managing portfolio investments over time - signals, intuition, strategies?": "如何长期管理组合投资：信号、直觉还是策略？",
+            "Bogleheads living in South Korea - How are we doing?": "生活在韩国的 Bogleheads：我们的配置做得怎么样？",
+            "my parents have paid their financial advisor roughly $47k in fees over 15 years for market returns": "父母 15 年来为接近市场回报向财务顾问支付约 4.7 万美元费用",
+            "My sister has been an Edward Jones broker for more than two decades and not one family member has even $1 invested there.": "姐姐做了二十多年 Edward Jones 经纪人，但家人没有一美元投在那里",
+            "Real estate or S&P 500. Honestly, what‘s the better investment for you?": "房地产还是标普 500：对你来说哪个投资更好？",
+            "S&P 500 Index Not So Diversified": "标普 500 指数是否并没有那么分散？",
+            "PSA- Mega IPOs are nothing to worry about as an index investor": "提醒：作为指数投资者不必过度担心大型 IPO",
+            "People who bought stocks early when they were still risky, unpopular, or getting hated on, what made you buy?": "早期买入仍有风险、不受欢迎或被嫌弃股票的人，当初为什么买？",
+            "Protecting ourselves from SpaceX IPO": "如何防范 SpaceX IPO 对指数组合的影响？",
+            "SpaceX IPO and NASDAQ violating its own methodology": "SpaceX IPO 与纳斯达克是否违背自身指数方法论",
+            "Should I stop contributing to 401k and IRA": "我是否应该停止向 401(k) 和 IRA 供款？",
+            "how much cash is too much?": "现金持有多少算太多？",
+            "What would the collapse of the Bond Market mean for stocks?": "债券市场崩溃对股票意味着什么？",
+            "I don't want to rebalance, what's your take?": "我不想再平衡组合，你怎么看？",
+            "19yo incoming college freshman; doubled money earned from internship last summer within first year of investing": "19 岁准大学新生：入市第一年把去年实习收入翻倍",
+            "How’s the portfolio looking now? 26M": "26 岁男性：现在这个投资组合看起来怎么样？",
+            "How to get over the FOMO from all the other investing subreddits?": "如何克服其他投资社区带来的错失恐惧？",
+            "What should i Change or upgrade on my portfolio?": "我的投资组合应该调整或升级什么？",
         }
 
         for title, expected_translation in cases.items():
@@ -853,6 +872,49 @@ class EtfDigestQualityTests(unittest.TestCase):
 
                 self.assertEqual(rendered_title, f"{title}（{expected_translation}）")
                 self.assertNotIn("论坛讨论", rendered_title)
+
+    def test_forum_selector_recovers_to_minimum_when_recent_history_leaves_too_few_items(self) -> None:
+        original_now_bj = dr.now_bj
+        dr.now_bj = lambda: dr.datetime(2026, 5, 28, 7, 0, tzinfo=dr.BJ)
+        items = [
+            self.item(
+                "Reddit r/portfolios（score/upvotes 40；comments/replies 80）",
+                f"Portfolio Feedback for a {age} year old",
+                "Post gives a portfolio allocation and asks for risk tolerance, ETF core, and rebalance feedback.",
+                f"https://www.reddit.com/r/portfolios/comments/example/portfolio_feedback_{age}/",
+            )
+            for age in range(31, 41)
+        ]
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            history_dir = tmp_path / "digest_history"
+            history_dir.mkdir()
+            (history_dir / "etf.json").write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "sent_date": "2026-05-27",
+                                "source": item.source,
+                                "title": item.title,
+                                "url": item.url,
+                            }
+                            for item in items[:6]
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            os.chdir(tmp_path)
+            try:
+                picked = dr.select_etf_forum_items(items, limit=10)
+            finally:
+                os.chdir(original_cwd)
+                dr.now_bj = original_now_bj
+
+        self.assertGreaterEqual(len(picked), dr.ETF_MIN_FORUM_ITEMS)
+        self.assertGreater(len(picked), 4)
 
     def test_generic_forum_post_is_skipped_without_thread_specific_summary(self) -> None:
         item = self.item(
