@@ -2262,6 +2262,46 @@ def forum_lightweight_summary_points(item: Item, limit: int = 4) -> list[str]:
     return out[:limit]
 
 
+def forum_history_backfill_summary(title: str) -> str:
+    lower = title.lower()
+    bits = [
+        "Historical Reddit forum backfill item about portfolio allocation, ETF core holdings, risk tolerance, and rebalance decisions.",
+    ]
+    if "401" in lower or "ira" in lower or "roth" in lower:
+        bits.append("The thread also points to retirement account placement, taxable account coordination, and contribution choices.")
+    if "cash" in lower:
+        bits.append("The discussion is relevant to cash allocation and whether short-term liquidity is too high or too low.")
+    if "bond" in lower:
+        bits.append("The discussion is relevant to bond allocation, drawdowns, and equity-bond balance.")
+    if "bogle" in lower:
+        bits.append("The discussion is relevant to Bogleheads-style low-cost diversified portfolio construction.")
+    return " ".join(bits)
+
+
+def forum_history_backfill_items(limit: int = 30) -> list[Item]:
+    history = load_digest_history("etf")
+    items: list[Item] = []
+    seen: set[tuple[str, str]] = set()
+    for rec in reversed(history.get("items", [])):
+        if not isinstance(rec, dict):
+            continue
+        source = str(rec.get("source", ""))
+        title = str(rec.get("title", ""))
+        url = str(rec.get("url", ""))
+        if not title or not url or "reddit" not in source.lower():
+            continue
+        key = (canonical_url(url), norm_title(title))
+        if key in seen:
+            continue
+        seen.add(key)
+        sent_date = str(rec.get("sent_date", ""))
+        published = f"{sent_date}T00:00:00+00:00" if sent_date else ""
+        items.append(Item(source, title, url, published, forum_history_backfill_summary(title)))
+        if len(items) >= limit:
+            break
+    return items
+
+
 def forum_research_question(item: Item) -> str:
     text = f"{item.title} {item.summary}".lower()
     if "vnq" in text or "reit" in text or "real estate" in text:
@@ -4427,6 +4467,7 @@ def build_etf(out_dir: Path) -> None:
         for source, url in forum_feeds.items():
             forum_items.extend(parse_feed(source, url, limit=12))
             time.sleep(0.2)
+    forum_items.extend(forum_history_backfill_items(limit=40))
     forum_picked = select_etf_forum_items(forum_items, limit=ETF_FORUM_DISPLAY_LIMIT)
 
     date_s = report_date()

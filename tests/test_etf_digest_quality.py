@@ -916,6 +916,38 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertGreaterEqual(len(picked), dr.ETF_MIN_FORUM_ITEMS)
         self.assertGreater(len(picked), 4)
 
+    def test_forum_history_backfill_items_are_renderable_when_live_reddit_is_sparse(self) -> None:
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            history_dir = tmp_path / "digest_history"
+            history_dir.mkdir()
+            (history_dir / "etf.json").write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "sent_date": "2026-05-27",
+                                "source": "Reddit r/Bogleheads",
+                                "title": f"Portfolio Feedback for a {age} year old",
+                                "url": f"https://www.reddit.com/r/Bogleheads/comments/example/history_{age}/",
+                            }
+                            for age in range(31, 41)
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            os.chdir(tmp_path)
+            try:
+                backfill = dr.forum_history_backfill_items(limit=10)
+                picked = dr.select_etf_forum_items(backfill, limit=10)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertGreaterEqual(len(picked), dr.ETF_MIN_FORUM_ITEMS)
+        self.assertTrue(all(dr.renderable_forum_item(item) for item in picked))
+
     def test_generic_forum_post_is_skipped_without_thread_specific_summary(self) -> None:
         item = self.item(
             "Reddit r/ETFs",
