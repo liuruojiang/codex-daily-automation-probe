@@ -2102,9 +2102,30 @@ def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
     return points[:limit]
 
 
+def forum_title_subject(title: str) -> str:
+    subject = clean_text(title, 220)
+    match = re.match(r"(.{2,80}?)(?:\s*[•?]\s*|\s+)Re:\s*(.+)", subject, flags=re.I)
+    if match:
+        section = clean_text(match.group(1), 80)
+        topic = clean_text(match.group(2), 180)
+        if section and topic:
+            return f"{section} • Re: {topic}"
+    return subject
+
+
+def forum_subject_text(title: str) -> str:
+    subject = forum_title_subject(title)
+    if "• Re:" in subject:
+        return clean_text(subject.split("• Re:", 1)[1], 180)
+    return subject
+
+
 def forum_public_heading(item: Item) -> str:
-    text = f"{item.title} {item.summary}".lower()
-    title_lower = item.title.lower()
+    subject = forum_title_subject(item.title)
+    topic = forum_subject_text(item.title)
+    text = f"{topic} {item.summary}".lower()
+    title_lower = topic.lower()
+    subject_lower = subject.lower()
     exact_title_translations = {
         "my parents have paid their financial advisor roughly $47k in fees over 15 years for market returns": "父母 15 年来为接近市场回报向财务顾问支付约 4.7 万美元费用",
         "my sister has been an edward jones broker for more than two decades and not one family member has even $1 invested there.": "姐姐做了二十多年 Edward Jones 经纪人，但家人没有一美元投在那里",
@@ -2133,11 +2154,19 @@ def forum_public_heading(item: Item) -> str:
         "recently opened self-managed brokerage and my roth ira strategy": "新开自主管理券商账户与 Roth IRA 策略求评",
         "help diversify portfolio": "如何让投资组合更加分散？",
         "personal investments • re: dividend investing or not?": "个人投资：是否应该做股息投资？",
+        "personal investments • re: when should i create tips ladder?now or wait": "个人投资：什么时候建立 TIPS 阶梯？现在还是等待？",
     }
+    if subject_lower in exact_title_translations:
+        return exact_title_translations[subject_lower]
     if title_lower in exact_title_translations:
         return exact_title_translations[title_lower]
+    forum_prefix = ""
+    if "• Re:" in subject:
+        forum_prefix = "个人投资：" if subject_lower.startswith("personal investments") else ""
     if "does this make sense" in title_lower and "overengineered portfolio" in title_lower:
         return "这样配置合理吗？组合是否过度设计，还是稳健理性的方案？"
+    if "tips ladder" in title_lower or "tips ladder" in text:
+        return f"{forum_prefix}什么时候建立 TIPS 阶梯？现在还是等待？"
     feedback_age_match = re.search(r"\bportfolio\s+feedback\s+for\s+a\s+(\d{2})\s+year\s+old\b", title_lower)
     if feedback_age_match:
         return f"{feedback_age_match.group(1)} 岁投资组合反馈求评"

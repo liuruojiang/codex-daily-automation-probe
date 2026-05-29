@@ -921,6 +921,8 @@ class EtfDigestQualityTests(unittest.TestCase):
             "Age 22 any recommendations?": "22 岁投资组合有什么建议？",
             "The Latest Morningstar Report Shows How to Invest in 2026": "Morningstar 最新报告：2026 年应如何投资？",
             "Personal Investments • Re: Dividend investing or not?": "个人投资：是否应该做股息投资？",
+            "Personal Investments • Re: When should I create tips ladder?Now or wait": "个人投资：什么时候建立 TIPS 阶梯？现在还是等待？",
+            "Personal Investments ? Re: When should I create tips ladder?Now or wait": "个人投资：什么时候建立 TIPS 阶梯？现在还是等待？",
             "22M taxable brokerage portfolio review, inquisitive about barbell growth and macro diversifier strategy": "22 岁男性应税券商账户组合求评：杠铃式成长与宏观分散策略是否合适？",
             "Recently Opened Self-Managed Brokerage and my Roth IRA Strategy": "新开自主管理券商账户与 Roth IRA 策略求评",
             "Help diversify portfolio": "如何让投资组合更加分散？",
@@ -938,6 +940,7 @@ class EtfDigestQualityTests(unittest.TestCase):
 
                 self.assertEqual(rendered_title, f"{title}（{expected_translation}）")
                 self.assertNotIn("论坛讨论", rendered_title)
+                self.assertNotIn("投资组合配置问题求评", rendered_title)
 
     def test_forum_selector_recovers_to_minimum_when_recent_history_leaves_too_few_items(self) -> None:
         original_now_bj = dr.now_bj
