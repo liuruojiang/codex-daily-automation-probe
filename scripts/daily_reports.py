@@ -4628,10 +4628,6 @@ MOVER_UNIVERSE = [
     MarketAsset("UUP", "Invesco DB US Dollar Index Bullish Fund", "yahoo", "UUP", "美元指数多头ETF。", "US Dollar"),
     MarketAsset("DBMF", "iMGP DBi Managed Futures Strategy ETF", "yahoo", "DBMF", "管理期货趋势跟踪ETF。", "Managed Futures"),
     MarketAsset("KMLM", "KFA Mount Lucas Managed Futures Index Strategy ETF", "yahoo", "KMLM", "系统化管理期货趋势ETF。", "Managed Futures"),
-    MarketAsset("000300", "沪深300指数", "eastmoney", "1.000300", "A股核心大盘宽基指数。", "China Equity"),
-    MarketAsset("000905", "中证500指数", "eastmoney", "1.000905", "A股中盘宽基指数。", "China Equity"),
-    MarketAsset("000852", "中证1000指数", "eastmoney", "1.000852", "A股小盘宽基指数。", "China Equity"),
-    MarketAsset("399006", "创业板指", "eastmoney", "0.399006", "A股成长风格核心指数。", "China Equity"),
 ]
 
 

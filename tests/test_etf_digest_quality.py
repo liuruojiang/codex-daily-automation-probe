@@ -76,6 +76,15 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertEqual([item.url for item in filtered], [new_item.url])
 
+    def test_mover_universe_excludes_a_share_local_indexes(self) -> None:
+        codes = {asset.code for asset in dr.MOVER_UNIVERSE}
+        self.assertNotIn("000852", codes)
+        self.assertNotIn("000300", codes)
+        self.assertNotIn("000905", codes)
+        self.assertNotIn("399006", codes)
+        self.assertIn("ASHR", codes)
+        self.assertIn("FXI", codes)
+
     def test_etf_research_freshness_filter_drops_stale_rss_items(self) -> None:
         original_now_bj = dr.now_bj
         dr.now_bj = lambda: dr.datetime(2026, 5, 20, 7, 0, tzinfo=dr.BJ)
