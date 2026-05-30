@@ -936,6 +936,13 @@ class EtfDigestQualityTests(unittest.TestCase):
             "Recently Opened Self-Managed Brokerage and my Roth IRA Strategy": "新开自主管理券商账户与 Roth IRA 策略求评",
             "Help diversify portfolio": "如何让投资组合更加分散？",
             "How long until I hit a million": "我还要多久才能达到 100 万美元？",
+            "New in ETF. Looking for advice": "ETF 新手寻求投资建议",
+            "Investment allocations": "投资配置比例讨论",
+            "Roast/Help my portfolio. Not great at this.": "请吐槽或帮我改进投资组合：我不太擅长配置",
+            "30m and i feel like like im falling behind": "30 岁男性觉得自己的投资进度落后",
+            "Allocation across account types": "不同账户类型之间如何分配资产",
+            "Rate my Portfolio2 months in": "入市两个月，请评价我的投资组合",
+            "Started a taxable investment account (Feedback appreciated)": "刚开始应税投资账户，欢迎反馈",
         }
 
         for title, expected_translation in cases.items():
@@ -951,6 +958,44 @@ class EtfDigestQualityTests(unittest.TestCase):
                 self.assertEqual(rendered_title, f"{title}（{expected_translation}）")
                 self.assertNotIn("论坛讨论", rendered_title)
                 self.assertNotIn("投资组合配置问题求评", rendered_title)
+                self.assertNotIn("投资组合配置求评", rendered_title)
+                self.assertNotIn("税务账户与退休账户配置问题", rendered_title)
+
+    def test_forum_section_rendering_does_not_use_generic_labels_as_title_translations(self) -> None:
+        items = [
+            self.item(
+                "Reddit r/portfolios（score/upvotes 40；comments/replies 80）",
+                title,
+                "Forum thread discusses portfolio allocation, ETF core holdings, account choice, risk tolerance, taxable account, 401k, IRA, and rebalance decisions.",
+                f"https://www.reddit.com/r/portfolios/comments/example/{idx}/",
+            )
+            for idx, title in enumerate(
+                [
+                    "New in ETF. Looking for advice",
+                    "Investment allocations",
+                    "Roast/Help my portfolio. Not great at this.",
+                    "30m and i feel like like im falling behind",
+                    "Allocation across account types",
+                    "Rate my Portfolio2 months in",
+                    "Started a taxable investment account (Feedback appreciated)",
+                    "Transition to 3 Fund Portfolio",
+                    "Lazy Portfolios",
+                ],
+                1,
+            )
+        ]
+        lines: list[str] = []
+
+        visible_count = dr.append_etf_research_sections(lines, [], items, [], [], "2026-05-30")
+        rendered = "\n".join(lines)
+
+        self.assertEqual(visible_count, 9)
+        self.assertIn("New in ETF. Looking for advice（ETF 新手寻求投资建议）", rendered)
+        self.assertIn("Investment allocations（投资配置比例讨论）", rendered)
+        self.assertIn("Allocation across account types（不同账户类型之间如何分配资产）", rendered)
+        self.assertNotIn("（投资组合配置问题求评）", rendered)
+        self.assertNotIn("（投资组合配置求评）", rendered)
+        self.assertNotIn("（税务账户与退休账户配置问题）", rendered)
 
     def test_forum_selector_recovers_to_minimum_when_recent_history_leaves_too_few_items(self) -> None:
         original_now_bj = dr.now_bj

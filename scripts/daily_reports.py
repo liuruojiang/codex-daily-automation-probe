@@ -2219,6 +2219,20 @@ def forum_public_heading(item: Item) -> str:
         return "如何把多个混乱组合迁移成 Bogleheads 风格组合"
     if re.search(r"\bhow long until i (?:hit|reach|get to|have|make)\s+(?:a\s+)?(?:\$?1\s*million|\$?1m|million)\b", title_lower):
         return "我还要多久才能达到 100 万美元？"
+    if "new in etf" in title_lower and "looking for advice" in title_lower:
+        return "ETF 新手寻求投资建议"
+    if title_lower.strip(" .") == "investment allocations":
+        return "投资配置比例讨论"
+    if "roast/help my portfolio" in title_lower or ("help my portfolio" in title_lower and "not great at this" in title_lower):
+        return "请吐槽或帮我改进投资组合：我不太擅长配置"
+    if re.search(r"\b30m\b", title_lower) and "falling behind" in title_lower:
+        return "30 岁男性觉得自己的投资进度落后"
+    if "allocation across account types" in title_lower:
+        return "不同账户类型之间如何分配资产"
+    if re.search(r"\brate my portfolio\s*2 months in\b", title_lower):
+        return "入市两个月，请评价我的投资组合"
+    if "started a taxable investment account" in title_lower:
+        return "刚开始应税投资账户，欢迎反馈"
     if "100%" in text and "0%" in text and ("stocks/funds" in text or "stocks" in text) and (
         "bonds" in text or "treasuries" in text
     ):
