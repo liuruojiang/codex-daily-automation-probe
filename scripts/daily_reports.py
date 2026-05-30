@@ -2217,6 +2217,8 @@ def forum_public_heading(item: Item) -> str:
         return "26 岁投资者 ETF 配置求建议"
     if "best way to migrate" in title_lower and "boglehead portfolio" in title_lower:
         return "如何把多个混乱组合迁移成 Bogleheads 风格组合"
+    if re.search(r"\bhow long until i (?:hit|reach|get to|have|make)\s+(?:a\s+)?(?:\$?1\s*million|\$?1m|million)\b", title_lower):
+        return "我还要多久才能达到 100 万美元？"
     if "100%" in text and "0%" in text and ("stocks/funds" in text or "stocks" in text) and (
         "bonds" in text or "treasuries" in text
     ):

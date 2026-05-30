@@ -935,6 +935,7 @@ class EtfDigestQualityTests(unittest.TestCase):
             "22M taxable brokerage portfolio review, inquisitive about barbell growth and macro diversifier strategy": "22 岁男性应税券商账户组合求评：杠铃式成长与宏观分散策略是否合适？",
             "Recently Opened Self-Managed Brokerage and my Roth IRA Strategy": "新开自主管理券商账户与 Roth IRA 策略求评",
             "Help diversify portfolio": "如何让投资组合更加分散？",
+            "How long until I hit a million": "我还要多久才能达到 100 万美元？",
         }
 
         for title, expected_translation in cases.items():
