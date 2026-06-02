@@ -2135,6 +2135,10 @@ GENERIC_FORUM_HEADINGS = {
 }
 
 
+def generic_forum_heading(heading: str) -> bool:
+    return heading in GENERIC_FORUM_HEADINGS or heading.endswith("相关问题")
+
+
 def specific_forum_title_translation(title: str, summary: str = "") -> str:
     subject = forum_title_subject(title)
     topic = forum_subject_text(title)
@@ -2258,6 +2262,16 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         return "请评价我的投资组合"
     if title_lower.strip(" .") == "advice on portfolio":
         return "投资组合建议请求"
+    if "personal investments" in subject_lower and "retire at 55" in title_lower and "taxable" in title_lower:
+        return "个人投资：55 岁退休且应税账户占比较高"
+    if re.search(r"\badd\s+spmo\s+or\s+fmtm\b", title_lower):
+        return "添加 SPMO 还是 FMTM？"
+    if title_lower.strip(" .?") == "investment suggestion":
+        return "投资建议请求"
+    if "employer" in title_lower and "safe harbor" in title_lower and "negative" in title_lower:
+        return "雇主通过负向缴款撤回了 2026 年 Safe Harbor 匹配缴款"
+    if "vanguard advised redundancy" in title_lower:
+        return "Vanguard 顾问服务是否重复多余"
     if "vti and chill" in title_lower:
         return "还有谁在坚持“VTI and Chill”？"
     if "wealthpie" in title_lower and "spreadsheet" in title_lower:
@@ -2309,7 +2323,7 @@ def forum_public_heading(item: Item) -> str:
 def forum_display_title(item: Item) -> str:
     original = clean_text(item.title, 180)
     chinese = clean_text(forum_public_heading(item), 180)
-    if chinese in GENERIC_FORUM_HEADINGS:
+    if generic_forum_heading(chinese):
         chinese = ""
     if not original:
         return chinese
@@ -2421,7 +2435,7 @@ def forum_lightweight_summary_points(item: Item, limit: int = 4) -> list[str]:
 
     out = list(points)
     heading = forum_public_heading(item)
-    if heading and heading not in GENERIC_FORUM_HEADINGS and not any(heading in point for point in out):
+    if heading and not generic_forum_heading(heading) and not any(heading in point for point in out):
         out.append(f"标题和摘要显示，该帖围绕“{heading}”征集社区观点，适合作为 ETF/资产配置日报的待验证选题。")
     engagement = forum_engagement_label(item)
     if engagement:

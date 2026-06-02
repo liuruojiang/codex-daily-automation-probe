@@ -951,6 +951,11 @@ class EtfDigestQualityTests(unittest.TestCase):
             "I built WealthPie because my investing spreadsheet got way too complicated": "我做了 WealthPie，因为我的投资表格变得过于复杂",
             "Moving on from AUM and rebalancing": "不再依赖 AUM 顾问后如何再平衡",
             "Rate my portfolio please": "请评价我的投资组合",
+            "Personal Investments • Re: Retire at 55 heavy in taxable": "个人投资：55 岁退休且应税账户占比较高",
+            "Add SPMO or FMTM?": "添加 SPMO 还是 FMTM？",
+            "Investment suggestion": "投资建议请求",
+            "Employer just reversed 2026 Safe Harbor matches via negative Controbitions": "雇主通过负向缴款撤回了 2026 年 Safe Harbor 匹配缴款",
+            "Vanguard Advised Redundancy": "Vanguard 顾问服务是否重复多余",
         }
 
         for title, expected_translation in cases.items():
@@ -964,6 +969,8 @@ class EtfDigestQualityTests(unittest.TestCase):
                 rendered_title = dr.forum_display_title(item)
 
                 self.assertEqual(rendered_title, f"{title}（{expected_translation}）")
+                self.assertRegex(rendered_title, r"（[^）]*[\u4e00-\u9fff][^）]*）")
+                self.assertNotRegex(rendered_title, r"（[^）]*相关问题）")
                 for generic_heading in dr.GENERIC_FORUM_HEADINGS:
                     self.assertNotIn(f"（{generic_heading}）", rendered_title)
 
@@ -974,6 +981,45 @@ class EtfDigestQualityTests(unittest.TestCase):
                 title,
                 "Forum thread discusses portfolio allocation, ETF core holdings, account choice, risk tolerance, taxable account, 401k, IRA, and rebalance decisions.",
                 f"https://www.reddit.com/r/portfolios/comments/example/{idx}/",
+            )
+            for idx, title in enumerate(
+                [
+                    "Personal Investments • Re: Retire at 55 heavy in taxable",
+                    "Add SPMO or FMTM?",
+                    "Investment suggestion",
+                    "Employer just reversed 2026 Safe Harbor matches via negative Controbitions",
+                    "Vanguard Advised Redundancy",
+                    "Moving on from AUM and rebalancing",
+                    "I built WealthPie because my investing spreadsheet got way too complicated",
+                    "Rate this portfolio",
+                    "Any suggestions? Taxable brokerage",
+                    "Transition to 3 Fund Portfolio",
+                ],
+                1,
+            )
+        ]
+        lines: list[str] = []
+
+        visible_count = dr.append_etf_research_sections(lines, [], items, [], [], "2026-06-02")
+        rendered = "\n".join(lines)
+
+        self.assertEqual(visible_count, 10)
+        self.assertIn("Personal Investments • Re: Retire at 55 heavy in taxable（个人投资：55 岁退休且应税账户占比较高）", rendered)
+        self.assertIn("Add SPMO or FMTM?（添加 SPMO 还是 FMTM？）", rendered)
+        self.assertIn("Employer just reversed 2026 Safe Harbor matches via negative Controbitions（雇主通过负向缴款撤回了 2026 年 Safe Harbor 匹配缴款）", rendered)
+        self.assertIn("Vanguard Advised Redundancy（Vanguard 顾问服务是否重复多余）", rendered)
+        self.assertNotRegex(rendered, r"（[^）]*相关问题）")
+        for generic_heading in dr.GENERIC_FORUM_HEADINGS:
+            self.assertNotIn(f"（{generic_heading}）", rendered)
+            self.assertNotIn(f"围绕“{generic_heading}”", rendered)
+
+    def test_forum_section_rendering_does_not_use_generic_labels_as_title_translations_for_reported_titles(self) -> None:
+        items = [
+            self.item(
+                "Reddit r/portfolios（score/upvotes 40；comments/replies 80）",
+                title,
+                "Forum thread discusses portfolio allocation, ETF core holdings, account choice, risk tolerance, taxable account, 401k, IRA, and rebalance decisions.",
+                f"https://www.reddit.com/r/portfolios/comments/reported/{idx}/",
             )
             for idx, title in enumerate(
                 [
@@ -1004,6 +1050,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("Who is still doing “VTI and Chill” ?（还有谁在坚持“VTI and Chill”？）", rendered)
         self.assertIn("Moving on from AUM and rebalancing（不再依赖 AUM 顾问后如何再平衡）", rendered)
         self.assertIn("Transition to 3 Fund Portfolio（过渡到三基金组合）", rendered)
+        self.assertNotRegex(rendered, r"（[^）]*相关问题）")
         for generic_heading in dr.GENERIC_FORUM_HEADINGS:
             self.assertNotIn(f"（{generic_heading}）", rendered)
             self.assertNotIn(f"围绕“{generic_heading}”", rendered)
