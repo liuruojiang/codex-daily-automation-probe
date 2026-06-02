@@ -664,7 +664,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("六个月应急现金", rendered)
         self.assertIn("三年内买房", rendered)
         self.assertIn("401(k)", rendered)
-        self.assertIn("投资组合持仓清理求建议", rendered)
+        self.assertIn("Advice on Portfolio（投资组合建议请求）", rendered)
         self.assertNotIn("RSS only says", rendered)
         self.assertNotRegex(rendered, re.compile(r"[A-Za-z][A-Za-z ,'-]{80,}"))
 
@@ -686,7 +686,7 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertIn("全文总结", rendered)
         self.assertIn("REIT", rendered)
-        self.assertIn("税优账户中是否应单列 REIT/VNQ", rendered)
+        self.assertIn("VNQ: Why not diversify into VNQ within tax-advantaged accounts?（为什么不在税优账户中用 VNQ 做 REIT 分散？）", rendered)
         self.assertNotRegex(rendered, re.compile(r"[A-Za-z][A-Za-z ,'-]{80,}"))
 
     def test_etf_article_title_displays_original_and_chinese_translation(self) -> None:
@@ -871,9 +871,9 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("线索摘要", rendered)
         self.assertIn("What’s a ETF you don’t plan on selling anytime soon?（你不打算长期卖出的 ETF 是哪只？）", rendered)
         self.assertIn("Beginner Portfolio Help（新手投资组合求助）", rendered)
-        self.assertIn("Rate My Portfolio（投资组合配置求评）", rendered)
+        self.assertIn("Rate My Portfolio（请评价我的投资组合）", rendered)
         self.assertIn("26M ETF Advice", rendered)
-        self.assertIn("SCHG vs QQQM for long term?", rendered)
+        self.assertIn("SCHG vs QQQM for long term?（长期持有选 SCHG 还是 QQQM？）", rendered)
         self.assertIn("Best way to migrate multiple portfolios filled with crap to a Boglehead portfolio（如何把多个混乱组合迁移成 Bogleheads 风格组合）", rendered)
         self.assertIn("论坛补充入正文数量：6", rendered)
         self.assertNotRegex(rendered, re.compile(r"[A-Za-z][A-Za-z ,'-]{100,}"))
@@ -943,6 +943,14 @@ class EtfDigestQualityTests(unittest.TestCase):
             "Allocation across account types": "不同账户类型之间如何分配资产",
             "Rate my Portfolio2 months in": "入市两个月，请评价我的投资组合",
             "Started a taxable investment account (Feedback appreciated)": "刚开始应税投资账户，欢迎反馈",
+            "Do some of you completely disregard the bond portion of a portfolio? All equities?": "你们中有人完全忽略组合中的债券部分、全仓股票吗？",
+            "Portfolio planning simplest": "最简单的投资组合规划",
+            "Any suggestions? Taxable brokerage": "应税券商账户有什么建议？",
+            "Rate this portfolio": "请评价我的投资组合",
+            "Who is still doing “VTI and Chill” ?": "还有谁在坚持“VTI and Chill”？",
+            "I built WealthPie because my investing spreadsheet got way too complicated": "我做了 WealthPie，因为我的投资表格变得过于复杂",
+            "Moving on from AUM and rebalancing": "不再依赖 AUM 顾问后如何再平衡",
+            "Rate my portfolio please": "请评价我的投资组合",
         }
 
         for title, expected_translation in cases.items():
@@ -956,10 +964,8 @@ class EtfDigestQualityTests(unittest.TestCase):
                 rendered_title = dr.forum_display_title(item)
 
                 self.assertEqual(rendered_title, f"{title}（{expected_translation}）")
-                self.assertNotIn("论坛讨论", rendered_title)
-                self.assertNotIn("投资组合配置问题求评", rendered_title)
-                self.assertNotIn("投资组合配置求评", rendered_title)
-                self.assertNotIn("税务账户与退休账户配置问题", rendered_title)
+                for generic_heading in dr.GENERIC_FORUM_HEADINGS:
+                    self.assertNotIn(f"（{generic_heading}）", rendered_title)
 
     def test_forum_section_rendering_does_not_use_generic_labels_as_title_translations(self) -> None:
         items = [
@@ -971,13 +977,14 @@ class EtfDigestQualityTests(unittest.TestCase):
             )
             for idx, title in enumerate(
                 [
-                    "New in ETF. Looking for advice",
-                    "Investment allocations",
-                    "Roast/Help my portfolio. Not great at this.",
-                    "30m and i feel like like im falling behind",
-                    "Allocation across account types",
-                    "Rate my Portfolio2 months in",
-                    "Started a taxable investment account (Feedback appreciated)",
+                    "Do some of you completely disregard the bond portion of a portfolio? All equities?",
+                    "Portfolio planning simplest",
+                    "Any suggestions? Taxable brokerage",
+                    "Rate this portfolio",
+                    "Who is still doing “VTI and Chill” ?",
+                    "I built WealthPie because my investing spreadsheet got way too complicated",
+                    "Moving on from AUM and rebalancing",
+                    "Rate my portfolio please",
                     "Transition to 3 Fund Portfolio",
                     "Lazy Portfolios",
                 ],
@@ -989,13 +996,17 @@ class EtfDigestQualityTests(unittest.TestCase):
         visible_count = dr.append_etf_research_sections(lines, [], items, [], [], "2026-05-30")
         rendered = "\n".join(lines)
 
-        self.assertEqual(visible_count, 9)
-        self.assertIn("New in ETF. Looking for advice（ETF 新手寻求投资建议）", rendered)
-        self.assertIn("Investment allocations（投资配置比例讨论）", rendered)
-        self.assertIn("Allocation across account types（不同账户类型之间如何分配资产）", rendered)
-        self.assertNotIn("（投资组合配置问题求评）", rendered)
-        self.assertNotIn("（投资组合配置求评）", rendered)
-        self.assertNotIn("（税务账户与退休账户配置问题）", rendered)
+        self.assertEqual(visible_count, 10)
+        self.assertIn(
+            "Do some of you completely disregard the bond portion of a portfolio? All equities?（你们中有人完全忽略组合中的债券部分、全仓股票吗？）",
+            rendered,
+        )
+        self.assertIn("Who is still doing “VTI and Chill” ?（还有谁在坚持“VTI and Chill”？）", rendered)
+        self.assertIn("Moving on from AUM and rebalancing（不再依赖 AUM 顾问后如何再平衡）", rendered)
+        self.assertIn("Transition to 3 Fund Portfolio（过渡到三基金组合）", rendered)
+        for generic_heading in dr.GENERIC_FORUM_HEADINGS:
+            self.assertNotIn(f"（{generic_heading}）", rendered)
+            self.assertNotIn(f"围绕“{generic_heading}”", rendered)
 
     def test_forum_selector_recovers_to_minimum_when_recent_history_leaves_too_few_items(self) -> None:
         original_now_bj = dr.now_bj

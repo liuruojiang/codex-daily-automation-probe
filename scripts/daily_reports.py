@@ -2120,12 +2120,27 @@ def forum_subject_text(title: str) -> str:
     return subject
 
 
-def forum_public_heading(item: Item) -> str:
-    subject = forum_title_subject(item.title)
-    topic = forum_subject_text(item.title)
-    text = f"{topic} {item.summary}".lower()
+GENERIC_FORUM_HEADINGS = {
+    "寻求投资组合建议",
+    "税优账户中是否应单列 REIT/VNQ",
+    "30 多岁中等风险组合求评",
+    "投资组合持仓清理求建议",
+    "组合目标达成后如何转向现金流",
+    "投资组合配置求评",
+    "债券配置与风险认知讨论",
+    "投资组合配置问题求评",
+    "Bogleheads 配置问题求评",
+    "税务账户与退休账户配置问题",
+    "税务/账户/医保阈值相关问题",
+}
+
+
+def specific_forum_title_translation(title: str, summary: str = "") -> str:
+    subject = forum_title_subject(title)
+    topic = forum_subject_text(title)
     title_lower = topic.lower()
     subject_lower = subject.lower()
+    text = f"{topic} {summary}".lower()
     exact_title_translations = {
         "my parents have paid their financial advisor roughly $47k in fees over 15 years for market returns": "父母 15 年来为接近市场回报向财务顾问支付约 4.7 万美元费用",
         "my sister has been an edward jones broker for more than two decades and not one family member has even $1 invested there.": "姐姐做了二十多年 Edward Jones 经纪人，但家人没有一美元投在那里",
@@ -2233,10 +2248,41 @@ def forum_public_heading(item: Item) -> str:
         return "入市两个月，请评价我的投资组合"
     if "started a taxable investment account" in title_lower:
         return "刚开始应税投资账户，欢迎反馈"
+    if "disregard" in title_lower and "bond" in title_lower and ("all equities" in title_lower or "portfolio" in title_lower):
+        return "你们中有人完全忽略组合中的债券部分、全仓股票吗？"
+    if "portfolio planning" in title_lower and "simplest" in title_lower:
+        return "最简单的投资组合规划"
+    if "taxable brokerage" in title_lower and ("suggestion" in title_lower or "advice" in title_lower):
+        return "应税券商账户有什么建议？"
+    if re.search(r"\brate (?:this|my) portfolio(?: please)?\b", title_lower):
+        return "请评价我的投资组合"
+    if title_lower.strip(" .") == "advice on portfolio":
+        return "投资组合建议请求"
+    if "vti and chill" in title_lower:
+        return "还有谁在坚持“VTI and Chill”？"
+    if "wealthpie" in title_lower and "spreadsheet" in title_lower:
+        return "我做了 WealthPie，因为我的投资表格变得过于复杂"
+    if "moving on from aum" in title_lower and "rebalancing" in title_lower:
+        return "不再依赖 AUM 顾问后如何再平衡"
+    if "vnq" in title_lower and "tax-advantaged" in title_lower:
+        return "为什么不在税优账户中用 VNQ 做 REIT 分散？"
+    if "schg" in title_lower and "qqqm" in title_lower and "long term" in title_lower:
+        return "长期持有选 SCHG 还是 QQQM？"
     if "100%" in text and "0%" in text and ("stocks/funds" in text or "stocks" in text) and (
         "bonds" in text or "treasuries" in text
     ):
         return "离退休还很远，退休储蓄几乎 100% 股票/基金、0% 债券或国债是否可以？"
+    return ""
+
+
+def forum_public_heading(item: Item) -> str:
+    specific_heading = specific_forum_title_translation(item.title, item.summary)
+    if specific_heading:
+        return specific_heading
+    subject = forum_title_subject(item.title)
+    topic = forum_subject_text(item.title)
+    text = f"{topic} {item.summary}".lower()
+    title_lower = topic.lower()
     if "looking for portfolio advice" in text:
         return "寻求投资组合建议"
     if "vnq" in title_lower or "reit" in title_lower or "real estate" in title_lower:
@@ -2263,6 +2309,8 @@ def forum_public_heading(item: Item) -> str:
 def forum_display_title(item: Item) -> str:
     original = clean_text(item.title, 180)
     chinese = clean_text(forum_public_heading(item), 180)
+    if chinese in GENERIC_FORUM_HEADINGS:
+        chinese = ""
     if not original:
         return chinese
     if not chinese or norm_title(original) == norm_title(chinese):
@@ -2373,7 +2421,7 @@ def forum_lightweight_summary_points(item: Item, limit: int = 4) -> list[str]:
 
     out = list(points)
     heading = forum_public_heading(item)
-    if heading and not any(heading in point for point in out):
+    if heading and heading not in GENERIC_FORUM_HEADINGS and not any(heading in point for point in out):
         out.append(f"标题和摘要显示，该帖围绕“{heading}”征集社区观点，适合作为 ETF/资产配置日报的待验证选题。")
     engagement = forum_engagement_label(item)
     if engagement:
