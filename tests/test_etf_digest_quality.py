@@ -810,6 +810,23 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("税后收益/久期风险框架", rendered)
         self.assertNotRegex(rendered, re.compile(r"[A-Za-z][A-Za-z ,'-]{80,}"))
 
+    def test_current_forum_digest_titles_have_chinese_display_labels(self) -> None:
+        cases = {
+            "voo vs. voo/vxus?": "VOO 单独持有，还是 VOO + VXUS 加入国际股票？",
+            "What are the best bonds for high income earners?": "高收入者适合配置哪些债券？",
+            "80k to invest + no debt how would you invest it?": "无债且有 8 万美元待投资资金，该如何配置？",
+            "Rebuilding entire portfolio with boglehead strategy as primary influence.": "以 Bogleheads 策略为核心重建整个投资组合",
+            "Rebuilding portfolio and need help (46m/44f) 3.5M investable assets": "46 岁/44 岁家庭重建 350 万美元可投资资产组合求助",
+            "Help me analyzing this portfolio and suggestions for improvement": "请帮我分析这个投资组合并给出改进建议",
+            "Unwind unrealized gains with taxable account": "应税账户里如何处理未实现资本利得？",
+        }
+
+        for title, zh in cases.items():
+            item = self.item("Reddit r/Bogleheads", title, "Portfolio allocation, bond, cash, taxable account and rebalance discussion.")
+            rendered_title = dr.forum_display_title(item)
+            self.assertIn(zh, rendered_title)
+            self.assertNotEqual(rendered_title, title)
+
     def test_low_evidence_article_is_dropped_instead_of_hard_written_mapping(self) -> None:
         item = self.item(
             "Robot Wealth",

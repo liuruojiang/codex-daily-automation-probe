@@ -2183,6 +2183,13 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         "personal investments • re: dividend investing or not?": "个人投资：是否应该做股息投资？",
         "personal investments • re: when should i create tips ladder?now or wait": "个人投资：什么时候建立 TIPS 阶梯？现在还是等待？",
         "personal investments • re: time to move \"cash\" to short term bonds?": "个人投资：是否该把现金转到短期债券？",
+        "voo vs. voo/vxus?": "VOO 单独持有，还是 VOO + VXUS 加入国际股票？",
+        "what are the best bonds for high income earners?": "高收入者适合配置哪些债券？",
+        "80k to invest + no debt how would you invest it?": "无债且有 8 万美元待投资资金，该如何配置？",
+        "rebuilding entire portfolio with boglehead strategy as primary influence.": "以 Bogleheads 策略为核心重建整个投资组合",
+        "rebuilding portfolio and need help (46m/44f) 3.5m investable assets": "46 岁/44 岁家庭重建 350 万美元可投资资产组合求助",
+        "help me analyzing this portfolio and suggestions for improvement": "请帮我分析这个投资组合并给出改进建议",
+        "unwind unrealized gains with taxable account": "应税账户里如何处理未实现资本利得？",
     }
     if subject_lower in exact_title_translations:
         return exact_title_translations[subject_lower]
