@@ -789,6 +789,27 @@ class EtfDigestQualityTests(unittest.TestCase):
         finally:
             dr.reddit_thread_metadata = original
 
+    def test_bogleheads_cash_to_short_term_bonds_title_translation(self) -> None:
+        item = self.item(
+            "Bogleheads Forum",
+            'Personal Investments • Re: Time to Move "Cash" to Short Term Bonds?',
+            (
+                "The thread asks whether a cash allocation should be moved to short term bonds. "
+                "Replies compare money market yields, short-term bond duration risk, tax treatment, liquidity, "
+                "and whether the money is needed soon or belongs to the long-term portfolio."
+            ),
+            "https://www.bogleheads.org/forum/viewtopic.php?t=example",
+        )
+        lines: list[str] = []
+
+        dr.append_etf_research_sections(lines, [], [item], [], [], "2026-06-03")
+        rendered = "\n".join(lines)
+
+        self.assertIn('Personal Investments • Re: Time to Move "Cash" to Short Term Bonds?（个人投资：是否该把现金转到短期债券？）', rendered)
+        self.assertIn("现金仓位是否该转入短期债券", rendered)
+        self.assertIn("税后收益/久期风险框架", rendered)
+        self.assertNotRegex(rendered, re.compile(r"[A-Za-z][A-Za-z ,'-]{80,}"))
+
     def test_low_evidence_article_is_dropped_instead_of_hard_written_mapping(self) -> None:
         item = self.item(
             "Robot Wealth",

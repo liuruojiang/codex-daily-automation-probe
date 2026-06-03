@@ -2066,6 +2066,14 @@ def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
         add("债券或国债的作用被归纳为降低组合回撤、提供再平衡资金和心理缓冲，而不是追求最高长期收益。")
     if "near-term cash" in lower_text or "cash needs" in lower_text:
         add("近期用钱应与退休资产分开管理，不能用 100% 股票配置去承担短期资金需求。")
+    if "cash" in lower_text and ("short term bonds" in lower_text or "short-term bonds" in lower_text):
+        add("发帖人的核心问题是：现金仓位是否该转入短期债券，需要比较现金收益率、短债久期风险、税后收益和资金使用期限。")
+    if "money market" in lower_text or "cash yield" in lower_text:
+        add("讨论把货币市场基金或现金收益率作为基准，短债只有在税后收益和流动性补偿足够时才值得替代现金。")
+    if "duration risk" in lower_text and ("short term bond" in lower_text or "short-term bond" in lower_text):
+        add("短期债券仍有久期风险，利率上行时可能出现价格波动；它不是无风险现金等价物。")
+    if "liquidity" in lower_text and ("needed soon" in lower_text or "needed" in lower_text):
+        add("如果资金近期要用，流动性和本金稳定性应优先于多拿一点短债收益。")
     if "glide path" in lower_text or "retirement approaches" in lower_text:
         add("一种可研究路径是随临近退休逐步增加债券，形成退休前逐步降风险路径，而不是永久维持 0% 债券。")
 
@@ -2174,6 +2182,7 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         "help diversify portfolio": "如何让投资组合更加分散？",
         "personal investments • re: dividend investing or not?": "个人投资：是否应该做股息投资？",
         "personal investments • re: when should i create tips ladder?now or wait": "个人投资：什么时候建立 TIPS 阶梯？现在还是等待？",
+        "personal investments • re: time to move \"cash\" to short term bonds?": "个人投资：是否该把现金转到短期债券？",
     }
     if subject_lower in exact_title_translations:
         return exact_title_translations[subject_lower]
@@ -2359,6 +2368,8 @@ def forum_has_specific_summary_evidence(item: Item, points: list[str] | None = N
         return len(points) >= 2
     if "dca" in text and ("treasury" in text or "treasuries" in text):
         return len(points) >= 2
+    if "cash" in text and ("short term bonds" in text or "short-term bonds" in text):
+        return len(points) >= 2
     return False
 
 
@@ -2493,6 +2504,8 @@ def forum_research_question(item: Item) -> str:
         return "可把个股持仓映射到行业、风格和单一公司集中度，再比较是否用宽基或行业 ETF 替代能降低非系统性风险。"
     if "dividends" in text or "living off" in text:
         return "可区分总回报提款和分红现金流两种退休取现方式，回测税后现金流、回撤和再平衡压力。"
+    if "cash" in text and ("short term bonds" in text or "short-term bonds" in text):
+        return "可把现金、货币市场基金、短债 ETF 和短期国债放到同一税后收益/久期风险框架里比较。"
     return "可把帖子里的配置问题转成权重、账户位置、资金用途和风险承受期四类变量，再用实际 ETF 收益、波动率和回撤数据验证。"
 
 
