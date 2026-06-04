@@ -856,6 +856,8 @@ class EtfDigestQualityTests(unittest.TestCase):
             "Need help consolidating my beginner portfolio": "新手投资组合需要合并整理，求帮助",
             "54 and Finally Waking up": "54 岁终于开始认真规划投资组合",
             "At what point did you diversify not only in VTSAX/VOO": "什么时候开始从 VTSAX/VOO 之外进一步分散配置？",
+            "Will SPTM/SPHQ and active ETFs get forced into hype IPOs like SpaceX?": "SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX 这类热门 IPO 吗？",
+            "Personal Investments • Re: $407K Net Worth, Large Cash Position, Looking for Advice on an Aggressive Investing Strategy": "个人投资：净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？",
         }
 
         for title, zh in cases.items():
@@ -863,6 +865,49 @@ class EtfDigestQualityTests(unittest.TestCase):
             rendered_title = dr.forum_display_title(item)
             self.assertIn(zh, rendered_title)
             self.assertNotEqual(rendered_title, title)
+
+    def test_specific_fresh_forum_titles_can_render_as_lightweight_ideas(self) -> None:
+        items = [
+            self.item(
+                "Reddit r/ETFs（score/upvotes 2；comments/replies 1）",
+                "Will SPTM/SPHQ and active ETFs get forced into hype IPOs like SpaceX?",
+                "",
+                "https://www.reddit.com/r/ETFs/comments/example/sptm_sphq_spacex/",
+            ),
+            self.item(
+                "Bogleheads.org Forum",
+                "Personal Investments • Re: $407K Net Worth, Large Cash Position, Looking for Advice on an Aggressive Investing Strategy",
+                "",
+                "https://www.bogleheads.org/forum/viewtopic.php?t=500002",
+            ),
+            self.item(
+                "Reddit r/Bogleheads（score/upvotes 1；comments/replies 0）",
+                "Target date fund ETF in brokerage account?",
+                "",
+                "https://www.reddit.com/r/Bogleheads/comments/example/target_date_taxable/",
+            ),
+            self.item(
+                "Reddit r/Bogleheads（score/upvotes 1；comments/replies 0）",
+                "At what point did you diversify not only in VTSAX/VOO",
+                "",
+                "https://www.reddit.com/r/Bogleheads/comments/example/diversify_vtsax_voo/",
+            ),
+            self.item(
+                "Reddit r/Bogleheads（score/upvotes 1；comments/replies 0）",
+                "Need help consolidating my beginner portfolio",
+                "",
+                "https://www.reddit.com/r/Bogleheads/comments/example/beginner_consolidation/",
+            ),
+        ]
+        lines: list[str] = []
+
+        visible_count = dr.append_etf_research_sections(lines, [], items, [], [], "2026-06-03")
+        rendered = "\n".join(lines)
+
+        self.assertEqual(visible_count, 5)
+        self.assertIn("SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX 这类热门 IPO 吗？", rendered)
+        self.assertIn("个人投资：净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？", rendered)
+        self.assertNotRegex(rendered, r"### \d+\. [^\n（]+$")
 
     def test_low_evidence_article_is_dropped_instead_of_hard_written_mapping(self) -> None:
         item = self.item(

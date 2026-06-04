@@ -2144,6 +2144,9 @@ GENERIC_FORUM_HEADINGS = {
     "税务账户与退休账户配置问题",
     "税务/账户/医保阈值相关问题",
 }
+LIGHTWEIGHT_FORUM_TITLE_ONLY_BLOCKLIST = {
+    "投资组合建议请求",
+}
 
 
 def generic_forum_heading(heading: str) -> bool:
@@ -2198,6 +2201,8 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         "need help consolidating my beginner portfolio": "新手投资组合需要合并整理，求帮助",
         "54 and finally waking up": "54 岁终于开始认真规划投资组合",
         "at what point did you diversify not only in vtsax/voo": "什么时候开始从 VTSAX/VOO 之外进一步分散配置？",
+        "will sptm/sphq and active etfs get forced into hype ipos like spacex?": "SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX 这类热门 IPO 吗？",
+        "personal investments • re: $407k net worth, large cash position, looking for advice on an aggressive investing strategy": "个人投资：净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？",
     }
     if subject_lower in exact_title_translations:
         return exact_title_translations[subject_lower]
@@ -2218,6 +2223,10 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         return "54 岁终于开始认真规划投资组合"
     if "diversify" in title_lower and ("vtsax" in title_lower or "voo" in title_lower):
         return "什么时候开始从 VTSAX/VOO 之外进一步分散配置？"
+    if "sptm" in title_lower and "sphq" in title_lower and "active etfs" in title_lower and "spacex" in title_lower:
+        return "SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX 这类热门 IPO 吗？"
+    if "large cash position" in title_lower and "aggressive investing strategy" in title_lower:
+        return f"{forum_prefix}净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？"
     if "tips ladder" in title_lower or "tips ladder" in text:
         return f"{forum_prefix}什么时候建立 TIPS 阶梯？现在还是等待？"
     feedback_age_match = re.search(r"\bportfolio\s+feedback\s+for\s+a\s+(\d{2})\s+year\s+old\b", title_lower)
@@ -2430,6 +2439,14 @@ def forum_has_topic_signal(item: Item) -> bool:
         "rate my",
         "beginner portfolio",
         "etf advice",
+        "active etf",
+        "target date",
+        "diversify",
+        "vtsax",
+        "cash position",
+        "aggressive investing",
+        "sptm",
+        "sphq",
         "don",
         "selling",
     ]
@@ -2453,13 +2470,24 @@ def forum_has_topic_signal(item: Item) -> bool:
     return title_hit or summary_hits >= 2
 
 
+def forum_has_specific_translated_title_signal(item: Item) -> bool:
+    if not forum_has_topic_signal(item):
+        return False
+    heading = forum_public_heading(item)
+    if not heading or generic_forum_heading(heading):
+        return False
+    if heading in LIGHTWEIGHT_FORUM_TITLE_ONLY_BLOCKLIST:
+        return False
+    return bool(re.search(r"[\u4e00-\u9fff]", heading))
+
+
 def forum_has_lightweight_summary_evidence(item: Item, points: list[str] | None = None) -> bool:
     points = points if points is not None else forum_thread_summary_points(item)
     if forum_has_specific_summary_evidence(item, points):
         return True
     if not forum_has_topic_signal(item):
         return False
-    return forum_engagement_score(item) >= 100 or bool(points)
+    return forum_engagement_score(item) >= 100 or bool(points) or forum_has_specific_translated_title_signal(item)
 
 
 def forum_lightweight_summary_points(item: Item, limit: int = 4) -> list[str]:
