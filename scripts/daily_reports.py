@@ -2193,6 +2193,8 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         "where to invest next?": "下一步应该投向哪里？",
         "target date fund etf in brokerage account?": "应税券商账户里能否买目标日期基金 ETF？",
         "need help consolidating my beginner portfolio": "新手投资组合需要合并整理，求帮助",
+        "54 and finally waking up": "54 岁终于开始认真规划投资组合",
+        "at what point did you diversify not only in vtsax/voo": "什么时候开始从 VTSAX/VOO 之外进一步分散配置？",
     }
     if subject_lower in exact_title_translations:
         return exact_title_translations[subject_lower]
@@ -2209,6 +2211,10 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         return f"{forum_prefix}应税券商账户里能否买目标日期基金 ETF？"
     if "beginner portfolio" in title_lower and ("consolidating" in title_lower or "help" in title_lower):
         return "新手投资组合需要合并整理，求帮助"
+    if re.search(r"\b54\b", title_lower) and "waking up" in title_lower:
+        return "54 岁终于开始认真规划投资组合"
+    if "diversify" in title_lower and ("vtsax" in title_lower or "voo" in title_lower):
+        return "什么时候开始从 VTSAX/VOO 之外进一步分散配置？"
     if "tips ladder" in title_lower or "tips ladder" in text:
         return f"{forum_prefix}什么时候建立 TIPS 阶梯？现在还是等待？"
     feedback_age_match = re.search(r"\bportfolio\s+feedback\s+for\s+a\s+(\d{2})\s+year\s+old\b", title_lower)

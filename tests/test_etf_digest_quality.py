@@ -822,6 +822,8 @@ class EtfDigestQualityTests(unittest.TestCase):
             "Where to invest next?": "下一步应该投向哪里？",
             "Target date fund ETF in brokerage account?": "应税券商账户里能否买目标日期基金 ETF？",
             "Need help consolidating my beginner portfolio": "新手投资组合需要合并整理，求帮助",
+            "54 and Finally Waking up": "54 岁终于开始认真规划投资组合",
+            "At what point did you diversify not only in VTSAX/VOO": "什么时候开始从 VTSAX/VOO 之外进一步分散配置？",
         }
 
         for title, zh in cases.items():
