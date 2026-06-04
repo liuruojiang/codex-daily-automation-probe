@@ -144,10 +144,13 @@ ETF_CORE_PAGE_MONITORS: tuple[tuple[str, str, str], ...] = (
 )
 
 ETF_EXTERNAL_FORUM_FEEDS: tuple[tuple[str, str, int], ...] = (
-    ("Bogleheads.org Forum", "https://www.bogleheads.org/forum/feed.php", 18),
-    ("Rational Reminder Community", "https://community.rationalreminder.ca/latest.rss", 12),
+    ("Bogleheads.org Forum", "https://www.bogleheads.org/forum/feed.php", 36),
+    ("Rational Reminder Community", "https://community.rationalreminder.ca/latest.rss", 24),
 )
 BOGLEBLOG_BEST_OF_BOGLEHEADS_URL = "https://bogleblog.com/best-of-bogleheads-forum/"
+ETF_FORUM_SUBREDDITS = ("ETFs", "Bogleheads", "investing", "portfolios")
+ETF_REDDIT_FORUM_SORTS = ("hot", "top", "new")
+ETF_REDDIT_LISTING_LIMIT = 24
 
 ETF_ARTICLE_MAX_AGE_HOURS = 36
 ETF_ARTICLE_BACKFILL_MAX_AGE_HOURS = 14 * 24
@@ -2901,12 +2904,11 @@ def ensure_non_reddit_forum_mix(
 
 def collect_etf_forum_items() -> list[Item]:
     forum_items: list[Item] = []
-    for subreddit in ["ETFs", "Bogleheads", "investing", "portfolios"]:
-        hot_items = fetch_reddit_listing_items(subreddit, "hot", limit=12)
-        forum_items.extend(hot_items)
-        if len([item for item in hot_items if etf_forum_relevant(item)]) < ETF_MIN_FORUM_ITEMS:
-            forum_items.extend(fetch_reddit_listing_items(subreddit, "top", limit=12))
-        forum_items.extend(parse_feed(f"Reddit r/{subreddit}", f"https://www.reddit.com/r/{subreddit}/hot/.rss", limit=12))
+    for subreddit in ETF_FORUM_SUBREDDITS:
+        for sort in ETF_REDDIT_FORUM_SORTS:
+            forum_items.extend(fetch_reddit_listing_items(subreddit, sort, limit=ETF_REDDIT_LISTING_LIMIT))
+            time.sleep(0.2)
+        forum_items.extend(parse_feed(f"Reddit r/{subreddit}", f"https://www.reddit.com/r/{subreddit}/hot/.rss", limit=ETF_REDDIT_LISTING_LIMIT))
         time.sleep(0.2)
     for source, url, limit in ETF_EXTERNAL_FORUM_FEEDS:
         forum_items.extend(parse_feed(source, url, limit=limit))

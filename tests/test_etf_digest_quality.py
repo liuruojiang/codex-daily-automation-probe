@@ -247,6 +247,38 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("Bogleheads.org Forum", sources)
         self.assertNotIn("Bogleblog Best of Bogleheads Forum", sources)
 
+    def test_collect_etf_forum_items_always_queries_supplemental_reddit_sorts(self) -> None:
+        original_parse_feed = dr.parse_feed
+        original_fetch_reddit = dr.fetch_reddit_listing_items
+        calls: list[tuple[str, str, int]] = []
+
+        def fake_fetch_reddit(subreddit: str, sort: str = "hot", limit: int = 12) -> list[dr.Item]:
+            calls.append((subreddit, sort, limit))
+            return [
+                self.item(
+                    f"Reddit r/{subreddit}",
+                    f"Portfolio allocation discussion {sort} {idx}",
+                    "Thread discusses ETF core holdings, risk tolerance, bond allocation, and rebalance decisions.",
+                    f"https://www.reddit.com/r/{subreddit}/comments/example/{sort}_{idx}/",
+                )
+                for idx in range(8)
+            ]
+
+        try:
+            dr.fetch_reddit_listing_items = fake_fetch_reddit
+            dr.parse_feed = lambda source, url, limit=12: []
+
+            dr.collect_etf_forum_items()
+        finally:
+            dr.parse_feed = original_parse_feed
+            dr.fetch_reddit_listing_items = original_fetch_reddit
+
+        called_sorts = {(subreddit, sort) for subreddit, sort, _limit in calls}
+        self.assertIn(("ETFs", "hot"), called_sorts)
+        self.assertIn(("ETFs", "top"), called_sorts)
+        self.assertIn(("ETFs", "new"), called_sorts)
+        self.assertGreaterEqual(min(limit for subreddit, _sort, limit in calls if subreddit == "ETFs"), 24)
+
     def test_etf_forum_selector_recovers_when_unrendered_same_day_candidates_polluted_history(self) -> None:
         original_now_bj = dr.now_bj
         dr.now_bj = lambda: dr.datetime(2026, 5, 21, 7, 0, tzinfo=dr.BJ)
