@@ -214,7 +214,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("三基金组合", dr.forum_display_title(items[0]))
         self.assertTrue(all(dr.etf_forum_relevant(item) for item in items))
 
-    def test_collect_etf_forum_items_includes_non_reddit_forums_and_curated_index(self) -> None:
+    def test_collect_etf_forum_items_includes_live_non_reddit_forums_without_static_index(self) -> None:
         original_parse_feed = dr.parse_feed
         original_fetch_reddit = dr.fetch_reddit_listing_items
         original_bogleblog = dr.bogleblog_bestof_forum_items
@@ -245,7 +245,7 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         sources = {item.source for item in items}
         self.assertIn("Bogleheads.org Forum", sources)
-        self.assertIn("Bogleblog Best of Bogleheads Forum", sources)
+        self.assertNotIn("Bogleblog Best of Bogleheads Forum", sources)
 
     def test_etf_forum_selector_recovers_when_unrendered_same_day_candidates_polluted_history(self) -> None:
         original_now_bj = dr.now_bj

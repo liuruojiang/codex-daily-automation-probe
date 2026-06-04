@@ -2911,7 +2911,6 @@ def collect_etf_forum_items() -> list[Item]:
     for source, url, limit in ETF_EXTERNAL_FORUM_FEEDS:
         forum_items.extend(parse_feed(source, url, limit=limit))
         time.sleep(0.2)
-    forum_items.extend(bogleblog_bestof_forum_items(limit=8))
     if not forum_items:
         forum_feeds = {
             "Reddit r/ETFs": "https://www.reddit.com/r/ETFs/hot/.rss",
