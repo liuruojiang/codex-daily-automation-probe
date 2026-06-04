@@ -146,7 +146,7 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertTrue(dr.etf_has_enough_summary_evidence(item))
 
-    def test_etf_forum_selector_backfills_renderable_threads_with_short_dedupe(self) -> None:
+    def test_etf_forum_selector_excludes_recently_sent_renderable_threads(self) -> None:
         original_now_bj = dr.now_bj
         dr.now_bj = lambda: dr.datetime(2026, 5, 21, 7, 0, tzinfo=dr.BJ)
         renderable = dr.Item(
@@ -187,7 +187,7 @@ class EtfDigestQualityTests(unittest.TestCase):
                 os.chdir(original_cwd)
                 dr.now_bj = original_now_bj
 
-        self.assertEqual([x.url for x in picked], [renderable.url])
+        self.assertEqual(picked, [])
 
     def test_bogleblog_bestof_index_yields_bogleheads_forum_items(self) -> None:
         original_fetch = dr.fetch_bytes
@@ -819,6 +819,9 @@ class EtfDigestQualityTests(unittest.TestCase):
             "Rebuilding portfolio and need help (46m/44f) 3.5M investable assets": "46 岁/44 岁家庭重建 350 万美元可投资资产组合求助",
             "Help me analyzing this portfolio and suggestions for improvement": "请帮我分析这个投资组合并给出改进建议",
             "Unwind unrealized gains with taxable account": "应税账户里如何处理未实现资本利得？",
+            "Where to invest next?": "下一步应该投向哪里？",
+            "Target date fund ETF in brokerage account?": "应税券商账户里能否买目标日期基金 ETF？",
+            "Need help consolidating my beginner portfolio": "新手投资组合需要合并整理，求帮助",
         }
 
         for title, zh in cases.items():
@@ -908,7 +911,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertEqual(visible_count, 6)
         self.assertIn("线索摘要", rendered)
         self.assertIn("What’s a ETF you don’t plan on selling anytime soon?（你不打算长期卖出的 ETF 是哪只？）", rendered)
-        self.assertIn("Beginner Portfolio Help（新手投资组合求助）", rendered)
+        self.assertIn("Beginner Portfolio Help（新手投资组合需要合并整理，求帮助）", rendered)
         self.assertIn("Rate My Portfolio（请评价我的投资组合）", rendered)
         self.assertIn("26M ETF Advice", rendered)
         self.assertIn("SCHG vs QQQM for long term?（长期持有选 SCHG 还是 QQQM？）", rendered)
@@ -1093,7 +1096,7 @@ class EtfDigestQualityTests(unittest.TestCase):
             self.assertNotIn(f"（{generic_heading}）", rendered)
             self.assertNotIn(f"围绕“{generic_heading}”", rendered)
 
-    def test_forum_selector_recovers_to_minimum_when_recent_history_leaves_too_few_items(self) -> None:
+    def test_forum_selector_does_not_recover_minimum_with_recent_history_duplicates(self) -> None:
         original_now_bj = dr.now_bj
         dr.now_bj = lambda: dr.datetime(2026, 5, 28, 7, 0, tzinfo=dr.BJ)
         items = [
@@ -1133,11 +1136,12 @@ class EtfDigestQualityTests(unittest.TestCase):
                 os.chdir(original_cwd)
                 dr.now_bj = original_now_bj
 
-        self.assertGreaterEqual(len(picked), dr.ETF_MIN_FORUM_ITEMS)
-        self.assertGreater(len(picked), 4)
+        self.assertEqual([item.title for item in picked], [item.title for item in items[6:]])
 
-    def test_forum_history_backfill_items_are_renderable_when_live_reddit_is_sparse(self) -> None:
+    def test_recent_forum_history_backfill_items_are_not_reselected(self) -> None:
         original_cwd = Path.cwd()
+        original_now_bj = dr.now_bj
+        dr.now_bj = lambda: dr.datetime(2026, 6, 4, 7, 0, tzinfo=dr.BJ)
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             history_dir = tmp_path / "digest_history"
@@ -1147,7 +1151,7 @@ class EtfDigestQualityTests(unittest.TestCase):
                     {
                         "items": [
                             {
-                                "sent_date": "2026-05-27",
+                                "sent_date": "2026-06-03",
                                 "source": "Reddit r/Bogleheads",
                                 "title": f"Portfolio Feedback for a {age} year old",
                                 "url": f"https://www.reddit.com/r/Bogleheads/comments/example/history_{age}/",
@@ -1164,9 +1168,10 @@ class EtfDigestQualityTests(unittest.TestCase):
                 picked = dr.select_etf_forum_items(backfill, limit=10)
             finally:
                 os.chdir(original_cwd)
+                dr.now_bj = original_now_bj
 
-        self.assertGreaterEqual(len(picked), dr.ETF_MIN_FORUM_ITEMS)
-        self.assertTrue(all(dr.renderable_forum_item(item) for item in picked))
+        self.assertEqual(picked, [])
+        self.assertTrue(all(dr.renderable_forum_item(item) for item in backfill))
 
     def test_extend_forum_items_to_minimum_uses_history_after_selector_stays_sparse(self) -> None:
         picked = [

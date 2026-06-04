@@ -154,7 +154,7 @@ ETF_ARTICLE_BACKFILL_MAX_AGE_HOURS = 14 * 24
 ETF_MIN_RESEARCH_ITEMS = 5
 ETF_DEDUPE_DAYS = 45
 ETF_BACKFILL_DEDUPE_DAYS = 7
-ETF_FORUM_BACKFILL_DEDUPE_DAYS = 1
+ETF_FORUM_BACKFILL_DEDUPE_DAYS = ETF_DEDUPE_DAYS
 ETF_MIN_FORUM_ITEMS = 8
 ETF_FORUM_DISPLAY_LIMIT = 10
 ETF_HISTORY_DAYS = 60
@@ -2190,6 +2190,9 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         "rebuilding portfolio and need help (46m/44f) 3.5m investable assets": "46 岁/44 岁家庭重建 350 万美元可投资资产组合求助",
         "help me analyzing this portfolio and suggestions for improvement": "请帮我分析这个投资组合并给出改进建议",
         "unwind unrealized gains with taxable account": "应税账户里如何处理未实现资本利得？",
+        "where to invest next?": "下一步应该投向哪里？",
+        "target date fund etf in brokerage account?": "应税券商账户里能否买目标日期基金 ETF？",
+        "need help consolidating my beginner portfolio": "新手投资组合需要合并整理，求帮助",
     }
     if subject_lower in exact_title_translations:
         return exact_title_translations[subject_lower]
@@ -2200,6 +2203,12 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         forum_prefix = "个人投资：" if subject_lower.startswith("personal investments") else ""
     if "does this make sense" in title_lower and "overengineered portfolio" in title_lower:
         return "这样配置合理吗？组合是否过度设计，还是稳健理性的方案？"
+    if "where to invest next" in title_lower:
+        return f"{forum_prefix}下一步应该投向哪里？"
+    if "target date fund" in title_lower and ("brokerage" in title_lower or "taxable" in text):
+        return f"{forum_prefix}应税券商账户里能否买目标日期基金 ETF？"
+    if "beginner portfolio" in title_lower and ("consolidating" in title_lower or "help" in title_lower):
+        return "新手投资组合需要合并整理，求帮助"
     if "tips ladder" in title_lower or "tips ladder" in text:
         return f"{forum_prefix}什么时候建立 TIPS 阶梯？现在还是等待？"
     feedback_age_match = re.search(r"\bportfolio\s+feedback\s+for\s+a\s+(\d{2})\s+year\s+old\b", title_lower)
@@ -2805,9 +2814,8 @@ def select_etf_forum_items(items: list[Item], limit: int = ETF_FORUM_DISPLAY_LIM
             break
     if len(out) >= ETF_MIN_FORUM_ITEMS:
         return out
-    recovery = [
-        x for x in (renderable_or_enriched_forum_item(item) for item in relevant[: max(limit * 3, 18)]) if x is not None
-    ]
+    recovery_raw = filter_previously_sent("etf", relevant, days=ETF_DEDUPE_DAYS, ignore_dates={today})[: max(limit * 3, 18)]
+    recovery = [x for x in (renderable_or_enriched_forum_item(item) for item in recovery_raw) if x is not None]
     recovery.sort(key=forum_engagement_score, reverse=True)
     for item in recovery:
         key = (canonical_url(item.url), norm_title(item.title))
@@ -4747,18 +4755,12 @@ def build_etf(out_dir: Path) -> None:
     picked = [x.item for x in scored_picked]
 
     forum_items = collect_etf_forum_items()
-    history_forum_items = forum_history_backfill_items(limit=60)
-    forum_items.extend(history_forum_items)
-    forum_picked = select_etf_forum_items(forum_items, limit=ETF_FORUM_DISPLAY_LIMIT)
-    forum_picked = extend_forum_items_to_minimum(
-        forum_picked,
-        history_forum_items,
-        minimum=ETF_MIN_FORUM_ITEMS,
-        limit=ETF_FORUM_DISPLAY_LIMIT,
-    )
-    forum_picked = ensure_non_reddit_forum_mix(forum_picked, forum_items, min_non_reddit=2, limit=ETF_FORUM_DISPLAY_LIMIT)
+    today = report_date()
+    fresh_forum_items = filter_previously_sent("etf", forum_items, days=ETF_DEDUPE_DAYS, ignore_dates={today})
+    forum_picked = select_etf_forum_items(fresh_forum_items, limit=ETF_FORUM_DISPLAY_LIMIT)
+    forum_picked = ensure_non_reddit_forum_mix(forum_picked, fresh_forum_items, min_non_reddit=2, limit=ETF_FORUM_DISPLAY_LIMIT)
 
-    date_s = report_date()
+    date_s = today
     data_dates = sorted({str(r["date"]) for r in strategy_rows + mover_rows})
     data_date_s = data_dates[-1] if data_dates else "数据不足"
     md = out_dir / f"us_etf_allocation_digest_{date_s}.md"
