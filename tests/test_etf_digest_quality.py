@@ -858,6 +858,7 @@ class EtfDigestQualityTests(unittest.TestCase):
             "At what point did you diversify not only in VTSAX/VOO": "什么时候开始从 VTSAX/VOO 之外进一步分散配置？",
             "Will SPTM/SPHQ and active ETFs get forced into hype IPOs like SpaceX?": "SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX 这类热门 IPO 吗？",
             "Personal Investments • Re: $407K Net Worth, Large Cash Position, Looking for Advice on an Aggressive Investing Strategy": "个人投资：净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？",
+            "Hit $200K Milestone This Week! Also please judge my financial snapshot and budget.": "本周资产达到 20 万美元里程碑，也请评估我的财务快照和预算",
         }
 
         for title, zh in cases.items():

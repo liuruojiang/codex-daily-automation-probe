@@ -2204,6 +2204,7 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         "at what point did you diversify not only in vtsax/voo": "什么时候开始从 VTSAX/VOO 之外进一步分散配置？",
         "will sptm/sphq and active etfs get forced into hype ipos like spacex?": "SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX 这类热门 IPO 吗？",
         "personal investments • re: $407k net worth, large cash position, looking for advice on an aggressive investing strategy": "个人投资：净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？",
+        "hit $200k milestone this week! also please judge my financial snapshot and budget.": "本周资产达到 20 万美元里程碑，也请评估我的财务快照和预算",
     }
     if subject_lower in exact_title_translations:
         return exact_title_translations[subject_lower]
@@ -2228,6 +2229,8 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         return "SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX 这类热门 IPO 吗？"
     if "large cash position" in title_lower and "aggressive investing strategy" in title_lower:
         return f"{forum_prefix}净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？"
+    if "$200k" in title_lower and "financial snapshot" in title_lower and "budget" in title_lower:
+        return "本周资产达到 20 万美元里程碑，也请评估我的财务快照和预算"
     if "tips ladder" in title_lower or "tips ladder" in text:
         return f"{forum_prefix}什么时候建立 TIPS 阶梯？现在还是等待？"
     feedback_age_match = re.search(r"\bportfolio\s+feedback\s+for\s+a\s+(\d{2})\s+year\s+old\b", title_lower)
