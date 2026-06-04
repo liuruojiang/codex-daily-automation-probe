@@ -1314,6 +1314,67 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("Target date fund ETF in brokerage account?", titles)
         self.assertNotIn("voo vs. voo/vxus?", titles)
 
+    def test_same_day_forum_supplement_dedupes_same_title_with_different_reply_urls(self) -> None:
+        original_cwd = Path.cwd()
+        original_now_bj = dr.now_bj
+        dr.now_bj = lambda: dr.datetime(2026, 6, 4, 7, 0, tzinfo=dr.BJ)
+        duplicate_title = (
+            "Personal Investments • Re: $407K Net Worth, Large Cash Position, "
+            "Looking for Advice on an Aggressive Investing Strategy"
+        )
+        picked = [
+            self.item(
+                "Bogleheads.org Forum",
+                duplicate_title,
+                "Thread discusses a large cash position, aggressive investing strategy, ETF core holdings, and rebalance decisions.",
+                "https://www.bogleheads.org/forum/viewtopic.php?p=8780009#p8780009",
+            ),
+            *[
+                self.item(
+                    "Reddit r/Bogleheads",
+                    f"Portfolio allocation fresh picked {idx}",
+                    "Thread discusses ETF core holdings, risk tolerance, bond allocation, and rebalance decisions.",
+                    f"https://www.reddit.com/r/Bogleheads/comments/example/picked_dedupe_{idx}/",
+                )
+                for idx in range(3)
+            ],
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            history_dir = tmp_path / "digest_history"
+            history_dir.mkdir()
+            (history_dir / "etf.json").write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "sent_date": "2026-06-04",
+                                "source": "Reddit r/Bogleheads",
+                                "title": "Target date fund ETF in brokerage account?",
+                                "url": "https://www.reddit.com/r/Bogleheads/comments/example/target_date_dedupe/",
+                            },
+                            {
+                                "sent_date": "2026-06-04",
+                                "source": "Bogleheads.org Forum",
+                                "title": duplicate_title,
+                                "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8780005#p8780005",
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            os.chdir(tmp_path)
+            try:
+                supplemented = dr.supplement_forum_items_with_same_day_new_history(picked, minimum=5, limit=10)
+            finally:
+                os.chdir(original_cwd)
+                dr.now_bj = original_now_bj
+
+        titles = [item.title for item in supplemented]
+        self.assertEqual(titles.count(duplicate_title), 1)
+        self.assertIn("Target date fund ETF in brokerage account?", titles)
+
     def test_extend_forum_items_to_minimum_uses_history_after_selector_stays_sparse(self) -> None:
         picked = [
             self.item(

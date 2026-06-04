@@ -2919,16 +2919,19 @@ def extend_forum_items_to_minimum(
     if len(out) >= minimum:
         return out
     seen = {(canonical_url(item.url), norm_title(item.title)) for item in out}
+    seen_titles = {norm_title(item.title) for item in out}
     for item in candidates:
         if len(out) >= limit:
             break
         key = (canonical_url(item.url), norm_title(item.title))
-        if key in seen:
+        title_key = norm_title(item.title)
+        if key in seen or title_key in seen_titles:
             continue
         enriched = item if renderable_forum_item(item) else enrich_article_item(item)
         if not renderable_forum_item(enriched):
             continue
         seen.add(key)
+        seen_titles.add(title_key)
         out.append(enriched)
         if len(out) >= minimum:
             break
