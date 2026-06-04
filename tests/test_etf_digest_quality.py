@@ -1297,6 +1297,12 @@ class EtfDigestQualityTests(unittest.TestCase):
                                 "title": "Need help consolidating my beginner portfolio",
                                 "url": "https://www.reddit.com/r/Bogleheads/comments/example/beginner_consolidating/",
                             },
+                            {
+                                "sent_date": "2026-06-04",
+                                "source": "Bogleblog Best of Bogleheads Forum",
+                                "title": "Overall index of portfolios",
+                                "url": "https://www.bogleheads.org/forum/viewtopic.php?t=287967",
+                            },
                         ]
                     }
                 ),
@@ -1313,6 +1319,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertGreaterEqual(len(titles), 6)
         self.assertIn("Target date fund ETF in brokerage account?", titles)
         self.assertNotIn("voo vs. voo/vxus?", titles)
+        self.assertNotIn("Overall index of portfolios", titles)
 
     def test_same_day_forum_supplement_dedupes_same_title_with_different_reply_urls(self) -> None:
         original_cwd = Path.cwd()

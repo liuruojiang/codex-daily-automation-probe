@@ -2561,6 +2561,8 @@ def same_day_forum_history_items(limit: int = 30) -> list[Item]:
         url = str(rec.get("url", ""))
         if not title or not url:
             continue
+        if "bogleblog" in source.lower():
+            continue
         if not any(marker in source.lower() for marker in ["reddit", "bogleheads", "forum"]):
             continue
         key = (canonical_url(url), norm_title(title))
