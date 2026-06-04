@@ -1252,6 +1252,68 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertEqual(picked, [])
         self.assertTrue(all(dr.renderable_forum_item(item) for item in backfill))
 
+    def test_same_day_forum_supplement_keeps_new_today_items_but_not_prior_duplicates(self) -> None:
+        original_cwd = Path.cwd()
+        original_now_bj = dr.now_bj
+        dr.now_bj = lambda: dr.datetime(2026, 6, 4, 7, 0, tzinfo=dr.BJ)
+        picked = [
+            self.item(
+                "Reddit r/Bogleheads",
+                f"Portfolio allocation fresh picked {idx}",
+                "Thread discusses ETF core holdings, risk tolerance, bond allocation, and rebalance decisions.",
+                f"https://www.reddit.com/r/Bogleheads/comments/example/picked_{idx}/",
+            )
+            for idx in range(4)
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            history_dir = tmp_path / "digest_history"
+            history_dir.mkdir()
+            (history_dir / "etf.json").write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "sent_date": "2026-06-03",
+                                "source": "Reddit r/Bogleheads",
+                                "title": "voo vs. voo/vxus?",
+                                "url": "https://www.reddit.com/r/Bogleheads/comments/example/voo_vxus/",
+                            },
+                            {
+                                "sent_date": "2026-06-04",
+                                "source": "Reddit r/Bogleheads",
+                                "title": "voo vs. voo/vxus?",
+                                "url": "https://www.reddit.com/r/Bogleheads/comments/example/voo_vxus/",
+                            },
+                            {
+                                "sent_date": "2026-06-04",
+                                "source": "Reddit r/Bogleheads",
+                                "title": "Target date fund ETF in brokerage account?",
+                                "url": "https://www.reddit.com/r/Bogleheads/comments/example/target_date/",
+                            },
+                            {
+                                "sent_date": "2026-06-04",
+                                "source": "Reddit r/Bogleheads",
+                                "title": "Need help consolidating my beginner portfolio",
+                                "url": "https://www.reddit.com/r/Bogleheads/comments/example/beginner_consolidating/",
+                            },
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            os.chdir(tmp_path)
+            try:
+                supplemented = dr.supplement_forum_items_with_same_day_new_history(picked, minimum=6, limit=10)
+            finally:
+                os.chdir(original_cwd)
+                dr.now_bj = original_now_bj
+
+        titles = [item.title for item in supplemented]
+        self.assertGreaterEqual(len(titles), 6)
+        self.assertIn("Target date fund ETF in brokerage account?", titles)
+        self.assertNotIn("voo vs. voo/vxus?", titles)
+
     def test_extend_forum_items_to_minimum_uses_history_after_selector_stays_sparse(self) -> None:
         picked = [
             self.item(

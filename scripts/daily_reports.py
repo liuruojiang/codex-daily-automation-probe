@@ -158,6 +158,7 @@ ETF_MIN_RESEARCH_ITEMS = 5
 ETF_DEDUPE_DAYS = 45
 ETF_BACKFILL_DEDUPE_DAYS = 7
 ETF_FORUM_BACKFILL_DEDUPE_DAYS = ETF_DEDUPE_DAYS
+ETF_MIN_VISIBLE_FORUM_ITEMS = 5
 ETF_MIN_FORUM_ITEMS = 8
 ETF_FORUM_DISPLAY_LIMIT = 10
 ETF_HISTORY_DAYS = 60
@@ -2547,6 +2548,49 @@ def forum_history_backfill_items(limit: int = 30) -> list[Item]:
     return items
 
 
+def same_day_forum_history_items(limit: int = 30) -> list[Item]:
+    history = load_digest_history("etf")
+    today = report_date()
+    items: list[Item] = []
+    seen: set[tuple[str, str]] = set()
+    for rec in reversed(history.get("items", [])):
+        if not isinstance(rec, dict) or str(rec.get("sent_date", "")) != today:
+            continue
+        source = str(rec.get("source", ""))
+        title = str(rec.get("title", ""))
+        url = str(rec.get("url", ""))
+        if not title or not url:
+            continue
+        if not any(marker in source.lower() for marker in ["reddit", "bogleheads", "forum"]):
+            continue
+        key = (canonical_url(url), norm_title(title))
+        if key in seen:
+            continue
+        seen.add(key)
+        items.append(Item(source, title, url, f"{today}T00:00:00+00:00", forum_history_backfill_summary(title)))
+        if len(items) >= limit:
+            break
+    return items
+
+
+def supplement_forum_items_with_same_day_new_history(
+    picked: list[Item],
+    minimum: int = ETF_MIN_VISIBLE_FORUM_ITEMS,
+    limit: int = ETF_FORUM_DISPLAY_LIMIT,
+) -> list[Item]:
+    if len(picked) >= minimum:
+        return picked[:limit]
+    today = report_date()
+    same_day_candidates = same_day_forum_history_items(limit=max(limit * 3, 18))
+    same_day_not_prior_sent = filter_previously_sent(
+        "etf",
+        same_day_candidates,
+        days=ETF_FORUM_BACKFILL_DEDUPE_DAYS,
+        ignore_dates={today},
+    )
+    return extend_forum_items_to_minimum(picked, same_day_not_prior_sent, minimum=minimum, limit=limit)
+
+
 def forum_research_question(item: Item) -> str:
     text = f"{item.title} {item.summary}".lower()
     if "vnq" in text or "reit" in text or "real estate" in text:
@@ -4794,6 +4838,11 @@ def build_etf(out_dir: Path) -> None:
     fresh_forum_items = filter_previously_sent("etf", forum_items, days=ETF_DEDUPE_DAYS, ignore_dates={today})
     forum_picked = select_etf_forum_items(fresh_forum_items, limit=ETF_FORUM_DISPLAY_LIMIT)
     forum_picked = ensure_non_reddit_forum_mix(forum_picked, fresh_forum_items, min_non_reddit=2, limit=ETF_FORUM_DISPLAY_LIMIT)
+    forum_picked = supplement_forum_items_with_same_day_new_history(
+        forum_picked,
+        minimum=ETF_MIN_VISIBLE_FORUM_ITEMS,
+        limit=ETF_FORUM_DISPLAY_LIMIT,
+    )
 
     date_s = today
     data_dates = sorted({str(r["date"]) for r in strategy_rows + mover_rows})
