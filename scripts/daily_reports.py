@@ -2212,6 +2212,7 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         "three fund advice before ditching robo advisor": "放弃智能投顾前，三基金组合配置求建议",
         "my first pie ;3": "我的第一个投资饼图组合",
         "my first pie ;3 19f": "19 岁女性的第一个投资饼图组合",
+        "personal investments • re: buying ishares ibonds term tips etf": "个人投资：是否购买 iShares iBonds 期限 TIPS ETF？",
     }
     if subject_lower in exact_title_translations:
         return exact_title_translations[subject_lower]
@@ -2240,6 +2241,8 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         return "本周资产达到 20 万美元里程碑，也请评估我的财务快照和预算"
     if "vanguard" in title_lower and "situational advisor" in title_lower:
         return f"{forum_prefix}Vanguard “Situational Advisor” 一次性建议服务体验如何？"
+    if "ishares ibonds" in title_lower and "tips etf" in title_lower:
+        return f"{forum_prefix}是否购买 iShares iBonds 期限 TIPS ETF？"
     if re.fullmatch(r"\s*401\s*k\s+advice\s*", title_lower):
         return "401(k) 配置建议"
     if "starting a portfolio" in title_lower and "advice" in title_lower:
@@ -2422,12 +2425,21 @@ def reddit_forum_meets_engagement_bar(item: Item) -> bool:
     return forum_engagement_score(item) >= ETF_FORUM_MIN_ENGAGEMENT_SCORE
 
 
+def forum_item_meets_quality_bar(item: Item) -> bool:
+    if is_reddit_forum_item(item):
+        return reddit_forum_meets_engagement_bar(item)
+    source = item.source.lower()
+    if any(marker in source for marker in ["bogleheads.org forum", "rational reminder community"]):
+        return forum_engagement_score(item) >= ETF_FORUM_MIN_ENGAGEMENT_SCORE or "curated" in source
+    return True
+
+
 def forum_has_specific_summary_evidence(item: Item, points: list[str] | None = None) -> bool:
     points = points if points is not None else forum_thread_summary_points(item)
     text = f"{item.title} {item.summary}".lower()
     if not points:
         return False
-    if not reddit_forum_meets_engagement_bar(item):
+    if not forum_item_meets_quality_bar(item):
         return False
     allocation_matches = re.findall(r"\b\d+(?:\.\d+)?%\s*[A-Z][A-Z0-9.-]{1,8}\b", item.summary)
     if allocation_matches:
@@ -2527,8 +2539,8 @@ def forum_has_lightweight_summary_evidence(item: Item, points: list[str] | None 
         return True
     if not forum_has_topic_signal(item):
         return False
-    if is_reddit_forum_item(item):
-        return forum_engagement_score(item) >= ETF_FORUM_MIN_ENGAGEMENT_SCORE
+    if not forum_item_meets_quality_bar(item):
+        return False
     return forum_engagement_score(item) >= 100 or bool(points)
 
 
@@ -2901,7 +2913,7 @@ def renderable_forum_item(item: Item) -> bool:
 
 
 def renderable_or_enriched_forum_item(item: Item) -> Item | None:
-    if is_reddit_forum_item(item) and not reddit_forum_meets_engagement_bar(item):
+    if not forum_item_meets_quality_bar(item):
         return None
     if renderable_forum_item(item):
         return item
@@ -2972,7 +2984,7 @@ def extend_forum_items_to_minimum(
         title_key = norm_title(item.title)
         if key in seen or title_key in seen_titles:
             continue
-        if is_reddit_forum_item(item) and not reddit_forum_meets_engagement_bar(item):
+        if not forum_item_meets_quality_bar(item):
             continue
         enriched = item if renderable_forum_item(item) else enrich_article_item(item)
         if not renderable_forum_item(enriched):

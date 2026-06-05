@@ -865,6 +865,7 @@ class EtfDigestQualityTests(unittest.TestCase):
             "Three Fund advice before ditching robo advisor": "放弃智能投顾前，三基金组合配置求建议",
             "My First Pie ;3": "我的第一个投资饼图组合",
             "My First Pie ;3 19F": "19 岁女性的第一个投资饼图组合",
+            "Personal Investments • Re: Buying iShares iBonds Term TIPS ETF": "个人投资：是否购买 iShares iBonds 期限 TIPS ETF？",
         }
 
         for title, zh in cases.items():
@@ -960,6 +961,22 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertEqual(visible_count, 0)
         self.assertIn("已从正文剔除", rendered)
         self.assertNotIn("401K advice（401(k) 配置建议）", rendered)
+
+    def test_regular_external_forum_rss_without_quality_signal_is_skipped(self) -> None:
+        item = self.item(
+            "Bogleheads.org Forum",
+            "Personal Investments • Re: Buying iShares iBonds Term TIPS ETF",
+            "Forum thread discusses TIPS ETF allocation, inflation protection, duration risk, and portfolio fit.",
+            "https://www.bogleheads.org/forum/viewtopic.php?p=8781000#p8781000",
+        )
+        lines: list[str] = []
+
+        visible_count = dr.append_etf_research_sections(lines, [], [item], [], [], "2026-06-05")
+        rendered = "\n".join(lines)
+
+        self.assertEqual(visible_count, 0)
+        self.assertIn("已从正文剔除", rendered)
+        self.assertNotIn("iShares iBonds Term TIPS ETF", rendered)
 
     def test_low_evidence_article_is_dropped_instead_of_hard_written_mapping(self) -> None:
         item = self.item(
@@ -1469,7 +1486,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         ]
         candidates = [
             self.item(
-                "Bogleheads.org Forum",
+                "Bogleheads.org Forum（score/upvotes 120；comments/replies 20）",
                 "Bogleheads living in South Korea - How are we doing?",
                 "Forum thread discusses Bogleheads portfolio allocation, ETF core holdings, and rebalancing.",
                 "https://www.bogleheads.org/forum/viewtopic.php?t=500001",
@@ -1486,7 +1503,7 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertEqual(len(mixed), 10)
         self.assertGreaterEqual(sum(1 for item in mixed if "reddit" not in item.source.lower()), 2)
-        self.assertIn("Bogleheads.org Forum", {item.source for item in mixed})
+        self.assertTrue(any(item.source.startswith("Bogleheads.org Forum") for item in mixed))
         self.assertIn("Bogleblog Best of Bogleheads Forum", {item.source for item in mixed})
 
     def test_generic_forum_post_is_skipped_without_thread_specific_summary(self) -> None:
