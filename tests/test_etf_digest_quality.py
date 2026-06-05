@@ -873,7 +873,7 @@ class EtfDigestQualityTests(unittest.TestCase):
             self.assertIn(zh, rendered_title)
             self.assertNotEqual(rendered_title, title)
 
-    def test_specific_fresh_forum_titles_can_render_as_lightweight_ideas(self) -> None:
+    def test_specific_fresh_forum_titles_still_need_engagement_or_evidence(self) -> None:
         items = [
             self.item(
                 "Reddit r/ETFs（score/upvotes 2；comments/replies 1）",
@@ -911,10 +911,39 @@ class EtfDigestQualityTests(unittest.TestCase):
         visible_count = dr.append_etf_research_sections(lines, [], items, [], [], "2026-06-03")
         rendered = "\n".join(lines)
 
-        self.assertEqual(visible_count, 5)
-        self.assertIn("SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX 这类热门 IPO 吗？", rendered)
-        self.assertIn("个人投资：净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？", rendered)
-        self.assertNotRegex(rendered, r"### \d+\. [^\n（]+$")
+        self.assertEqual(visible_count, 0)
+        self.assertIn("已从正文剔除", rendered)
+        self.assertNotIn("SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX", rendered)
+
+    def test_low_engagement_translated_forum_titles_are_not_used_to_pad_count(self) -> None:
+        items = [
+            self.item(
+                "Reddit r/ETFs（score/upvotes 2；comments/replies 1）",
+                "My First Pie ;3",
+                "",
+                "https://www.reddit.com/r/ETFs/comments/example/my_first_pie/",
+            ),
+            self.item(
+                "Reddit r/portfolios（score/upvotes 1；comments/replies 0）",
+                "Need advice, starting a portfolio",
+                "",
+                "https://www.reddit.com/r/portfolios/comments/example/starting_portfolio/",
+            ),
+            self.item(
+                "Reddit r/Bogleheads（score/upvotes 3；comments/replies 2）",
+                "401K advice",
+                "",
+                "https://www.reddit.com/r/Bogleheads/comments/example/401k_advice/",
+            ),
+        ]
+        lines: list[str] = []
+
+        visible_count = dr.append_etf_research_sections(lines, [], items, [], [], "2026-06-05")
+        rendered = "\n".join(lines)
+
+        self.assertEqual(visible_count, 0)
+        self.assertIn("已从正文剔除", rendered)
+        self.assertNotIn("My First Pie ;3（我的第一个投资饼图组合）", rendered)
 
     def test_low_evidence_article_is_dropped_instead_of_hard_written_mapping(self) -> None:
         item = self.item(

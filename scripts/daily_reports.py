@@ -2514,7 +2514,7 @@ def forum_has_lightweight_summary_evidence(item: Item, points: list[str] | None 
         return True
     if not forum_has_topic_signal(item):
         return False
-    return forum_engagement_score(item) >= 100 or bool(points) or forum_has_specific_translated_title_signal(item)
+    return forum_engagement_score(item) >= 100 or bool(points)
 
 
 def forum_lightweight_summary_points(item: Item, limit: int = 4) -> list[str]:
