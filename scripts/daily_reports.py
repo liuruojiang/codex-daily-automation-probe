@@ -2419,6 +2419,19 @@ def is_reddit_forum_item(item: Item) -> bool:
     return "reddit" in f"{item.source} {item.url}".lower()
 
 
+def reddit_forum_item_with_engagement(item: Item) -> Item:
+    if not is_reddit_forum_item(item) or forum_engagement_score(item) > 0:
+        return item
+    meta = reddit_thread_metadata(item.url)
+    if meta is None:
+        return item
+    score, comments = meta
+    base_source = re.sub(r"\s*\([^)]*score/upvotes[^)]*comments/replies[^)]*\)\s*$", "", item.source).strip()
+    source = f"{base_source} (score/upvotes {score}; comments/replies {comments})"
+    summary = clean_text(f"{item.summary} Engagement: score/upvotes {score}; comments/replies {comments}.", 1200)
+    return Item(source, item.title, item.url, item.published, summary)
+
+
 def reddit_forum_meets_engagement_bar(item: Item) -> bool:
     if not is_reddit_forum_item(item):
         return True
@@ -2913,6 +2926,7 @@ def renderable_forum_item(item: Item) -> bool:
 
 
 def renderable_or_enriched_forum_item(item: Item) -> Item | None:
+    item = reddit_forum_item_with_engagement(item)
     if not forum_item_meets_quality_bar(item):
         return None
     if renderable_forum_item(item):
@@ -2980,6 +2994,7 @@ def extend_forum_items_to_minimum(
     for item in candidates:
         if len(out) >= limit:
             break
+        item = reddit_forum_item_with_engagement(item)
         key = (canonical_url(item.url), norm_title(item.title))
         title_key = norm_title(item.title)
         if key in seen or title_key in seen_titles:

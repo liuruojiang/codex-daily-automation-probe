@@ -821,6 +821,24 @@ class EtfDigestQualityTests(unittest.TestCase):
         finally:
             dr.reddit_thread_metadata = original
 
+    def test_reddit_rss_forum_item_fetches_engagement_before_quality_gate(self) -> None:
+        item = self.item(
+            "Reddit r/Bogleheads",
+            "Three Fund advice before ditching robo advisor",
+            "Thread discusses a three fund portfolio, ETF core allocation, risk tolerance, and rebalance decisions.",
+            "https://www.reddit.com/r/Bogleheads/comments/example/three_fund_hot/",
+        )
+        original = dr.reddit_thread_metadata
+        try:
+            dr.reddit_thread_metadata = lambda url: (80, 45)
+            picked = dr.select_etf_forum_items([item], limit=3)
+        finally:
+            dr.reddit_thread_metadata = original
+
+        self.assertEqual([x.title for x in picked], [item.title])
+        self.assertIn("score/upvotes 80", picked[0].source)
+        self.assertIn("comments/replies 45", picked[0].source)
+
     def test_bogleheads_cash_to_short_term_bonds_title_translation(self) -> None:
         item = self.item(
             "Bogleheads Forum",
