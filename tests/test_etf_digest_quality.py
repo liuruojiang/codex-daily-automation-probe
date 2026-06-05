@@ -150,7 +150,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         original_now_bj = dr.now_bj
         dr.now_bj = lambda: dr.datetime(2026, 5, 21, 7, 0, tzinfo=dr.BJ)
         renderable = dr.Item(
-            "Reddit r/ETFs",
+            "Reddit r/ETFs（score/upvotes 184；comments/replies 71）",
             "SCHG vs QQQM for long term?",
             "https://www.reddit.com/r/ETFs/comments/example/schg_vs_qqqm/",
             "2026-05-19T12:00:00+00:00",
@@ -283,7 +283,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         original_now_bj = dr.now_bj
         dr.now_bj = lambda: dr.datetime(2026, 5, 21, 7, 0, tzinfo=dr.BJ)
         renderable = dr.Item(
-            "Reddit r/ETFs",
+            "Reddit r/ETFs（score/upvotes 184；comments/replies 71）",
             "SCHG vs QQQM for long term?",
             "https://www.reddit.com/r/ETFs/comments/example/schg_vs_qqqm/",
             "2026-05-21T01:00:00+00:00",
@@ -678,7 +678,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         try:
             dr.fetch_bytes = fake_fetch
             item = self.item(
-                "Reddit r/portfolios",
+                "Reddit r/portfolios（score/upvotes 220；comments/replies 90）",
                 "Advice on Portfolio",
                 "RSS only says Advice on Portfolio.",
                 "https://www.reddit.com/r/portfolios/comments/example/advice_on_portfolio/",
@@ -702,7 +702,7 @@ class EtfDigestQualityTests(unittest.TestCase):
 
     def test_forum_summary_does_not_emit_raw_english_fallback_sentences(self) -> None:
         item = self.item(
-            "Reddit r/Bogleheads",
+            "Reddit r/Bogleheads（score/upvotes 180；comments/replies 80）",
             "VNQ: Why not diversify into VNQ within tax-advantaged accounts?",
             (
                 "I just wonder why, especially for those of us who do not own real estate, diversification under "
@@ -746,7 +746,7 @@ class EtfDigestQualityTests(unittest.TestCase):
 
     def test_bogleheads_forum_title_translation_and_detailed_summary(self) -> None:
         item = self.item(
-            "Reddit r/Bogleheads",
+            "Reddit r/Bogleheads（score/upvotes 260；comments/replies 140）",
             "Is it ok to have basically 100% of my retirement savings in stocks/funds and 0% bonds/treasuries if I'm far from retirement?",
             (
                 "The original poster is far from retirement and asks whether keeping basically 100% of retirement savings "
@@ -944,6 +944,22 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertEqual(visible_count, 0)
         self.assertIn("已从正文剔除", rendered)
         self.assertNotIn("My First Pie ;3（我的第一个投资饼图组合）", rendered)
+
+    def test_low_engagement_reddit_forum_with_specific_allocation_is_still_skipped(self) -> None:
+        item = self.item(
+            "Reddit r/Bogleheads",
+            "401K advice",
+            "The post lists a 70% VTSAX, 20% VTIAX, 10% VSMAX portfolio and asks for 401k allocation advice.",
+            "https://www.reddit.com/r/Bogleheads/comments/example/401k_advice_low_engagement/",
+        )
+        lines: list[str] = []
+
+        visible_count = dr.append_etf_research_sections(lines, [], [item], [], [], "2026-06-05")
+        rendered = "\n".join(lines)
+
+        self.assertEqual(visible_count, 0)
+        self.assertIn("已从正文剔除", rendered)
+        self.assertNotIn("401K advice（401(k) 配置建议）", rendered)
 
     def test_low_evidence_article_is_dropped_instead_of_hard_written_mapping(self) -> None:
         item = self.item(
@@ -1286,7 +1302,7 @@ class EtfDigestQualityTests(unittest.TestCase):
                 dr.now_bj = original_now_bj
 
         self.assertEqual(picked, [])
-        self.assertTrue(all(dr.renderable_forum_item(item) for item in backfill))
+        self.assertTrue(all(not dr.renderable_forum_item(item) for item in backfill))
 
     def test_same_day_forum_supplement_keeps_new_today_items_but_not_prior_duplicates(self) -> None:
         original_cwd = Path.cwd()
@@ -1352,8 +1368,8 @@ class EtfDigestQualityTests(unittest.TestCase):
                 dr.now_bj = original_now_bj
 
         titles = [item.title for item in supplemented]
-        self.assertGreaterEqual(len(titles), 6)
-        self.assertIn("Target date fund ETF in brokerage account?", titles)
+        self.assertEqual(len(titles), 4)
+        self.assertNotIn("Target date fund ETF in brokerage account?", titles)
         self.assertNotIn("voo vs. voo/vxus?", titles)
         self.assertNotIn("Overall index of portfolios", titles)
 
@@ -1416,7 +1432,7 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         titles = [item.title for item in supplemented]
         self.assertEqual(titles.count(duplicate_title), 1)
-        self.assertIn("Target date fund ETF in brokerage account?", titles)
+        self.assertNotIn("Target date fund ETF in brokerage account?", titles)
 
     def test_extend_forum_items_to_minimum_uses_history_after_selector_stays_sparse(self) -> None:
         picked = [
@@ -1439,9 +1455,7 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         extended = dr.extend_forum_items_to_minimum(picked, history_items, minimum=dr.ETF_MIN_FORUM_ITEMS, limit=10)
 
-        self.assertGreaterEqual(len(extended), dr.ETF_MIN_FORUM_ITEMS)
-        self.assertLessEqual(len(extended), 10)
-        self.assertEqual(extended[0].title, picked[0].title)
+        self.assertEqual([item.title for item in extended], [picked[0].title])
 
     def test_ensure_non_reddit_forum_mix_keeps_external_forums_when_available(self) -> None:
         picked = [
@@ -1493,7 +1507,7 @@ class EtfDigestQualityTests(unittest.TestCase):
 
     def test_forum_renderer_returns_actual_visible_count(self) -> None:
         item = self.item(
-            "Reddit r/ETFs",
+            "Reddit r/ETFs（score/upvotes 184；comments/replies 71）",
             "SCHG vs QQQM for long term?",
             (
                 "The post compares portfolio allocation choices between SCHG and QQQM. "

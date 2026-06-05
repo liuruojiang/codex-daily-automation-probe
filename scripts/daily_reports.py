@@ -161,6 +161,7 @@ ETF_FORUM_BACKFILL_DEDUPE_DAYS = ETF_DEDUPE_DAYS
 ETF_MIN_VISIBLE_FORUM_ITEMS = 5
 ETF_MIN_FORUM_ITEMS = 8
 ETF_FORUM_DISPLAY_LIMIT = 10
+ETF_FORUM_MIN_ENGAGEMENT_SCORE = 100
 ETF_HISTORY_DAYS = 60
 
 
@@ -2411,10 +2412,22 @@ def forum_engagement_score(item: Item) -> int:
     return score + comments * 3
 
 
+def is_reddit_forum_item(item: Item) -> bool:
+    return "reddit" in f"{item.source} {item.url}".lower()
+
+
+def reddit_forum_meets_engagement_bar(item: Item) -> bool:
+    if not is_reddit_forum_item(item):
+        return True
+    return forum_engagement_score(item) >= ETF_FORUM_MIN_ENGAGEMENT_SCORE
+
+
 def forum_has_specific_summary_evidence(item: Item, points: list[str] | None = None) -> bool:
     points = points if points is not None else forum_thread_summary_points(item)
     text = f"{item.title} {item.summary}".lower()
     if not points:
+        return False
+    if not reddit_forum_meets_engagement_bar(item):
         return False
     allocation_matches = re.findall(r"\b\d+(?:\.\d+)?%\s*[A-Z][A-Z0-9.-]{1,8}\b", item.summary)
     if allocation_matches:
@@ -2514,6 +2527,8 @@ def forum_has_lightweight_summary_evidence(item: Item, points: list[str] | None 
         return True
     if not forum_has_topic_signal(item):
         return False
+    if is_reddit_forum_item(item):
+        return forum_engagement_score(item) >= ETF_FORUM_MIN_ENGAGEMENT_SCORE
     return forum_engagement_score(item) >= 100 or bool(points)
 
 
@@ -2886,6 +2901,8 @@ def renderable_forum_item(item: Item) -> bool:
 
 
 def renderable_or_enriched_forum_item(item: Item) -> Item | None:
+    if is_reddit_forum_item(item) and not reddit_forum_meets_engagement_bar(item):
+        return None
     if renderable_forum_item(item):
         return item
     enriched = enrich_article_item(item)
@@ -2954,6 +2971,8 @@ def extend_forum_items_to_minimum(
         key = (canonical_url(item.url), norm_title(item.title))
         title_key = norm_title(item.title)
         if key in seen or title_key in seen_titles:
+            continue
+        if is_reddit_forum_item(item) and not reddit_forum_meets_engagement_bar(item):
             continue
         enriched = item if renderable_forum_item(item) else enrich_article_item(item)
         if not renderable_forum_item(enriched):
