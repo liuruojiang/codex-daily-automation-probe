@@ -2209,6 +2209,8 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         "401k advice": "401(k) 配置建议",
         "need advice, starting a portfolio": "刚开始建立投资组合，求建议",
         "three fund advice before ditching robo advisor": "放弃智能投顾前，三基金组合配置求建议",
+        "my first pie ;3": "我的第一个投资饼图组合",
+        "my first pie ;3 19f": "19 岁女性的第一个投资饼图组合",
     }
     if subject_lower in exact_title_translations:
         return exact_title_translations[subject_lower]
@@ -2245,6 +2247,13 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         return "放弃智能投顾前，三基金组合配置求建议"
     if "three fund" in title_lower and "advice" in title_lower:
         return "三基金组合配置求建议"
+    first_pie_match = re.search(r"\bmy\s+first\s+pie\b", title_lower)
+    if first_pie_match:
+        age_gender = re.search(r"\b(\d{2})\s*([fm])\b", title_lower)
+        if age_gender:
+            gender = "女性" if age_gender.group(2) == "f" else "男性"
+            return f"{age_gender.group(1)} 岁{gender}的第一个投资饼图组合"
+        return "我的第一个投资饼图组合"
     if "tips ladder" in title_lower or "tips ladder" in text:
         return f"{forum_prefix}什么时候建立 TIPS 阶梯？现在还是等待？"
     feedback_age_match = re.search(r"\bportfolio\s+feedback\s+for\s+a\s+(\d{2})\s+year\s+old\b", title_lower)

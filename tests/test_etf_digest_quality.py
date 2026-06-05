@@ -863,6 +863,8 @@ class EtfDigestQualityTests(unittest.TestCase):
             "401K advice": "401(k) 配置建议",
             "Need advice, starting a portfolio": "刚开始建立投资组合，求建议",
             "Three Fund advice before ditching robo advisor": "放弃智能投顾前，三基金组合配置求建议",
+            "My First Pie ;3": "我的第一个投资饼图组合",
+            "My First Pie ;3 19F": "19 岁女性的第一个投资饼图组合",
         }
 
         for title, zh in cases.items():
