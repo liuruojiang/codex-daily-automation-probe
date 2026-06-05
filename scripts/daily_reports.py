@@ -2510,9 +2510,32 @@ def forum_item_meets_quality_bar(item: Item) -> bool:
     return True
 
 
+def low_signal_forum_title(item: Item) -> bool:
+    title = item.title.lower()
+    low_signal_title_markers = [
+        "rate my portfolio",
+        "rate my portfolio weekly",
+        "rate this portfolio",
+        "my first pie",
+        "401k advice",
+        "need advice",
+        "staying on-topic",
+        "rude &/or off-topic",
+        "rude or off-topic",
+        "what are your thoughts on this portfolio",
+        "weekly update",
+        "add to portfolio",
+        "created this percentage system",
+        "first year teacher",
+    ]
+    return any(marker in title for marker in low_signal_title_markers)
+
+
 def forum_has_specific_summary_evidence(item: Item, points: list[str] | None = None) -> bool:
     points = points if points is not None else forum_thread_summary_points(item)
     text = f"{item.title} {item.summary}".lower()
+    if low_signal_forum_title(item):
+        return False
     if not points:
         return False
     if not forum_item_meets_quality_bar(item):
@@ -2558,22 +2581,7 @@ def forum_has_topic_signal(item: Item) -> bool:
     text = f"{item.title} {item.summary}".lower()
     if not etf_forum_relevant(item):
         return False
-    low_signal_title_markers = [
-        "rate my portfolio",
-        "rate my portfolio weekly",
-        "my first pie",
-        "401k advice",
-        "need advice",
-        "staying on-topic",
-        "rude &/or off-topic",
-        "rude or off-topic",
-        "what are your thoughts on this portfolio",
-        "weekly update",
-        "add to portfolio",
-        "created this percentage system",
-        "first year teacher",
-    ]
-    if any(marker in title for marker in low_signal_title_markers):
+    if low_signal_forum_title(item):
         return False
     if re.fullmatch(r"\s*(?:best\s+)?etfs?\s+to\s+invest\s+in\s*", title):
         return False

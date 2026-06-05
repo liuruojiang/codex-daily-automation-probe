@@ -889,6 +889,17 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertFalse(dr.forum_has_topic_signal(item))
         self.assertEqual(dr.select_etf_forum_items([item], limit=3), [])
 
+    def test_generic_what_are_your_thoughts_portfolio_thread_still_blocked(self) -> None:
+        item = self.item(
+            "Reddit r/portfolios (hot RSS rank 5)",
+            "What are your thoughts on this portfolio?",
+            "Poster lists VTI 50%, VXUS 20%, BND 20%, cash 10% and asks for portfolio feedback.",
+            "https://old.reddit.com/r/portfolios/comments/example/thoughts_on_portfolio/",
+        )
+
+        self.assertFalse(dr.forum_has_specific_summary_evidence(item))
+        self.assertEqual(dr.select_etf_forum_items([item], limit=3), [])
+
     def test_old_reddit_hot_rss_rank_can_qualify_without_fake_upvotes(self) -> None:
         item = self.item(
             "Reddit r/Bogleheads",
@@ -1274,7 +1285,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         visible_count = dr.append_etf_research_sections(lines, [], items, [], [], "2026-06-02")
         rendered = "\n".join(lines)
 
-        self.assertEqual(visible_count, 10)
+        self.assertEqual(visible_count, 9)
         self.assertIn("Personal Investments • Re: Retire at 55 heavy in taxable（个人投资：55 岁退休且应税账户占比较高）", rendered)
         self.assertIn("Add SPMO or FMTM?（添加 SPMO 还是 FMTM？）", rendered)
         self.assertIn("Employer just reversed 2026 Safe Harbor matches via negative Controbitions（雇主通过负向缴款撤回了 2026 年 Safe Harbor 匹配缴款）", rendered)
@@ -1313,7 +1324,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         visible_count = dr.append_etf_research_sections(lines, [], items, [], [], "2026-05-30")
         rendered = "\n".join(lines)
 
-        self.assertEqual(visible_count, 10)
+        self.assertEqual(visible_count, 8)
         self.assertIn(
             "Do some of you completely disregard the bond portion of a portfolio? All equities?（你们中有人完全忽略组合中的债券部分、全仓股票吗？）",
             rendered,
@@ -1321,6 +1332,8 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("Who is still doing “VTI and Chill” ?（还有谁在坚持“VTI and Chill”？）", rendered)
         self.assertIn("Moving on from AUM and rebalancing（不再依赖 AUM 顾问后如何再平衡）", rendered)
         self.assertIn("Transition to 3 Fund Portfolio（过渡到三基金组合）", rendered)
+        self.assertNotIn("Rate this portfolio", rendered)
+        self.assertNotIn("Rate my portfolio please", rendered)
         self.assertNotRegex(rendered, r"（[^）]*相关问题）")
         for generic_heading in dr.GENERIC_FORUM_HEADINGS:
             self.assertNotIn(f"（{generic_heading}）", rendered)
