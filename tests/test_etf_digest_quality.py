@@ -859,6 +859,10 @@ class EtfDigestQualityTests(unittest.TestCase):
             "Will SPTM/SPHQ and active ETFs get forced into hype IPOs like SpaceX?": "SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX 这类热门 IPO 吗？",
             "Personal Investments • Re: $407K Net Worth, Large Cash Position, Looking for Advice on an Aggressive Investing Strategy": "个人投资：净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？",
             "Hit $200K Milestone This Week! Also please judge my financial snapshot and budget.": "本周资产达到 20 万美元里程碑，也请评估我的财务快照和预算",
+            'Personal Investments • Re: Experiences with Vanguard "Situational Advisor" (advice-only, one-time)?': "个人投资：Vanguard “Situational Advisor” 一次性建议服务体验如何？",
+            "401K advice": "401(k) 配置建议",
+            "Need advice, starting a portfolio": "刚开始建立投资组合，求建议",
+            "Three Fund advice before ditching robo advisor": "放弃智能投顾前，三基金组合配置求建议",
         }
 
         for title, zh in cases.items():

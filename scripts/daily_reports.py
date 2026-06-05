@@ -2205,6 +2205,10 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         "will sptm/sphq and active etfs get forced into hype ipos like spacex?": "SPTM/SPHQ 和主动 ETF 会被迫买入 SpaceX 这类热门 IPO 吗？",
         "personal investments • re: $407k net worth, large cash position, looking for advice on an aggressive investing strategy": "个人投资：净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？",
         "hit $200k milestone this week! also please judge my financial snapshot and budget.": "本周资产达到 20 万美元里程碑，也请评估我的财务快照和预算",
+        "personal investments • re: experiences with vanguard \"situational advisor\" (advice-only, one-time)?": "个人投资：Vanguard “Situational Advisor” 一次性建议服务体验如何？",
+        "401k advice": "401(k) 配置建议",
+        "need advice, starting a portfolio": "刚开始建立投资组合，求建议",
+        "three fund advice before ditching robo advisor": "放弃智能投顾前，三基金组合配置求建议",
     }
     if subject_lower in exact_title_translations:
         return exact_title_translations[subject_lower]
@@ -2231,6 +2235,16 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         return f"{forum_prefix}净资产 40.7 万美元、现金仓位较大，如何制定更积极的投资策略？"
     if "$200k" in title_lower and "financial snapshot" in title_lower and "budget" in title_lower:
         return "本周资产达到 20 万美元里程碑，也请评估我的财务快照和预算"
+    if "vanguard" in title_lower and "situational advisor" in title_lower:
+        return f"{forum_prefix}Vanguard “Situational Advisor” 一次性建议服务体验如何？"
+    if re.fullmatch(r"\s*401\s*k\s+advice\s*", title_lower):
+        return "401(k) 配置建议"
+    if "starting a portfolio" in title_lower and "advice" in title_lower:
+        return "刚开始建立投资组合，求建议"
+    if "three fund" in title_lower and "robo advisor" in title_lower:
+        return "放弃智能投顾前，三基金组合配置求建议"
+    if "three fund" in title_lower and "advice" in title_lower:
+        return "三基金组合配置求建议"
     if "tips ladder" in title_lower or "tips ladder" in text:
         return f"{forum_prefix}什么时候建立 TIPS 阶梯？现在还是等待？"
     feedback_age_match = re.search(r"\bportfolio\s+feedback\s+for\s+a\s+(\d{2})\s+year\s+old\b", title_lower)
