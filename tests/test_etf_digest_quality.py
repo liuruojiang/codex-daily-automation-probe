@@ -821,6 +821,22 @@ class EtfDigestQualityTests(unittest.TestCase):
         finally:
             dr.reddit_thread_metadata = original
 
+    def test_old_reddit_thread_metadata_parses_html_score_and_comments(self) -> None:
+        html = b'''
+<div class="thing" data-score="910" data-comments-count="141">
+  <div class="score unvoted" title="910">910</div>
+  <a class="comments">141 comments</a>
+</div>
+'''
+        original = dr.fetch_bytes
+        try:
+            dr.fetch_bytes = lambda url, timeout=30, headers=None: html
+            meta = dr.reddit_thread_metadata("https://old.reddit.com/r/Bogleheads/comments/1tx3fpe/example/")
+        finally:
+            dr.fetch_bytes = original
+
+        self.assertEqual(meta, (910, 141))
+
     def test_reddit_rss_forum_item_fetches_engagement_before_quality_gate(self) -> None:
         item = self.item(
             "Reddit r/Bogleheads",
@@ -838,6 +854,54 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertEqual([x.title for x in picked], [item.title])
         self.assertIn("score/upvotes 80", picked[0].source)
         self.assertIn("comments/replies 45", picked[0].source)
+
+    def test_bogleheads_active_feed_preserves_replies_and_views_for_quality_gate(self) -> None:
+        xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <updated>2026-06-05T01:00:00-05:00</updated>
+    <published>2026-06-05T01:00:00-05:00</published>
+    <link href="https://www.bogleheads.org/forum/viewtopic.php?p=8780000#p8780000" />
+    <title type="html">Personal Investments &#8226; Fresh out of college and need investment / retirement advice</title>
+    <content type="html">Thread discusses portfolio allocation, ETF core holdings, retirement account placement, and rebalancing. &lt;p&gt;Statistics: Posted by user &#8212; Fri Jun 05, 2026 1:00 am &#8212; Replies 28 &#8212; Views 907&lt;/p&gt;</content>
+  </entry>
+</feed>"""
+        original = dr.fetch_bytes
+        try:
+            dr.fetch_bytes = lambda url: xml
+            item = dr.parse_feed("Bogleheads.org Forum", "https://www.bogleheads.org/forum/feed/topics_active", limit=1)[0]
+        finally:
+            dr.fetch_bytes = original
+
+        self.assertIn("comments/replies 28", item.source)
+        self.assertIn("views 907", item.source)
+        self.assertGreaterEqual(dr.forum_engagement_score(item), dr.ETF_FORUM_MIN_ENGAGEMENT_SCORE)
+        self.assertTrue(dr.forum_item_meets_quality_bar(item))
+
+    def test_high_engagement_rate_my_portfolio_thread_still_blocked(self) -> None:
+        item = self.item(
+            "Reddit r/ETFs (score/upvotes 800; comments/replies 400)",
+            "Rate My Portfolio Weekly Thread | June 01, 2026",
+            "Weekly thread asks users to post portfolio allocation and ETF holdings for feedback.",
+            "https://old.reddit.com/r/ETFs/comments/example/rate_my_portfolio_weekly/",
+        )
+
+        self.assertFalse(dr.forum_has_topic_signal(item))
+        self.assertEqual(dr.select_etf_forum_items([item], limit=3), [])
+
+    def test_old_reddit_hot_rss_rank_can_qualify_without_fake_upvotes(self) -> None:
+        item = self.item(
+            "Reddit r/Bogleheads",
+            "SP 500 stays put on inclusion criteria",
+            "Thread discusses S&P 500 index inclusion rules, index funds, ETF tracking, and allocation impact.",
+            "https://old.reddit.com/r/Bogleheads/comments/example/sp_500_index_inclusion/",
+        )
+        ranked = dr.reddit_hot_rss_ranked_items([item])[0]
+        picked = dr.select_etf_forum_items([ranked], limit=3)
+
+        self.assertIn("hot RSS rank 1", ranked.source)
+        self.assertNotIn("score/upvotes", ranked.source)
+        self.assertEqual([x.title for x in picked], [item.title])
 
     def test_bogleheads_cash_to_short_term_bonds_title_translation(self) -> None:
         item = self.item(
@@ -1074,15 +1138,15 @@ class EtfDigestQualityTests(unittest.TestCase):
         visible_count = dr.append_etf_research_sections(lines, [], forum_items, [], [], "2026-05-25")
         rendered = "\n".join(lines)
 
-        self.assertEqual(visible_count, 6)
+        self.assertEqual(visible_count, 5)
         self.assertIn("线索摘要", rendered)
         self.assertIn("What’s a ETF you don’t plan on selling anytime soon?（你不打算长期卖出的 ETF 是哪只？）", rendered)
         self.assertIn("Beginner Portfolio Help（新手投资组合需要合并整理，求帮助）", rendered)
-        self.assertIn("Rate My Portfolio（请评价我的投资组合）", rendered)
+        self.assertNotIn("Rate My Portfolio", rendered)
         self.assertIn("26M ETF Advice", rendered)
         self.assertIn("SCHG vs QQQM for long term?（长期持有选 SCHG 还是 QQQM？）", rendered)
         self.assertIn("Best way to migrate multiple portfolios filled with crap to a Boglehead portfolio（如何把多个混乱组合迁移成 Bogleheads 风格组合）", rendered)
-        self.assertIn("论坛补充入正文数量：6", rendered)
+        self.assertIn("论坛补充入正文数量：5", rendered)
         self.assertNotRegex(rendered, re.compile(r"[A-Za-z][A-Za-z ,'-]{100,}"))
 
     def test_forum_title_translation_is_specific_not_generic_topic_label(self) -> None:

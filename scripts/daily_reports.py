@@ -144,7 +144,8 @@ ETF_CORE_PAGE_MONITORS: tuple[tuple[str, str, str], ...] = (
 )
 
 ETF_EXTERNAL_FORUM_FEEDS: tuple[tuple[str, str, int], ...] = (
-    ("Bogleheads.org Forum", "https://www.bogleheads.org/forum/feed.php", 36),
+    ("Bogleheads.org Forum", "https://www.bogleheads.org/forum/feed/topics_active", 36),
+    ("Bogleheads.org Forum", "https://www.bogleheads.org/forum/feed/topics", 36),
     ("Rational Reminder Community", "https://community.rationalreminder.ca/latest.rss", 24),
 )
 BOGLEBLOG_BEST_OF_BOGLEHEADS_URL = "https://bogleblog.com/best-of-bogleheads-forum/"
@@ -209,6 +210,26 @@ def parse_date(text: str | None) -> datetime | None:
     return parsed.astimezone(timezone.utc)
 
 
+def feed_forum_engagement_text(summary: str | None) -> str:
+    text = clean_text(summary, 5000)
+    match = re.search(r"Replies\s+([\d,]+).{0,40}?Views\s+([\d,]+)", text, flags=re.I)
+    if not match:
+        return ""
+    return f"comments/replies {match.group(1)}; views {match.group(2)}"
+
+
+def reddit_hot_rss_ranked_items(items: list[Item]) -> list[Item]:
+    out: list[Item] = []
+    for rank, item in enumerate(items, start=1):
+        if "reddit" not in item.source.lower() or "hot rss rank" in f"{item.source} {item.summary}".lower():
+            out.append(item)
+            continue
+        source = f"{item.source} (hot RSS rank {rank})"
+        summary = clean_text(f"{item.summary} Ranking signal: old Reddit hot RSS rank {rank}.", 1200)
+        out.append(Item(source, item.title, item.url, item.published, summary))
+    return out
+
+
 def parse_feed(source: str, url: str, limit: int = 12) -> list[Item]:
     try:
         root = ET.fromstring(fetch_bytes(url))
@@ -239,13 +260,19 @@ def parse_feed(source: str, url: str, limit: int = 12) -> list[Item]:
             summary = node.findtext("description", default="") or node.findtext("content:encoded", default="", namespaces=ns)
         if title and link:
             dt = parse_date(published)
+            engagement = feed_forum_engagement_text(summary)
+            item_source = source
+            item_summary = clean_text(summary, 700)
+            if engagement and "comments/replies" not in item_source.lower():
+                item_source = f"{item_source} ({engagement})"
+                item_summary = clean_text(f"{item_summary} Engagement: {engagement}.", 1200)
             out.append(
                 Item(
-                    source=source,
+                    source=item_source,
                     title=title,
                     url=link,
                     published=dt.isoformat() if dt else "",
-                    summary=clean_text(summary, 700),
+                    summary=item_summary,
                 )
             )
     return out
@@ -371,15 +398,46 @@ def reddit_thread_payload(url: str) -> object | None:
     return None
 
 
+def old_reddit_thread_url(url: str) -> str:
+    parts = urllib.parse.urlsplit(url)
+    path = parts.path.rstrip("/") + "/"
+    return urllib.parse.urlunsplit(("https", "old.reddit.com", path, "", ""))
+
+
+def old_reddit_thread_metadata(url: str) -> tuple[int, int] | None:
+    try:
+        html_text = fetch_bytes(
+            old_reddit_thread_url(url),
+            timeout=20,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 ETFAllocationDigest/1.0"
+                )
+            },
+        ).decode("utf-8", "ignore")
+    except Exception:
+        return None
+    score_match = re.search(r'data-score="([\d-]+)"', html_text)
+    comments_match = re.search(r'data-comments-count="([\d,]+)"', html_text)
+    if not score_match and not comments_match:
+        return None
+    score = int(score_match.group(1).replace(",", "")) if score_match else 0
+    comments = int(comments_match.group(1).replace(",", "")) if comments_match else 0
+    return score, comments
+
+
 def reddit_thread_metadata(url: str) -> tuple[int, int] | None:
+    if urllib.parse.urlsplit(url).netloc.lower().startswith("old."):
+        return old_reddit_thread_metadata(url)
     payload = reddit_thread_payload(url)
     if not isinstance(payload, list) or not payload:
-        return None
+        return old_reddit_thread_metadata(url)
     try:
         data = payload[0]["data"]["children"][0]["data"]
         return int(data.get("score") or 0), int(data.get("num_comments") or 0)
     except Exception:
-        return None
+        return old_reddit_thread_metadata(url)
 
 
 def reddit_source_with_engagement(source: str, url: str) -> str:
@@ -2410,9 +2468,14 @@ def forum_engagement_score(item: Item) -> int:
     text = f"{item.source} {item.summary}".lower()
     score_match = re.search(r"(?:score/upvotes|score|upvotes?)\s*[:：]?\s*([\d,]+)", text)
     comments_match = re.search(r"(?:comments/replies|comments?|replies)\s*[:：]?\s*([\d,]+)", text)
+    views_match = re.search(r"(?:views?)\s*[:：]?\s*([\d,]+)", text)
+    hot_rank_match = re.search(r"hot rss rank\s*[:#]?\s*(\d+)", text)
     score = int(score_match.group(1).replace(",", "")) if score_match else 0
     comments = int(comments_match.group(1).replace(",", "")) if comments_match else 0
-    return score + comments * 3
+    views = int(views_match.group(1).replace(",", "")) if views_match else 0
+    hot_rank = int(hot_rank_match.group(1)) if hot_rank_match else 0
+    hot_rank_score = max(0, ETF_FORUM_MIN_ENGAGEMENT_SCORE + 60 - hot_rank * 8) if hot_rank else 0
+    return score + comments * 3 + views // 50 + hot_rank_score
 
 
 def is_reddit_forum_item(item: Item) -> bool:
@@ -2476,11 +2539,17 @@ def forum_engagement_label(item: Item) -> str:
     text = f"{item.source} {item.summary}".lower()
     score_match = re.search(r"(?:score/upvotes|score|upvotes?)\s*[:：]?\s*([\d,]+)", text)
     comments_match = re.search(r"(?:comments/replies|comments?|replies)\s*[:：]?\s*([\d,]+)", text)
+    views_match = re.search(r"(?:views?)\s*[:：]?\s*([\d,]+)", text)
+    hot_rank_match = re.search(r"hot rss rank\s*[:#]?\s*(\d+)", text)
     bits: list[str] = []
     if score_match:
         bits.append(f"点赞/评分 {score_match.group(1)}")
     if comments_match:
         bits.append(f"回复 {comments_match.group(1)}")
+    if views_match:
+        bits.append(f"浏览 {views_match.group(1)}")
+    if hot_rank_match:
+        bits.append(f"old Reddit hot RSS rank {hot_rank_match.group(1)}")
     return "、".join(bits)
 
 
@@ -2488,6 +2557,23 @@ def forum_has_topic_signal(item: Item) -> bool:
     title = item.title.lower()
     text = f"{item.title} {item.summary}".lower()
     if not etf_forum_relevant(item):
+        return False
+    low_signal_title_markers = [
+        "rate my portfolio",
+        "rate my portfolio weekly",
+        "my first pie",
+        "401k advice",
+        "need advice",
+        "staying on-topic",
+        "rude &/or off-topic",
+        "rude or off-topic",
+        "what are your thoughts on this portfolio",
+        "weekly update",
+        "add to portfolio",
+        "created this percentage system",
+        "first year teacher",
+    ]
+    if any(marker in title for marker in low_signal_title_markers):
         return False
     if re.fullmatch(r"\s*(?:best\s+)?etfs?\s+to\s+invest\s+in\s*", title):
         return False
@@ -2514,6 +2600,13 @@ def forum_has_topic_signal(item: Item) -> bool:
         "sphq",
         "don",
         "selling",
+        "etfs only",
+        "international funds",
+        "market events",
+        "index inclusion",
+        "s&p 500",
+        "sp 500",
+        "what are you buying",
     ]
     summary_markers = [
         "portfolio",
@@ -2529,6 +2622,11 @@ def forum_has_topic_signal(item: Item) -> bool:
         "vxus",
         "schg",
         "qqqm",
+        "index fund",
+        "s&p 500",
+        "sp 500",
+        "international funds",
+        "withdrawal rate",
     ]
     title_hit = any(marker in title for marker in title_markers)
     summary_hits = sum(1 for marker in summary_markers if marker in text)
@@ -3057,20 +3155,21 @@ def collect_etf_forum_items() -> list[Item]:
         for sort in ETF_REDDIT_FORUM_SORTS:
             forum_items.extend(fetch_reddit_listing_items(subreddit, sort, limit=ETF_REDDIT_LISTING_LIMIT))
             time.sleep(0.2)
-        forum_items.extend(parse_feed(f"Reddit r/{subreddit}", f"https://www.reddit.com/r/{subreddit}/hot/.rss", limit=ETF_REDDIT_LISTING_LIMIT))
+        reddit_rss_items = parse_feed(f"Reddit r/{subreddit}", f"https://old.reddit.com/r/{subreddit}/hot/.rss", limit=ETF_REDDIT_LISTING_LIMIT)
+        forum_items.extend(reddit_hot_rss_ranked_items(reddit_rss_items))
         time.sleep(0.2)
     for source, url, limit in ETF_EXTERNAL_FORUM_FEEDS:
         forum_items.extend(parse_feed(source, url, limit=limit))
         time.sleep(0.2)
     if not forum_items:
         forum_feeds = {
-            "Reddit r/ETFs": "https://www.reddit.com/r/ETFs/hot/.rss",
-            "Reddit r/Bogleheads": "https://www.reddit.com/r/Bogleheads/hot/.rss",
-            "Reddit r/investing": "https://www.reddit.com/r/investing/hot/.rss",
-            "Reddit r/portfolios": "https://www.reddit.com/r/portfolios/hot/.rss",
+            "Reddit r/ETFs": "https://old.reddit.com/r/ETFs/hot/.rss",
+            "Reddit r/Bogleheads": "https://old.reddit.com/r/Bogleheads/hot/.rss",
+            "Reddit r/investing": "https://old.reddit.com/r/investing/hot/.rss",
+            "Reddit r/portfolios": "https://old.reddit.com/r/portfolios/hot/.rss",
         }
         for source, url in forum_feeds.items():
-            forum_items.extend(parse_feed(source, url, limit=12))
+            forum_items.extend(reddit_hot_rss_ranked_items(parse_feed(source, url, limit=12)))
             time.sleep(0.2)
     return forum_items
 
