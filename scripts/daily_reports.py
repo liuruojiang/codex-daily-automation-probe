@@ -2404,6 +2404,16 @@ def specific_forum_title_translation(title: str, summary: str = "") -> str:
         return "雇主通过负向缴款撤回了 2026 年 Safe Harbor 匹配缴款"
     if "vanguard advised redundancy" in title_lower:
         return "Vanguard 顾问服务是否重复多余"
+    if "really bad" in title_lower and "market events" in title_lower and "test your portfolio" in title_lower:
+        return "应该用哪些极端市场事件来压力测试投资组合？"
+    if "better performing international funds" in title_lower:
+        return "表现更好的国际基金是否值得关注？"
+    if "simple portfolio tracking" in title_lower and "right tool" in title_lower:
+        return "还在寻找合适的简洁投资组合跟踪工具"
+    if "one less boomer getting fleeced by ej" in title_lower:
+        return "又少一位被 Edward Jones 高费率产品收割的长辈"
+    if "51m at 95/5" in title_lower and "wife wants 70/30" in title_lower:
+        return "51 岁 95/5 配置，伴侣想改成 70/30：同龄人实际怎么取舍？"
     if "vti and chill" in title_lower:
         return "还有谁在坚持“VTI and Chill”？"
     if "wealthpie" in title_lower and "spreadsheet" in title_lower:

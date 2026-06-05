@@ -914,6 +914,24 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertNotIn("score/upvotes", ranked.source)
         self.assertEqual([x.title for x in picked], [item.title])
 
+    def test_current_hot_forum_titles_have_chinese_translations(self) -> None:
+        titles = {
+            'Investing - Theory, News & General • What "really bad" market events do you test your portfolio against?': "应该用哪些极端市场事件来压力测试投资组合？",
+            "Personal Investments • Better Performing International Funds?": "表现更好的国际基金是否值得关注？",
+            "Simple portfolio tracking - still looking for the right tool": "还在寻找合适的简洁投资组合跟踪工具",
+            "One less boomer getting fleeced by EJ": "又少一位被 Edward Jones 高费率产品收割的长辈",
+            "51M at 95/5, wife wants 70/30. Where did you actually land at this age?": "51 岁 95/5 配置，伴侣想改成 70/30：同龄人实际怎么取舍？",
+        }
+        for original, translated in titles.items():
+            with self.subTest(original=original):
+                item = self.item(
+                    "Reddit r/Bogleheads (hot RSS rank 4)",
+                    original,
+                    "Forum thread discusses portfolio allocation, ETF core holdings, risk tolerance, and rebalance decisions.",
+                    "https://old.reddit.com/r/Bogleheads/comments/example/current_hot_title/",
+                )
+                self.assertIn(translated, dr.forum_display_title(item))
+
     def test_bogleheads_cash_to_short_term_bonds_title_translation(self) -> None:
         item = self.item(
             "Bogleheads Forum",
