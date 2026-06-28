@@ -97,6 +97,121 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertEqual([item.title for item in filtered], ["Fresh item"])
 
+    def test_fixed_monitor_updates_respect_freshness_history_and_existing_picks(self) -> None:
+        original_parse_feed = dr.parse_feed
+        original_page_items = dr.fixed_page_items
+        original_now_bj = dr.now_bj
+        original_sleep = dr.time.sleep
+
+        included = self.item(
+            "Portfolio Charts",
+            "Fresh portfolio translation note",
+            "portfolio allocation and home country translation",
+            "https://portfoliocharts.com/fresh-portfolio-translation/",
+        )
+        included.published = "2026-06-27T23:00:00+00:00"
+        excluded = self.item(
+            "Portfolio Charts",
+            "Already selected by research scoring",
+            "portfolio construction",
+            "https://portfoliocharts.com/already-selected/",
+        )
+        excluded.published = "2026-06-27T22:00:00+00:00"
+        sent = self.item(
+            "Portfolio Charts",
+            "Previously sent item",
+            "asset allocation",
+            "https://portfoliocharts.com/previously-sent/",
+        )
+        sent.published = "2026-06-27T21:00:00+00:00"
+        stale = self.item("Portfolio Charts", "Stale fixed monitor item", "portfolio", "https://portfoliocharts.com/stale/")
+        stale.published = "2026-06-24T00:00:00+00:00"
+        page_item = dr.Item(
+            "AQR Perspectives（页面）",
+            "A Positive Stock Bond Correlation",
+            "https://www.aqr.com/Insights/Perspectives/a-positive-stock-bond-correlation",
+            "",
+            "factor and allocation page monitor item",
+        )
+
+        def fake_parse_feed(source: str, url: str, limit: int = 12) -> list[dr.Item]:
+            if source == "Portfolio Charts":
+                return [included, excluded, sent, stale]
+            return []
+
+        def fake_page_items(monitor: dr.FixedPageMonitor) -> list[dr.Item]:
+            return [page_item] if monitor.source == "AQR Perspectives" else []
+
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            history_dir = tmp_path / "digest_history"
+            history_dir.mkdir()
+            (history_dir / "etf.json").write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "sent_date": "2026-06-20",
+                                "source": sent.source,
+                                "title": sent.title,
+                                "url": sent.url,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            os.chdir(tmp_path)
+            dr.parse_feed = fake_parse_feed
+            dr.fixed_page_items = fake_page_items
+            dr.now_bj = lambda: dr.datetime(2026, 6, 28, 8, 0, tzinfo=dr.BJ)
+            dr.time.sleep = lambda _seconds: None
+            try:
+                updates = dr.collect_etf_fixed_monitor_updates(exclude_urls={dr.canonical_url(excluded.url)})
+            finally:
+                dr.parse_feed = original_parse_feed
+                dr.fixed_page_items = original_page_items
+                dr.now_bj = original_now_bj
+                dr.time.sleep = original_sleep
+                os.chdir(original_cwd)
+
+        self.assertEqual([item.url for item in updates], [included.url, page_item.url])
+        self.assertIn("（博客）", updates[0].source)
+
+    def test_fixed_monitor_section_renders_empty_state_without_backfill(self) -> None:
+        lines: list[str] = []
+        count = dr.append_etf_fixed_monitor_section(lines, [])
+        rendered = "\n".join(lines)
+
+        self.assertEqual(count, 0)
+        self.assertIn("固定关注博客/播客更新", rendered)
+        self.assertIn("不补旧文", rendered)
+
+    def test_fixed_monitor_section_renders_update_link_and_context(self) -> None:
+        item = dr.Item(
+            "Portfolio Charts（博客）",
+            "How to Translate Portfolios to Any Home Country",
+            "https://portfoliocharts.com/how-to-translate-portfolios-to-any-home-country/",
+            "2026-06-27T23:00:00+00:00",
+            "portfolio allocation and home country implementation",
+        )
+        lines: list[str] = []
+        count = dr.append_etf_fixed_monitor_section(lines, [item])
+        rendered = "\n".join(lines)
+
+        self.assertEqual(count, 1)
+        self.assertIn("Portfolio Charts", rendered)
+        self.assertIn(item.url, rendered)
+        self.assertIn("配置关注点", rendered)
+
+    def test_fixed_page_title_uses_article_slug(self) -> None:
+        title = dr.fixed_page_title_from_url(
+            "https://www.researchaffiliates.com/insights/publications/articles/1119-the-future-of-indexing-passive-isnt-passive"
+        )
+
+        self.assertEqual(title, "The Future Of Indexing Passive Isn't Passive")
+
     def test_etf_research_selector_backfills_high_evidence_items_when_primary_is_empty(self) -> None:
         original_now_bj = dr.now_bj
         dr.now_bj = lambda: dr.datetime(2026, 5, 21, 7, 0, tzinfo=dr.BJ)
@@ -845,11 +960,18 @@ class EtfDigestQualityTests(unittest.TestCase):
             "https://www.reddit.com/r/Bogleheads/comments/example/three_fund_hot/",
         )
         original = dr.reddit_thread_metadata
+        original_cwd = Path.cwd()
         try:
             dr.reddit_thread_metadata = lambda url: (80, 45)
-            picked = dr.select_etf_forum_items([item], limit=3)
+            with tempfile.TemporaryDirectory() as tmp:
+                os.chdir(tmp)
+                try:
+                    picked = dr.select_etf_forum_items([item], limit=3)
+                finally:
+                    os.chdir(original_cwd)
         finally:
             dr.reddit_thread_metadata = original
+            os.chdir(original_cwd)
 
         self.assertEqual([x.title for x in picked], [item.title])
         self.assertIn("score/upvotes 80", picked[0].source)

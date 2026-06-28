@@ -41,6 +41,23 @@ class ResearchFeed:
 
 
 @dataclass(frozen=True)
+class FixedMonitorFeed:
+    source: str
+    url: str
+    medium: str
+    limit: int = 5
+
+
+@dataclass(frozen=True)
+class FixedPageMonitor:
+    source: str
+    url: str
+    href_pattern: str
+    medium: str = "页面"
+    limit: int = 5
+
+
+@dataclass(frozen=True)
 class ScoredResearchItem:
     item: Item
     score: int
@@ -133,6 +150,34 @@ ETF_RESEARCH_FEEDS: tuple[ResearchFeed, ...] = (
 )
 
 
+ETF_FIXED_MONITOR_FEEDS: tuple[FixedMonitorFeed, ...] = (
+    FixedMonitorFeed("Meb Faber", "https://mebfaber.com/feed/", "博客", 5),
+    FixedMonitorFeed("The Meb Faber Show", "https://www.youtube.com/feeds/videos.xml?channel_id=UCKvWzzrVUA_DSCoKXL6GU2w", "视频/播客", 5),
+    FixedMonitorFeed("A Wealth of Common Sense", "https://awealthofcommonsense.com/feed/", "博客", 5),
+    FixedMonitorFeed("The Compound / Animal Spirits", "https://www.youtube.com/feeds/videos.xml?channel_id=UCBRpqrzuuqE8TZcWw75JSdw", "视频/播客", 5),
+    FixedMonitorFeed("Portfolio Charts", "https://portfoliocharts.com/feed/", "博客", 5),
+    FixedMonitorFeed("Flirting with Models", "https://feeds.captivate.fm/flirting-with-models/", "播客", 5),
+    FixedMonitorFeed("Newfound Research", "https://blog.thinknewfound.com/feed/", "博客", 5),
+    FixedMonitorFeed("ReSolve Asset Management", "https://investresolve.com/feed/", "博客", 5),
+    FixedMonitorFeed("Return Stacked", "https://www.returnstacked.com/feed/", "博客", 5),
+    FixedMonitorFeed("Alpha Architect", "https://alphaarchitect.com/feed/", "博客", 5),
+    FixedMonitorFeed("Allocate Smartly", "https://allocatesmartly.com/feed/", "博客", 5),
+    FixedMonitorFeed("Rational Reminder", "https://www.youtube.com/feeds/videos.xml?channel_id=UCOErWFfNOQzXsgE7f5S_ULw", "视频/播客", 5),
+    FixedMonitorFeed("Ben Felix", "https://www.youtube.com/feeds/videos.xml?channel_id=UCDXTQ8nWmx_EhZ2v-kp7QxA", "视频", 5),
+    FixedMonitorFeed("Early Retirement Now", "https://earlyretirementnow.com/feed/", "博客", 5),
+    FixedMonitorFeed("Of Dollars And Data", "https://ofdollarsanddata.com/feed/", "博客", 5),
+    FixedMonitorFeed("Paul Merriman", "https://www.paulmerriman.com/feed/rss2", "博客/播客", 5),
+    FixedMonitorFeed("Optimal Momentum", "https://www.optimalmomentum.com/feed/", "博客", 5),
+)
+
+
+ETF_FIXED_PAGE_MONITORS: tuple[FixedPageMonitor, ...] = (
+    FixedPageMonitor("AQR Perspectives", "https://www.aqr.com/Insights/Perspectives", r"/Insights/Perspectives/[^\\\"'<>#? ]+", "页面", 5),
+    FixedPageMonitor("AQR Research", "https://www.aqr.com/Insights/Research", r"/Insights/Research/(?:Working-Paper|Tax-Aware-Investing|Alternative-Thinking|Journal-Article|White-Papers)/[^\\\"'<>#? ]+", "页面", 5),
+    FixedPageMonitor("Research Affiliates", "https://www.researchaffiliates.com/insights/publications", r"/insights/publications/articles/[^\\\"'<>#? ]+", "页面", 5),
+)
+
+
 ETF_CORE_PAGE_MONITORS: tuple[tuple[str, str, str], ...] = (
     ("AQR Insights / Cliff's Perspectives", "https://www.aqr.com/Insights/Perspectives", "因子、动量、价值、另类风险溢价与组合构建"),
     ("AQR Data Library", "https://www.aqr.com/insights/datasets/about-the-aqr-data-library", "因子数据集与月度更新说明"),
@@ -154,6 +199,7 @@ ETF_REDDIT_FORUM_SORTS = ("hot", "top", "new")
 ETF_REDDIT_LISTING_LIMIT = 24
 
 ETF_ARTICLE_MAX_AGE_HOURS = 36
+ETF_FIXED_MONITOR_DISPLAY_LIMIT = 12
 ETF_ARTICLE_BACKFILL_MAX_AGE_HOURS = 14 * 24
 ETF_MIN_RESEARCH_ITEMS = 5
 ETF_DEDUPE_DAYS = 45
@@ -3384,6 +3430,156 @@ def append_etf_research_sections(
     return visible_forum_count
 
 
+def fixed_monitor_source(source: str, medium: str) -> str:
+    return f"{source}（{medium}）"
+
+
+def fixed_page_title_from_url(url: str) -> str:
+    path = urllib.parse.urlsplit(url).path.strip("/")
+    slug = path.split("/")[-1] if path else url
+    slug = re.sub(r"^\d+-", "", slug)
+    words = [w for w in re.split(r"[-_]+", slug) if w]
+    special = {
+        "ai": "AI",
+        "aqr": "AQR",
+        "cio": "CIO",
+        "cfa": "CFA",
+        "etf": "ETF",
+        "etfs": "ETFs",
+        "isnt": "Isn't",
+        "aint": "Ain't",
+        "thats": "That's",
+        "whats": "What's",
+    }
+    return clean_text(" ".join(special.get(w.lower(), w.capitalize()) for w in words), 180)
+
+
+def fixed_page_text(body: str) -> str:
+    text = re.sub(r"<script\b.*?</script>", " ", body, flags=re.I | re.S)
+    text = re.sub(r"<style\b.*?</style>", " ", text, flags=re.I | re.S)
+    text = re.sub(r"<[^>]+>", " ", text)
+    return clean_text(html.unescape(text), 600)
+
+
+def fixed_page_items(monitor: FixedPageMonitor) -> list[Item]:
+    try:
+        page = fetch_bytes(monitor.url).decode("utf-8", "ignore")
+    except Exception:
+        return []
+    anchor_re = re.compile(
+        r"<a\s+[^>]*href=[\"'](?P<href>" + monitor.href_pattern + r")[\"'][^>]*>(?P<body>.*?)</a>",
+        flags=re.I | re.S,
+    )
+    out: list[Item] = []
+    seen: set[str] = set()
+    for match in anchor_re.finditer(page):
+        href = html.unescape(match.group("href")).rstrip("\\")
+        url = urllib.parse.urljoin(monitor.url, href)
+        key = canonical_url(url)
+        if key in seen:
+            continue
+        seen.add(key)
+        title = fixed_page_title_from_url(url)
+        text = fixed_page_text(match.group("body"))
+        if not title:
+            continue
+        out.append(
+            Item(
+                fixed_monitor_source(monitor.source, monitor.medium),
+                title,
+                url,
+                "",
+                text or "页面监控源发现了新的文章链接，但页面没有提供标准 RSS 摘要。",
+            )
+        )
+        if len(out) >= monitor.limit:
+            break
+    return out
+
+
+def collect_etf_fixed_monitor_updates(exclude_urls: set[str] | None = None) -> list[Item]:
+    exclude_urls = exclude_urls or set()
+    today = report_date()
+    feed_items: list[Item] = []
+    for feed in ETF_FIXED_MONITOR_FEEDS:
+        for item in parse_feed(feed.source, feed.url, limit=feed.limit):
+            feed_items.append(
+                Item(
+                    fixed_monitor_source(item.source, feed.medium),
+                    item.title,
+                    item.url,
+                    item.published,
+                    item.summary,
+                )
+            )
+        time.sleep(0.1)
+
+    recent_feed_items = filter_recent_published(sort_recent(dedupe_items(feed_items)), ETF_ARTICLE_MAX_AGE_HOURS)
+    recent_feed_items = filter_previously_sent("etf", recent_feed_items, days=ETF_DEDUPE_DAYS, ignore_dates={today})
+
+    page_items: list[Item] = []
+    for monitor in ETF_FIXED_PAGE_MONITORS:
+        page_items.extend(fixed_page_items(monitor))
+        time.sleep(0.1)
+    page_items = filter_previously_sent("etf", dedupe_items(page_items), days=ETF_DEDUPE_DAYS, ignore_dates={today})
+
+    out: list[Item] = []
+    seen = set(exclude_urls)
+    for item in [*recent_feed_items, *page_items]:
+        key = canonical_url(item.url)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+        if len(out) >= ETF_FIXED_MONITOR_DISPLAY_LIMIT:
+            break
+    return out
+
+
+def fixed_monitor_update_summary(item: Item) -> str:
+    source = item.source
+    lower = f"{item.title} {item.summary}".lower()
+    if any(marker in source for marker in ["视频", "播客"]):
+        return "这是固定关注清单里的新一期视频或播客；日报只把它作为资产配置研究线索，不直接当作交易结论。"
+    if "page" in source.lower() or "页面" in source:
+        return "这是没有稳定 RSS 的机构页面中新发现、且近期未推送过的文章链接；需要打开原文确认发布日期和完整论据。"
+    if any(k in lower for k in ["portfolio", "allocation", "asset class", "expected return", "capital market"]):
+        return "这是一条固定关注源的新文章，主题靠近组合构建、资产类别预期收益或长期配置框架。"
+    if any(k in lower for k in ["trend", "momentum", "factor", "value", "managed futures"]):
+        return "这是一条固定关注源的新文章，主题靠近趋势、动量、因子或另类风险溢价。"
+    return "这是一条固定关注源的新内容，已通过发布时间或 URL 历史去重，适合作为后续阅读入口。"
+
+
+def append_etf_fixed_monitor_section(lines: list[str], updates: list[Item]) -> int:
+    lines += [
+        "",
+        "---",
+        "",
+        "## 固定关注博客/播客更新",
+        "",
+        f"> 监控范围：前面那 14 个资产配置博客/播客及其相关页面源。RSS/YouTube 条目按最近 {ETF_ARTICLE_MAX_AGE_HOURS} 小时过滤；页面型源按 URL 历史去重，只在新发现或未推送过时出现。",
+        "",
+    ]
+    if not updates:
+        lines.append(f"过去 {ETF_ARTICLE_MAX_AGE_HOURS} 小时没有发现未推送过的新内容；不补旧文。")
+        lines.append("")
+        return 0
+
+    for idx, item in enumerate(updates[:ETF_FIXED_MONITOR_DISPLAY_LIMIT], 1):
+        published = parse_date(item.published)
+        published_s = published.astimezone(BJ).strftime("%Y-%m-%d %H:%M %Z") if published else "无标准 RSS 日期"
+        lines += [
+            f"### {idx}. {etf_display_title(item)}",
+            f"- 来源：{item.source}",
+            f"- 发布时间：{published_s}",
+            f"- 链接：{item.url}",
+            f"- 更新线索：{fixed_monitor_update_summary(item)}",
+            f"- 配置关注点：{etf_follow_up_point(item.title, item.summary)}",
+            "",
+        ]
+    return len(updates[:ETF_FIXED_MONITOR_DISPLAY_LIMIT])
+
+
 def write_meta(out_dir: Path, subject: str, body: str, attachment: Path) -> None:
     meta = {"subject": subject, "body": body, "attachment": str(attachment)}
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -5026,6 +5222,7 @@ def build_etf(out_dir: Path) -> None:
         time.sleep(0.1)
     scored_picked = select_etf_research_items(items, limit=9)
     picked = [x.item for x in scored_picked]
+    fixed_monitor_updates = collect_etf_fixed_monitor_updates(exclude_urls={canonical_url(item.url) for item in picked})
 
     forum_items = collect_etf_forum_items()
     today = report_date()
@@ -5055,6 +5252,7 @@ def build_etf(out_dir: Path) -> None:
         "- [资产配置影响](#资产配置影响)",
         "- [量化策略影响](#量化策略影响)",
         "- [A 股 / 港股专项](#a-股--港股专项)",
+        "- [固定关注博客/播客更新](#固定关注博客播客更新)",
         "- [待验证假设](#待验证假设)",
         "",
         "---",
@@ -5098,13 +5296,15 @@ def build_etf(out_dir: Path) -> None:
             append_mover_table(lines, dedupe_by_category(period_neg, reverse=False))
 
     forum_rendered_count = append_etf_research_sections(lines, scored_picked, forum_picked, strategy_rows, mover_rows, data_date_s)
-    update_digest_history("etf", [*picked, *forum_picked], days=ETF_HISTORY_DAYS)
+    fixed_monitor_rendered_count = append_etf_fixed_monitor_section(lines, fixed_monitor_updates)
+    update_digest_history("etf", [*picked, *fixed_monitor_updates, *forum_picked], days=ETF_HISTORY_DAYS)
     lines += [
         "## 去重与补充审计",
         "",
         f"- 去重窗口：最近 {ETF_DEDUPE_DAYS} 天；按 canonical URL 和标题去重，历史记录写入 `digest_history/etf.json`。",
         f"- RSS/研究文章新鲜度：优先使用最近 {ETF_ARTICLE_MAX_AGE_HOURS} 小时内发布的条目；若高证据文章不足 {ETF_MIN_RESEARCH_ITEMS} 篇，按严格证据门槛回填近 {ETF_ARTICLE_BACKFILL_MAX_AGE_HOURS // 24} 天文章。",
         f"- RSS/研究文章数量：{len(scored_picked)}",
+        f"- 固定关注博客/播客更新数量：{fixed_monitor_rendered_count}",
         f"- 论坛/社区 idea mining 数量：{forum_rendered_count}",
         "",
     ]
@@ -5124,6 +5324,7 @@ def build_etf(out_dir: Path) -> None:
             f"数据日期：{data_date_s}",
             f"涨幅靠前：{top_preview}",
             f"跌幅靠前：{bottom_preview}",
+            f"固定关注博客/播客更新：{fixed_monitor_rendered_count} 条",
             "完整排版版见附件。",
             f"调度审计：实际启动 {started.strftime('%Y-%m-%d %H:%M:%S %Z')}；执行环境 GitHub Actions。",
         ]
