@@ -8,6 +8,7 @@ import json
 import os
 import re
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -5336,10 +5337,30 @@ def fetch_json(url: str) -> object:
     return json.loads(fetch_bytes(url).decode("utf-8"))
 
 
+def fetch_json_with_retries(
+    url: str,
+    attempts: int = 4,
+    timeout: int = 30,
+    delays: tuple[float, ...] = (5.0, 15.0, 30.0),
+) -> object:
+    last_error: BaseException | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return json.loads(fetch_bytes(url, timeout=timeout).decode("utf-8"))
+        except (TimeoutError, OSError, urllib.error.URLError) as exc:
+            last_error = exc
+            if attempt == attempts:
+                break
+            delay = delays[min(attempt - 1, len(delays) - 1)] if delays else 0
+            if delay > 0:
+                time.sleep(delay)
+    raise RuntimeError(f"Failed to fetch JSON after {attempts} attempts: {url}") from last_error
+
+
 def build_ai(out_dir: Path) -> None:
     started = now_bj()
     base = "https://aihot.virxact.com"
-    daily = fetch_json(f"{base}/api/public/daily")
+    daily = fetch_json_with_retries(f"{base}/api/public/daily")
     date_s = str(daily.get("date") or report_date())
     sections = daily.get("sections") or []
     md = out_dir / f"ai_hot_digest_{date_s}.md"
