@@ -1,12 +1,6 @@
 {
   "items": [
     {
-      "sent_date": "2026-05-22",
-      "source": "Reddit r/ETFs",
-      "title": "Rate My Portfolio (24M)",
-      "url": "https://www.reddit.com/r/ETFs/comments/1tjtcg5/rate_my_portfolio_24m/"
-    },
-    {
       "sent_date": "2026-05-23",
       "source": "Reddit r/ETFs",
       "title": "Help making a \"set it and forget it\" satellite portfolio (10-15 year horizon)",
@@ -1757,6 +1751,36 @@
       "source": "Bogleheads.org Forum (comments/replies 35; views 639)",
       "title": "Personal Investments • 401k Investment options re-visited - I need help please?",
       "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8813571#p8813571"
+    },
+    {
+      "sent_date": "2026-07-22",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Housing Rules of Thumb",
+      "url": "https://awealthofcommonsense.com/2026/07/housing-rules-of-thumb/"
+    },
+    {
+      "sent_date": "2026-07-22",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Why Panic Selling Is the Worst Strategy",
+      "url": "https://www.youtube.com/shorts/T0rF_1tBtKE"
+    },
+    {
+      "sent_date": "2026-07-22",
+      "source": "Of Dollars And Data（博客）",
+      "title": "Money Talks: The Price of Status",
+      "url": "https://ofdollarsanddata.com/money-talks/"
+    },
+    {
+      "sent_date": "2026-07-22",
+      "source": "Alpha Architect（博客）",
+      "title": "Cashless payment and financial inclusion",
+      "url": "https://alphaarchitect.com/cashless-payment/"
+    },
+    {
+      "sent_date": "2026-07-22",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "The Estate Planning Conversation Every Family Avoids",
+      "url": "https://www.youtube.com/shorts/V3oinTnfyIk"
     }
   ]
 }
