@@ -1,24 +1,6 @@
 {
   "items": [
     {
-      "sent_date": "2026-05-24",
-      "source": "Reddit r/Bogleheads（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "After tax dollars - Mega BDR, brokerage or both?",
-      "url": "https://www.reddit.com/r/Bogleheads/comments/1tls483/after_tax_dollars_mega_bdr_brokerage_or_both/"
-    },
-    {
-      "sent_date": "2026-05-24",
-      "source": "Reddit r/Bogleheads（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "24M saving for a house in ~5 years — how would Bogleheads approach this?",
-      "url": "https://www.reddit.com/r/Bogleheads/comments/1tlo4u5/24m_saving_for_a_house_in_5_years_how_would/"
-    },
-    {
-      "sent_date": "2026-05-24",
-      "source": "Reddit r/Bogleheads（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "For my own sanity",
-      "url": "https://www.reddit.com/r/Bogleheads/comments/1tllx8g/for_my_own_sanity/"
-    },
-    {
       "sent_date": "2026-05-25",
       "source": "Reddit r/investing（score/upvotes 未抓取；comments/replies 未抓取）",
       "title": "Thoughts on my USOY position? I've had some success, but should I continue?",
@@ -1781,6 +1763,18 @@
       "source": "Bogleheads.org Forum (comments/replies 29; views 1008)",
       "title": "Personal Investments • HELP! MIL's portfolio from hell.",
       "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8814991#p8814991"
+    },
+    {
+      "sent_date": "2026-07-24",
+      "source": "Rational Reminder（视频/播客）",
+      "title": "Jean-Pierre Aubry: The State of Retirement Research | Rational Reminder 419",
+      "url": "https://www.youtube.com/watch?v=it38Njx2Q_Y"
+    },
+    {
+      "sent_date": "2026-07-24",
+      "source": "Bogleheads.org Forum (comments/replies 22; views 3350)",
+      "title": "Personal Investments • Law practice struggling; Can I retire? (portfolio review)",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8815912#p8815912"
     }
   ]
 }
