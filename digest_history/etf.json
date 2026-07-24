@@ -1,12 +1,6 @@
 {
   "items": [
     {
-      "sent_date": "2026-05-25",
-      "source": "Reddit r/investing（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Thoughts on my USOY position? I've had some success, but should I continue?",
-      "url": "https://www.reddit.com/r/investing/comments/1tmjm2r/thoughts_on_my_usoy_position_ive_had_some_success/"
-    },
-    {
       "sent_date": "2026-05-26",
       "source": "Reddit r/ETFs（score/upvotes 未抓取；comments/replies 未抓取）",
       "title": "Does this make sense? Overengineered portfolio, or a robust and rational one?",
@@ -1775,6 +1769,54 @@
       "source": "Bogleheads.org Forum (comments/replies 22; views 3350)",
       "title": "Personal Investments • Law practice struggling; Can I retire? (portfolio review)",
       "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8815912#p8815912"
+    },
+    {
+      "sent_date": "2026-07-25",
+      "source": "The Meb Faber Show（视频/播客）",
+      "title": "The Market Is Missing This Trillion-Dollar Energy Shift",
+      "url": "https://www.youtube.com/watch?v=phn7DgSIjBc"
+    },
+    {
+      "sent_date": "2026-07-25",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Secrets From the Greatest Fund Manager of All Time | TCAF 252",
+      "url": "https://www.youtube.com/watch?v=0aL-3b4h_qw"
+    },
+    {
+      "sent_date": "2026-07-25",
+      "source": "Rational Reminder（视频/播客）",
+      "title": "Why Does Your Neighbour's Vacation Make You Feel Broke?",
+      "url": "https://www.youtube.com/shorts/_vLeEfH_mRs"
+    },
+    {
+      "sent_date": "2026-07-25",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Investing in the Boom Times",
+      "url": "https://awealthofcommonsense.com/2026/07/investing-in-the-boom-times/"
+    },
+    {
+      "sent_date": "2026-07-25",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "An Era of Fiscal Dominance",
+      "url": "https://www.youtube.com/shorts/0qSiPwVZYd0"
+    },
+    {
+      "sent_date": "2026-07-25",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "This 19 Year Old Is Investing Better Than Most Adults",
+      "url": "https://www.youtube.com/shorts/3cp3EzVrnHs"
+    },
+    {
+      "sent_date": "2026-07-25",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "If You’re Bearish Right Now You’re an Idiot",
+      "url": "https://www.youtube.com/shorts/87dkep-ETAI"
+    },
+    {
+      "sent_date": "2026-07-25",
+      "source": "Bogleheads.org Forum (comments/replies 164; views 8475)",
+      "title": "Investing - Theory, News & General • BND - flaws in a downturn?",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8816634#p8816634"
     }
   ]
 }
