@@ -1,138 +1,6 @@
 {
   "items": [
     {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/ETFs（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Does this make sense? Overengineered portfolio, or a robust and rational one?",
-      "url": "https://www.reddit.com/r/ETFs/comments/1tno40h/does_this_make_sense_overengineered_portfolio_or/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/Bogleheads（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Roth vs Traditional 401k",
-      "url": "https://www.reddit.com/r/Bogleheads/comments/1tnnj8j/roth_vs_traditional_401k/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/ETFs（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Sold everything to rebalance my ETF portfolio.",
-      "url": "https://www.reddit.com/r/ETFs/comments/1tnmmi1/sold_everything_to_rebalance_my_etf_portfolio/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/Bogleheads（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Moving on from advisor - so many individual stocks in taxable",
-      "url": "https://www.reddit.com/r/Bogleheads/comments/1tnllug/moving_on_from_advisor_so_many_individual_stocks/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/ETFs（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Yall convinced me. I’m buying my first VXUS tommorow..",
-      "url": "https://www.reddit.com/r/ETFs/comments/1tnlhpm/yall_convinced_me_im_buying_my_first_vxus_tommorow/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/Bogleheads（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Move TSP G fund to VMFXX?",
-      "url": "https://www.reddit.com/r/Bogleheads/comments/1tnc6mi/move_tsp_g_fund_to_vmfxx/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/ETFs（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "ETFs for a 35 year time horizon",
-      "url": "https://www.reddit.com/r/ETFs/comments/1tnaruk/etfs_for_a_35_year_time_horizon/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/ETFs（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Would SPMO + VFMO as a U.S. portfolio core make sense to add a little risk instead of the typical VOO as the core?",
-      "url": "https://www.reddit.com/r/ETFs/comments/1tnvq7g/would_spmo_vfmo_as_a_us_portfolio_core_make_sense/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/portfolios（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Advice on how to improve my portfolio (25M)",
-      "url": "https://www.reddit.com/r/portfolios/comments/1tnvhcu/advice_on_how_to_improve_my_portfolio_25m/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/portfolios（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "18 with $1,000; what do I do?",
-      "url": "https://www.reddit.com/r/portfolios/comments/1tntwhf/18_with_1000_what_do_i_do/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/portfolios（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Rate the portfolio and give advice pls",
-      "url": "https://www.reddit.com/r/portfolios/comments/1tnt8p6/rate_the_portfolio_and_give_advice_pls/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/ETFs（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Please rate my portfolio 49 years old single, plan to retire 65",
-      "url": "https://www.reddit.com/r/ETFs/comments/1tnr71f/please_rate_my_portfolio_49_years_old_single_plan/"
-    },
-    {
-      "sent_date": "2026-05-26",
-      "source": "Reddit r/portfolios（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Portfolio age 33",
-      "url": "https://www.reddit.com/r/portfolios/comments/1tnoog6/portfolio_age_33/"
-    },
-    {
-      "sent_date": "2026-05-27",
-      "source": "Reddit r/investing（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Built my first Roth IRA portfolio in my 20's - here's my 6 ETF allocation and the reasoning behind each pick",
-      "url": "https://www.reddit.com/r/investing/comments/1tomexb/built_my_first_roth_ira_portfolio_in_my_20s_heres/"
-    },
-    {
-      "sent_date": "2026-05-27",
-      "source": "Reddit r/portfolios（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Help diversify portfolio",
-      "url": "https://www.reddit.com/r/portfolios/comments/1tojvji/help_diversify_portfolio/"
-    },
-    {
-      "sent_date": "2026-05-27",
-      "source": "Reddit r/portfolios（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Recently Opened Self-Managed Brokerage and my Roth IRA Strategy",
-      "url": "https://www.reddit.com/r/portfolios/comments/1tojio6/recently_opened_selfmanaged_brokerage_and_my_roth/"
-    },
-    {
-      "sent_date": "2026-05-27",
-      "source": "Reddit r/portfolios（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "22M taxable brokerage portfolio review, inquisitive about barbell growth and macro diversifier strategy",
-      "url": "https://www.reddit.com/r/portfolios/comments/1tocsfs/22m_taxable_brokerage_portfolio_review/"
-    },
-    {
-      "sent_date": "2026-05-27",
-      "source": "Reddit r/Bogleheads（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Re-balance question",
-      "url": "https://www.reddit.com/r/Bogleheads/comments/1tocdv8/rebalance_question/"
-    },
-    {
-      "sent_date": "2026-05-27",
-      "source": "Reddit r/Bogleheads（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "So where do I convert to bonds?",
-      "url": "https://www.reddit.com/r/Bogleheads/comments/1to88d4/so_where_do_i_convert_to_bonds/"
-    },
-    {
-      "sent_date": "2026-05-28",
-      "source": "Reddit r/portfolios（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Portfolio Feedback for a 31 year old",
-      "url": "https://www.reddit.com/r/portfolios/comments/1tpkpku/portfolio_feedback_for_a_31_year_old/"
-    },
-    {
-      "sent_date": "2026-05-28",
-      "source": "Reddit r/investing（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Managing portfolio investments over time - signals, intuition, strategies?",
-      "url": "https://www.reddit.com/r/investing/comments/1tpbxvq/managing_portfolio_investments_over_time_signals/"
-    },
-    {
-      "sent_date": "2026-05-28",
-      "source": "Reddit r/Bogleheads（score/upvotes 未抓取；comments/replies 未抓取）",
-      "title": "Bogleheads living in South Korea - How are we doing?",
-      "url": "https://www.reddit.com/r/Bogleheads/comments/1tozw9g/bogleheads_living_in_south_korea_how_are_we_doing/"
-    },
-    {
       "sent_date": "2026-05-29",
       "source": "Bogleheads.org Forum",
       "title": "Personal Investments • Re: When should I create tips ladder?Now or wait",
@@ -1817,6 +1685,84 @@
       "source": "Bogleheads.org Forum (comments/replies 164; views 8475)",
       "title": "Investing - Theory, News & General • BND - flaws in a downturn?",
       "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8816634#p8816634"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "Quantpedia",
+      "title": "From Backtest to Benchmark: Validating New Strategies with Quantpedia API",
+      "url": "https://quantpedia.com/from-backtest-to-benchmark-validating-new-strategies-with-quantpedia-api/"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "Rational Reminder（视频/播客）",
+      "title": "Concentration Risk In Index Funds: Fact Or Myth",
+      "url": "https://www.youtube.com/shorts/Bsfu-p9kajQ"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Stocks Don't Give Signals",
+      "url": "https://www.youtube.com/shorts/6UVRLJrfIr4"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "Portfolio Charts（博客）",
+      "title": "Tour the Investing Horizon With the Global Explorer",
+      "url": "https://portfoliocharts.com/2026/07/27/tour-the-investing-horizon-with-the-global-explorer/"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "The Meb Faber Show（视频/播客）",
+      "title": "The Wildest Real Estate Bubble In History",
+      "url": "https://www.youtube.com/shorts/46aAqbxSboM"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Talk Your Book: Is Crypto Dead?",
+      "url": "https://awealthofcommonsense.com/2026/07/talk-your-book-is-crypto-dead/"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "Early Retirement Now（博客）",
+      "title": "Can we increase the Safe Withdrawal Rate with Risk Parity? – SWR Series Part 64",
+      "url": "https://earlyretirementnow.com/2026/07/27/risk-parity-swr-series-part-64/"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Now Show Japan",
+      "url": "https://awealthofcommonsense.com/2026/07/now-show-japan/"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "The K-Shaped Economy Is Not as Bad as People Think",
+      "url": "https://www.youtube.com/shorts/3Rv4iK9w3Po"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Gold vs. Bitcoin vs. Semis",
+      "url": "https://www.youtube.com/shorts/mgNCnhuUews"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Has Nike Become a Dustbin Brand?",
+      "url": "https://www.youtube.com/shorts/nPLL4s0kECI"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Will SpaceX Be the Biggest Company in the World?",
+      "url": "https://www.youtube.com/shorts/6w_CCTTMZVk"
+    },
+    {
+      "sent_date": "2026-07-28",
+      "source": "Bogleheads.org Forum (comments/replies 2414; views 744481)",
+      "title": "Investing - Theory, News & General • Total Portfolio Allocation and Withdrawal (TPAW)",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8818763#p8818763"
     }
   ]
 }
