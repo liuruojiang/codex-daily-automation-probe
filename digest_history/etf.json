@@ -1,36 +1,6 @@
 {
   "items": [
     {
-      "sent_date": "2026-05-30",
-      "source": "Reddit r/portfolios",
-      "title": "How long until I hit a million",
-      "url": "https://www.reddit.com/r/portfolios/comments/1trip9z/how_long_until_i_hit_a_million/"
-    },
-    {
-      "sent_date": "2026-05-30",
-      "source": "Reddit r/Bogleheads",
-      "title": "Investment allocations",
-      "url": "https://www.reddit.com/r/Bogleheads/comments/1trik47/investment_allocations/"
-    },
-    {
-      "sent_date": "2026-05-30",
-      "source": "Reddit r/ETFs",
-      "title": "New in ETF. Looking for advice",
-      "url": "https://www.reddit.com/r/ETFs/comments/1trgqi0/new_in_etf_looking_for_advice/"
-    },
-    {
-      "sent_date": "2026-05-30",
-      "source": "Reddit r/portfolios",
-      "title": "Roast/Help my portfolio. Not great at this.",
-      "url": "https://www.reddit.com/r/portfolios/comments/1tr8meg/roasthelp_my_portfolio_not_great_at_this/"
-    },
-    {
-      "sent_date": "2026-05-30",
-      "source": "Bogleblog Best of Bogleheads Forum",
-      "title": "Lazy Portfolios",
-      "url": "https://www.bogleheads.org/wiki/Lazy_portfolios"
-    },
-    {
       "sent_date": "2026-06-02",
       "source": "Reddit r/Bogleheads",
       "title": "Do some of you completely disregard the bond portion of a portfolio? All equities?",
@@ -1763,6 +1733,42 @@
       "source": "Research Affiliates（页面）",
       "title": "Moat Or Mirage The Arithmetic Of AI Lab Valuations",
       "url": "https://www.researchaffiliates.com/insights/publications/articles/1122-moat-or-mirage-the-arithmetic-of-ai-lab-valuations"
+    },
+    {
+      "sent_date": "2026-07-30",
+      "source": "Quantocracy",
+      "title": "Recent Quant Links from Quantocracy as of 07/25/2026",
+      "url": "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-07252026/"
+    },
+    {
+      "sent_date": "2026-07-30",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "When Should You Turn Bearish on the Stock Market?",
+      "url": "https://www.youtube.com/watch?v=QwGFC5M14fU"
+    },
+    {
+      "sent_date": "2026-07-30",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "45 Million Rich Households | AS 475",
+      "url": "https://www.youtube.com/watch?v=UtTFcivsQHU"
+    },
+    {
+      "sent_date": "2026-07-30",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Animal Spirits: 45 Million Rich Households",
+      "url": "https://awealthofcommonsense.com/2026/07/71270/"
+    },
+    {
+      "sent_date": "2026-07-30",
+      "source": "Early Retirement Now（博客）",
+      "title": "How to “Lie” with Personal Finance – Part 4: Risk Parity",
+      "url": "https://earlyretirementnow.com/2026/07/29/risk-parity-lies/"
+    },
+    {
+      "sent_date": "2026-07-30",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "The Most Important Week of Earnings Season",
+      "url": "https://www.youtube.com/shorts/0d6LKoen2HE"
     }
   ]
 }
