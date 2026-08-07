@@ -1,5 +1,11 @@
-# Codex Daily Automation Probe
+# Codex Daily Automations
 
-This private repository tests whether a real cloud scheduler can run independently of the local Codex Desktop app.
+This private repository hosts cloud-scheduled digest workflows that run independently of the local Codex Desktop app.
 
-The workflow `.github/workflows/scheduler-probe.yml` runs at 07:05 Asia/Shanghai and writes the actual trigger time to a GitHub issue comment.
+Current workflows include AI HOT, US ETF and asset-allocation, MNT advisory, and Microcap Top100 realtime digests. The Microcap workflow publishes a compact action-first email for v2.0, v2.3, and v2.5 while retaining momentum, hedge momentum, data freshness, and failure-gate checks.
+
+Run the regression suite with:
+
+```powershell
+python -m pytest -q
+```
