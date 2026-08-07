@@ -238,6 +238,20 @@ def format_holding(value: str) -> str:
     return HOLDING_LABELS.get(normalized, normalized or "未知")
 
 
+def member_rebalance_action(fields: dict[str, str]) -> str:
+    state = first_value(fields, "member_rebalance_state").lower()
+    required = parse_bool(first_value(fields, "member_rebalance_required"))
+    if not required and state in {"", "hold", "none", "no_rebalance"}:
+        return ""
+
+    label = first_value(fields, "member_rebalance_label")
+    if label:
+        return label
+    enter_count = first_value(fields, "member_enter_count") or "0"
+    exit_count = first_value(fields, "member_exit_count") or "0"
+    return f"名单调仓（调入 {enter_count}，调出 {exit_count}）"
+
+
 def action_label(item: dict[str, object]) -> str:
     if item["status"] != "OK":
         return "异常"
@@ -262,10 +276,14 @@ def action_label(item: dict[str, object]) -> str:
             return "平仓"
         return "调仓"
 
+    actions: list[str] = []
     scale_state = first_value(fields, "scale_trade_state").lower()
     if parse_bool(first_value(fields, "scale_trade_required")) or scale_state not in {"", "hold_scale"}:
-        return "调整仓位"
-    return "无操作"
+        actions.append("调整仓位")
+    member_action = member_rebalance_action(fields)
+    if member_action:
+        actions.append(member_action)
+    return "；".join(actions) or "无操作"
 
 
 def momentum_text(version: str, fields: dict[str, str]) -> str:
@@ -398,6 +416,7 @@ def build_compact_digest(
     *,
     date_s: str,
     run_url: str,
+    subject_prefix: str = "",
 ) -> tuple[str, str]:
     versions = "/".join(str(item["version"]) for item in results)
     tag = subject_tag(results)
@@ -438,7 +457,9 @@ def build_compact_digest(
     if run_url:
         lines += [f"[查看完整诊断与原始输出]({run_url})"]
     body = "\n".join(lines)
-    subject = f"[{tag}] 微盘股 {versions} 日报 - {date_s}"
+    normalized_prefix = subject_prefix.strip().strip("[]")
+    prefix = f"[{normalized_prefix}]" if normalized_prefix else ""
+    subject = f"{prefix}[{tag}] 微盘股 {versions} 日报 - {date_s}"
     return subject, body
 
 
@@ -453,6 +474,7 @@ def main() -> int:
     parser.add_argument("--out-dir", required=True, help="Output artifact directory")
     parser.add_argument("--planned", default="12:45 Asia/Shanghai")
     parser.add_argument("--started", default="")
+    parser.add_argument("--subject-prefix", default="")
     parser.add_argument("--exit-code", action="append", default=[], help="Exit code, or version=code. Can be repeated.")
     parser.add_argument(
         "--signal-csv",
@@ -500,7 +522,12 @@ def main() -> int:
 
     date_s = now_bj().date().isoformat()
     run_url = os.environ.get("GITHUB_RUN_URL", "")
-    subject, digest_text = build_compact_digest(results, date_s=date_s, run_url=run_url)
+    subject, digest_text = build_compact_digest(
+        results,
+        date_s=date_s,
+        run_url=run_url,
+        subject_prefix=args.subject_prefix,
+    )
 
     md = out_dir / f"microcap_realtime_signal_digest_{date_s}.md"
     md.write_text(digest_text, encoding="utf-8")
