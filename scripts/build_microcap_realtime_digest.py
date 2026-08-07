@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import os
 import re
 from datetime import date, datetime, timedelta
@@ -200,6 +201,104 @@ def parse_bool(value: str) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
+STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
+    "v2.0": {
+        "text": {
+            "version": "2.0",
+            "overlay_type": "volatility_overheat_exit_then_target_volatility_scaling",
+        },
+        "bool": {
+            "overheat_enabled": True,
+            "overheat_require_signal_reset": True,
+        },
+        "number": {
+            "overheat_window": 60.0,
+            "overheat_threshold": 0.23,
+            "target_vol": 0.15,
+            "target_vol_window": 75.0,
+            "max_leverage": 1.5,
+            "fixed_hedge_ratio": 0.8,
+        },
+    },
+    "v2.3": {
+        "text": {
+            "strategy_version": "v2.3",
+            "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2gate0p08_signal1p0_exec0p8_vol10_overheat",
+        },
+        "bool": {
+            "overheat_enabled": True,
+            "target_vol_enabled": False,
+        },
+        "number": {
+            "lookback": 25.0,
+            "halflife": 2.5,
+            "r2_entry_gate": 0.08,
+            "execution_hedge_ratio": 0.8,
+            "overheat_feature_window": 10.0,
+            "overheat_trigger_threshold": 0.26,
+            "overheat_recovery_threshold": 0.195,
+            "target_vol": 0.0,
+            "target_vol_window": 0.0,
+        },
+    },
+    "v2.5": {
+        "text": {
+            "strategy_version": "v2.5",
+            "signal_model": "microcap_only_log_wls_exp_halflife_3p0_lb17_entry46_exit25_no_targetvol",
+        },
+        "bool": {
+            "hedge_removed": True,
+            "overheat_enabled": False,
+            "target_vol_enabled": False,
+        },
+        "number": {
+            "execution_hedge_ratio": 0.0,
+            "fixed_hedge_ratio": 0.0,
+            "lookback": 17.0,
+            "halflife": 3.0,
+            "entry_threshold": 0.46,
+            "exit_threshold": 0.25,
+            "target_vol": 0.0,
+            "target_vol_window": 0.0,
+        },
+    },
+}
+
+
+def validate_strategy_identity(version: str, fields: dict[str, str]) -> tuple[bool, str]:
+    identity = STRATEGY_IDENTITIES.get(version)
+    if identity is None:
+        return False, f"unsupported strategy version {version}"
+
+    mismatches: list[str] = []
+    for key, expected in identity["text"].items():
+        actual = first_value(fields, key)
+        if actual != expected:
+            mismatches.append(f"{key} expected {expected}, got {actual or '<missing>'}")
+
+    for key, expected in identity["bool"].items():
+        actual = first_value(fields, key)
+        normalized = actual.lower()
+        if normalized in {"1", "true", "yes", "y", "on"}:
+            actual_bool: bool | None = True
+        elif normalized in {"0", "false", "no", "n", "off"}:
+            actual_bool = False
+        else:
+            actual_bool = None
+        if actual_bool is not expected:
+            mismatches.append(f"{key} expected {expected}, got {actual or '<missing>'}")
+
+    for key, expected in identity["number"].items():
+        actual = first_value(fields, key)
+        actual_number = parse_number(actual)
+        if actual_number is None or not math.isclose(actual_number, float(expected), rel_tol=0.0, abs_tol=1e-9):
+            mismatches.append(f"{key} expected {expected:g}, got {actual or '<missing>'}")
+
+    if mismatches:
+        return False, "strategy identity mismatch: " + "; ".join(mismatches[:3])
+    return True, ""
+
+
 def format_percent(value: str, *, signed: bool = True) -> str:
     number = parse_number(value)
     if number is None:
@@ -239,17 +338,22 @@ def format_holding(value: str) -> str:
 
 
 def member_rebalance_action(fields: dict[str, str]) -> str:
-    state = first_value(fields, "member_rebalance_state").lower()
-    required = parse_bool(first_value(fields, "member_rebalance_required"))
-    if not required and state in {"", "hold", "none", "no_rebalance"}:
+    actionable = parse_bool(first_value(fields, "member_rebalance_actionable"))
+    official = parse_bool(first_value(fields, "member_rebalance_official"))
+    signal_date = first_value(fields, "member_rebalance_signal_date")
+    execution_date = first_value(fields, "member_rebalance_execution_date")
+    if not actionable or not official or not signal_date or not execution_date:
         return ""
 
     label = first_value(fields, "member_rebalance_label")
-    if label:
-        return label
-    enter_count = first_value(fields, "member_enter_count") or "0"
-    exit_count = first_value(fields, "member_exit_count") or "0"
-    return f"名单调仓（调入 {enter_count}，调出 {exit_count}）"
+    if not label:
+        enter_count = first_value(fields, "member_enter_count") or "0"
+        exit_count = first_value(fields, "member_exit_count") or "0"
+        label = f"名单调仓（调入 {enter_count}，调出 {exit_count}）"
+    date_text = f"信号日 {signal_date}，执行日 {execution_date}"
+    if label.startswith("名单调仓（") and label.endswith("）"):
+        return label[:-1] + f"；{date_text}）"
+    return f"{label}（{date_text}）"
 
 
 def action_label(item: dict[str, object]) -> str:
@@ -328,6 +432,9 @@ def humanize_status_note(status: str, note: str) -> str:
     if note.startswith("required signal fields are missing:"):
         fields = note.split(":", 1)[1].strip()
         return f"缺少必要信号字段：{fields}"
+    if note.startswith("strategy identity mismatch:"):
+        detail = note.split(":", 1)[1].strip()
+        return f"策略身份不匹配：{detail}"
     return f"运行失败：{note}" if note else "运行失败"
 
 
@@ -386,7 +493,7 @@ def conclusion_text(results: list[dict[str, object]]) -> str:
     return "；".join(phrases) + "。"
 
 
-def shared_data_line(results: list[dict[str, object]]) -> str:
+def shared_data_line(results: list[dict[str, object]], strategy_sha: str) -> str:
     fields_list = [item["fields"] for item in results]
     snapshots = [first_value(fields, "snapshot_time") for fields in fields_list if isinstance(fields, dict)]
     snapshots = [value for value in snapshots if value]
@@ -404,7 +511,24 @@ def shared_data_line(results: list[dict[str, object]]) -> str:
     line = f"数据时间：{data_value}"
     if coverages and len(set(coverages)) == 1:
         line += f"｜报价覆盖：{coverages[0]}"
+    if strategy_sha:
+        line += f"｜策略代码：`{strategy_sha}`"
     return line
+
+
+def holdings_summary_text(results: list[dict[str, object]]) -> str:
+    summaries: list[str] = []
+    for item in results:
+        version = str(item["version"])
+        if item["status"] != "OK":
+            summaries.append(f"{version}：持仓与下一交易日可执行仓位不可用")
+            continue
+        fields = item["fields"]
+        assert isinstance(fields, dict)
+        current = format_holding(first_value(fields, "current_holding", "holding"))
+        next_holding = format_holding(first_value(fields, "next_holding"))
+        summaries.append(f"{version}：{current} → {next_holding}，下一交易日可执行仓位 {format_scale(fields)}")
+    return "；".join(summaries) + "。"
 
 
 def escape_table_cell(value: str) -> str:
@@ -416,12 +540,15 @@ def build_compact_digest(
     *,
     date_s: str,
     run_url: str,
+    strategy_sha: str,
     subject_prefix: str = "",
 ) -> tuple[str, str]:
     versions = "/".join(str(item["version"]) for item in results)
     tag = subject_tag(results)
     lines = [
         "## 今日结论",
+        "",
+        f"**{holdings_summary_text(results)}**",
         "",
         f"**{conclusion_text(results)}**",
         "",
@@ -431,8 +558,9 @@ def build_compact_digest(
     for item in results:
         fields = item["fields"]
         assert isinstance(fields, dict)
-        current = format_holding(first_value(fields, "current_holding", "holding"))
-        next_holding = format_holding(first_value(fields, "next_holding"))
+        trusted = item["status"] == "OK"
+        current = format_holding(first_value(fields, "current_holding", "holding")) if trusted else "不可用"
+        next_holding = format_holding(first_value(fields, "next_holding")) if trusted else "不可用"
         lines.append(
             "| "
             + " | ".join(
@@ -440,8 +568,8 @@ def build_compact_digest(
                     escape_table_cell(str(item["version"])),
                     escape_table_cell(f"{current} → {next_holding}"),
                     escape_table_cell(action_label(item)),
-                    escape_table_cell(format_scale(fields)),
-                    escape_table_cell(momentum_text(str(item["version"]), fields)),
+                    escape_table_cell(format_scale(fields) if trusted else "不可用"),
+                    escape_table_cell(momentum_text(str(item["version"]), fields) if trusted else "不可用"),
                 ]
             )
             + " |"
@@ -453,7 +581,7 @@ def build_compact_digest(
         lines += [f"- **{warning.split('：', 1)[0]}：**{warning.split('：', 1)[1]}" for warning in warnings]
     else:
         lines.append("风险/数据异常：无")
-    lines += ["", shared_data_line(results)]
+    lines += ["", shared_data_line(results, strategy_sha)]
     if run_url:
         lines += [f"[查看完整诊断与原始输出]({run_url})"]
     body = "\n".join(lines)
@@ -475,6 +603,7 @@ def main() -> int:
     parser.add_argument("--planned", default="12:45 Asia/Shanghai")
     parser.add_argument("--started", default="")
     parser.add_argument("--subject-prefix", default="")
+    parser.add_argument("--strategy-sha", default="", help="Checked-out microcap strategy commit SHA")
     parser.add_argument("--exit-code", action="append", default=[], help="Exit code, or version=code. Can be repeated.")
     parser.add_argument(
         "--signal-csv",
@@ -505,6 +634,11 @@ def main() -> int:
             if missing:
                 status = "FAILED"
                 status_note = "required signal fields are missing: " + ", ".join(missing)
+        if status == "OK":
+            identity_ok, identity_note = validate_strategy_identity(version, fields)
+            if not identity_ok:
+                status = "FAILED"
+                status_note = identity_note
         results.append(
             {
                 "version": version,
@@ -526,6 +660,7 @@ def main() -> int:
         results,
         date_s=date_s,
         run_url=run_url,
+        strategy_sha=args.strategy_sha,
         subject_prefix=args.subject_prefix,
     )
 

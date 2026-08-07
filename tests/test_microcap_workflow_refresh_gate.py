@@ -55,6 +55,9 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             text,
         )
         self.assertIn("--exit-code \"v2.5=${SIGNAL_V2_5_EXIT_CODE:-unknown}\"", text)
+        self.assertIn('id: microcap_sha', text)
+        self.assertIn('git rev-parse HEAD', text)
+        self.assertIn('--strategy-sha "${{ steps.microcap_sha.outputs.sha }}"', text)
         self.assertIn("microcap/realtime_signal_v2_5_result.txt", text)
         self.assertNotIn("v2.4", text)
         self.assertLess(
