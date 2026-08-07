@@ -40,6 +40,18 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("name: Run v2.5 realtime signal", text)
         self.assertIn("microcap_top100_mom16_biweekly_live_v2_5.py", text)
         self.assertIn("--result v2.5=microcap/realtime_signal_v2_5_result.txt", text)
+        self.assertIn(
+            "--signal-csv v2.0=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_0_realtime_signal.csv",
+            text,
+        )
+        self.assertIn(
+            "--signal-csv v2.3=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_3_realtime_signal.csv",
+            text,
+        )
+        self.assertIn(
+            "--signal-csv v2.5=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_5_realtime_signal.csv",
+            text,
+        )
         self.assertIn("--exit-code \"v2.5=${SIGNAL_V2_5_EXIT_CODE:-unknown}\"", text)
         self.assertIn("microcap/realtime_signal_v2_5_result.txt", text)
         self.assertNotIn("v2.4", text)

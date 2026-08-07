@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import re
@@ -143,6 +144,304 @@ def parse_exit_codes(specs: list[str]) -> tuple[dict[str, str], str]:
     return mapped, default
 
 
+def parse_output_fields(output: str) -> dict[str, str]:
+    fields: dict[str, str] = {}
+    for match in re.finditer(r"^(?P<key>[A-Za-z0-9_]+)\s*:\s*(?P<value>[^\n]*)$", output, flags=re.M):
+        fields[match.group("key")] = match.group("value").strip()
+    return fields
+
+
+def read_last_csv_row(path_value: str) -> dict[str, str]:
+    if not path_value:
+        return {}
+    path = Path(path_value)
+    if not path.exists() or not path.is_file():
+        return {}
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    if not rows:
+        return {}
+    return {str(key): str(value).strip() for key, value in rows[-1].items() if key and value is not None}
+
+
+def parse_signal_csv_specs(specs: list[str]) -> dict[str, str]:
+    mapped: dict[str, str] = {}
+    for spec in specs:
+        version, value = split_version_spec(spec, "")
+        if not version:
+            raise ValueError("--signal-csv values must use version=path format")
+        mapped[version] = value
+    return mapped
+
+
+def first_value(fields: dict[str, str], *keys: str) -> str:
+    for key in keys:
+        value = fields.get(key, "").strip()
+        if value and value.lower() not in {"nan", "none"}:
+            return value
+    return ""
+
+
+def parse_number(value: str) -> float | None:
+    cleaned = value.strip().replace(",", "")
+    if not cleaned or cleaned.lower() in {"nan", "none"}:
+        return None
+    is_percent = cleaned.endswith("%")
+    if is_percent:
+        cleaned = cleaned[:-1]
+    try:
+        number = float(cleaned)
+    except ValueError:
+        return None
+    return number / 100.0 if is_percent else number
+
+
+def parse_bool(value: str) -> bool:
+    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def format_percent(value: str, *, signed: bool = True) -> str:
+    number = parse_number(value)
+    if number is None:
+        return "N/A"
+    return f"{number:+.2%}" if signed else f"{number:.2%}"
+
+
+def format_r2(value: str) -> str:
+    number = parse_number(value)
+    return "N/A" if number is None else f"{number:.3f}"
+
+
+def format_scale(fields: dict[str, str]) -> str:
+    value = first_value(
+        fields,
+        "next_session_actionable_scale",
+        "target_vol_next_execution_scale",
+        "next_session_target_scale",
+        "target_position_scale",
+        "current_execution_scale",
+        "execution_scale",
+    )
+    number = parse_number(value)
+    return "N/A" if number is None else f"{number:.2f}"
+
+
+HOLDING_LABELS = {
+    "cash": "空仓",
+    "long_microcap_short_zz1000": "微盘 Top100＋空头中证1000",
+    "long_microcap_top100": "微盘 Top100",
+}
+
+
+def format_holding(value: str) -> str:
+    normalized = value.strip()
+    return HOLDING_LABELS.get(normalized, normalized or "未知")
+
+
+def action_label(item: dict[str, object]) -> str:
+    if item["status"] != "OK":
+        return "异常"
+    fields = item["fields"]
+    assert isinstance(fields, dict)
+    current = first_value(fields, "current_holding", "holding")
+    next_holding = first_value(fields, "next_holding")
+    if current and next_holding and current != next_holding:
+        if current == "cash" and next_holding != "cash":
+            return "开仓"
+        if current != "cash" and next_holding == "cash":
+            return "平仓"
+        return "调仓"
+
+    holding_state = first_value(fields, "holding_trade_state").lower()
+    trade_state = first_value(fields, "trade_state").lower()
+    if holding_state not in {"", "hold"} or trade_state not in {"", "hold"}:
+        state = holding_state if holding_state not in {"", "hold"} else trade_state
+        if state in {"enter", "entry", "open", "buy"}:
+            return "开仓"
+        if state in {"exit", "close", "sell"}:
+            return "平仓"
+        return "调仓"
+
+    scale_state = first_value(fields, "scale_trade_state").lower()
+    if parse_bool(first_value(fields, "scale_trade_required")) or scale_state not in {"", "hold_scale"}:
+        return "调整仓位"
+    return "无操作"
+
+
+def momentum_text(version: str, fields: dict[str, str]) -> str:
+    if version == "v2.0":
+        values = [
+            ("微盘", first_value(fields, "microcap_mom")),
+            ("对冲", first_value(fields, "hedge_mom")),
+            ("动量差", first_value(fields, "momentum_gap")),
+        ]
+        rendered = [f"{label} **{format_percent(value)}**" for label, value in values if value]
+        return "；".join(rendered) or "N/A"
+
+    score = first_value(fields, "annualized_log_wls_score", "momentum_gap")
+    r2 = first_value(fields, "log_wls_r2")
+    if version == "v2.3":
+        label = "对冲价差年化 WLS 得分"
+    elif version == "v2.5":
+        label = "微盘年化 WLS 得分"
+    else:
+        label = "年化 WLS 得分"
+    parts = []
+    if score:
+        parts.append(f"{label} **{format_percent(score)}**")
+    if r2:
+        parts.append(f"R² **{format_r2(r2)}**")
+    return "；".join(parts) or "N/A"
+
+
+def humanize_status_note(status: str, note: str) -> str:
+    if status == "STALE":
+        match = re.search(r"anchor (\d{4}-\d{2}-\d{2}) is older than expected (\d{4}-\d{2}-\d{2})", note)
+        if match:
+            return f"数据过期，锚点 {match.group(1)} 早于应有日期 {match.group(2)}"
+        return f"数据过期：{note}"
+    if "state refresh failed" in note.lower():
+        return "状态刷新失败，实时信号未运行"
+    match = re.search(r"script exit code is ([^\s]+)", note)
+    if match:
+        return f"脚本运行失败，退出码 {match.group(1)}"
+    if "marker is missing" in note.lower():
+        return "未生成实时信号标记"
+    if note.startswith("required signal fields are missing:"):
+        fields = note.split(":", 1)[1].strip()
+        return f"缺少必要信号字段：{fields}"
+    return f"运行失败：{note}" if note else "运行失败"
+
+
+def risk_warnings(item: dict[str, object]) -> list[str]:
+    version = str(item["version"])
+    status = str(item["status"])
+    note = str(item["status_note"])
+    fields = item["fields"]
+    assert isinstance(fields, dict)
+    if status != "OK":
+        return [f"{version}：{humanize_status_note(status, note)}"]
+
+    warnings: list[str] = []
+    fallback_warning = first_value(fields, "fallback_warning")
+    if fallback_warning:
+        warnings.append(f"{version}：行情使用回退数据（{fallback_warning}）")
+
+    if version == "v2.0" and parse_bool(first_value(fields, "blocked_until_signal_reset")):
+        metric = first_value(fields, "overheat_metric")
+        threshold = first_value(fields, "overheat_threshold")
+        detail = "过热退出后锁定，等待基础信号重置"
+        if metric and threshold:
+            detail += f"；当前指标 {format_percent(metric, signed=False)}，触发线 {format_percent(threshold, signed=False)}"
+        warnings.append(f"v2.0：{detail}")
+
+    if version == "v2.3" and parse_bool(first_value(fields, "overheat_risk_off")):
+        value = first_value(fields, "overheat_feature_value")
+        trigger = first_value(fields, "overheat_trigger_threshold")
+        recovery = first_value(fields, "overheat_recovery_threshold")
+        detail = "过热风险关闭中"
+        if value and trigger:
+            detail += f"；当前指标 {format_percent(value, signed=False)}，触发线 {format_percent(trigger, signed=False)}"
+        if recovery:
+            detail += f"，恢复线 {format_percent(recovery, signed=False)}"
+        warnings.append(f"v2.3：{detail}")
+    return warnings
+
+
+def subject_tag(results: list[dict[str, object]]) -> str:
+    if any(item["status"] != "OK" for item in results):
+        return "异常"
+    if any(action_label(item) != "无操作" for item in results):
+        return "需操作"
+    return "无需操作"
+
+
+def conclusion_text(results: list[dict[str, object]]) -> str:
+    if any(item["status"] != "OK" for item in results):
+        return "存在异常版本，请勿执行异常版本信号。"
+    actionable = [(str(item["version"]), action_label(item)) for item in results if action_label(item) != "无操作"]
+    if not actionable:
+        return "所有版本均无需调仓。"
+    phrases = [f"{version} 需要{action}" for version, action in actionable]
+    if len(actionable) < len(results):
+        return "；".join(phrases) + "；其他版本无需调仓。"
+    return "；".join(phrases) + "。"
+
+
+def shared_data_line(results: list[dict[str, object]]) -> str:
+    fields_list = [item["fields"] for item in results]
+    snapshots = [first_value(fields, "snapshot_time") for fields in fields_list if isinstance(fields, dict)]
+    snapshots = [value for value in snapshots if value]
+    quote_dates = [first_value(fields, "quote_trade_date") for fields in fields_list if isinstance(fields, dict)]
+    quote_dates = [value for value in quote_dates if value]
+    coverages = [first_value(fields, "quote_coverage") for fields in fields_list if isinstance(fields, dict)]
+    coverages = [value for value in coverages if value]
+
+    if snapshots:
+        data_value = max(snapshots)
+    elif quote_dates:
+        data_value = max(quote_dates)
+    else:
+        data_value = "未记录"
+    line = f"数据时间：{data_value}"
+    if coverages and len(set(coverages)) == 1:
+        line += f"｜报价覆盖：{coverages[0]}"
+    return line
+
+
+def escape_table_cell(value: str) -> str:
+    return value.replace("|", "\\|").replace("\n", " ")
+
+
+def build_compact_digest(
+    results: list[dict[str, object]],
+    *,
+    date_s: str,
+    run_url: str,
+) -> tuple[str, str]:
+    versions = "/".join(str(item["version"]) for item in results)
+    tag = subject_tag(results)
+    lines = [
+        "## 今日结论",
+        "",
+        f"**{conclusion_text(results)}**",
+        "",
+        "| 版本 | 当前 → 下一持仓 | 今日操作 | 下一交易日仓位 | 核心动量 |",
+        "|---|---|---|---:|---|",
+    ]
+    for item in results:
+        fields = item["fields"]
+        assert isinstance(fields, dict)
+        current = format_holding(first_value(fields, "current_holding", "holding"))
+        next_holding = format_holding(first_value(fields, "next_holding"))
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    escape_table_cell(str(item["version"])),
+                    escape_table_cell(f"{current} → {next_holding}"),
+                    escape_table_cell(action_label(item)),
+                    escape_table_cell(format_scale(fields)),
+                    escape_table_cell(momentum_text(str(item["version"]), fields)),
+                ]
+            )
+            + " |"
+        )
+
+    warnings = [warning for item in results for warning in risk_warnings(item)]
+    lines += ["", "## 需要关注", ""]
+    if warnings:
+        lines += [f"- **{warning.split('：', 1)[0]}：**{warning.split('：', 1)[1]}" for warning in warnings]
+    else:
+        lines.append("风险/数据异常：无")
+    lines += ["", shared_data_line(results)]
+    if run_url:
+        lines += [f"[查看完整诊断与原始输出]({run_url})"]
+    body = "\n".join(lines)
+    subject = f"[{tag}] 微盘股 {versions} 日报 - {date_s}"
+    return subject, body
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build a Gmail-ready microcap realtime signal digest.")
     parser.add_argument(
@@ -155,13 +454,20 @@ def main() -> int:
     parser.add_argument("--planned", default="12:45 Asia/Shanghai")
     parser.add_argument("--started", default="")
     parser.add_argument("--exit-code", action="append", default=[], help="Exit code, or version=code. Can be repeated.")
+    parser.add_argument(
+        "--signal-csv",
+        action="append",
+        default=[],
+        help="Optional version=path realtime signal CSV. Can be repeated.",
+    )
     args = parser.parse_args()
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     exit_codes, default_exit_code = parse_exit_codes(args.exit_code)
+    signal_csv_paths = parse_signal_csv_specs(args.signal_csv)
     result_specs = [split_version_spec(spec, "v2.0" if len(args.result) == 1 else "") for spec in args.result]
-    results: list[dict[str, str]] = []
+    results: list[dict[str, object]] = []
     for version, result_value in result_specs:
         if not version:
             raise ValueError("multiple --result values must use version=path format")
@@ -170,12 +476,19 @@ def main() -> int:
         output = clean_output(raw)
         exit_code = exit_codes.get(version, default_exit_code)
         status, status_note = classify_signal_output(output, exit_code)
+        fields = parse_output_fields(output)
+        fields.update(read_last_csv_row(signal_csv_paths.get(version, "")))
+        if status == "OK":
+            missing = [key for key in ("current_holding", "next_holding") if not first_value(fields, key)]
+            if missing:
+                status = "FAILED"
+                status_note = "required signal fields are missing: " + ", ".join(missing)
         results.append(
             {
                 "version": version,
                 "path": str(result_path),
                 "output": output,
-                "summary": extract_signal_summary(output),
+                "fields": fields,
                 "exit_code": exit_code,
                 "status": status,
                 "status_note": status_note,
@@ -186,65 +499,14 @@ def main() -> int:
         raise ValueError("at least one realtime signal result is required")
 
     date_s = now_bj().date().isoformat()
-    finished = now_bj().strftime("%Y-%m-%d %H:%M:%S %Z")
-    started = args.started or os.environ.get("STARTED_BJ", "")
     run_url = os.environ.get("GITHUB_RUN_URL", "")
-    title_versions = " / ".join(item["version"] for item in results)
-    exit_summary = "；".join(f"{item['version']}={item['exit_code'] or '未记录'}" for item in results)
-    digest_status = worst_status([item["status"] for item in results])
-    status_summary = "；".join(
-        f"{item['version']}={item['status']}{'：' + item['status_note'] if item['status_note'] else ''}"
-        for item in results
-    )
+    subject, digest_text = build_compact_digest(results, date_s=date_s, run_url=run_url)
 
     md = out_dir / f"microcap_realtime_signal_digest_{date_s}.md"
-    lines = [
-        f"# 微盘股 {title_versions} 实时信号日报 - {date_s}",
-        "",
-        f"> Digest status: {digest_status}. {status_summary}",
-        "",
-        f"> 用途：这是自动化仓库中的微盘股 {title_versions} 实时信号推送。STALE 状态仍会发送当前可计算信号，但不能当作完整刷新后的官方实时信号。",
-        "",
-        "## 调度审计",
-        "",
-        f"- 计划时间：{args.planned}",
-        f"- 实际启动：{started or '未记录'}",
-        f"- 完成时间：{finished}",
-        f"- Workflow Run：{run_url or '未提供'}",
-        f"- 脚本退出码：{exit_summary}",
-        "",
-        "---",
-        "",
-        "## 信号摘要",
-        "",
-    ]
-    for item in results:
-        status_note = f" - {item['status_note']}" if item["status_note"] else ""
-        lines += [
-            f"### {item['version']}",
-            "",
-            f"- {item['version']} status: {item['status']}{status_note}",
-            f"- 退出码：{item['exit_code'] or '未记录'}",
-            f"- 原始输出：`{item['path']}`",
-            "",
-            item["summary"],
-            "",
-        ]
-    lines += ["---", "", "## 原始实时信号输出", ""]
-    for item in results:
-        lines += [
-            f"### {item['version']}",
-            "",
-            "```text",
-            item["output"],
-            "```",
-            "",
-        ]
-    digest_text = "\n".join(lines)
     md.write_text(digest_text, encoding="utf-8")
 
     meta = {
-        "subject": f"[{digest_status}] 微盘股 {title_versions} 实时信号日报 - {date_s}",
+        "subject": subject,
         "body": digest_text,
         "attachment": None,
     }
