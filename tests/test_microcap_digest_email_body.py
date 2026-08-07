@@ -36,7 +36,9 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 "fixed_hedge_ratio": "0.8",
             },
             "v2.3": {
+                "version": "2.3",
                 "strategy_version": "v2.3",
+                "overlay_type": "spread_nav_log_wls_lb25_vol10_overheat",
                 "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2gate0p08_signal1p0_exec0p8_vol10_overheat",
                 "lookback": "25",
                 "halflife": "2.5",
@@ -51,7 +53,9 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 "target_vol_window": "0",
             },
             "v2.5": {
+                "version": "2.5",
                 "strategy_version": "v2.5",
+                "overlay_type": "microcap_only_log_wls_threshold_no_target_vol",
                 "signal_model": "microcap_only_log_wls_exp_halflife_3p0_lb17_entry46_exit25_no_targetvol",
                 "execution_hedge_ratio": "0.0",
                 "fixed_hedge_ratio": "0.0",
@@ -82,6 +86,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         exit_codes: dict[str, str] | None = None,
         subject_prefix: str = "",
         strategy_sha: str = STRATEGY_SHA,
+        signal_csv_paths: dict[str, Path] | None = None,
     ) -> dict[str, object]:
         out_dir = tmp_path / "artifacts"
         argv = ["build_microcap_realtime_digest.py"]
@@ -92,6 +97,8 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         for version, row in (csv_rows or {}).items():
             csv_path = tmp_path / f"{version.replace('.', '')}.csv"
             self.write_csv(csv_path, row)
+            argv += ["--signal-csv", f"{version}={csv_path}"]
+        for version, csv_path in (signal_csv_paths or {}).items():
             argv += ["--signal-csv", f"{version}={csv_path}"]
         argv += ["--out-dir", str(out_dir), "--planned", "09:30 Asia/Shanghai"]
         argv += ["--strategy-sha", strategy_sha]
@@ -466,6 +473,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                         ]
                     )
                 },
+                {"v2.5": self.identity_fields("v2.5")},
             )
 
         body = str(meta["body"])
@@ -568,6 +576,106 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertIn(holdings, body)
         self.assertIn(action, body)
         self.assertLess(body.index(holdings), body.index(action))
+
+    def test_stdout_identity_without_final_signal_csv_fails_closed(self) -> None:
+        identity_lines = [f"{key}: {value}" for key, value in self.identity_fields("v2.5").items()]
+        output = "\n".join(
+            [
+                "realtime_signal",
+                "snapshot_time: 2026-08-07 09:33:00+08:00",
+                "latest_anchor_trade_date: 2026-08-06",
+                "quote_trade_date: 2026-08-07",
+                "current_holding: cash",
+                "next_holding: long_microcap_top100",
+                "trade_state: open",
+                "next_session_actionable_scale: 1.0",
+                *identity_lines,
+            ]
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.run_digest(Path(tmp), {"v2.5": output})
+
+        body = str(meta["body"])
+        self.assertEqual(meta["subject"], "[异常] 微盘股 v2.5 日报 - 2026-08-07")
+        self.assertIn("最终实时信号 CSV", body)
+        self.assertNotIn("需要开仓", body)
+        self.assertNotIn("空仓 → 微盘 Top100", body)
+
+    def test_missing_and_empty_final_signal_csvs_fail_closed(self) -> None:
+        output = "\n".join(
+            [
+                "realtime_signal",
+                "snapshot_time: 2026-08-07 09:33:00+08:00",
+                "latest_anchor_trade_date: 2026-08-06",
+                "quote_trade_date: 2026-08-07",
+                "current_holding: cash",
+                "next_holding: long_microcap_top100",
+                "trade_state: open",
+            ]
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            empty_csv = tmp_path / "empty.csv"
+            empty_csv.write_text("", encoding="utf-8")
+            unreadable_csv = tmp_path / "csv-is-directory"
+            unreadable_csv.mkdir()
+            cases = {
+                "missing": tmp_path / "missing.csv",
+                "empty": empty_csv,
+                "unreadable": unreadable_csv,
+            }
+            for label, csv_path in cases.items():
+                with self.subTest(label=label):
+                    case_dir = tmp_path / label
+                    case_dir.mkdir()
+                    try:
+                        meta = self.run_digest(
+                            case_dir,
+                            {"v2.5": output},
+                            signal_csv_paths={"v2.5": csv_path},
+                        )
+                    except OSError as exc:
+                        self.fail(f"unreadable final CSV must fail closed in the digest: {exc}")
+                    self.assertEqual(meta["subject"], "[异常] 微盘股 v2.5 日报 - 2026-08-07")
+                    self.assertIn("最终实时信号 CSV", str(meta["body"]))
+                    self.assertNotIn("需要开仓", str(meta["body"]))
+
+    def test_v23_and_v25_reject_contradictory_csv_version_and_overlay(self) -> None:
+        holding_by_version = {
+            "v2.3": "long_microcap_short_zz1000",
+            "v2.5": "long_microcap_top100",
+        }
+        for version, next_holding in holding_by_version.items():
+            with self.subTest(version=version):
+                output = "\n".join(
+                    [
+                        "realtime_signal",
+                        f"strategy_version: {version}",
+                        "snapshot_time: 2026-08-07 09:33:00+08:00",
+                        "latest_anchor_trade_date: 2026-08-06",
+                        "quote_trade_date: 2026-08-07",
+                        "current_holding: cash",
+                        f"next_holding: {next_holding}",
+                        "trade_state: open",
+                        "next_session_actionable_scale: 1.0",
+                    ]
+                )
+                contradictory = {
+                    **self.identity_fields(version),
+                    "version": "9.9",
+                    "overlay_type": "legacy_wrong_overlay",
+                }
+                with tempfile.TemporaryDirectory() as tmp:
+                    meta = self.run_digest(Path(tmp), {version: output}, {version: contradictory})
+
+                body = str(meta["body"])
+                self.assertEqual(meta["subject"], f"[异常] 微盘股 {version} 日报 - 2026-08-07")
+                self.assertIn("策略身份不匹配", body)
+                self.assertIn("version expected", body)
+                self.assertIn("overlay_type expected", body)
+                self.assertNotIn("需要开仓", body)
 
 
 if __name__ == "__main__":

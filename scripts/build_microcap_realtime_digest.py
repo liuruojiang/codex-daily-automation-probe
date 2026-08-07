@@ -152,17 +152,25 @@ def parse_output_fields(output: str) -> dict[str, str]:
     return fields
 
 
-def read_last_csv_row(path_value: str) -> dict[str, str]:
+def read_last_csv_row(path_value: str) -> tuple[dict[str, str], str]:
     if not path_value:
-        return {}
+        return {}, "final signal CSV is required"
     path = Path(path_value)
-    if not path.exists() or not path.is_file():
-        return {}
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        rows = list(csv.DictReader(handle))
+    if not path.exists():
+        return {}, "final signal CSV is missing"
+    if not path.is_file():
+        return {}, "final signal CSV is unreadable"
+    try:
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            rows = list(csv.DictReader(handle))
+    except (OSError, UnicodeError, csv.Error) as exc:
+        return {}, f"final signal CSV is unreadable: {type(exc).__name__}"
     if not rows:
-        return {}
-    return {str(key): str(value).strip() for key, value in rows[-1].items() if key and value is not None}
+        return {}, "final signal CSV is empty"
+    row = {str(key): str(value).strip() for key, value in rows[-1].items() if key and value is not None}
+    if not row or not any(row.values()):
+        return {}, "final signal CSV is empty"
+    return row, ""
 
 
 def parse_signal_csv_specs(specs: list[str]) -> dict[str, str]:
@@ -222,7 +230,9 @@ STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
     },
     "v2.3": {
         "text": {
+            "version": "2.3",
             "strategy_version": "v2.3",
+            "overlay_type": "spread_nav_log_wls_lb25_vol10_overheat",
             "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2gate0p08_signal1p0_exec0p8_vol10_overheat",
         },
         "bool": {
@@ -243,7 +253,9 @@ STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
     },
     "v2.5": {
         "text": {
+            "version": "2.5",
             "strategy_version": "v2.5",
+            "overlay_type": "microcap_only_log_wls_threshold_no_target_vol",
             "signal_model": "microcap_only_log_wls_exp_halflife_3p0_lb17_entry46_exit25_no_targetvol",
         },
         "bool": {
@@ -435,6 +447,14 @@ def humanize_status_note(status: str, note: str) -> str:
     if note.startswith("strategy identity mismatch:"):
         detail = note.split(":", 1)[1].strip()
         return f"策略身份不匹配：{detail}"
+    if note.startswith("final signal CSV"):
+        details = {
+            "final signal CSV is required": "缺少最终实时信号 CSV",
+            "final signal CSV is missing": "最终实时信号 CSV 不存在",
+            "final signal CSV is empty": "最终实时信号 CSV 为空",
+            "final signal CSV is unreadable": "最终实时信号 CSV 无法读取",
+        }
+        return details.get(note, f"最终实时信号 CSV 无法读取：{note.split(':', 1)[-1].strip()}")
     return f"运行失败：{note}" if note else "运行失败"
 
 
@@ -609,7 +629,7 @@ def main() -> int:
         "--signal-csv",
         action="append",
         default=[],
-        help="Optional version=path realtime signal CSV. Can be repeated.",
+        help="Required version=path final realtime signal CSV. Can be repeated.",
     )
     args = parser.parse_args()
 
@@ -627,23 +647,32 @@ def main() -> int:
         output = clean_output(raw)
         exit_code = exit_codes.get(version, default_exit_code)
         status, status_note = classify_signal_output(output, exit_code)
-        fields = parse_output_fields(output)
-        fields.update(read_last_csv_row(signal_csv_paths.get(version, "")))
+        stdout_fields = parse_output_fields(output)
+        csv_fields, csv_status_note = read_last_csv_row(signal_csv_paths.get(version, ""))
+        fields: dict[str, str] = {}
         if status == "OK":
+            if csv_status_note:
+                status = "FAILED"
+                status_note = csv_status_note
+        if status == "OK":
+            identity_ok, identity_note = validate_strategy_identity(version, csv_fields)
+            if not identity_ok:
+                status = "FAILED"
+                status_note = identity_note
+        if status == "OK":
+            fields = dict(stdout_fields)
+            fields.update(csv_fields)
             missing = [key for key in ("current_holding", "next_holding") if not first_value(fields, key)]
             if missing:
                 status = "FAILED"
                 status_note = "required signal fields are missing: " + ", ".join(missing)
-        if status == "OK":
-            identity_ok, identity_note = validate_strategy_identity(version, fields)
-            if not identity_ok:
-                status = "FAILED"
-                status_note = identity_note
         results.append(
             {
                 "version": version,
                 "path": str(result_path),
                 "output": output,
+                "stdout_fields": stdout_fields,
+                "csv_fields": csv_fields,
                 "fields": fields,
                 "exit_code": exit_code,
                 "status": status,
