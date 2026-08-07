@@ -295,7 +295,8 @@ def validate_strategy_identity(version: str, fields: dict[str, str]) -> tuple[bo
     for key, expected in identity["text"].items():
         actual = first_value(fields, key)
         if actual != expected:
-            mismatches.append(f"{key} expected {expected}, got {actual or '<missing>'}")
+            actual_display = escape_markdown_inline(actual) if actual else "<missing>"
+            mismatches.append(f"{key} expected {expected}, got {actual_display}")
 
     for key, expected in identity["bool"].items():
         actual = first_value(fields, key)
@@ -307,13 +308,15 @@ def validate_strategy_identity(version: str, fields: dict[str, str]) -> tuple[bo
         else:
             actual_bool = None
         if actual_bool is not expected:
-            mismatches.append(f"{key} expected {expected}, got {actual or '<missing>'}")
+            actual_display = escape_markdown_inline(actual) if actual else "<missing>"
+            mismatches.append(f"{key} expected {expected}, got {actual_display}")
 
     for key, expected in identity["number"].items():
         actual = first_value(fields, key)
         actual_number = parse_number(actual)
         if actual_number is None or not math.isclose(actual_number, float(expected), rel_tol=0.0, abs_tol=1e-9):
-            mismatches.append(f"{key} expected {expected:g}, got {actual or '<missing>'}")
+            actual_display = escape_markdown_inline(actual) if actual else "<missing>"
+            mismatches.append(f"{key} expected {expected:g}, got {actual_display}")
 
     if mismatches:
         return False, "strategy identity mismatch: " + "; ".join(mismatches[:3])

@@ -861,6 +861,34 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertNotIn("**break-date**", body)
         self.assertIn("\\*\\*break-date\\*\\*", body)
 
+    def test_identity_mismatch_cannot_inject_abnormal_warning_markdown(self) -> None:
+        csv_row = {
+            **self.identity_fields("v2.5"),
+            "version": "9.9\n## INJECT-IDENTITY\n**break-identity**",
+        }
+        output = "\n".join(
+            [
+                "realtime_signal",
+                "strategy_version: v2.5",
+                "snapshot_time: 2026-08-07 09:33:00+08:00",
+                "latest_anchor_trade_date: 2026-08-06",
+                "quote_trade_date: 2026-08-07",
+                "current_holding: cash",
+                "next_holding: long_microcap_top100",
+                "trade_state: open",
+            ]
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.run_digest(Path(tmp), {"v2.5": output}, {"v2.5": csv_row})
+
+        body = str(meta["body"])
+        headings = [line for line in body.splitlines() if line.startswith("## ")]
+        self.assertEqual(meta["subject"], "[异常] 微盘股 v2.5 日报 - 2026-08-07")
+        self.assertEqual(headings, ["## 今日结论", "## 需要关注"])
+        self.assertNotIn("**break-identity**", body)
+        self.assertIn("\\*\\*break-identity\\*\\*", body)
+
 
 if __name__ == "__main__":
     unittest.main()
