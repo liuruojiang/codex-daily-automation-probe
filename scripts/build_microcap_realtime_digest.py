@@ -209,6 +209,15 @@ def parse_bool(value: str) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
+def parse_strict_bool(value: str) -> bool | None:
+    normalized = value.strip().lower()
+    if normalized == "true":
+        return True
+    if normalized == "false":
+        return False
+    return None
+
+
 STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
     "v2.0": {
         "text": {
@@ -311,6 +320,52 @@ def validate_strategy_identity(version: str, fields: dict[str, str]) -> tuple[bo
     return True, ""
 
 
+def validate_member_action_contract(fields: dict[str, str]) -> tuple[bool, str]:
+    parsed: dict[str, bool] = {}
+    for key in (
+        "member_rebalance_required",
+        "member_rebalance_actionable",
+        "member_rebalance_official",
+    ):
+        raw = fields.get(key, "").strip()
+        value = parse_strict_bool(raw)
+        if value is None:
+            actual = escape_markdown_inline(raw) if raw else "<missing>"
+            return False, f"member action contract invalid: {key} must be True or False, got {actual}"
+        parsed[key] = value
+
+    required = parsed["member_rebalance_required"]
+    actionable = parsed["member_rebalance_actionable"]
+    official = parsed["member_rebalance_official"]
+    if actionable and not required:
+        return False, "member action contract invalid: actionable=True requires required=True"
+    if actionable and not official:
+        return False, "member action contract invalid: actionable=True requires official=True"
+    if actionable:
+        signal_raw = first_value(fields, "member_rebalance_signal_date")
+        execution_raw = first_value(fields, "member_rebalance_execution_date")
+        signal_date = parse_strict_iso_date(signal_raw)
+        execution_date = parse_strict_iso_date(execution_raw)
+        if signal_date is None:
+            actual = escape_markdown_inline(signal_raw) if signal_raw else "<missing>"
+            return False, f"member action contract invalid: invalid signal date {actual}"
+        if execution_date is None:
+            actual = escape_markdown_inline(execution_raw) if execution_raw else "<missing>"
+            return False, f"member action contract invalid: invalid execution date {actual}"
+        if execution_date <= signal_date:
+            return False, "member action contract invalid: execution date must be after signal date"
+    return True, ""
+
+
+def parse_strict_iso_date(value: str) -> date | None:
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value.strip()):
+        return None
+    try:
+        return date.fromisoformat(value.strip())
+    except ValueError:
+        return None
+
+
 def format_percent(value: str, *, signed: bool = True) -> str:
     number = parse_number(value)
     if number is None:
@@ -349,9 +404,14 @@ def format_holding(value: str) -> str:
     return HOLDING_LABELS.get(normalized, normalized or "未知")
 
 
+def escape_markdown_inline(value: str) -> str:
+    flattened = re.sub(r"\s*\n\s*", " ", value.replace("\r\n", "\n").replace("\r", "\n"))
+    return re.sub(r"([\\`*_\[\]<>#])", r"\\\1", flattened)
+
+
 def member_rebalance_action(fields: dict[str, str]) -> str:
-    actionable = parse_bool(first_value(fields, "member_rebalance_actionable"))
-    official = parse_bool(first_value(fields, "member_rebalance_official"))
+    actionable = parse_strict_bool(first_value(fields, "member_rebalance_actionable"))
+    official = parse_strict_bool(first_value(fields, "member_rebalance_official"))
     signal_date = first_value(fields, "member_rebalance_signal_date")
     execution_date = first_value(fields, "member_rebalance_execution_date")
     if not actionable or not official or not signal_date or not execution_date:
@@ -455,6 +515,9 @@ def humanize_status_note(status: str, note: str) -> str:
             "final signal CSV is unreadable": "最终实时信号 CSV 无法读取",
         }
         return details.get(note, f"最终实时信号 CSV 无法读取：{note.split(':', 1)[-1].strip()}")
+    if note.startswith("member action contract invalid:"):
+        detail = note.split(":", 1)[1].strip()
+        return f"成员调仓契约无效：{detail}"
     return f"运行失败：{note}" if note else "运行失败"
 
 
@@ -470,7 +533,7 @@ def risk_warnings(item: dict[str, object]) -> list[str]:
     warnings: list[str] = []
     fallback_warning = first_value(fields, "fallback_warning")
     if fallback_warning:
-        warnings.append(f"{version}：行情使用回退数据（{fallback_warning}）")
+        warnings.append(f"{version}：行情使用回退数据（{escape_markdown_inline(fallback_warning)}）")
 
     if version == "v2.0" and parse_bool(first_value(fields, "blocked_until_signal_reset")):
         metric = first_value(fields, "overheat_metric")
@@ -507,7 +570,7 @@ def conclusion_text(results: list[dict[str, object]]) -> str:
     actionable = [(str(item["version"]), action_label(item)) for item in results if action_label(item) != "无操作"]
     if not actionable:
         return "所有版本均无需调仓。"
-    phrases = [f"{version} 需要{action}" for version, action in actionable]
+    phrases = [f"{escape_markdown_inline(version)} 需要{escape_markdown_inline(action)}" for version, action in actionable]
     if len(actionable) < len(results):
         return "；".join(phrases) + "；其他版本无需调仓。"
     return "；".join(phrases) + "。"
@@ -523,16 +586,16 @@ def shared_data_line(results: list[dict[str, object]], strategy_sha: str) -> str
     coverages = [value for value in coverages if value]
 
     if snapshots:
-        data_value = max(snapshots)
+        data_value = escape_markdown_inline(max(snapshots))
     elif quote_dates:
-        data_value = max(quote_dates)
+        data_value = escape_markdown_inline(max(quote_dates))
     else:
         data_value = "未记录"
     line = f"数据时间：{data_value}"
     if coverages and len(set(coverages)) == 1:
-        line += f"｜报价覆盖：{coverages[0]}"
+        line += f"｜报价覆盖：{escape_markdown_inline(coverages[0])}"
     if strategy_sha:
-        line += f"｜策略代码：`{strategy_sha}`"
+        line += f"｜策略代码：{escape_markdown_inline(strategy_sha)}"
     return line
 
 
@@ -545,9 +608,11 @@ def holdings_summary_text(results: list[dict[str, object]]) -> str:
             continue
         fields = item["fields"]
         assert isinstance(fields, dict)
-        current = format_holding(first_value(fields, "current_holding", "holding"))
-        next_holding = format_holding(first_value(fields, "next_holding"))
-        summaries.append(f"{version}：{current} → {next_holding}，下一交易日可执行仓位 {format_scale(fields)}")
+        current = escape_markdown_inline(format_holding(first_value(fields, "current_holding", "holding")))
+        next_holding = escape_markdown_inline(format_holding(first_value(fields, "next_holding")))
+        summaries.append(
+            f"{escape_markdown_inline(version)}：{current} → {next_holding}，下一交易日可执行仓位 {format_scale(fields)}"
+        )
     return "；".join(summaries) + "。"
 
 
@@ -579,15 +644,21 @@ def build_compact_digest(
         fields = item["fields"]
         assert isinstance(fields, dict)
         trusted = item["status"] == "OK"
-        current = format_holding(first_value(fields, "current_holding", "holding")) if trusted else "不可用"
-        next_holding = format_holding(first_value(fields, "next_holding")) if trusted else "不可用"
+        current = (
+            escape_markdown_inline(format_holding(first_value(fields, "current_holding", "holding")))
+            if trusted
+            else "不可用"
+        )
+        next_holding = (
+            escape_markdown_inline(format_holding(first_value(fields, "next_holding"))) if trusted else "不可用"
+        )
         lines.append(
             "| "
             + " | ".join(
                 [
                     escape_table_cell(str(item["version"])),
                     escape_table_cell(f"{current} → {next_holding}"),
-                    escape_table_cell(action_label(item)),
+                    escape_table_cell(escape_markdown_inline(action_label(item))),
                     escape_table_cell(format_scale(fields) if trusted else "不可用"),
                     escape_table_cell(momentum_text(str(item["version"]), fields) if trusted else "不可用"),
                 ]
@@ -659,6 +730,11 @@ def main() -> int:
             if not identity_ok:
                 status = "FAILED"
                 status_note = identity_note
+        if status == "OK":
+            member_contract_ok, member_contract_note = validate_member_action_contract(csv_fields)
+            if not member_contract_ok:
+                status = "FAILED"
+                status_note = member_contract_note
         if status == "OK":
             fields = dict(stdout_fields)
             fields.update(csv_fields)

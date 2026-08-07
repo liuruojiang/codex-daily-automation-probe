@@ -58,6 +58,12 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('id: microcap_sha', text)
         self.assertIn('git rev-parse HEAD', text)
         self.assertIn('--strategy-sha "${{ steps.microcap_sha.outputs.sha }}"', text)
+        self.assertIn('repository: liuruojiang/microcap', text)
+        self.assertIn('ref: b53fe0a956d7a679b04fe14aef8970c2fa940d19', text)
+        self.assertNotIn('ref: main', text)
+        sha_step = text[text.index('name: Record microcap strategy SHA') : text.index('name: Install runtime dependencies')]
+        self.assertIn('working-directory: microcap', sha_step)
+        self.assertIn('echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"', sha_step)
         self.assertIn("microcap/realtime_signal_v2_5_result.txt", text)
         self.assertNotIn("v2.4", text)
         self.assertLess(

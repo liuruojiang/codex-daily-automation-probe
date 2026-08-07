@@ -70,7 +70,12 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 "target_vol_window": "0",
             },
         }
-        return identities[version].copy()
+        return {
+            **identities[version],
+            "member_rebalance_required": "False",
+            "member_rebalance_actionable": "False",
+            "member_rebalance_official": "True",
+        }
 
     def write_csv(self, path: Path, row: dict[str, str]) -> None:
         with path.open("w", encoding="utf-8", newline="") as handle:
@@ -366,7 +371,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                     "v2.0": {
                         **self.identity_fields("v2.0"),
                         "member_rebalance_required": "True",
-                        "member_rebalance_actionable": "True",
+                        "member_rebalance_actionable": "False",
                         "member_rebalance_official": "False",
                         "member_rebalance_signal_date": "2026-08-07",
                         "member_rebalance_execution_date": "2026-08-10",
@@ -676,6 +681,185 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 self.assertIn("version expected", body)
                 self.assertIn("overlay_type expected", body)
                 self.assertNotIn("需要开仓", body)
+
+    def test_missing_and_malformed_member_booleans_fail_closed(self) -> None:
+        output = "\n".join(
+            [
+                "realtime_signal",
+                "strategy_version: v2.5",
+                "snapshot_time: 2026-08-07 09:33:00+08:00",
+                "latest_anchor_trade_date: 2026-08-06",
+                "quote_trade_date: 2026-08-07",
+                "current_holding: cash",
+                "next_holding: long_microcap_top100",
+                "trade_state: open",
+                "next_session_actionable_scale: 1.0",
+            ]
+        )
+        boolean_fields = (
+            "member_rebalance_required",
+            "member_rebalance_actionable",
+            "member_rebalance_official",
+        )
+        cases: list[tuple[str, dict[str, str]]] = []
+        for field in boolean_fields:
+            missing = self.identity_fields("v2.5")
+            missing.pop(field)
+            cases.append((f"missing-{field}", missing))
+            malformed = self.identity_fields("v2.5")
+            malformed[field] = "sometimes"
+            cases.append((f"malformed-{field}", malformed))
+        required_without_actionable = self.identity_fields("v2.5")
+        required_without_actionable["member_rebalance_required"] = "True"
+        required_without_actionable.pop("member_rebalance_actionable")
+        cases.append(("required-true-missing-actionable", required_without_actionable))
+
+        for label, csv_row in cases:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as tmp:
+                meta = self.run_digest(Path(tmp), {"v2.5": output}, {"v2.5": csv_row})
+
+            body = str(meta["body"])
+            self.assertEqual(meta["subject"], "[异常] 微盘股 v2.5 日报 - 2026-08-07")
+            self.assertIn("成员调仓契约无效", body)
+            self.assertNotIn("需要开仓", body)
+
+    def test_inconsistent_member_contract_and_action_dates_fail_closed(self) -> None:
+        output = "\n".join(
+            [
+                "realtime_signal",
+                "strategy_version: v2.5",
+                "snapshot_time: 2026-08-07 09:33:00+08:00",
+                "latest_anchor_trade_date: 2026-08-06",
+                "quote_trade_date: 2026-08-07",
+                "current_holding: cash",
+                "next_holding: long_microcap_top100",
+                "trade_state: open",
+                "next_session_actionable_scale: 1.0",
+            ]
+        )
+        cases = {
+            "arbitrary-dates": {
+                "member_rebalance_required": "True",
+                "member_rebalance_actionable": "True",
+                "member_rebalance_official": "True",
+                "member_rebalance_signal_date": "next Tuesday",
+                "member_rebalance_execution_date": "eventually",
+            },
+            "reversed-dates": {
+                "member_rebalance_required": "True",
+                "member_rebalance_actionable": "True",
+                "member_rebalance_official": "True",
+                "member_rebalance_signal_date": "2026-08-10",
+                "member_rebalance_execution_date": "2026-08-07",
+            },
+            "required-false-actionable-true": {
+                "member_rebalance_required": "False",
+                "member_rebalance_actionable": "True",
+                "member_rebalance_official": "True",
+                "member_rebalance_signal_date": "2026-08-07",
+                "member_rebalance_execution_date": "2026-08-10",
+            },
+            "official-false-actionable-true": {
+                "member_rebalance_required": "True",
+                "member_rebalance_actionable": "True",
+                "member_rebalance_official": "False",
+                "member_rebalance_signal_date": "2026-08-07",
+                "member_rebalance_execution_date": "2026-08-10",
+            },
+        }
+
+        for label, overrides in cases.items():
+            csv_row = {**self.identity_fields("v2.5"), **overrides}
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as tmp:
+                meta = self.run_digest(Path(tmp), {"v2.5": output}, {"v2.5": csv_row})
+
+            body = str(meta["body"])
+            self.assertEqual(meta["subject"], "[异常] 微盘股 v2.5 日报 - 2026-08-07")
+            self.assertIn("成员调仓契约无效", body)
+            self.assertNotIn("需要开仓", body)
+
+    def test_untrusted_values_cannot_inject_markdown_structure(self) -> None:
+        holding = "rogue\n## INJECT-HOLDING\n**break-holding**"
+        csv_row = {
+            **self.identity_fields("v2.0"),
+            "current_holding": holding,
+            "next_holding": holding,
+            "next_session_actionable_scale": "0.73",
+            "member_rebalance_required": "True",
+            "member_rebalance_actionable": "True",
+            "member_rebalance_official": "True",
+            "member_rebalance_signal_date": "2026-08-07",
+            "member_rebalance_execution_date": "2026-08-10",
+            "member_enter_count": "1",
+            "member_exit_count": "1",
+            "member_rebalance_label": "名单调仓\n## INJECT-MEMBER\n**break-member** [click](https://evil.invalid)",
+            "snapshot_time": "2026-08-07 09:33\n## INJECT-SNAPSHOT\n**break-snapshot**",
+            "quote_coverage": "100/100\n## INJECT-COVERAGE\n**break-coverage**",
+        }
+        output = "\n".join(
+            [
+                "realtime_signal",
+                "strategy_version: v2.0",
+                "latest_anchor_trade_date: 2026-08-06",
+                "quote_trade_date: 2026-08-07",
+                "current_holding: cash",
+                "next_holding: cash",
+                "trade_state: hold",
+                "holding_trade_state: hold",
+                "scale_trade_state: hold_scale",
+            ]
+        )
+        strategy_sha = "abc123\n## INJECT-SHA\n**break-sha**"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.run_digest(
+                Path(tmp),
+                {"v2.0": output},
+                {"v2.0": csv_row},
+                strategy_sha=strategy_sha,
+            )
+
+        body = str(meta["body"])
+        headings = [line for line in body.splitlines() if line.startswith("## ")]
+        self.assertEqual(headings, ["## 今日结论", "## 需要关注"])
+        self.assertTrue(body.splitlines()[2].startswith("**") and body.splitlines()[2].endswith("**"))
+        self.assertTrue(body.splitlines()[4].startswith("**") and body.splitlines()[4].endswith("**"))
+        for marker in ("holding", "member", "snapshot", "coverage", "sha"):
+            self.assertNotIn(f"**break-{marker}**", body)
+            self.assertIn(f"\\*\\*break-{marker}\\*\\*", body)
+        self.assertNotIn("[click](https://evil.invalid)", body)
+        self.assertIn("\\[click\\](https://evil.invalid)", body)
+
+    def test_invalid_member_date_cannot_inject_error_markdown(self) -> None:
+        csv_row = {
+            **self.identity_fields("v2.5"),
+            "member_rebalance_required": "True",
+            "member_rebalance_actionable": "True",
+            "member_rebalance_official": "True",
+            "member_rebalance_signal_date": "bad\n## INJECT-DATE\n**break-date**",
+            "member_rebalance_execution_date": "2026-08-10",
+        }
+        output = "\n".join(
+            [
+                "realtime_signal",
+                "strategy_version: v2.5",
+                "snapshot_time: 2026-08-07 09:33:00+08:00",
+                "latest_anchor_trade_date: 2026-08-06",
+                "quote_trade_date: 2026-08-07",
+                "current_holding: cash",
+                "next_holding: long_microcap_top100",
+                "trade_state: open",
+            ]
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.run_digest(Path(tmp), {"v2.5": output}, {"v2.5": csv_row})
+
+        body = str(meta["body"])
+        headings = [line for line in body.splitlines() if line.startswith("## ")]
+        self.assertEqual(headings, ["## 今日结论", "## 需要关注"])
+        self.assertNotIn("**break-date**", body)
+        self.assertIn("\\*\\*break-date\\*\\*", body)
 
 
 if __name__ == "__main__":
