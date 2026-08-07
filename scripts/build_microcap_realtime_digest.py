@@ -238,6 +238,20 @@ def format_holding(value: str) -> str:
     return HOLDING_LABELS.get(normalized, normalized or "未知")
 
 
+def member_rebalance_action(fields: dict[str, str]) -> str:
+    state = first_value(fields, "member_rebalance_state").lower()
+    required = parse_bool(first_value(fields, "member_rebalance_required"))
+    if not required and state in {"", "hold", "none", "no_rebalance"}:
+        return ""
+
+    label = first_value(fields, "member_rebalance_label")
+    if label:
+        return label
+    enter_count = first_value(fields, "member_enter_count") or "0"
+    exit_count = first_value(fields, "member_exit_count") or "0"
+    return f"名单调仓（调入 {enter_count}，调出 {exit_count}）"
+
+
 def action_label(item: dict[str, object]) -> str:
     if item["status"] != "OK":
         return "异常"
@@ -262,10 +276,14 @@ def action_label(item: dict[str, object]) -> str:
             return "平仓"
         return "调仓"
 
+    actions: list[str] = []
     scale_state = first_value(fields, "scale_trade_state").lower()
     if parse_bool(first_value(fields, "scale_trade_required")) or scale_state not in {"", "hold_scale"}:
-        return "调整仓位"
-    return "无操作"
+        actions.append("调整仓位")
+    member_action = member_rebalance_action(fields)
+    if member_action:
+        actions.append(member_action)
+    return "；".join(actions) or "无操作"
 
 
 def momentum_text(version: str, fields: dict[str, str]) -> str:

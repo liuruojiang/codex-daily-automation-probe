@@ -190,6 +190,66 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertIn("| 0.72 |", body)
         self.assertIn("风险/数据异常：无", body)
 
+    def test_member_rebalance_is_an_action_when_holding_and_scale_are_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.run_digest(
+                Path(tmp),
+                {
+                    "v2.0": "\n".join(
+                        [
+                            "realtime_signal",
+                            "strategy_version: v2.0",
+                            "snapshot_time: 2026-08-07 12:17:56+08:00",
+                            "latest_anchor_trade_date: 2026-08-06",
+                            "quote_trade_date: 2026-08-07",
+                            "current_holding: long_microcap_short_zz1000",
+                            "next_holding: long_microcap_short_zz1000",
+                            "trade_state: hold",
+                            "holding_trade_state: hold",
+                            "scale_trade_state: hold_scale",
+                            "current_execution_scale: 0.73",
+                            "next_session_actionable_scale: 0.73",
+                            "microcap_mom: +4.2612%",
+                            "hedge_mom: -0.2173%",
+                            "momentum_gap: +4.4784%",
+                            "quote_coverage: 100/100",
+                        ]
+                    )
+                },
+                {
+                    "v2.0": {
+                        "member_rebalance_required": "True",
+                        "member_rebalance_state": "rebalance",
+                        "member_enter_count": "7",
+                        "member_exit_count": "7",
+                        "member_rebalance_label": "名单调仓（调入 7，调出 7）",
+                    }
+                },
+            )
+
+        body = str(meta["body"])
+        self.assertEqual(meta["subject"], "[需操作] 微盘股 v2.0 日报 - 2026-08-07")
+        self.assertIn("**v2.0 需要名单调仓（调入 7，调出 7）。**", body)
+        self.assertIn("| 名单调仓（调入 7，调出 7） |", body)
+
+    def test_scale_and_member_rebalances_are_both_visible(self) -> None:
+        fields = {
+            "current_holding": "long_microcap_short_zz1000",
+            "next_holding": "long_microcap_short_zz1000",
+            "holding_trade_state": "hold",
+            "trade_state": "hold",
+            "scale_trade_state": "rebalance_scale",
+            "scale_trade_required": "True",
+            "member_rebalance_required": "True",
+            "member_enter_count": "3",
+            "member_exit_count": "3",
+        }
+
+        self.assertEqual(
+            digest.action_label({"status": "OK", "fields": fields}),
+            "调整仓位；名单调仓（调入 3，调出 3）",
+        )
+
     def test_stale_anchor_uses_abnormal_subject_and_visible_warning(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             meta = self.run_digest(
