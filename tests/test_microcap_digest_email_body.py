@@ -31,6 +31,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         outputs: dict[str, str],
         csv_rows: dict[str, dict[str, str]] | None = None,
         exit_codes: dict[str, str] | None = None,
+        subject_prefix: str = "",
     ) -> dict[str, object]:
         out_dir = tmp_path / "artifacts"
         argv = ["build_microcap_realtime_digest.py"]
@@ -43,6 +44,8 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             self.write_csv(csv_path, row)
             argv += ["--signal-csv", f"{version}={csv_path}"]
         argv += ["--out-dir", str(out_dir), "--planned", "09:30 Asia/Shanghai"]
+        if subject_prefix:
+            argv += ["--subject-prefix", subject_prefix]
         for version in outputs:
             argv += ["--exit-code", f"{version}={(exit_codes or {}).get(version, '0')}"]
 
@@ -248,6 +251,32 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertEqual(
             digest.action_label({"status": "OK", "fields": fields}),
             "调整仓位；名单调仓（调入 3，调出 3）",
+        )
+
+    def test_corrected_dispatch_adds_visible_subject_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.run_digest(
+                Path(tmp),
+                {
+                    "v2.5": "\n".join(
+                        [
+                            "realtime_signal",
+                            "strategy_version: v2.5",
+                            "snapshot_time: 2026-08-07 15:05:00+08:00",
+                            "latest_anchor_trade_date: 2026-08-06",
+                            "quote_trade_date: 2026-08-07",
+                            "current_holding: long_microcap_top100",
+                            "next_holding: long_microcap_top100",
+                            "trade_state: hold",
+                        ]
+                    )
+                },
+                subject_prefix="纠正版",
+            )
+
+        self.assertEqual(
+            meta["subject"],
+            "[纠正版][无需操作] 微盘股 v2.5 日报 - 2026-08-07",
         )
 
     def test_stale_anchor_uses_abnormal_subject_and_visible_warning(self) -> None:

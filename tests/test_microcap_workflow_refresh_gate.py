@@ -12,9 +12,11 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
     def test_microcap_workflow_refreshes_state_before_signals(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
 
-        self.assertIn("# 09:30 Asia/Shanghai == 01:30 UTC.", text)
-        self.assertIn('- cron: "30 1 * * *"', text)
-        self.assertIn('PLANNED_BJ: "09:30 Asia/Shanghai"', text)
+        self.assertIn("# Redundant off-minute triggers", text)
+        self.assertIn('- cron: "33 1 * * *"', text)
+        self.assertIn('- cron: "48 1 * * *"', text)
+        self.assertIn('- cron: "3 2 * * *"', text)
+        self.assertIn('PLANNED_BJ: "09:33/09:48/10:03 Asia/Shanghai"', text)
         self.assertNotIn('10:00 Asia/Shanghai', text)
         self.assertNotIn('- cron: "0 2 * * *"', text)
         self.assertNotIn('10:30 Asia/Shanghai', text)
@@ -60,14 +62,23 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             text.index("name: Run v2.0 realtime signal"),
         )
         self.assertNotIn("if: steps.refresh_state.outputs.exit_code == '0'", text)
-        self.assertEqual(text.count("if: always()"), 8)
+        self.assertIn("group: microcap-realtime-digest", text)
+        self.assertIn("cancel-in-progress: false", text)
+        self.assertIn("actions: read", text)
+        self.assertIn("name: Check delivery marker", text)
+        self.assertIn("scripts/check_microcap_delivery.py", text)
+        self.assertIn("steps.delivery_gate.outputs.should_send == 'true'", text)
+        self.assertIn("name: Mark digest delivered", text)
+        self.assertIn("steps.delivery_gate.outputs.marker_name", text)
+        self.assertIn("subject_prefix", text)
+        self.assertIn("--subject-prefix", text)
         self.assertIn("name: Record refresh failure for digest", text)
         self.assertIn("for version in v2_0 v2_3 v2_5", text)
         self.assertEqual(text.count('TOP100_REALTIME_REQUIRE_STATE: "1"'), 3)
         self.assertEqual(text.count("timeout --foreground 8m python -u microcap_top100"), 3)
         self.assertNotIn("timeout --foreground 30m python -u microcap_top100", text)
         self.assertIn(
-            "if: steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0' || steps.signals_v25.outputs.exit_code != '0'",
+            "if: steps.delivery_gate.outputs.should_send == 'true' && (steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0' || steps.signals_v25.outputs.exit_code != '0')",
             text,
         )
 
