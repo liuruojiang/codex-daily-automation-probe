@@ -1,126 +1,6 @@
 {
   "items": [
     {
-      "sent_date": "2026-06-09",
-      "source": "Quantocracy",
-      "title": "Recent Quant Links from Quantocracy as of 06/06/2026",
-      "url": "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-06062026/"
-    },
-    {
-      "sent_date": "2026-06-09",
-      "source": "Bogleheads.org Forum (comments/replies 3798; views 1094122)",
-      "title": "Investing - Theory, News & General • Modified versions of HFEA with ITT and Futures / Lifecycle Investing with Modern Portfolio Theory",
-      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8783816#p8783816"
-    },
-    {
-      "sent_date": "2026-06-09",
-      "source": "Bogleheads.org Forum (comments/replies 829; views 198782)",
-      "title": "Personal Consumer Issues • Don't pay full price for SiriusXM radio",
-      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8783802#p8783802"
-    },
-    {
-      "sent_date": "2026-06-09",
-      "source": "Bogleheads.org Forum (comments/replies 270; views 21035)",
-      "title": "Personal Finance (Not Investing) • Any early retired physicians?",
-      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8783804#p8783804"
-    },
-    {
-      "sent_date": "2026-06-09",
-      "source": "Reddit r/ETFs (hot RSS rank 4)",
-      "title": "Roth IRA",
-      "url": "https://old.reddit.com/r/ETFs/comments/1u0b3qd/roth_ira/"
-    },
-    {
-      "sent_date": "2026-06-09",
-      "source": "Reddit r/Bogleheads (hot RSS rank 4)",
-      "title": "Money Market vs Total Bond Market for Gradual De-Risking",
-      "url": "https://old.reddit.com/r/Bogleheads/comments/1u07j9a/money_market_vs_total_bond_market_for_gradual/"
-    },
-    {
-      "sent_date": "2026-06-09",
-      "source": "Reddit r/portfolios (hot RSS rank 5)",
-      "title": "Good Portfolio Build?",
-      "url": "https://old.reddit.com/r/portfolios/comments/1u0kmto/good_portfolio_build/"
-    },
-    {
-      "sent_date": "2026-06-09",
-      "source": "Reddit r/investing (hot RSS rank 5)",
-      "title": "S&P 500 will not be fast tracking SpaceX entry into its index and it won't waive its rule for unprofitable AI companies",
-      "url": "https://old.reddit.com/r/investing/comments/1tzo7dz/sp_500_will_not_be_fast_tracking_spacex_entry/"
-    },
-    {
-      "sent_date": "2026-06-09",
-      "source": "Bogleheads.org Forum (comments/replies 27; views 1764)",
-      "title": "Personal Finance (Not Investing) • Transitioning into FIRE and tax optimization",
-      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8783818#p8783818"
-    },
-    {
-      "sent_date": "2026-06-09",
-      "source": "Reddit r/portfolios (hot RSS rank 6)",
-      "title": "Roth IRA portfolio with Fidelity",
-      "url": "https://old.reddit.com/r/portfolios/comments/1u0imzi/roth_ira_portfolio_with_fidelity/"
-    },
-    {
-      "sent_date": "2026-06-09",
-      "source": "Reddit r/Bogleheads (hot RSS rank 6)",
-      "title": "What am I missing? 100% stock keeps outperforming stock/bond portfolios in retirement backtests",
-      "url": "https://old.reddit.com/r/Bogleheads/comments/1tzyofl/what_am_i_missing_100_stock_keeps_outperforming/"
-    },
-    {
-      "sent_date": "2026-06-10",
-      "source": "Bogleheads.org Forum (comments/replies 1073; views 447918)",
-      "title": "Investing - Theory, News & General • A Simple Bogleheads Retirement Using Variable Percentage Withdrawals (VPW Forward Test)",
-      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8784471#p8784471"
-    },
-    {
-      "sent_date": "2026-06-10",
-      "source": "Reddit r/Bogleheads (hot RSS rank 3)",
-      "title": "Bogleheads who do Roth conversions: what made the extra modeling feel justified?",
-      "url": "https://old.reddit.com/r/Bogleheads/comments/1u13n6k/bogleheads_who_do_roth_conversions_what_made_the/"
-    },
-    {
-      "sent_date": "2026-06-10",
-      "source": "Reddit r/portfolios (hot RSS rank 4)",
-      "title": "Return stacked + highly levered portfolio",
-      "url": "https://old.reddit.com/r/portfolios/comments/1u1kmta/return_stacked_highly_levered_portfolio/"
-    },
-    {
-      "sent_date": "2026-06-10",
-      "source": "Reddit r/ETFs (hot RSS rank 7)",
-      "title": "2 Years Since Last Post",
-      "url": "https://old.reddit.com/r/ETFs/comments/1u13f0k/2_years_since_last_post/"
-    },
-    {
-      "sent_date": "2026-06-11",
-      "source": "Bogleheads.org Forum (comments/replies 151; views 7758)",
-      "title": "Investing - Theory, News & General • Big IPOs coming to S&P 500?",
-      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8785176#p8785176"
-    },
-    {
-      "sent_date": "2026-06-11",
-      "source": "Reddit r/portfolios (hot RSS rank 3)",
-      "title": "Portfolio opinions x2 401ks and x1 Roth IRA",
-      "url": "https://old.reddit.com/r/portfolios/comments/1u2gjo4/portfolio_opinions_x2_401ks_and_x1_roth_ira/"
-    },
-    {
-      "sent_date": "2026-06-11",
-      "source": "Reddit r/investing (hot RSS rank 5)",
-      "title": "SpaceX IPO is in 2 days. I read the entire S-1 so you don't have to. Heres the good, the bad and the absolutely insane",
-      "url": "https://old.reddit.com/r/investing/comments/1u1sa60/spacex_ipo_is_in_2_days_i_read_the_entire_s1_so/"
-    },
-    {
-      "sent_date": "2026-06-11",
-      "source": "Reddit r/Bogleheads (hot RSS rank 6)",
-      "title": "Preferred Bond ETF for 5 to 10 years?",
-      "url": "https://old.reddit.com/r/Bogleheads/comments/1u24aqp/preferred_bond_etf_for_5_to_10_years/"
-    },
-    {
-      "sent_date": "2026-06-11",
-      "source": "Reddit r/ETFs (hot RSS rank 7)",
-      "title": "If you were starting from scratch today, would you choose VOO, VTI, or VT?",
-      "url": "https://old.reddit.com/r/ETFs/comments/1u20apq/if_you_were_starting_from_scratch_today_would_you/"
-    },
-    {
       "sent_date": "2026-06-13",
       "source": "Quantpedia",
       "title": "Quantpedia in May 2026",
@@ -1757,6 +1637,66 @@
       "source": "Reddit r/ETFs (hot RSS rank 7)",
       "title": "I want to start investing with 1300$/month",
       "url": "https://old.reddit.com/r/ETFs/comments/1viaegn/i_want_to_start_investing_with_1300month/"
+    },
+    {
+      "sent_date": "2026-08-11",
+      "source": "Quantocracy",
+      "title": "Recent Quant Links from Quantocracy as of 08/09/2026",
+      "url": "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-08092026/"
+    },
+    {
+      "sent_date": "2026-08-11",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Is IMAX a Screaming Buy? | LFTC",
+      "url": "https://www.youtube.com/watch?v=gi4YHHJJO14"
+    },
+    {
+      "sent_date": "2026-08-11",
+      "source": "Alpha Architect（博客）",
+      "title": "AI should assist advisors, but AI is NOT a fiduciary",
+      "url": "https://alphaarchitect.com/llm-fiduciary/"
+    },
+    {
+      "sent_date": "2026-08-11",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Talk Your Book: Why Momentum Investing Works",
+      "url": "https://awealthofcommonsense.com/2026/08/talk-your-book-why-momentum-investing-works/"
+    },
+    {
+      "sent_date": "2026-08-11",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Why SpaceX Stock Could Drop Below $100",
+      "url": "https://www.youtube.com/shorts/417oNMKm0Jw"
+    },
+    {
+      "sent_date": "2026-08-11",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Astrology For Finance Bros",
+      "url": "https://www.youtube.com/shorts/xFJO3NlN7m8"
+    },
+    {
+      "sent_date": "2026-08-11",
+      "source": "Portfolio Charts（博客）",
+      "title": "Fun New Ways to Find a Great Portfolio",
+      "url": "https://portfoliocharts.com/2026/08/09/fun-new-ways-to-find-a-great-portfolio/"
+    },
+    {
+      "sent_date": "2026-08-11",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Making it to New All-Time Highs",
+      "url": "https://awealthofcommonsense.com/2026/08/making-it-to-new-all-time-highs/"
+    },
+    {
+      "sent_date": "2026-08-11",
+      "source": "Bogleheads.org Forum (comments/replies 13330; views 2615006)",
+      "title": "Investing - Theory, News & General • The Final, Definitive Thread on Brokerage Transfer Bonuses",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8829780#p8829780"
+    },
+    {
+      "sent_date": "2026-08-11",
+      "source": "Bogleheads.org Forum (comments/replies 25; views 1869)",
+      "title": "Personal Investments • Retirement Advice Requested",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8829764#p8829764"
     }
   ]
 }
