@@ -104,7 +104,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 803675dccb9d9e739eaa1b759dfdb5e37f68e6e1
+          ref: 29522a1ad1c70113c8899283856149e9b7f61e9f
           path: microcap
 
       - name: Record microcap strategy SHA
@@ -232,14 +232,14 @@ jobs:
         run: python automation/scripts/send_report.py artifacts/metadata.json
 
       - name: Prepare delivery marker
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success'
+        if: steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0'
         shell: bash
         run: |
           mkdir -p delivery-marker
           printf '%s\n' "${GITHUB_RUN_URL}" > delivery-marker/run-url.txt
 
       - name: Mark digest delivered
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success'
+        if: steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}
