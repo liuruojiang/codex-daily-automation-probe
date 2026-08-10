@@ -59,7 +59,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('git rev-parse HEAD', text)
         self.assertIn('--strategy-sha "${{ steps.microcap_sha.outputs.sha }}"', text)
         self.assertIn('repository: liuruojiang/microcap', text)
-        self.assertIn('ref: 803675dccb9d9e739eaa1b759dfdb5e37f68e6e1', text)
+        self.assertIn('ref: 29522a1ad1c70113c8899283856149e9b7f61e9f', text)
         self.assertNotIn('ref: main', text)
         sha_step = text[text.index('name: Record microcap strategy SHA') : text.index('name: Install runtime dependencies')]
         self.assertIn('working-directory: microcap', sha_step)
@@ -90,6 +90,21 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             "if: steps.delivery_gate.outputs.should_send == 'true' && (steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0' || steps.signals_v25.outputs.exit_code != '0')",
             text,
         )
+
+    def test_normal_delivery_marker_requires_all_signal_scripts_to_succeed(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        prepare_step = text[
+            text.index("name: Prepare delivery marker") : text.index("name: Mark digest delivered")
+        ]
+        mark_step = text[
+            text.index("name: Mark digest delivered") : text.index("name: Upload signal outputs")
+        ]
+
+        for step in (prepare_step, mark_step):
+            self.assertIn("steps.send_gmail.outcome == 'success'", step)
+            self.assertIn("steps.signals_v20.outputs.exit_code == '0'", step)
+            self.assertIn("steps.signals_v23.outputs.exit_code == '0'", step)
+            self.assertIn("steps.signals_v25.outputs.exit_code == '0'", step)
 
 
 if __name__ == "__main__":
