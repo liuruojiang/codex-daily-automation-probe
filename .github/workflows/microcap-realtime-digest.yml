@@ -2,11 +2,11 @@ name: Microcap Realtime Digest
 
 on:
   schedule:
-    # Redundant off-minute triggers target delivery around 14:00-14:30 Asia/Shanghai
-    # under the recent 85-120 minute GitHub cron delay.
-    - cron: "3 4 * * *"
-    - cron: "18 4 * * *"
-    - cron: "33 4 * * *"
+    # Redundant off-minute triggers target delivery around 14:20-14:40 Asia/Shanghai
+    # under the latest 65-75 minute GitHub cron delay plus report runtime.
+    - cron: "3 5 * * *"
+    - cron: "18 5 * * *"
+    - cron: "33 5 * * *"
   workflow_dispatch:
     inputs:
       correction:
@@ -71,7 +71,7 @@ jobs:
     timeout-minutes: 75
     env:
       TZ: Asia/Shanghai
-      PLANNED_BJ: "12:03/12:18/12:33 Asia/Shanghai"
+      PLANNED_BJ: "13:03/13:18/13:33 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Record workflow start time
