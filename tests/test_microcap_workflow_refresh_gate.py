@@ -37,21 +37,21 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertNotIn("--max-workers 2", refresh_step)
         self.assertNotIn("microcap_top100_mom16_biweekly_live_v2_0.py", refresh_step)
         self.assertNotIn("&& python", refresh_step)
-        self.assertIn("name: Run v2.0 realtime signal", text)
-        self.assertIn("name: Run v2.3 realtime signal", text)
-        self.assertIn("name: Run v2.5 realtime signal", text)
+        self.assertIn("name: Run v2.0 selected signal", text)
+        self.assertIn("name: Run v2.3 selected signal", text)
+        self.assertIn("name: Run v2.5 selected signal", text)
         self.assertIn("microcap_top100_mom16_biweekly_live_v2_5.py", text)
         self.assertIn("--result v2.5=microcap/realtime_signal_v2_5_result.txt", text)
         self.assertIn(
-            "--signal-csv v2.0=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_0_realtime_signal.csv",
+            "--signal-csv v2.0=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_0_${signal_suffix}.csv",
             text,
         )
         self.assertIn(
-            "--signal-csv v2.3=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_3_realtime_signal.csv",
+            "--signal-csv v2.3=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_3_${signal_suffix}.csv",
             text,
         )
         self.assertIn(
-            "--signal-csv v2.5=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_5_realtime_signal.csv",
+            "--signal-csv v2.5=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_5_${signal_suffix}.csv",
             text,
         )
         self.assertIn("--exit-code \"v2.5=${SIGNAL_V2_5_EXIT_CODE:-unknown}\"", text)
@@ -59,7 +59,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('git rev-parse HEAD', text)
         self.assertIn('--strategy-sha "${{ steps.microcap_sha.outputs.sha }}"', text)
         self.assertIn('repository: liuruojiang/microcap', text)
-        self.assertIn('ref: 6e88b474e591546b449712414ca69f30bd55cb0c', text)
+        self.assertIn('ref: 4a9fbe4888d6dbdbf5157e020eb6b778022f7ae4', text)
         self.assertNotIn('ref: main', text)
         sha_step = text[text.index('name: Record microcap strategy SHA') : text.index('name: Install runtime dependencies')]
         self.assertIn('working-directory: microcap', sha_step)
@@ -68,7 +68,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertNotIn("v2.4", text)
         self.assertLess(
             text.index("name: Refresh Top100 realtime state"),
-            text.index("name: Run v2.0 realtime signal"),
+            text.index("name: Run v2.0 selected signal"),
         )
         self.assertNotIn("if: steps.refresh_state.outputs.exit_code == '0'", text)
         self.assertIn("group: microcap-realtime-digest", text)
@@ -84,12 +84,13 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("name: Record refresh failure for digest", text)
         self.assertIn("for version in v2_0 v2_3 v2_5", text)
         self.assertEqual(text.count('TOP100_REALTIME_REQUIRE_STATE: "1"'), 3)
-        self.assertEqual(text.count("timeout --foreground 8m python -u microcap_top100"), 3)
+        self.assertEqual(text.count("timeout --foreground 60m python -u microcap_top100"), 3)
         self.assertNotIn("timeout --foreground 30m python -u microcap_top100", text)
-        self.assertIn(
-            "if: steps.delivery_gate.outputs.should_send == 'true' && (steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0' || steps.signals_v25.outputs.exit_code != '0')",
-            text,
-        )
+        self.assertIn("publication_mode:", text)
+        self.assertIn("- close_confirmed", text)
+        self.assertIn("--publication-mode \"${{ steps.publication_mode.outputs.mode }}\"", text)
+        self.assertIn("signal_suffix=latest_signal", text)
+        self.assertIn("steps.digest.outputs.status != 'OK'", text)
 
     def test_normal_delivery_marker_requires_all_signal_scripts_to_succeed(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -102,6 +103,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
 
         for step in (prepare_step, mark_step):
             self.assertIn("steps.send_gmail.outcome == 'success'", step)
+            self.assertIn("steps.digest.outputs.status == 'OK'", step)
             self.assertIn("steps.signals_v20.outputs.exit_code == '0'", step)
             self.assertIn("steps.signals_v23.outputs.exit_code == '0'", step)
             self.assertIn("steps.signals_v25.outputs.exit_code == '0'", step)

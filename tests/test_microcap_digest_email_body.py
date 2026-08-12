@@ -92,6 +92,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         subject_prefix: str = "",
         strategy_sha: str = STRATEGY_SHA,
         signal_csv_paths: dict[str, Path] | None = None,
+        publication_mode: str = "realtime",
     ) -> dict[str, object]:
         out_dir = tmp_path / "artifacts"
         argv = ["build_microcap_realtime_digest.py"]
@@ -107,6 +108,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             argv += ["--signal-csv", f"{version}={csv_path}"]
         argv += ["--out-dir", str(out_dir), "--planned", "09:30 Asia/Shanghai"]
         argv += ["--strategy-sha", strategy_sha]
+        argv += ["--publication-mode", publication_mode]
         if subject_prefix:
             argv += ["--subject-prefix", subject_prefix]
         for version in outputs:
@@ -120,6 +122,61 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         ):
             self.assertEqual(digest.main(), 0)
         return json.loads((out_dir / "metadata.json").read_text(encoding="utf-8"))
+
+    def test_close_confirmed_digest_uses_final_csvs_and_common_signal_date(self) -> None:
+        outputs: dict[str, str] = {}
+        csv_rows: dict[str, dict[str, str]] = {}
+        holdings = {
+            "v2.0": ("cash", "cash", "0.0"),
+            "v2.3": ("cash", "cash", "0.0"),
+            "v2.5": ("long_microcap_top100", "long_microcap_top100", "1.0"),
+        }
+        for version, (current, next_holding, scale) in holdings.items():
+            outputs[version] = "\n".join(
+                [
+                    "signal",
+                    f"strategy_version: {version}",
+                    "signal_date: 2026-08-12",
+                    f"current_holding: {current}",
+                    f"next_holding: {next_holding}",
+                    "trade_state: hold",
+                ]
+            )
+            csv_rows[version] = {
+                **self.identity_fields(version),
+                "date": "2026-08-12",
+                "signal_timing": "close_confirmed",
+                "official_close_confirmed_signal": "True",
+                "current_holding": current,
+                "next_holding": next_holding,
+                "trade_state": "hold",
+                "holding_trade_state": "hold",
+                "scale_trade_state": "hold_scale",
+                "next_session_actionable_scale": scale,
+                "member_rebalance_signal_date": "2026-08-06",
+                "member_rebalance_execution_date": "2026-08-07",
+                "microcap_mom": "0.2102",
+                "hedge_mom": "0.0735",
+                "momentum_gap": "0.1367",
+                "annualized_log_wls_score": "3.2530" if version == "v2.5" else "0.8230",
+                "log_wls_r2": "0.955" if version == "v2.5" else "0.327",
+            }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.run_digest(
+                Path(tmp),
+                outputs,
+                csv_rows,
+                publication_mode="close_confirmed",
+            )
+
+        self.assertEqual(meta["status"], "OK")
+        self.assertEqual(meta["publication_mode"], "close_confirmed")
+        self.assertEqual(meta["signal_date"], "2026-08-12")
+        self.assertIn("[收盘确认]", str(meta["subject"]))
+        self.assertIn("信号类型：收盘确认", str(meta["body"]))
+        self.assertIn("收盘确认日期：2026-08-12", str(meta["body"]))
+        self.assertNotIn("不可用", str(meta["body"]))
 
     def test_actionable_digest_is_compact_and_uses_version_correct_momentum_labels(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

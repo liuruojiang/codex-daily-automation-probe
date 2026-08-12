@@ -55,7 +55,11 @@ def previous_weekday(value: date) -> date:
     return value
 
 
-def classify_signal_output(output: str, exit_code: str) -> tuple[str, str]:
+def classify_signal_output(
+    output: str,
+    exit_code: str,
+    publication_mode: str = "realtime",
+) -> tuple[str, str]:
     code = exit_code.strip().lower()
     if code and code not in {"0", "none", "unknown"}:
         return "FAILED", f"script exit code is {exit_code}"
@@ -67,8 +71,9 @@ def classify_signal_output(output: str, exit_code: str) -> tuple[str, str]:
         if refresh_code:
             return "FAILED", f"state refresh failed with exit code {refresh_code}"
         return "FAILED", "state refresh failed before realtime signal ran"
-    if "realtime_signal" not in output:
-        return "FAILED", "realtime_signal marker is missing"
+    expected_marker = "realtime_signal" if publication_mode == "realtime" else "signal"
+    if re.search(rf"^{re.escape(expected_marker)}\s*$", output, flags=re.M) is None:
+        return "FAILED", f"{expected_marker} marker is missing"
 
     anchor = parse_iso_date(extract_value(output, "latest_anchor_trade_date"))
     quote_trade_date = parse_iso_date(extract_value(output, "quote_trade_date"))
@@ -360,6 +365,21 @@ def validate_member_action_contract(fields: dict[str, str]) -> tuple[bool, str]:
     return True, ""
 
 
+def validate_publication_contract(
+    publication_mode: str,
+    fields: dict[str, str],
+) -> tuple[bool, str]:
+    if publication_mode != "close_confirmed":
+        return True, ""
+    if parse_strict_bool(first_value(fields, "official_close_confirmed_signal")) is not True:
+        return False, "publication contract invalid: official_close_confirmed_signal must be True"
+    if first_value(fields, "signal_timing") != "close_confirmed":
+        return False, "publication contract invalid: signal_timing must be close_confirmed"
+    if parse_strict_iso_date(first_value(fields, "date")) is None:
+        return False, "publication contract invalid: final CSV date must be YYYY-MM-DD"
+    return True, ""
+
+
 def parse_strict_iso_date(value: str) -> date | None:
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value.strip()):
         return None
@@ -579,8 +599,21 @@ def conclusion_text(results: list[dict[str, object]]) -> str:
     return "；".join(phrases) + "。"
 
 
-def shared_data_line(results: list[dict[str, object]], strategy_sha: str) -> str:
+def shared_data_line(
+    results: list[dict[str, object]],
+    strategy_sha: str,
+    publication_mode: str = "realtime",
+) -> str:
     fields_list = [item["fields"] for item in results]
+    if publication_mode == "close_confirmed":
+        close_dates = [first_value(fields, "date") for fields in fields_list if isinstance(fields, dict)]
+        close_dates = [value for value in close_dates if value]
+        data_value = escape_markdown_inline(max(close_dates)) if close_dates else "未记录"
+        line = f"收盘确认日期：{data_value}"
+        if strategy_sha:
+            line += f"｜策略代码：{escape_markdown_inline(strategy_sha)}"
+        return line
+
     snapshots = [first_value(fields, "snapshot_time") for fields in fields_list if isinstance(fields, dict)]
     snapshots = [value for value in snapshots if value]
     quote_dates = [first_value(fields, "quote_trade_date") for fields in fields_list if isinstance(fields, dict)]
@@ -630,11 +663,14 @@ def build_compact_digest(
     run_url: str,
     strategy_sha: str,
     subject_prefix: str = "",
+    publication_mode: str = "realtime",
 ) -> tuple[str, str]:
     versions = "/".join(str(item["version"]) for item in results)
     tag = subject_tag(results)
     lines = [
         "## 今日结论",
+        "",
+        f"**信号类型：{'收盘确认' if publication_mode == 'close_confirmed' else '盘中实时'}**",
         "",
         f"**{holdings_summary_text(results)}**",
         "",
@@ -675,13 +711,14 @@ def build_compact_digest(
         lines += [f"- **{warning.split('：', 1)[0]}：**{warning.split('：', 1)[1]}" for warning in warnings]
     else:
         lines.append("风险/数据异常：无")
-    lines += ["", shared_data_line(results, strategy_sha)]
+    lines += ["", shared_data_line(results, strategy_sha, publication_mode)]
     if run_url:
         lines += [f"[查看完整诊断与原始输出]({run_url})"]
     body = "\n".join(lines)
     normalized_prefix = subject_prefix.strip().strip("[]")
     prefix = f"[{normalized_prefix}]" if normalized_prefix else ""
-    subject = f"{prefix}[{tag}] 微盘股 {versions} 日报 - {date_s}"
+    mode_tag = "[收盘确认]" if publication_mode == "close_confirmed" else ""
+    subject = f"{prefix}{mode_tag}[{tag}] 微盘股 {versions} 日报 - {date_s}"
     return subject, body
 
 
@@ -698,6 +735,12 @@ def main() -> int:
     parser.add_argument("--started", default="")
     parser.add_argument("--subject-prefix", default="")
     parser.add_argument("--strategy-sha", default="", help="Checked-out microcap strategy commit SHA")
+    parser.add_argument(
+        "--publication-mode",
+        choices=("realtime", "close_confirmed"),
+        default="realtime",
+        help="Whether the final CSVs represent an intraday realtime snapshot or a close-confirmed signal.",
+    )
     parser.add_argument("--exit-code", action="append", default=[], help="Exit code, or version=code. Can be repeated.")
     parser.add_argument(
         "--signal-csv",
@@ -720,7 +763,7 @@ def main() -> int:
         raw = result_path.read_text(encoding="utf-8", errors="replace") if result_path.exists() else "未找到实时信号输出文件。"
         output = clean_output(raw)
         exit_code = exit_codes.get(version, default_exit_code)
-        status, status_note = classify_signal_output(output, exit_code)
+        status, status_note = classify_signal_output(output, exit_code, args.publication_mode)
         stdout_fields = parse_output_fields(output)
         csv_fields, csv_status_note = read_last_csv_row(signal_csv_paths.get(version, ""))
         fields: dict[str, str] = {}
@@ -738,6 +781,11 @@ def main() -> int:
             if not member_contract_ok:
                 status = "FAILED"
                 status_note = member_contract_note
+        if status == "OK":
+            publication_ok, publication_note = validate_publication_contract(args.publication_mode, csv_fields)
+            if not publication_ok:
+                status = "FAILED"
+                status_note = publication_note
         if status == "OK":
             fields = dict(stdout_fields)
             fields.update(csv_fields)
@@ -762,7 +810,21 @@ def main() -> int:
     if not results:
         raise ValueError("at least one realtime signal result is required")
 
-    date_s = now_bj().date().isoformat()
+    if args.publication_mode == "close_confirmed":
+        close_dates = {
+            first_value(item["csv_fields"], "date")
+            for item in results
+            if isinstance(item["csv_fields"], dict) and first_value(item["csv_fields"], "date")
+        }
+        if len(close_dates) != 1:
+            for item in results:
+                item["status"] = "FAILED"
+                item["status_note"] = "publication contract invalid: close-confirmed CSV dates must match"
+            date_s = now_bj().date().isoformat()
+        else:
+            date_s = next(iter(close_dates))
+    else:
+        date_s = now_bj().date().isoformat()
     run_url = os.environ.get("GITHUB_RUN_URL", "")
     subject, digest_text = build_compact_digest(
         results,
@@ -770,6 +832,7 @@ def main() -> int:
         run_url=run_url,
         strategy_sha=args.strategy_sha,
         subject_prefix=args.subject_prefix,
+        publication_mode=args.publication_mode,
     )
 
     md = out_dir / f"microcap_realtime_signal_digest_{date_s}.md"
@@ -779,6 +842,9 @@ def main() -> int:
         "subject": subject,
         "body": digest_text,
         "attachment": None,
+        "status": worst_status([str(item["status"]) for item in results]),
+        "publication_mode": args.publication_mode,
+        "signal_date": date_s,
     }
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     return 0
