@@ -1,30 +1,6 @@
 {
   "items": [
     {
-      "sent_date": "2026-06-13",
-      "source": "Quantpedia",
-      "title": "Quantpedia in May 2026",
-      "url": "https://quantpedia.com/quantpedia-in-may-2026/"
-    },
-    {
-      "sent_date": "2026-06-13",
-      "source": "Bogleheads.org Forum (comments/replies 1187; views 429487)",
-      "title": "Investing - Theory, News & General • The One-Fund Portfolio as a default suggestion",
-      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8786501#p8786501"
-    },
-    {
-      "sent_date": "2026-06-13",
-      "source": "Bogleheads.org Forum (comments/replies 74; views 5351)",
-      "title": "Investing - Theory, News & General • Psychology during bull markets",
-      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8786507#p8786507"
-    },
-    {
-      "sent_date": "2026-06-13",
-      "source": "Reddit r/ETFs (hot RSS rank 4)",
-      "title": "Finally landed on my portfolio — going aggressive with a little safety",
-      "url": "https://old.reddit.com/r/ETFs/comments/1u46rns/finally_landed_on_my_portfolio_going_aggressive/"
-    },
-    {
       "sent_date": "2026-06-16",
       "source": "Bogleheads.org Forum (comments/replies 81; views 2239)",
       "title": "Personal Investments • Should federal employees consider pension as their bond fund?",
@@ -1775,6 +1751,30 @@
       "source": "Reddit r/ETFs (hot RSS rank 7)",
       "title": "A bit confused, trying to create portfolio",
       "url": "https://old.reddit.com/r/ETFs/comments/1vlraj4/a_bit_confused_trying_to_create_portfolio/"
+    },
+    {
+      "sent_date": "2026-08-13",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Animal Spirits: Depressed Day Traders",
+      "url": "https://awealthofcommonsense.com/2026/08/animal-spirits-depressed-day-traders/"
+    },
+    {
+      "sent_date": "2026-08-13",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Depressed Day Traders | Animal Spirits 477",
+      "url": "https://www.youtube.com/watch?v=BFZitoZky5M"
+    },
+    {
+      "sent_date": "2026-08-13",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "The Stocks AI Was Supposed to Destroy Are Ripping",
+      "url": "https://www.youtube.com/shorts/_8vpIKmRmr0"
+    },
+    {
+      "sent_date": "2026-08-13",
+      "source": "Bogleheads.org Forum (comments/replies 34; views 37443)",
+      "title": "US Chapters • Master Thread for Charlotte, NC Boglehead Chapter",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8831254#p8831254"
     }
   ]
 }
