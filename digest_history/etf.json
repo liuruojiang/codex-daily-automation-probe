@@ -1,24 +1,6 @@
 {
   "items": [
     {
-      "sent_date": "2026-06-20",
-      "source": "Quantocracy",
-      "title": "Recent Quant Links from Quantocracy as of 06/17/2026",
-      "url": "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-06172026/"
-    },
-    {
-      "sent_date": "2026-06-20",
-      "source": "Reddit r/ETFs (hot RSS rank 4)",
-      "title": "SCHG vs QQQ",
-      "url": "https://old.reddit.com/r/ETFs/comments/1uab0pf/schg_vs_qqq/"
-    },
-    {
-      "sent_date": "2026-06-20",
-      "source": "Reddit r/ETFs (hot RSS rank 6)",
-      "title": "Considering switch from VTI to ITOT",
-      "url": "https://old.reddit.com/r/ETFs/comments/1ua28w5/considering_switch_from_vti_to_itot/"
-    },
-    {
       "sent_date": "2026-06-23",
       "source": "Quantocracy",
       "title": "Recent Quant Links from Quantocracy as of 06/21/2026",
@@ -1877,6 +1859,48 @@
       "source": "Of Dollars And Data（博客）",
       "title": "The Myth of Owning Your Time",
       "url": "https://ofdollarsanddata.com/the-myth-of-owning-your-time/"
+    },
+    {
+      "sent_date": "2026-08-20",
+      "source": "Meb Faber（博客）",
+      "title": "Meb’s Greatest Hits",
+      "url": "https://mebfaber.com/2026/08/19/mebs-greatest-hits-2/"
+    },
+    {
+      "sent_date": "2026-08-20",
+      "source": "The Meb Faber Show（视频/播客）",
+      "title": "Cambria Global EW 3 ETF and 351 ETF Conversions (GEX) | Meb Faber",
+      "url": "https://www.youtube.com/watch?v=9dkWdd4-wTc"
+    },
+    {
+      "sent_date": "2026-08-20",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Animal Spirits: The Best Bear Case on AI",
+      "url": "https://awealthofcommonsense.com/2026/08/animal-spirits-the-best-bear-case-on-ai/"
+    },
+    {
+      "sent_date": "2026-08-20",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "The Best Bear Case on AI | Animal Spirits 478",
+      "url": "https://www.youtube.com/watch?v=8rx1SjD11yQ"
+    },
+    {
+      "sent_date": "2026-08-20",
+      "source": "The Compound / Animal Spirits（视频/播客）",
+      "title": "Will Spotify Be the First Media Company to Hit 1 Billion Subscribers?",
+      "url": "https://www.youtube.com/shorts/aAUqlk4H8p0"
+    },
+    {
+      "sent_date": "2026-08-20",
+      "source": "The Meb Faber Show（视频/播客）",
+      "title": "Gold or Real Estate: What Survives Hyperinflation?",
+      "url": "https://www.youtube.com/shorts/huH3Xk5zXgc"
+    },
+    {
+      "sent_date": "2026-08-20",
+      "source": "Bogleheads.org Forum (comments/replies 55; views 6926)",
+      "title": "Investing - Theory, News & General • Bonds: are Bogleheads slicing and dicing their fixed income allocation?",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8837127#p8837127"
     }
   ]
 }
