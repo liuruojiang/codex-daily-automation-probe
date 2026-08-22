@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Install ETF market-data dependency
+        run: python -m pip install "yfinance==0.2.66"
       - name: Build US ETF and asset allocation digest
         run: python scripts/daily_reports.py etf --out-dir artifacts
       - name: Send Gmail
