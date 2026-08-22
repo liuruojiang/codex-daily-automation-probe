@@ -61,7 +61,11 @@ class AiHotFetchRetryTests(unittest.TestCase):
 
         self.assertEqual(len(attempts), 3)
         self.assertEqual(metadata["subject"], "AI HOT 日报 - 2026-07-05")
-        self.assertTrue((Path(metadata["attachment"])).name.endswith("2026-07-05.md"))
+        self.assertIsNone(metadata["attachment"])
+        self.assertIn("<!doctype html>", metadata["html_body"].lower())
+        self.assertIn("Example model update", metadata["html_body"])
+        self.assertIn("Example model update", metadata["body"])
+        self.assertFalse(any(out_dir.glob("*.md")))
 
     def test_build_ai_reports_attempt_count_when_fetch_never_recovers(self) -> None:
         original_fetch_bytes = dr.fetch_bytes

@@ -7,7 +7,12 @@ from email.message import EmailMessage
 from pathlib import Path
 
 
-def send_mail(subject: str, body: str, attachment: str | Path | None = None) -> None:
+def send_mail(
+    subject: str,
+    body: str,
+    attachment: str | Path | None = None,
+    html_body: str | None = None,
+) -> None:
     required = [
         "MAIL_SERVER",
         "MAIL_PORT",
@@ -25,6 +30,8 @@ def send_mail(subject: str, body: str, attachment: str | Path | None = None) -> 
     message["From"] = os.environ["MAIL_FROM"]
     message["To"] = os.environ["MAIL_TO"]
     message.set_content(body)
+    if html_body:
+        message.add_alternative(html_body, subtype="html")
 
     if attachment:
         path = Path(attachment)
