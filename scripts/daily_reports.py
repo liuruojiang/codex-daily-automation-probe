@@ -3581,8 +3581,20 @@ def append_etf_fixed_monitor_section(lines: list[str], updates: list[Item]) -> i
     return len(updates[:ETF_FIXED_MONITOR_DISPLAY_LIMIT])
 
 
-def write_meta(out_dir: Path, subject: str, body: str, attachment: Path) -> None:
-    meta = {"subject": subject, "body": body, "attachment": str(attachment)}
+def write_meta(
+    out_dir: Path,
+    subject: str,
+    body: str,
+    attachment: Path | None,
+    html_body: str | None = None,
+) -> None:
+    meta = {
+        "subject": subject,
+        "body": body,
+        "attachment": str(attachment) if attachment else None,
+    }
+    if html_body:
+        meta["html_body"] = html_body
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
@@ -5363,39 +5375,127 @@ def build_ai(out_dir: Path) -> None:
     daily = fetch_json_with_retries(f"{base}/api/public/daily")
     date_s = str(daily.get("date") or report_date())
     sections = daily.get("sections") or []
-    md = out_dir / f"ai_hot_digest_{date_s}.md"
-    lines = [f"# AI HOT 日报 - {date_s}", "", "## 一句话结论", "", clean_text(daily.get("lead") or "今日 AI 热点以模型、产品和行业动态为主。"), ""]
+    lead = daily.get("lead")
+    if isinstance(lead, dict):
+        conclusion = clean_text(lead.get("leadParagraph") or lead.get("title"))
+    else:
+        conclusion = clean_text(lead)
+    conclusion = conclusion or "今日 AI 热点以模型、产品和行业动态为主。"
+    flat = [it for sec in sections for it in (sec.get("items") or [])]
+    counts = " · ".join(f"{sec.get('label') or '其他'} {len(sec.get('items') or [])} 条" for sec in sections)
+    why_it_matters = "可能影响模型选择、产品工作流、成本结构或行业竞争格局，建议结合实际使用场景判断是否跟进。"
+
+    plain_lines = [
+        f"AI HOT 日报 - {date_s}",
+        "",
+        "一句话结论",
+        conclusion,
+        "",
+        "今日速览",
+        f"共 {len(flat)} 条：{counts}",
+        "",
+    ]
+    html_sections: list[str] = []
+    global_index = 0
     for sec in sections:
         label = sec.get("label") or "其他"
-        lines += ["---", "", f"## {label}", ""]
-        for i, it in enumerate(sec.get("items") or [], 1):
+        plain_lines += [label, ""]
+        html_cards: list[str] = []
+        for it in sec.get("items") or []:
+            global_index += 1
             title = clean_text(it.get("title") or "")
             summary = clean_text(it.get("summary") or "")
             url = it.get("sourceUrl") or it.get("url") or ""
             source = it.get("sourceName") or it.get("source") or ""
-            lines += [
-                f"### {i}. {title}",
-                f"- 来源：{source or '未标注'}",
-                f"- 原文链接：{url or '未提供'}",
-                "",
-                f"**要点摘要**：{summary or 'AI HOT 未提供摘要。'}",
-                "",
-                "**为什么重要**：可能影响模型选择、产品工作流、成本结构或行业竞争格局，建议结合实际使用场景判断是否跟进。",
+            summary = summary or "AI HOT 未提供摘要。"
+            source = source or "未标注"
+            plain_lines += [
+                f"{global_index}. {title}",
+                f"来源：{source}",
+                f"原文链接：{url or '未提供'}",
+                f"要点摘要：{summary}",
+                f"为什么重要：{why_it_matters}",
                 "",
             ]
-    lines += audit_lines("08:15 Asia/Shanghai", started)
-    md.write_text("\n".join(lines), encoding="utf-8")
-    flat = [it for sec in sections for it in (sec.get("items") or [])]
-    body = "\n".join(
-        [
-            f"一句话结论：{clean_text(daily.get('lead') or '今日 AI 热点以模型、产品和行业动态为主。', 160)}",
-            f"实际日报日期：{date_s}",
-            f"条目数量：{len(flat)}",
-            "完整排版版见附件。",
-            f"调度审计：实际启动 {started.strftime('%Y-%m-%d %H:%M:%S %Z')}；执行环境 GitHub Actions。",
-        ]
-    )
-    write_meta(out_dir, f"AI HOT 日报 - {date_s}", body, md)
+            safe_url = html.escape(str(url), quote=True)
+            link_html = (
+                f'<a href="{safe_url}" style="color:#4f46e5;font-size:14px;font-weight:700;text-decoration:none;">阅读原文 →</a>'
+                if url
+                else '<span style="color:#98a2b3;font-size:14px;">原文链接未提供</span>'
+            )
+            html_cards.append(
+                '<div style="margin:0 0 16px;padding:18px 20px;background:#ffffff;border:1px solid #e6eaf0;border-radius:12px;">'
+                f'<div style="font-size:18px;line-height:1.5;font-weight:700;color:#172033;margin-bottom:8px;">'
+                f'<span style="display:inline-block;min-width:30px;color:#5b5bd6;">{global_index}.</span>{html.escape(title)}</div>'
+                f'<div style="font-size:13px;line-height:1.6;color:#667085;margin-bottom:10px;">来源：{html.escape(source)}</div>'
+                f'<div style="font-size:15px;line-height:1.8;color:#344054;margin-bottom:9px;"><strong style="color:#172033;">要点摘要：</strong>{html.escape(summary)}</div>'
+                f'<div style="font-size:15px;line-height:1.8;color:#344054;margin-bottom:12px;"><strong style="color:#172033;">为什么重要：</strong>{html.escape(why_it_matters)}</div>'
+                f'{link_html}</div>'
+            )
+        html_sections.append(
+            '<section style="margin-top:30px;">'
+            f'<h2 style="margin:0 0 14px;padding-bottom:9px;border-bottom:2px solid #dfe3ff;font-size:22px;line-height:1.4;color:#27306b;">{html.escape(label)}</h2>'
+            f'{"".join(html_cards)}</section>'
+        )
+
+    flashes = daily.get("flashes") or []
+    if flashes:
+        plain_lines += ["快讯", ""]
+        flash_rows: list[str] = []
+        for flash in flashes:
+            title = clean_text(flash.get("title") or "")
+            source = clean_text(flash.get("sourceName") or flash.get("source") or "未标注")
+            url = flash.get("sourceUrl") or flash.get("url") or ""
+            plain_lines += [f"- {title} — {source}", f"  {url or '原文链接未提供'}"]
+            link = (
+                f'<a href="{html.escape(str(url), quote=True)}" style="color:#4f46e5;text-decoration:none;">{html.escape(title)}</a>'
+                if url
+                else html.escape(title)
+            )
+            flash_rows.append(f'<li style="margin:0 0 8px;line-height:1.7;">{link} — {html.escape(source)}</li>')
+        html_sections.append(
+            '<section style="margin-top:30px;">'
+            '<h2 style="margin:0 0 14px;padding-bottom:9px;border-bottom:2px solid #dfe3ff;font-size:22px;color:#27306b;">快讯</h2>'
+            f'<ul style="margin:0;padding-left:20px;color:#344054;">{"".join(flash_rows)}</ul></section>'
+        )
+
+    audit_time = started.strftime("%Y-%m-%d %H:%M:%S %Z")
+    plain_lines += [
+        "",
+        "运行审计",
+        "计划时间：每天 08:15（北京时间）",
+        f"实际启动：{audit_time}",
+        "执行环境：GitHub Actions",
+        f"数据日期：{date_s}",
+    ]
+    body = "\n".join(plain_lines)
+    html_body = f'''<!doctype html>
+<html lang="zh-CN"><body style="margin:0;padding:0;background:#f3f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',Arial,sans-serif;color:#172033;">
+<div style="display:none;max-height:0;overflow:hidden;">今日 {len(flat)} 条 AI 动态，完整内容直接在邮件正文查看。</div>
+<div style="max-width:760px;margin:0 auto;padding:24px 14px 40px;">
+  <header style="background:#35378f;padding:30px 26px;border-radius:16px;color:#ffffff;">
+    <div style="font-size:13px;letter-spacing:1.5px;opacity:.85;">AI HOT · 每日中文简报</div>
+    <h1 style="margin:8px 0 6px;font-size:30px;line-height:1.3;">AI HOT 日报</h1>
+    <div style="font-size:15px;opacity:.9;">{html.escape(date_s)} · 共 {len(flat)} 条</div>
+  </header>
+  <div style="margin-top:16px;padding:20px 22px;background:#fff8e8;border:1px solid #f3d38b;border-radius:12px;">
+    <div style="font-size:13px;font-weight:700;color:#8a5a00;margin-bottom:6px;">一句话结论</div>
+    <div style="font-size:16px;line-height:1.8;color:#563b00;">{html.escape(conclusion)}</div>
+  </div>
+  <div style="margin-top:16px;padding:18px 22px;background:#ffffff;border:1px solid #e6eaf0;border-radius:12px;">
+    <div style="font-size:17px;font-weight:700;color:#172033;margin-bottom:8px;">今日速览</div>
+    <div style="font-size:14px;line-height:1.8;color:#475467;">{html.escape(counts)}</div>
+  </div>
+  {''.join(html_sections)}
+  <footer style="margin-top:28px;padding:18px 22px;background:#eef1f6;border-radius:12px;color:#667085;font-size:12px;line-height:1.8;">
+    <strong style="color:#344054;">运行审计</strong><br>
+    计划时间：每天 08:15（北京时间）<br>
+    实际启动：{html.escape(audit_time)}<br>
+    执行环境：GitHub Actions<br>
+    数据日期：{html.escape(date_s)}
+  </footer>
+</div></body></html>'''
+    write_meta(out_dir, f"AI HOT 日报 - {date_s}", body, None, html_body=html_body)
 
 
 def main() -> int:
