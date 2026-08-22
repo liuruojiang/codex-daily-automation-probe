@@ -47,6 +47,8 @@ class EtfMoverRulesTests(unittest.TestCase):
         self.assertEqual(movers.exclusion_reason(row("XRPX", "Canary XRP ETF")), "single_crypto")
         self.assertEqual(movers.exclusion_reason(row("IBIT", "iShares Bitcoin Trust ETF")), "single_crypto")
         self.assertEqual(movers.exclusion_reason(row("IAU", "iShares Gold Trust")), "physical_or_spot_trust")
+        self.assertEqual(movers.exclusion_reason(row("GLDM", "SPDR Gold MiniShares")), "physical_or_spot_trust")
+        self.assertEqual(movers.exclusion_reason(row("BLOX", "Nicholas Crypto Income ETF")), "option_income_or_defined_outcome")
 
     def test_theme_dedupe_keeps_one_product_per_underlying_theme(self) -> None:
         records = []
@@ -69,6 +71,31 @@ class EtfMoverRulesTests(unittest.TestCase):
         self.assertEqual(movers.theme_key(row("LAZR", "Tema Photonics and Optical Technology ETF")), "photonics")
         self.assertEqual(movers.theme_key(row("JEDI", "Defiance Drone and Modern Warfare ETF")), "defense_aerospace")
         self.assertEqual(movers.theme_key(row("XAR", "SPDR S&P Aerospace & Defense ETF")), "defense_aerospace")
+
+    def test_broad_resource_equity_family_keeps_only_one_mining_theme(self) -> None:
+        records = []
+        for symbol, name, change in [
+            ("URNJ", "Sprott Junior Uranium Miners ETF", 8.0),
+            ("REMX", "VanEck Rare Earth and Strategic Metals ETF", 7.0),
+            ("COPP", "Sprott Copper Miners ETF", 6.0),
+            ("SETM", "Sprott Critical Materials ETF", 5.0),
+            ("RING", "iShares MSCI Global Gold Miners ETF", 4.0),
+            ("VNM", "VanEck Vietnam ETF", 3.0),
+        ]:
+            records.append(movers._record(row(symbol, name, change=change), "2026-08-21", change))
+        ranked = movers._rank(records, True, 10)
+        self.assertEqual([item["symbol"] for item in ranked], ["URNJ", "VNM"])
+
+    def test_visible_name_and_description_are_useful_chinese_copy(self) -> None:
+        record = movers._record(row("NCLD", "Roundhill Neocloud ETF"), "2026-08-21", -2.5)
+        self.assertEqual(record["name"], "软件与云计算股票 ETF")
+        self.assertIn("企业 IT 支出", record["description"])
+        self.assertNotIn("去重后保留", record["description"])
+        self.assertNotIn("Roundhill", record["description"])
+        pharma = movers._record(row("FTXH", "First Trust Nasdaq Pharmaceuticals ETF"), "2026-08-21", 2.0)
+        self.assertEqual(pharma["name"], "医疗保健股票 ETF")
+        inflation = movers._record(row("INFL", "Horizon Kinetics Inflation Beneficiaries ETF"), "2026-08-21", 2.0)
+        self.assertEqual(inflation["name"], "通胀受益股票 ETF")
 
 
 if __name__ == "__main__":
