@@ -96,6 +96,8 @@ class EtfMoverRulesTests(unittest.TestCase):
         self.assertEqual(pharma["name"], "医疗保健股票 ETF")
         inflation = movers._record(row("INFL", "Horizon Kinetics Inflation Beneficiaries ETF"), "2026-08-21", 2.0)
         self.assertEqual(inflation["name"], "通胀受益股票 ETF")
+        active = movers._record(row("AKRE", "Akre Focus ETF"), "2026-08-21", 2.0)
+        self.assertEqual(active["name"], "主动精选股票 ETF")
 
 
 if __name__ == "__main__":
