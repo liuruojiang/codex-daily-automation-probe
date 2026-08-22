@@ -5496,7 +5496,7 @@ def build_etf(out_dir: Path) -> None:
         "",
         "排行范围：美国上市 ETF 全市场，不使用精选 ETF 池。流动性门槛为近 3 个月平均成交额至少 500 万美元/日且平均成交量至少 5 万份/日。",
         "",
-        "过滤口径：已排除杠杆、反向/做空、单股日内目标、期权收益增强/定义结果、ETN、单一加密资产和实物/现货信托；正常的商品、外汇、波动率和管理期货 ETF 可以纳入。每个榜单按底层资产或策略主题去重，同类只保留一只；涨幅榜只展示正收益，跌幅榜只展示负收益。",
+        "过滤口径：已排除杠杆、反向/做空、单股日内目标、期权收益增强/定义结果、ETN、单一加密资产和实物/现货信托；正常的商品、外汇、波动率和管理期货 ETF 可以纳入。每个榜单按共同经济驱动强去重，例如铀矿、稀土、铜矿、金矿及关键材料股票统一视为一个矿产资源大类；涨幅榜只展示正收益，跌幅榜只展示负收益。",
         "",
         "### 涨幅前 10",
         "",
@@ -5529,7 +5529,7 @@ def build_etf(out_dir: Path) -> None:
         f"- RSS/研究文章数量：{len(scored_picked)}",
         f"- 固定关注博客/播客更新数量：{fixed_monitor_rendered_count}",
         f"- 论坛/社区 idea mining 数量：{forum_rendered_count}",
-        f"- ETF 排行宇宙：扫描 {daily_movers.universe_count} 只美国上市 ETF，流动性及产品结构过滤后合格 {daily_movers.eligible_count} 只；每个涨跌榜按主题再次去重。",
+        f"- ETF 排行宇宙：扫描 {daily_movers.universe_count} 只美国上市 ETF，流动性及产品结构过滤后合格 {daily_movers.eligible_count} 只；每个涨跌榜按共同经济驱动强去重。",
         "",
     ]
     lines.append(f"- 回填去重：文章回填排除最近 {ETF_BACKFILL_DEDUPE_DAYS} 天已推送内容；论坛回填排除最近 {ETF_FORUM_BACKFILL_DEDUPE_DAYS} 天已推送内容，并只统计真正进入正文的帖子。")
