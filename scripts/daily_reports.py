@@ -3598,6 +3598,189 @@ def write_meta(
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def email_inline_markdown(text: str) -> str:
+    placeholders: list[str] = []
+
+    def stash(value: str) -> str:
+        placeholders.append(value)
+        return f"\x00EMAILTOKEN{len(placeholders) - 1}\x00"
+
+    def markdown_link(match: re.Match[str]) -> str:
+        label = html.escape(match.group(1))
+        url = html.escape(match.group(2), quote=True)
+        return stash(f'<a href="{url}" class="email-link">{label}</a>')
+
+    def inline_code(match: re.Match[str]) -> str:
+        value = html.escape(match.group(1))
+        return stash(f'<code class="email-code">{value}</code>')
+
+    def bare_link(match: re.Match[str]) -> str:
+        url = html.escape(match.group(0), quote=True)
+        return stash(f'<a href="{url}" class="email-link">{url}</a>')
+
+    protected = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", markdown_link, text)
+    protected = re.sub(r"`([^`]+)`", inline_code, protected)
+    protected = re.sub(r"https?://[^\s<>\"'，。；、）]+", bare_link, protected)
+    rendered = html.escape(protected)
+    rendered = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", rendered)
+    rendered = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<em>\1</em>", rendered)
+    for index, value in enumerate(placeholders):
+        rendered = rendered.replace(f"\x00EMAILTOKEN{index}\x00", value)
+    return rendered
+
+
+def markdown_to_email_html(markdown_text: str, preheader: str) -> str:
+    lines = markdown_text.splitlines()
+    blocks: list[str] = []
+    index = 0
+    open_list: str | None = None
+
+    def close_list() -> None:
+        nonlocal open_list
+        if open_list:
+            blocks.append(f"</{open_list}>")
+            open_list = None
+
+    while index < len(lines):
+        raw = lines[index]
+        line = raw.strip()
+        if not line:
+            close_list()
+            index += 1
+            continue
+
+        if line.startswith("|") and index + 1 < len(lines):
+            separator = lines[index + 1].strip()
+            if separator.startswith("|") and re.fullmatch(r"\|?[\s:|-]+\|?", separator):
+                close_list()
+                table_rows: list[list[str]] = []
+                while index < len(lines) and lines[index].strip().startswith("|"):
+                    table_line = lines[index].strip()
+                    if not re.fullmatch(r"\|?[\s:|-]+\|?", table_line):
+                        table_rows.append([cell.strip() for cell in table_line.strip("|").split("|")])
+                    index += 1
+                if table_rows:
+                    header_cells = "".join(
+                        f'<th class="report-th">{email_inline_markdown(cell)}</th>'
+                        for cell in table_rows[0]
+                    )
+                    body_rows = "".join(
+                        "<tr>"
+                        + "".join(
+                            f'<td class="report-td">{email_inline_markdown(cell)}</td>'
+                            for cell in row
+                        )
+                        + "</tr>"
+                        for row in table_rows[1:]
+                    )
+                    blocks.append(
+                        '<div class="table-wrap">'
+                        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" class="report-table">'
+                        f"<thead><tr>{header_cells}</tr></thead><tbody>{body_rows}</tbody></table></div>"
+                    )
+                continue
+
+        heading = re.match(r"^(#{1,3})\s+(.+)$", line)
+        if heading:
+            close_list()
+            level = len(heading.group(1))
+            content = email_inline_markdown(heading.group(2))
+            if level == 1:
+                blocks.append(
+                    '<div class="report-hero"><div class="report-kicker">每日资产配置简报</div>'
+                    f'<h1 class="report-h1">{content}</h1></div>'
+                )
+            elif level == 2:
+                blocks.append(f'<h2 class="report-h2">{content}</h2>')
+            else:
+                blocks.append(f'<h3 class="report-h3">{content}</h3>')
+            index += 1
+            continue
+
+        if re.fullmatch(r"-{3,}", line):
+            close_list()
+            blocks.append('<div class="report-rule"></div>')
+            index += 1
+            continue
+
+        if line.startswith(">"):
+            close_list()
+            quote_lines: list[str] = []
+            while index < len(lines) and lines[index].strip().startswith(">"):
+                quote_lines.append(lines[index].strip().lstrip(">").strip())
+                index += 1
+            blocks.append(
+                '<div class="report-quote">'
+                f'{"<br>".join(email_inline_markdown(item) for item in quote_lines)}</div>'
+            )
+            continue
+
+        bullet = re.match(r"^[-*]\s+(.+)$", line)
+        numbered = re.match(r"^\d+[.)]\s+(.+)$", line)
+        if bullet or numbered:
+            list_type = "ul" if bullet else "ol"
+            if open_list != list_type:
+                close_list()
+                blocks.append(f'<{list_type} class="report-list">')
+                open_list = list_type
+            content = (bullet or numbered).group(1)
+            blocks.append(f'<li class="report-li">{email_inline_markdown(content)}</li>')
+            index += 1
+            continue
+
+        close_list()
+        paragraph_lines = [line]
+        index += 1
+        while index < len(lines):
+            candidate = lines[index].strip()
+            if (
+                not candidate
+                or candidate.startswith(("#", ">", "|"))
+                or re.fullmatch(r"-{3,}", candidate)
+                or re.match(r"^[-*]\s+", candidate)
+                or re.match(r"^\d+[.)]\s+", candidate)
+            ):
+                break
+            paragraph_lines.append(candidate)
+            index += 1
+        blocks.append(
+            '<p class="report-p">'
+            f'{"<br>".join(email_inline_markdown(item) for item in paragraph_lines)}</p>'
+        )
+
+    close_list()
+    return f'''<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{{margin:0;padding:0;background:#f3f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',Arial,sans-serif;color:#172033}}
+.email-link{{color:#4f46e5;text-decoration:none;font-weight:600;word-break:break-word}}
+.email-code{{padding:2px 5px;background:#f2f4f7;border-radius:4px;color:#344054;font-family:Consolas,monospace;font-size:.92em}}
+.email-shell{{max-width:920px;margin:0 auto;padding:24px 12px 40px}}
+.email-main{{background:#fff;padding:24px 22px;border:1px solid #e4e7ec;border-radius:16px}}
+.report-hero{{background:#25335f;padding:28px 24px;border-radius:16px;color:#fff;margin-bottom:18px}}
+.report-kicker{{font-size:13px;letter-spacing:1.3px;opacity:.82;margin-bottom:7px}}
+.report-h1{{margin:0;font-size:28px;line-height:1.35;color:#fff}}
+.report-h2{{margin:30px 0 14px;padding-bottom:9px;border-bottom:2px solid #dbe1f8;font-size:22px;line-height:1.4;color:#27306b}}
+.report-h3{{margin:22px 0 10px;font-size:17px;line-height:1.5;color:#344054}}
+.report-rule{{height:1px;background:#e4e7ec;margin:24px 0}}
+.report-quote{{margin:12px 0 18px;padding:14px 16px;background:#fff8e8;border-left:4px solid #e0a82e;border-radius:8px;color:#694b09;font-size:14px;line-height:1.75}}
+.report-list{{margin:8px 0 16px;padding-left:24px;color:#344054;font-size:14px;line-height:1.75}}
+.report-li{{margin:0 0 6px}}
+.report-p{{margin:0 0 14px;color:#344054;font-size:14px;line-height:1.8}}
+.table-wrap{{margin:14px 0 22px;overflow-x:auto}}
+.report-table{{width:100%;border-collapse:collapse;table-layout:auto}}
+.report-th{{padding:10px 8px;background:#eef1ff;border:1px solid #d9def5;text-align:left;color:#27306b;font-size:12px;line-height:1.5}}
+.report-td{{padding:9px 8px;border:1px solid #e4e7ec;vertical-align:top;color:#344054;font-size:12px;line-height:1.55;word-break:break-word}}
+@media(max-width:640px){{.email-shell{{padding:10px 4px 24px}}.email-main{{padding:16px 12px;border-radius:10px}}.report-hero{{padding:22px 16px}}.report-h1{{font-size:23px}}.report-h2{{font-size:19px}}.report-th,.report-td{{padding:7px 5px;font-size:11px}}}}
+</style></head><body>
+<div style="display:none;max-height:0;overflow:hidden;">{html.escape(preheader)}</div>
+<div class="email-shell">
+  <main class="email-main">
+    {''.join(blocks)}
+  </main>
+</div></body></html>'''
+
+
 def life_feed_profile(source: str) -> LifeDigestFeed | None:
     for feed in (*LIFE_DIGEST_FEEDS, *LIFE_COMMUNITY_FALLBACK_FEEDS):
         if feed.source == source:
@@ -5323,7 +5506,8 @@ def build_etf(out_dir: Path) -> None:
     ]
     lines.append(f"- 回填去重：文章回填排除最近 {ETF_BACKFILL_DEDUPE_DAYS} 天已推送内容；论坛回填排除最近 {ETF_FORUM_BACKFILL_DEDUPE_DAYS} 天已推送内容，并只统计真正进入正文的帖子。")
     lines += audit_lines("08:00 Asia/Shanghai", started)
-    md.write_text("\n".join(lines), encoding="utf-8")
+    report_text = "\n".join(lines)
+    md.write_text(report_text, encoding="utf-8")
 
     top_preview = "; ".join(
         f"{row['asset'].code} {fmt_change(row['change'])}" for row in top_rows[:3] if isinstance(row["asset"], MarketAsset)
@@ -5331,18 +5515,18 @@ def build_etf(out_dir: Path) -> None:
     bottom_preview = "; ".join(
         f"{row['asset'].code} {fmt_change(row['change'])}" for row in bottom_rows[:3] if isinstance(row["asset"], MarketAsset)
     )
-    body = "\n".join(
-        [
-            "一句话结论：ETF/资产配置日报已按市场 regime、资产配置影响、量化策略影响、A股/港股专项和待验证假设生成。",
-            f"数据日期：{data_date_s}",
-            f"涨幅靠前：{top_preview}",
-            f"跌幅靠前：{bottom_preview}",
-            f"固定关注博客/播客更新：{fixed_monitor_rendered_count} 条",
-            "完整排版版见附件。",
-            f"调度审计：实际启动 {started.strftime('%Y-%m-%d %H:%M:%S %Z')}；执行环境 GitHub Actions。",
-        ]
+    preheader = (
+        f"数据日期 {data_date_s}；涨幅靠前 {top_preview or '无'}；"
+        f"跌幅靠前 {bottom_preview or '无'}；完整报告直接在邮件正文查看。"
     )
-    write_meta(out_dir, f"美股 ETF 与资产配置日报 - {date_s}", body, md)
+    html_body = markdown_to_email_html(report_text, preheader)
+    write_meta(
+        out_dir,
+        f"美股 ETF 与资产配置日报 - {date_s}",
+        report_text,
+        None,
+        html_body=html_body,
+    )
 
 
 def fetch_json(url: str) -> object:
