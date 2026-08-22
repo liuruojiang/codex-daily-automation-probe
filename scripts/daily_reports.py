@@ -17,6 +17,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import etf_movers as broad_etf_movers
+
 
 BJ = ZoneInfo("Asia/Shanghai")
 UA = "Mozilla/5.0 (Codex daily digest; +https://github.com/liuruojiang/codex-daily-automation-probe)"
@@ -5290,6 +5292,28 @@ def dedupe_by_category(rows: list[dict[str, object]], reverse: bool) -> list[dic
     return picked
 
 
+def broad_mover_rows(records: list[dict[str, object]]) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for record in records:
+        rows.append(
+            {
+                "asset": MarketAsset(
+                    str(record["symbol"]),
+                    str(record["name"]),
+                    "yahoo",
+                    str(record["symbol"]),
+                    str(record["description"]),
+                    str(record["category"]),
+                ),
+                "date": str(record["date"]),
+                "change": float(record["change"]),
+                "average_daily_volume": int(record["average_daily_volume"]),
+                "average_daily_dollar_volume": float(record["average_daily_dollar_volume"]),
+            }
+        )
+    return rows
+
+
 A_STRATEGY_ASSETS = [
     MarketAsset("H20955", "中证红利低波100全收益", "csindex", "H20955", "A策略使用的红利低波权益全收益指数；日涨跌取中证指数官网 H20955。", "A策略"),
     MarketAsset("399606", "创业板指数", "eastmoney", "0.399606", "A策略权益池里的创业板宽基指数。", "A策略"),
@@ -5406,11 +5430,11 @@ def build_etf(out_dir: Path) -> None:
     started = now_bj()
     strategy_assets = A_STRATEGY_ASSETS + ADK_STRATEGY_ASSETS + B_STRATEGY_ASSETS + D_STRATEGY_ASSETS
     strategy_rows = fetch_asset_changes(strategy_assets)
-    mover_rows = fetch_asset_changes(MOVER_UNIVERSE)
-    positive_movers = [r for r in mover_rows if float(r["change"]) > 0]
-    negative_movers = [r for r in mover_rows if float(r["change"]) < 0]
-    top_rows = dedupe_by_category(positive_movers, reverse=True)
-    bottom_rows = dedupe_by_category(negative_movers, reverse=False)
+    broad_universe = broad_etf_movers.fetch_universe()
+    daily_movers = broad_etf_movers.daily_rankings(broad_universe)
+    top_rows = broad_mover_rows(daily_movers.gainers)
+    bottom_rows = broad_mover_rows(daily_movers.losers)
+    mover_rows = top_rows + bottom_rows
 
     items: list[Item] = []
     for feed in ETF_RESEARCH_FEEDS:
@@ -5470,7 +5494,9 @@ def build_etf(out_dir: Path) -> None:
         "",
         "## ETF 涨跌幅榜",
         "",
-        "过滤口径：已排除杠杆、反向、期权/收益增强、单股日内目标、单一资产信托/现货商品/单一加密产品，并按主题/类别去重；涨幅榜只展示正收益标的，跌幅榜只展示负收益标的。",
+        "排行范围：美国上市 ETF 全市场，不使用精选 ETF 池。流动性门槛为近 3 个月平均成交额至少 500 万美元/日且平均成交量至少 5 万份/日。",
+        "",
+        "过滤口径：已排除杠杆、反向/做空、单股日内目标、期权收益增强/定义结果、ETN、单一加密资产和实物/现货信托；正常的商品、外汇、波动率和管理期货 ETF 可以纳入。每个榜单按底层资产或策略主题去重，同类只保留一只；涨幅榜只展示正收益，跌幅榜只展示负收益。",
         "",
         "### 涨幅前 10",
         "",
@@ -5481,15 +5507,16 @@ def build_etf(out_dir: Path) -> None:
     lines += ["", "### 跌幅前 10", ""]
     append_mover_table(lines, bottom_rows)
 
+    period_movers: dict[str, object] | None = None
     if now_bj().weekday() == 5:
-        for label, sessions in [("最近一周", 5), ("最近一个月", 21)]:
-            period_rows = fetch_asset_changes(MOVER_UNIVERSE, sessions=sessions)
-            period_pos = [r for r in period_rows if float(r["change"]) > 0]
-            period_neg = [r for r in period_rows if float(r["change"]) < 0]
+        period_movers = broad_etf_movers.period_rankings(broad_universe)
+        for label, key in [("最近一周", "one_week"), ("最近一个月", "one_month")]:
+            period_block = period_movers[key]
+            assert isinstance(period_block, dict)
             lines += ["", f"### {label}涨幅前 10", ""]
-            append_mover_table(lines, dedupe_by_category(period_pos, reverse=True))
+            append_mover_table(lines, broad_mover_rows(period_block["gainers"]))
             lines += ["", f"### {label}跌幅前 10", ""]
-            append_mover_table(lines, dedupe_by_category(period_neg, reverse=False))
+            append_mover_table(lines, broad_mover_rows(period_block["losers"]))
 
     forum_rendered_count = append_etf_research_sections(lines, scored_picked, forum_picked, strategy_rows, mover_rows, data_date_s)
     fixed_monitor_rendered_count = append_etf_fixed_monitor_section(lines, fixed_monitor_updates)
@@ -5502,6 +5529,7 @@ def build_etf(out_dir: Path) -> None:
         f"- RSS/研究文章数量：{len(scored_picked)}",
         f"- 固定关注博客/播客更新数量：{fixed_monitor_rendered_count}",
         f"- 论坛/社区 idea mining 数量：{forum_rendered_count}",
+        f"- ETF 排行宇宙：扫描 {daily_movers.universe_count} 只美国上市 ETF，流动性及产品结构过滤后合格 {daily_movers.eligible_count} 只；每个涨跌榜按主题再次去重。",
         "",
     ]
     lines.append(f"- 回填去重：文章回填排除最近 {ETF_BACKFILL_DEDUPE_DAYS} 天已推送内容；论坛回填排除最近 {ETF_FORUM_BACKFILL_DEDUPE_DAYS} 天已推送内容，并只统计真正进入正文的帖子。")
