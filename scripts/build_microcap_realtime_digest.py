@@ -555,7 +555,15 @@ def risk_warnings(item: dict[str, object]) -> list[str]:
 
     warnings: list[str] = []
     fallback_warning = first_value(fields, "fallback_warning")
-    if fallback_warning:
+    validated_state_only_cache = (
+        "production state-only mode avoids implicit cache rebuilds" in fallback_warning
+        and first_value(fields, "expected_latest_completed_trade_date_source")
+        == "independent_close_history_refresh"
+        and first_value(fields, "latest_anchor_trade_date")
+        == first_value(fields, "expected_latest_completed_trade_date")
+        and bool(first_value(fields, "latest_anchor_trade_date"))
+    )
+    if fallback_warning and not validated_state_only_cache:
         warnings.append(f"{version}：行情使用回退数据（{escape_markdown_inline(fallback_warning)}）")
 
     if version == "v2.0" and parse_bool(first_value(fields, "blocked_until_signal_reset")):
