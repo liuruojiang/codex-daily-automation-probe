@@ -83,6 +83,25 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             writer.writeheader()
             writer.writerow(row)
 
+    def test_validated_state_only_cache_is_not_reported_as_market_data_fallback(self) -> None:
+        fields = {
+            "fallback_warning": (
+                "realtime base used cached proxy through 2026-08-21 because "
+                "production state-only mode avoids implicit cache rebuilds"
+            ),
+            "expected_latest_completed_trade_date_source": "independent_close_history_refresh",
+            "latest_anchor_trade_date": "2026-08-21",
+            "expected_latest_completed_trade_date": "2026-08-21",
+        }
+        item = {"version": "v2.5", "status": "OK", "status_note": "", "fields": fields}
+
+        self.assertEqual(digest.risk_warnings(item), [])
+
+        fields["expected_latest_completed_trade_date"] = "2026-08-20"
+        warnings = digest.risk_warnings(item)
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("行情使用回退数据", warnings[0])
+
     def run_digest(
         self,
         tmp_path: Path,
