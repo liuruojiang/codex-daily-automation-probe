@@ -102,6 +102,18 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertEqual(len(warnings), 1)
         self.assertIn("行情使用回退数据", warnings[0])
 
+    def test_blank_stdout_fallback_warning_does_not_consume_next_line(self) -> None:
+        fields = digest.parse_output_fields(
+            "fallback_warning: \n"
+            "microcap_mom: +10.6236%\n"
+            "annualized_log_wls_score: +96.5699%\n"
+        )
+
+        self.assertEqual(fields["fallback_warning"], "")
+        self.assertEqual(fields["microcap_mom"], "+10.6236%")
+        item = {"version": "v2.0", "status": "OK", "status_note": "", "fields": fields}
+        self.assertEqual(digest.risk_warnings(item), [])
+
     def run_digest(
         self,
         tmp_path: Path,

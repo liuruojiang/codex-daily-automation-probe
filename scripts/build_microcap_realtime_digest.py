@@ -152,7 +152,11 @@ def parse_exit_codes(specs: list[str]) -> tuple[dict[str, str], str]:
 
 def parse_output_fields(output: str) -> dict[str, str]:
     fields: dict[str, str] = {}
-    for match in re.finditer(r"^(?P<key>[A-Za-z0-9_]+)\s*:\s*(?P<value>[^\n]*)$", output, flags=re.M):
+    for match in re.finditer(
+        r"^(?P<key>[A-Za-z0-9_]+)[ \t]*:[ \t]*(?P<value>[^\n]*)$",
+        output,
+        flags=re.M,
+    ):
         fields[match.group("key")] = match.group("value").strip()
     return fields
 
