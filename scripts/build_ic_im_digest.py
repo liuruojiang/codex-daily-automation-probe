@@ -60,18 +60,35 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         raise ValueError("result must contain IC and IM signals")
     actions = {product: action_parts(signals[product]) for product in ("IC", "IM")}
     actionable = any(actions.values())
-    tag = "需调整" if actionable else "无需调整"
+    mode = str(payload.get("publication_mode", "close_confirmed"))
+    realtime = mode == "realtime"
+    tag = (
+        ("预估需调整" if actionable else "预估无需调整")
+        if realtime
+        else ("需调整" if actionable else "无需调整")
+    )
+    mode_tag = "盘中实时" if realtime else "收盘确认"
     prefix = f"[{subject_prefix.strip().strip('[]')}]" if subject_prefix.strip() else ""
-    day = str(payload.get("completed_day", "未知日期"))
-    subject = f"{prefix}[收盘确认][{tag}] IC/IM 1.2 日报 - {day}"
+    day = str(
+        payload.get("market_date" if realtime else "completed_day", "未知日期")
+    )
+    subject = f"{prefix}[{mode_tag}][{tag}] IC/IM 1.2 日报 - {day}"
     lines = [
         "## 今日结论",
         "",
-        "**存在下一交易日调整，请查看逐腿变化。**" if actionable else "**IC、IM均无需调整。**",
+        (
+            "**盘中预估存在下一交易日调整，请等待收盘确认。**"
+            if actionable and realtime
+            else "**盘中暂未出现下一交易日调整，收盘前仍可能变化。**"
+            if realtime
+            else "**存在下一交易日调整，请查看逐腿变化。**"
+            if actionable
+            else "**IC、IM均无需调整。**"
+        ),
         "",
         f"信号日：**{day}**｜下一交易日：**{payload.get('next_trade_day', 'N/A')}**",
         "",
-        "| 品种 | 期货总仓 | 动量袖 | 网格 | Put | Call | 今日动作 |",
+        "| 品种 | 期货总仓 | 动量袖 | 网格 | Put | Call | 预估变化 |",
         "|---|---:|---:|---:|---|---|---|",
     ]
     for product in ("IC", "IM"):
@@ -99,7 +116,12 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         f"- 账本摘要：`{str(payload.get('digest', ''))[:12]}`",
         f"- 本次补写交易日数：`{payload.get('advanced_sessions', 'N/A')}`",
         "",
-        "本邮件是研究审计信号，不是账户持仓，不会自动下单。完整逐腿解释见附件。",
+        (
+            "本邮件是盘中研究预估，使用实时/延时行情与上一已核验收盘账本；"
+            "盘中值并未写入账本，必须等待收盘确认。它不是账户持仓，不会自动下单。完整逐腿解释见附件。"
+            if realtime
+            else "本邮件是研究审计信号，不是账户持仓，不会自动下单。完整逐腿解释见附件。"
+        ),
     ]
     if run_url:
         lines.append(f"[查看GitHub运行记录]({run_url})")
@@ -109,12 +131,17 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
 def build_failure(payload: dict[str, Any], run_url: str, subject_prefix: str) -> tuple[str, str]:
     prefix = f"[{subject_prefix.strip().strip('[]')}]" if subject_prefix.strip() else ""
     day = str(payload.get("generated_at", ""))[:10] or "未知日期"
-    subject = f"{prefix}[异常] IC/IM 1.2 日报 - {day}"
+    realtime = str(payload.get("publication_mode", "close_confirmed")) == "realtime"
+    subject = f"{prefix}[异常][{'盘中实时' if realtime else '收盘确认'}] IC/IM 1.2 日报 - {day}"
     body = "\n".join(
         [
             "## 今日结论",
             "",
-            "**IC/IM收盘信号生成失败，请勿依据旧邮件调整。**",
+            (
+                "**IC/IM盘中实时信号生成失败，请勿依据旧邮件调整。**"
+                if realtime
+                else "**IC/IM收盘信号生成失败，请勿依据旧邮件调整。**"
+            ),
             "",
             f"- 构建：`{payload.get('build', 'N/A')}`",
             f"- 错误：{payload.get('error_type', 'RuntimeError')}: {payload.get('error', '未知错误')}",
@@ -137,7 +164,10 @@ def main() -> int:
     run_url = os.environ.get("GITHUB_RUN_URL", "")
     if payload.get("status") == "ok":
         subject, body, _ = build_success(payload, run_url, args.subject_prefix)
-        attachment = args.report if args.report and Path(args.report).is_file() else None
+        report = args.report
+        if not report and payload.get("report_file"):
+            report = str(Path(args.result).resolve().parent / str(payload["report_file"]))
+        attachment = report if report and Path(report).is_file() else None
     else:
         subject, body = build_failure(payload, run_url, args.subject_prefix)
         attachment = None

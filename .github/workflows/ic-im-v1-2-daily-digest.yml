@@ -1,11 +1,12 @@
-name: IC IM v1.2 Daily Digest
+name: IC IM v1.2 Realtime Digest
 
 on:
   schedule:
-    # 16:30/17:00/17:30 Beijing. Early data misses retry without sending stale mail.
-    - cron: "30 8 * * 1-5"
-    - cron: "0 9 * * 1-5"
-    - cron: "30 9 * * 1-5"
+    # Match Microcap: 13:03/13:18/13:33 Beijing planned triggers. GitHub cron
+    # delay has recently moved actual delivery to roughly 14:20-14:40.
+    - cron: "3 5 * * *"
+    - cron: "18 5 * * *"
+    - cron: "33 5 * * *"
   workflow_dispatch:
     inputs:
       correction:
@@ -13,13 +14,21 @@ on:
         required: false
         type: boolean
         default: false
+      publication_mode:
+        description: "Use realtime during market hours; use close_confirmed only for a manual correction"
+        required: true
+        type: choice
+        options:
+          - realtime
+          - close_confirmed
+        default: realtime
 
 permissions:
   contents: read
   actions: read
 
 concurrency:
-  group: ic-im-v1-2-daily-digest
+  group: ic-im-v1-2-realtime-digest
   cancel-in-progress: false
 
 jobs:
@@ -28,6 +37,7 @@ jobs:
     timeout-minutes: 85
     env:
       TZ: Asia/Shanghai
+      PLANNED_BJ: "13:03/13:18/13:33 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Check out automation repository
@@ -48,10 +58,23 @@ jobs:
           SCHEDULE_VALUE: ${{ github.event.schedule }}
         run: |
           final=false
-          if [[ "${EVENT_NAME}" != "schedule" || "${SCHEDULE_VALUE}" == "30 9 * * 1-5" ]]; then
+          if [[ "${EVENT_NAME}" != "schedule" || "${SCHEDULE_VALUE}" == "33 5 * * *" ]]; then
             final=true
           fi
           echo "final_attempt=${final}" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve publication mode
+        id: publication_mode
+        shell: bash
+        env:
+          DISPATCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'realtime' }}
+        run: |
+          runner_mode=realtime
+          if [[ "${DISPATCH_MODE}" == "close_confirmed" ]]; then
+            runner_mode=close
+          fi
+          echo "mode=${DISPATCH_MODE}" >> "${GITHUB_OUTPUT}"
+          echo "runner_mode=${runner_mode}" >> "${GITHUB_OUTPUT}"
 
       - name: Check delivery marker
         id: delivery_gate
@@ -105,7 +128,7 @@ jobs:
         run: |
           python automation/scripts/restore_ic_im_ledger.py --state-dir state
 
-      - name: Run close-confirmed IC/IM signal
+      - name: Run IC/IM signal
         if: steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
         id: run_signal
         shell: bash
@@ -114,6 +137,7 @@ jobs:
           timeout --foreground 65m python -u strategy/run_ic_im_v1_2_github_digest.py \
             --state-dir state \
             --out-dir strategy-artifacts \
+            --mode "${{ steps.publication_mode.outputs.runner_mode }}" \
             --max-sessions 20 2>&1 | tee strategy-run.log
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
@@ -124,7 +148,6 @@ jobs:
         run: |
           python automation/scripts/build_ic_im_digest.py \
             --result strategy-artifacts/result.json \
-            --report strategy-artifacts/ic_im_v1_2_close_signal.md \
             --out-dir mail-artifacts \
             --subject-prefix "${{ steps.delivery_gate.outputs.subject_prefix }}"
 
@@ -171,7 +194,7 @@ jobs:
         if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
         uses: actions/upload-artifact@v7
         with:
-          name: ic-im-v1-2-daily-digest
+          name: ic-im-v1-2-realtime-digest
           path: |
             strategy-run.log
             strategy-artifacts/
@@ -184,8 +207,10 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## IC/IM v1.2 daily digest"
+            echo "## IC/IM v1.2 realtime digest"
             echo
+            echo "- Publication mode: ${{ steps.publication_mode.outputs.mode }}"
+            echo "- Planned: ${PLANNED_BJ}"
             echo "- Trading day: ${{ steps.calendar.outputs.trade_day }}"
             echo "- Final attempt: ${{ steps.attempt.outputs.final_attempt }}"
             echo "- Ledger restored: ${{ steps.restore_ledger.outputs.restored }}"
@@ -193,6 +218,6 @@ jobs:
             echo "- Gmail outcome: ${{ steps.send_gmail.outcome }}"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Fail when close-confirmed signal failed
+      - name: Fail when signal publication failed
         if: steps.run_signal.outputs.exit_code != '' && steps.run_signal.outputs.exit_code != '0'
         run: exit 1
