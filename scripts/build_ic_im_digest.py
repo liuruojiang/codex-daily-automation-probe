@@ -36,6 +36,20 @@ def number(value: Any) -> str:
     return f"{result:g}"
 
 
+def decimal(value: Any, places: int = 3) -> str:
+    try:
+        return f"{float(value):.{places}f}"
+    except (TypeError, ValueError):
+        return "N/A"
+
+
+def percent(value: Any, places: int = 2) -> str:
+    try:
+        return f"{float(value):.{places}%}"
+    except (TypeError, ValueError):
+        return "N/A"
+
+
 def action_parts(signal: dict[str, Any]) -> list[str]:
     labels = {
         "core_action": "核心合约",
@@ -97,6 +111,110 @@ def product_action_text(signal: dict[str, Any]) -> str:
     return "；".join(parts) or "维持现状"
 
 
+def momentum_reason(signal: dict[str, Any]) -> str:
+    score = signal.get("momentum_score")
+    abs20 = signal.get("momentum_abs20")
+    weight = number(signal.get("momentum_next_weight"))
+    if score is None or abs20 is None:
+        return f"动量袖：下一交易日权重为{weight}；详细判定字段未随本次结果输出。"
+    score_sign = ">0" if float(score) > 0 else "≤0"
+    abs20_sign = ">0" if float(abs20) > 0 else "≤0"
+    return (
+        f"动量袖：Score {decimal(score)}（{score_sign}），Abs20 {percent(abs20)}（{abs20_sign}）。"
+        f"规则为Score≤0取0；Score>0后，Abs20≤0取0.5、Abs20>0取1；"
+        f"所以目标权重为{weight}，对应期货名义{number(0.5 * float(signal.get('momentum_next_weight', 0)))}倍。"
+    )
+
+
+def grid_reason(product: str, signal: dict[str, Any]) -> str:
+    entry, exit_ = ((0.375, 1.0) if product == "IC" else (1.6, 2.0))
+    score = signal.get("score")
+    current = float(signal.get("grid_current", 0) or 0)
+    target = float(signal.get("grid_target", 0) or 0)
+    if score is None:
+        return f"估值网格：当前{number(current)}倍，目标{number(target)}倍；估值分未随本次结果输出。"
+    score_value = float(score)
+    if current <= 0 and target > 0:
+        conclusion = f"已触发入场线≤{entry:g}，因此加至{number(target)}倍"
+    elif current > 0 and target <= 0:
+        conclusion = f"已触发退出线≥{exit_:g}，因此降至0倍"
+    elif current <= 0:
+        conclusion = f"未触发入场线≤{entry:g}，因此继续0倍"
+    else:
+        conclusion = f"未触发退出线≥{exit_:g}，因此维持{number(target)}倍"
+    return f"估值网格：当前估值分{decimal(score_value)}；{conclusion}。网格腿不配置Put或Call。"
+
+
+def put_reason(product: str, signal: dict[str, Any]) -> str:
+    if product == "IC":
+        return (
+            f"Put保护：估值分{decimal(signal.get('score'))}，处于{signal.get('valuation_tier_label', '未知估值档')}，"
+            f"估值目标为{percent(signal.get('valuation_put_delta'), 0)} Delta；MOM120为"
+            f"{percent(signal.get('momentum_120'))}，核心袖下限为{percent(signal.get('mom120_floor_delta'), 0)} Delta。"
+            f"两者取高后由{signal.get('core_put_driver', '规则判定')}主导，乘0.5倍核心袖贡献"
+            f"{percent(signal.get('core_put_target_delta'), 1)} Delta；动量袖只看估值，贡献"
+            f"{percent(signal.get('momentum_put_target_delta'), 1)}，合计目标"
+            f"{percent(signal.get('total_put_target_delta'), 1)}。"
+        )
+    return (
+        f"Put保护：估值分{decimal(signal.get('score'))}；绝对轴为"
+        f"{signal.get('absolute_valuation_tier_label', '未知档位')}，相对轴为"
+        f"{signal.get('relative_valuation_tier_label', '未知档位')}。估值给每1倍核心IM "
+        f"{number(signal.get('valuation_puts_per_full_core'))}张，而MOM120为"
+        f"{percent(signal.get('momentum_120'))}，负动量下限给"
+        f"{number(signal.get('mom120_floor_puts_per_full_core'))}张；两者取高，本次由"
+        f"{signal.get('core_put_driver', '规则判定')}主导。只覆盖0.5倍核心袖，所以规范化目标为"
+        f"{number(signal.get('core_put_target_qty_normalized'))}张；动量袖和网格均不配期权。"
+    )
+
+
+def call_reason(product: str, signal: dict[str, Any]) -> str:
+    if product == "IC":
+        return "Call：IC 1.2规则明确禁止卖Call，所以当前和目标都为无。"
+    target = str(signal.get("call_target") or "未输出Call目标说明")
+    if not bool(signal.get("call_has_position")):
+        return f"Call：当前没有旧Call，只评估D10候选；{target}。"
+    otm = signal.get("call_otm")
+    if otm is None:
+        return f"Call：当前有旧Call；{target}。"
+    trigger = "已触发" if float(otm) <= 0.05 else "未触发"
+    return f"Call：旧Call虚值度{percent(otm)}，5%救援线{trigger}；{target}。"
+
+
+def roll_reason(signal: dict[str, Any]) -> str:
+    current = signal.get("core_target") or signal.get("core_current") or "当前核心合约"
+    next_core = signal.get("next_core")
+    roll_date = signal.get("roll_date")
+    if bool(signal.get("scheduled_roll_completed")):
+        prefix = "上一到期月换仓已计入当前规则仓位，不再重复算作下一交易日动作"
+    else:
+        prefix = f"核心合约动作是{action_cn(signal.get('core_action'))}"
+    if next_core and roll_date and current != next_core:
+        return f"展期：{prefix}；{current}规则到期日为{roll_date}，届时转入{next_core}，Put按规则同步重置。"
+    return f"展期：{prefix}。"
+
+
+def product_reasons(product: str, signal: dict[str, Any]) -> list[str]:
+    return [
+        momentum_reason(signal),
+        grid_reason(product, signal),
+        put_reason(product, signal),
+        call_reason(product, signal),
+        roll_reason(signal),
+    ]
+
+
+def reasons_html(product: str, signal: dict[str, Any]) -> str:
+    items = "".join(
+        f'<li style="margin:0 0 9px;padding-left:2px;">{escaped(reason)}</li>'
+        for reason in product_reasons(product, signal)
+    )
+    return f'''<div style="margin:4px 10px 12px;padding:14px 14px 5px;background:#f8fafc;border:1px solid #e4e7ec;border-radius:10px;color:#344054;font-size:13px;line-height:1.65;">
+      <div style="margin-bottom:8px;color:#101828;font-size:14px;font-weight:750;">为什么是这个结果</div>
+      <ol style="margin:0;padding-left:20px;">{items}</ol>
+    </div>'''
+
+
 def leg_row(label: str, current: Any, target: Any, note: str = "") -> str:
     note_html = (
         f'<div style="margin-top:4px;color:#667085;font-size:12px;line-height:1.45;">{escaped(note)}</div>'
@@ -153,6 +271,7 @@ def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
     </td>
   </tr>
   <tr><td style="padding:0 8px 8px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">{rows}</table></td></tr>
+  <tr><td>{reasons_html(product, signal)}</td></tr>
 </table>'''
 
 
@@ -282,8 +401,13 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
             f"| {product} | {current_total} → {target_total} | {current_mom} → {target_mom} | "
             f"{current_grid} → {target_grid} | {put} | {call} | {action} |"
         )
+    lines += ["", "## 为什么是这个结果", ""]
+    for product in ("IC", "IM"):
+        lines.append(f"### {product}")
+        lines.append("")
+        lines.extend(f"- {reason}" for reason in product_reasons(product, signals[product]))
+        lines.append("")
     lines += [
-        "",
         "## 审计状态",
         "",
         f"- 构建：`{payload.get('build', 'N/A')}`",

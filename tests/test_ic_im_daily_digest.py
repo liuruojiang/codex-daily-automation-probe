@@ -29,19 +29,44 @@ def product_signal(product: str, action: str = "HOLD") -> dict[str, object]:
         "total_units_target": 1.0,
         "momentum_current_weight": 1.0,
         "momentum_next_weight": 1.0,
+        "momentum_score": 27.046 if product == "IC" else 46.030,
+        "momentum_abs20": 0.0327 if product == "IC" else 0.0633,
+        "momentum_120": -0.058 if product == "IC" else -0.0679,
+        "score": 1.834 if product == "IC" else 2.020,
         "grid_current": 0,
         "grid_target": 0,
+        "core_current": "IC2609" if product == "IC" else "IM2609",
+        "core_target": "IC2609" if product == "IC" else "IM2609",
+        "next_core": "IC2610" if product == "IC" else "IM2610",
+        "roll_date": "2026-09-18",
+        "scheduled_roll_completed": True,
         "put_current_contract": "510500P2612M07500" if product == "IC" else "MO2612-P-7200",
         "put_target_contract": "510500P2612M07500" if product == "IC" else "MO2612-P-7200",
         "call_target_qty_normalized": 0,
     }
     if product == "IC":
-        signal.update(put_current_total_qty=14, put_target_total_qty=14)
+        signal.update(
+            put_current_total_qty=14,
+            put_target_total_qty=14,
+            valuation_tier_label="基础观察档（低于1.900）",
+            valuation_put_delta=0,
+            mom120_floor_delta=0.5,
+            core_put_driver="MOM120负动量下限",
+            core_put_target_delta=0.25,
+            momentum_put_target_delta=0,
+            total_put_target_delta=0.25,
+        )
     else:
         signal.update(
             core_put_current_qty_normalized=1.5,
             core_put_target_qty_normalized=1.5,
             call_has_position=False,
+            call_target="D10候选 MO2610-C-8500 的IV 24.34%<26%，保持空仓",
+            absolute_valuation_tier_label="基础观察档（低于2.450）",
+            relative_valuation_tier_label="第1保护档（1.976至低于2.095）",
+            valuation_puts_per_full_core=1,
+            mom120_floor_puts_per_full_core=3,
+            core_put_driver="MOM120负动量下限",
         )
     return signal
 
@@ -141,6 +166,36 @@ class ICIMDigestTests(unittest.TestCase):
         self.assertIn("[无需调整]", subject)
         self.assertIn("等待IV条件（无需操作）", html_body)
         self.assertIn("维持现状", html_body)
+
+    def test_success_digest_explains_each_decision_chain(self) -> None:
+        payload = {
+            "status": "ok",
+            "publication_mode": "close_confirmed",
+            "completed_day": "2026-08-26",
+            "next_trade_day": "2026-08-27",
+            "verified_day": "2026-08-26",
+            "signals": {
+                "IC": product_signal("IC"),
+                "IM": {**product_signal("IM"), "call_action": "WAIT_IV"},
+            },
+        }
+        _, body, _ = digest.build_success(payload, "", "")
+        html_body = digest.build_success_html(payload, "")
+
+        for rendered in (body, html_body):
+            self.assertIn("为什么是这个结果", rendered)
+            self.assertIn("未触发入场线≤0.375", rendered)
+            self.assertIn("MOM120负动量下限主导", rendered)
+            self.assertIn("合计目标25.0%", rendered)
+            self.assertIn("未触发入场线≤1.6", rendered)
+            self.assertIn("负动量下限给3张", rendered)
+            self.assertIn("规则到期日为2026-09-18", rendered)
+        self.assertIn("Score 27.046（>0）", body)
+        self.assertIn("Abs20 3.27%（>0）", body)
+        self.assertIn("IV 24.34%<26%", body)
+        self.assertIn("Score 27.046（&gt;0）", html_body)
+        self.assertIn("Abs20 3.27%（&gt;0）", html_body)
+        self.assertIn("IV 24.34%&lt;26%", html_body)
 
     def test_failure_html_is_readable_and_escapes_error(self) -> None:
         html_body = digest.build_failure_html(
