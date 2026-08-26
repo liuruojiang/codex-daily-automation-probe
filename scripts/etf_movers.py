@@ -258,6 +258,48 @@ THEME_INFO: dict[str, tuple[str, str]] = {
     "crypto_index": ("加密产业股票 ETF", "持有区块链、交易平台和加密基础设施公司，不是单一加密资产现货产品。"),
 }
 
+# Product-level copy for funds whose mechanics cannot be inferred safely from
+# their Yahoo Finance names. Every description identifies the underlying
+# exposure, the main economic driver, and a product-specific risk.
+TICKER_DETAILS: dict[str, tuple[str, str]] = {
+    "BLOK": (
+        "主动区块链技术股票 ETF",
+        "主动将至少 80% 净资产投向开发或使用区块链技术的公司，包括交易平台、矿企、数据中心、芯片及金融科技企业；主要受加密市场活跃度、区块链采用和风险偏好驱动，特有风险是主动选股、监管变化、加密周期及行业集中。",
+    ),
+    "BWET": (
+        "原油油轮运价期货 ETF",
+        "持有反映 VLCC 与 Suezmax 原油油轮航线运费的交易所清算期货，而非航运股票；主要受原油贸易流、航程和可用船舶供给驱动，特有风险是运价极端波动、期货展期、流动性及商品池结构。",
+    ),
+    "COMT": (
+        "动态展期广义商品期货 ETF",
+        "跟踪 S&P GSCI Dynamic Roll (USD) Total Return Index，通过期货覆盖能源、金属、农业和牲畜，并为各商品选择相对有利的到期合约；主要受现货供需、通胀与美元驱动，特有风险是选月模型、期货曲线、展期损益及衍生品与抵押品管理。",
+    ),
+    "CRAK": (
+        "全球炼油企业股票 ETF",
+        "跟踪 MVIS Global Oil Refiners Index，持有把原油加工成汽油、柴油、航空燃料及石化产品的全球炼油企业；主要受成品油裂解价差、炼厂开工率和燃料需求驱动，特有风险是炼油行业集中、油价错配、环保监管、汇率及海外市场风险。",
+    ),
+    "DRAM": (
+        "全球存储芯片股票 ETF",
+        "主动投资 HBM、DRAM、NAND、SSD 和硬盘产业链公司，并可使用总回报互换维持敞口；主要受 AI 基础设施需求与存储价格周期驱动，特有风险是少数厂商集中、库存周期、出口管制、技术迭代及互换对手方风险。",
+    ),
+    "FCG": (
+        "天然气生产企业股票 ETF",
+        "跟踪 Nasdaq FactSet Natural Gas Index，持有天然气勘探、生产及相关美国能源公司，而非天然气期货；主要受天然气价格、产量、库存和资本纪律驱动，特有风险是能源行业集中、商品周期、监管及中小型生产商波动。",
+    ),
+    "FTXN": (
+        "美国油气因子精选股票 ETF",
+        "跟踪 Nasdaq US Smart Oil & Gas Index，从美国油气公司中按毛利润、资产回报率、动量和现金流筛选 30–50 只股票并按现金流加权；主要受油气价格、产量与资本纪律驱动，特有风险是能源行业集中、商品周期、监管变化与中小盘波动。",
+    ),
+    "GSG": (
+        "传统展期广义商品期货信托",
+        "跟踪 S&P GSCI Total Return Index，以全额抵押的商品期货覆盖能源、工业与贵金属、农业和牲畜；主要受全球供需、通胀与美元驱动，特有风险是能源权重集中、期货升贴水与展期损益，且产品属于商品信托而非 1940 年法案 ETF。",
+    ),
+    "PFIX": (
+        "长端利率上行凸性对冲 ETF",
+        "主要持有 OTC 利率期权、互换期权和美国国债期货，经济效果近似长期持有 20 年期美国国债看跌期权；主要在长期利率或利率波动率上升时受益，特有风险是期权时间损耗、利率下行、交易对手、估值及衍生品流动性。",
+    ),
+}
+
 MINING_RESOURCE_THEMES = {
     "gold_miners",
     "silver_miners",
@@ -349,13 +391,22 @@ def dedupe_family(row: dict[str, Any], key: str) -> str:
 
 
 def display_name(key: str) -> str:
-    return THEME_INFO.get(key, ("特色主题股票 ETF", ""))[0]
+    return THEME_INFO.get(key, ("", ""))[0]
 
 
 def description(row: dict[str, Any], key: str) -> str:
     if key in THEME_INFO:
         return THEME_INFO[key][1]
-    return "聚焦基金名称所示的细分股票主题，主要风险来自主题集中度和成分股波动。"
+    return ""
+
+
+def product_details(row: dict[str, Any], key: str) -> tuple[str, str] | None:
+    symbol = str(row.get("symbol") or "").upper()
+    if symbol in TICKER_DETAILS:
+        return TICKER_DETAILS[symbol]
+    if key in THEME_INFO:
+        return THEME_INFO[key]
+    return None
 
 
 def _screener_body(offset: int, size: int, min_price: float) -> dict[str, Any]:
@@ -437,13 +488,17 @@ def _rank(records: list[dict[str, Any]], reverse: bool, limit: int) -> list[dict
     return picked
 
 
-def _record(row: dict[str, Any], date_s: str, change: float) -> dict[str, Any]:
+def _record(row: dict[str, Any], date_s: str, change: float) -> dict[str, Any] | None:
     key = theme_key(row)
+    details = product_details(row, key)
+    if details is None:
+        return None
+    name, detail = details
     return {
         "symbol": str(row.get("symbol") or ""),
-        "name": display_name(key),
+        "name": name,
         "original_name": _name(row),
-        "description": description(row, key),
+        "description": detail,
         "category": key,
         "dedupe_family": dedupe_family(row, key),
         "date": date_s,
@@ -463,7 +518,11 @@ def daily_rankings(rows: list[dict[str, Any]], limit: int = 10) -> RankingResult
             continue
         timestamp = int(row.get("regularMarketTime") or 0)
         date_s = datetime.fromtimestamp(timestamp, tz=timezone.utc).astimezone(ny).date().isoformat() if timestamp else ""
-        records.append(_record(row, date_s, float(value)))
+        record = _record(row, date_s, float(value))
+        if record is None:
+            excluded["unresolved_theme_detail"] = excluded.get("unresolved_theme_detail", 0) + 1
+            continue
+        records.append(record)
     return RankingResult(len(rows), len(eligible), excluded, _rank(records, True, limit), _rank(records, False, limit))
 
 
@@ -526,7 +585,10 @@ def period_rankings(rows: list[dict[str, Any]], limit: int = 10) -> dict[str, An
             end_date, end_close = chart[-1]
             if start_close <= 0:
                 continue
-            records.append(_record(row, end_date, (end_close / start_close - 1.0) * 100.0))
+            record = _record(row, end_date, (end_close / start_close - 1.0) * 100.0)
+            if record is None:
+                continue
+            records.append(record)
         result[label] = {
             "gainers": _rank(records, True, limit),
             "losers": _rank(records, False, limit),

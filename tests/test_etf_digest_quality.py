@@ -36,6 +36,8 @@ class EtfDigestQualityTests(unittest.TestCase):
             dr.csindex_daily_rows = original
 
     def test_etf_dedupe_keeps_recently_sent_items_out_beyond_one_day(self) -> None:
+        original_now_bj = dr.now_bj
+        dr.now_bj = lambda: dr.datetime(2026, 5, 20, 7, 0, tzinfo=dr.BJ)
         old_item = self.item(
             "Quantpedia",
             "Dual Momentum Allocation Between Physical Gold and Bitcoin (Digital Gold)",
@@ -49,30 +51,33 @@ class EtfDigestQualityTests(unittest.TestCase):
             "https://www.aqr.com/insights/fresh-trend-following-research-note",
         )
         original_cwd = Path.cwd()
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_path = Path(tmp)
-            history_dir = tmp_path / "digest_history"
-            history_dir.mkdir()
-            (history_dir / "etf.json").write_text(
-                json.dumps(
-                    {
-                        "items": [
-                            {
-                                "sent_date": "2026-05-18",
-                                "source": old_item.source,
-                                "title": old_item.title,
-                                "url": old_item.url,
-                            }
-                        ]
-                    }
-                ),
-                encoding="utf-8",
-            )
-            os.chdir(tmp_path)
-            try:
-                filtered = dr.filter_previously_sent("etf", [old_item, new_item], days=dr.ETF_DEDUPE_DAYS)
-            finally:
-                os.chdir(original_cwd)
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                tmp_path = Path(tmp)
+                history_dir = tmp_path / "digest_history"
+                history_dir.mkdir()
+                (history_dir / "etf.json").write_text(
+                    json.dumps(
+                        {
+                            "items": [
+                                {
+                                    "sent_date": "2026-05-18",
+                                    "source": old_item.source,
+                                    "title": old_item.title,
+                                    "url": old_item.url,
+                                }
+                            ]
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                os.chdir(tmp_path)
+                try:
+                    filtered = dr.filter_previously_sent("etf", [old_item, new_item], days=dr.ETF_DEDUPE_DAYS)
+                finally:
+                    os.chdir(original_cwd)
+        finally:
+            dr.now_bj = original_now_bj
 
         self.assertEqual([item.url for item in filtered], [new_item.url])
 

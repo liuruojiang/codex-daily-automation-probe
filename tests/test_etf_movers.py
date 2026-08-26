@@ -88,16 +88,52 @@ class EtfMoverRulesTests(unittest.TestCase):
 
     def test_visible_name_and_description_are_useful_chinese_copy(self) -> None:
         record = movers._record(row("NCLD", "Roundhill Neocloud ETF"), "2026-08-21", -2.5)
+        self.assertIsNotNone(record)
+        assert record is not None
         self.assertEqual(record["name"], "软件与云计算股票 ETF")
         self.assertIn("企业 IT 支出", record["description"])
         self.assertNotIn("去重后保留", record["description"])
         self.assertNotIn("Roundhill", record["description"])
         pharma = movers._record(row("FTXH", "First Trust Nasdaq Pharmaceuticals ETF"), "2026-08-21", 2.0)
+        self.assertIsNotNone(pharma)
+        assert pharma is not None
         self.assertEqual(pharma["name"], "医疗保健股票 ETF")
         inflation = movers._record(row("INFL", "Horizon Kinetics Inflation Beneficiaries ETF"), "2026-08-21", 2.0)
+        self.assertIsNotNone(inflation)
+        assert inflation is not None
         self.assertEqual(inflation["name"], "通胀受益股票 ETF")
         active = movers._record(row("AKRE", "Akre Focus ETF"), "2026-08-21", 2.0)
         self.assertEqual(active["name"], "主动精选股票 ETF")
+
+    def test_current_misclassified_products_have_exact_distinct_details(self) -> None:
+        products = {
+            "GSG": ("iShares S&P GSCI Commodity-Indexed Trust", "S&P GSCI Total Return Index"),
+            "COMT": ("iShares GSCI Commodity Dynamic Roll Strategy ETF", "S&P GSCI Dynamic Roll (USD) Total Return Index"),
+            "FTXN": ("First Trust Nasdaq Oil & Gas ETF", "Nasdaq US Smart Oil & Gas Index"),
+            "DRAM": ("Roundhill Memory ETF", "HBM、DRAM、NAND"),
+            "PFIX": ("Simplify Interest Rate Hedge ETF", "20 年期美国国债看跌期权"),
+            "CRAK": ("VanEck Oil Refiners ETF", "MVIS Global Oil Refiners Index"),
+            "FCG": ("First Trust Natural Gas ETF", "而非天然气期货"),
+            "BWET": ("Breakwave Tanker Shipping ETF", "而非航运股票"),
+            "BLOK": ("Amplify Blockchain Technology ETF", "至少 80% 净资产"),
+        }
+        names: set[str] = set()
+        descriptions: set[str] = set()
+        for symbol, (fund_name, required_text) in products.items():
+            record = movers._record(row(symbol, fund_name), "2026-08-25", -1.0)
+            self.assertIsNotNone(record, symbol)
+            assert record is not None
+            self.assertIn(required_text, record["description"], symbol)
+            self.assertNotIn("特色主题股票 ETF", record["name"], symbol)
+            self.assertNotIn("聚焦基金名称所示", record["description"], symbol)
+            names.add(str(record["name"]))
+            descriptions.add(str(record["description"]))
+        self.assertEqual(len(names), len(products))
+        self.assertEqual(len(descriptions), len(products))
+
+    def test_unknown_theme_is_dropped_instead_of_using_placeholder_copy(self) -> None:
+        unknown = movers._record(row("ZZZZ", "Example Distinctive Opportunities ETF"), "2026-08-25", 1.0)
+        self.assertIsNone(unknown)
 
 
 if __name__ == "__main__":
