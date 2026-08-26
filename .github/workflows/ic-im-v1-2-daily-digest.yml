@@ -66,14 +66,13 @@ jobs:
           fi
           python automation/scripts/check_ic_im_delivery.py "${args[@]}"
 
-      - name: Check out private IC/IM strategy repository
+      - name: Check out public IC/IM strategy repository
         if: steps.delivery_gate.outputs.should_send == 'true'
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
           ref: main
           path: strategy
-          token: ${{ secrets.ICIM_REPO_TOKEN }}
 
       - name: Install strategy dependencies
         if: steps.delivery_gate.outputs.should_send == 'true'

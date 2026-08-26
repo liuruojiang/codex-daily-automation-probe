@@ -16,7 +16,7 @@ class ICIMWorkflowTests(unittest.TestCase):
         self.assertIn('- cron: "30 9 * * 1-5"', text)
         self.assertIn("group: ic-im-v1-2-daily-digest", text)
         self.assertIn("cancel-in-progress: false", text)
-        self.assertIn("secrets.ICIM_REPO_TOKEN", text)
+        self.assertNotIn("ICIM_REPO_TOKEN", text)
         self.assertIn("scripts/restore_ic_im_ledger.py", text)
         self.assertIn("run_ic_im_v1_2_github_digest.py", text)
         self.assertIn("name: ic-im-v1-2-ledger", text)
