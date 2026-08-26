@@ -1,0 +1,198 @@
+name: IC IM v1.2 Daily Digest
+
+on:
+  schedule:
+    # 16:30/17:00/17:30 Beijing. Early data misses retry without sending stale mail.
+    - cron: "30 8 * * 1-5"
+    - cron: "0 9 * * 1-5"
+    - cron: "30 9 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      correction:
+        description: "Bypass today's delivery marker and label the email as corrected"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ic-im-v1-2-daily-digest
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    env:
+      TZ: Asia/Shanghai
+      GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Check out automation repository
+        uses: actions/checkout@v6
+        with:
+          path: automation
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Classify attempt
+        id: attempt
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE_VALUE: ${{ github.event.schedule }}
+        run: |
+          final=false
+          if [[ "${EVENT_NAME}" != "schedule" || "${SCHEDULE_VALUE}" == "30 9 * * 1-5" ]]; then
+            final=true
+          fi
+          echo "final_attempt=${final}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check delivery marker
+        id: delivery_gate
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CORRECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.correction && 'true' || 'false' }}
+        run: |
+          args=()
+          if [[ "${CORRECTION}" == "true" ]]; then
+            args+=(--correction)
+          fi
+          python automation/scripts/check_ic_im_delivery.py "${args[@]}"
+
+      - name: Check out public IC/IM strategy repository
+        if: steps.delivery_gate.outputs.should_send == 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/ic-im-rolling-arbitrage
+          ref: main
+          path: strategy
+
+      - name: Install strategy dependencies
+        if: steps.delivery_gate.outputs.should_send == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r strategy/requirements-poe-v1.2-server.txt
+
+      - name: Check A-share trading day
+        if: steps.delivery_gate.outputs.should_send == 'true'
+        id: calendar
+        shell: bash
+        run: |
+          python - <<'PY' | tee calendar.env
+          import sys
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          sys.path.insert(0, "strategy")
+          import poe_ic_im_mainline_v1_2_bot as strategy
+          today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+          print(f"trade_day={str(strategy._is_exchange_trading_day(today)).lower()}")
+          print(f"today={today.isoformat()}")
+          PY
+          cat calendar.env >> "${GITHUB_OUTPUT}"
+
+      - name: Restore latest hash-chained ledger
+        if: steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
+        id: restore_ledger
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python automation/scripts/restore_ic_im_ledger.py --state-dir state
+
+      - name: Run close-confirmed IC/IM signal
+        if: steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
+        id: run_signal
+        shell: bash
+        run: |
+          set +e
+          timeout --foreground 65m python -u strategy/run_ic_im_v1_2_github_digest.py \
+            --state-dir state \
+            --out-dir strategy-artifacts \
+            --max-sessions 20 2>&1 | tee strategy-run.log
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          exit 0
+
+      - name: Build Gmail digest
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
+        run: |
+          python automation/scripts/build_ic_im_digest.py \
+            --result strategy-artifacts/result.json \
+            --report strategy-artifacts/ic_im_v1_2_close_signal.md \
+            --out-dir mail-artifacts \
+            --subject-prefix "${{ steps.delivery_gate.outputs.subject_prefix }}"
+
+      - name: Send Gmail
+        id: send_gmail
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && (steps.run_signal.outputs.exit_code == '0' || steps.attempt.outputs.final_attempt == 'true')
+        env:
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
+        run: python automation/scripts/send_report.py mail-artifacts/metadata.json
+
+      - name: Upload successful ledger
+        if: steps.run_signal.outputs.exit_code == '0'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ic-im-v1-2-ledger
+          path: |
+            state/latest.json
+            state/journal/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Prepare delivery marker
+        if: steps.send_gmail.outcome == 'success'
+        shell: bash
+        run: |
+          mkdir -p delivery-marker
+          printf '%s\n' "${GITHUB_RUN_URL}" > delivery-marker/run-url.txt
+
+      - name: Mark digest delivered
+        if: steps.send_gmail.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.delivery_gate.outputs.marker_name }}
+          path: delivery-marker/run-url.txt
+          retention-days: 30
+
+      - name: Upload audit artifacts
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
+        uses: actions/upload-artifact@v7
+        with:
+          name: ic-im-v1-2-daily-digest
+          path: |
+            strategy-run.log
+            strategy-artifacts/
+            mail-artifacts/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Add run summary
+        if: always() && steps.delivery_gate.outputs.should_send == 'true'
+        shell: bash
+        run: |
+          {
+            echo "## IC/IM v1.2 daily digest"
+            echo
+            echo "- Trading day: ${{ steps.calendar.outputs.trade_day }}"
+            echo "- Final attempt: ${{ steps.attempt.outputs.final_attempt }}"
+            echo "- Ledger restored: ${{ steps.restore_ledger.outputs.restored }}"
+            echo "- Signal exit code: ${{ steps.run_signal.outputs.exit_code }}"
+            echo "- Gmail outcome: ${{ steps.send_gmail.outcome }}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Fail when close-confirmed signal failed
+        if: steps.run_signal.outputs.exit_code != '' && steps.run_signal.outputs.exit_code != '0'
+        run: exit 1
