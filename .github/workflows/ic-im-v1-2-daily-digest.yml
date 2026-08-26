@@ -144,7 +144,7 @@ jobs:
           exit 0
 
       - name: Build Gmail digest
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped'
         run: |
           python automation/scripts/build_ic_im_digest.py \
             --result strategy-artifacts/result.json \
@@ -153,7 +153,7 @@ jobs:
 
       - name: Send Gmail
         id: send_gmail
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && (steps.run_signal.outputs.exit_code == '0' || steps.attempt.outputs.final_attempt == 'true')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && (steps.run_signal.outputs.exit_code == '0' || steps.attempt.outputs.final_attempt == 'true')
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}

@@ -15,6 +15,21 @@ MAX_FILES = 500
 ARTIFACT_NAME = "ic-im-v1-2-ledger"
 
 
+class StripCrossOriginAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Follow artifact redirects without leaking GitHub auth cross-origin."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if redirected is None:
+            return None
+        old_origin = urllib.parse.urlsplit(req.full_url).netloc.lower()
+        new_origin = urllib.parse.urlsplit(newurl).netloc.lower()
+        if old_origin != new_origin:
+            for name in ("Authorization", "X-GitHub-Api-Version", "Accept"):
+                redirected.remove_header(name)
+        return redirected
+
+
 def api_request(url: str, token: str) -> urllib.request.Request:
     return urllib.request.Request(
         url,
@@ -56,7 +71,8 @@ def fetch_latest(repository: str, token: str, api_url: str) -> dict[str, object]
 
 def download(artifact: dict[str, object], token: str) -> bytes:
     url = str(artifact["archive_download_url"])
-    with urllib.request.urlopen(api_request(url, token), timeout=60) as response:
+    opener = urllib.request.build_opener(StripCrossOriginAuthRedirectHandler())
+    with opener.open(api_request(url, token), timeout=60) as response:
         data = response.read(MAX_ARCHIVE_BYTES + 1)
     if len(data) > MAX_ARCHIVE_BYTES:
         raise RuntimeError("ledger artifact exceeds safety limit")

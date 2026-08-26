@@ -189,6 +189,34 @@ class ICIMDigestTests(unittest.TestCase):
         }
         self.assertEqual(restore.latest_artifact(payload)["id"], 2)
 
+    def test_artifact_redirect_strips_auth_only_when_origin_changes(self) -> None:
+        handler = restore.StripCrossOriginAuthRedirectHandler()
+        request = restore.api_request(
+            "https://api.github.com/repos/example/repo/actions/artifacts/1/zip",
+            "secret-token",
+        )
+        cross_origin = handler.redirect_request(
+            request,
+            None,
+            302,
+            "Found",
+            {},
+            "https://signed-results.example.net/archive.zip?sig=abc",
+        )
+        self.assertIsNotNone(cross_origin)
+        self.assertIsNone(cross_origin.get_header("Authorization"))
+        self.assertIsNone(cross_origin.get_header("X-GitHub-Api-Version"))
+
+        same_origin = handler.redirect_request(
+            request,
+            None,
+            302,
+            "Found",
+            {},
+            "https://api.github.com/redirected",
+        )
+        self.assertEqual(same_origin.get_header("Authorization"), "Bearer secret-token")
+
     def test_ledger_extract_rejects_path_traversal(self) -> None:
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w") as archive:
