@@ -71,6 +71,32 @@ class ICIMDigestTests(unittest.TestCase):
         self.assertIn("动量袖 TURN_OFF", body)
         self.assertIn("研究审计信号", body)
 
+    def test_realtime_digest_is_provisional_and_uses_market_date(self) -> None:
+        payload = {
+            "status": "ok",
+            "publication_mode": "realtime",
+            "build": "v1.2-test",
+            "market_date": "2026-08-26",
+            "completed_day": "2026-08-25",
+            "next_trade_day": "2026-08-27",
+            "verified_day": "2026-08-25",
+            "sequence": 1,
+            "digest": "abcdef1234567890",
+            "advanced_sessions": 0,
+            "signals": {
+                "IC": product_signal("IC"),
+                "IM": product_signal("IM", "TURN_OFF"),
+            },
+        }
+        subject, body, actionable = digest.build_success(payload, "", "")
+        self.assertTrue(actionable)
+        self.assertEqual(
+            subject,
+            "[盘中实时][预估需调整] IC/IM 1.2 日报 - 2026-08-26",
+        )
+        self.assertIn("等待收盘确认", body)
+        self.assertIn("盘中值并未写入账本", body)
+
     def test_failure_digest_blocks_old_signal_use(self) -> None:
         subject, body = digest.build_failure(
             {
@@ -83,13 +109,18 @@ class ICIMDigestTests(unittest.TestCase):
             "",
             "",
         )
-        self.assertEqual(subject, "[异常] IC/IM 1.2 日报 - 2026-08-26")
+        self.assertEqual(
+            subject, "[异常][收盘确认] IC/IM 1.2 日报 - 2026-08-26"
+        )
         self.assertIn("请勿依据旧邮件调整", body)
         self.assertIn("没有因本次失败而跳日", body)
 
     def test_delivery_marker_uses_beijing_date(self) -> None:
         day = gate.delivery_date(datetime(2026, 8, 26, 9, 0, tzinfo=timezone.utc))
-        self.assertEqual(gate.marker_name(day), "ic-im-v1-2-digest-delivered-2026-08-26")
+        self.assertEqual(
+            gate.marker_name(day),
+            "ic-im-v1-2-realtime-digest-delivered-2026-08-26",
+        )
 
     def test_latest_ledger_artifact_ignores_expired(self) -> None:
         payload = {

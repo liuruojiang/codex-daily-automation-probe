@@ -24,7 +24,7 @@ def delivery_date(value: datetime) -> date:
 
 
 def marker_name(value: date) -> str:
-    return f"ic-im-v1-2-digest-delivered-{value.isoformat()}"
+    return f"ic-im-v1-2-realtime-digest-delivered-{value.isoformat()}"
 
 
 def marker_exists(payload: dict[str, object], name: str) -> bool:
