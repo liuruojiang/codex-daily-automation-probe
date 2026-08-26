@@ -97,6 +97,64 @@ class ICIMDigestTests(unittest.TestCase):
         self.assertIn("等待收盘确认", body)
         self.assertIn("盘中值并未写入账本", body)
 
+        html_body = digest.build_success_html(payload, "https://github.com/example/run")
+        self.assertIn("<!doctype html>", html_body.lower())
+        self.assertIn("IC / 中证500", html_body)
+        self.assertIn("IM / 中证1000", html_body)
+        self.assertIn("盘中结果会随行情变化", html_body)
+        self.assertIn("动量：关闭", html_body)
+        self.assertNotIn("| 品种 |", html_body)
+
+    def test_success_html_escapes_untrusted_signal_values(self) -> None:
+        payload = {
+            "status": "ok",
+            "publication_mode": "realtime",
+            "market_date": "2026-08-26",
+            "completed_day": "2026-08-25",
+            "next_trade_day": "2026-08-27",
+            "verified_day": "2026-08-25",
+            "signals": {
+                "IC": {**product_signal("IC"), "core_current": "<script>alert(1)</script>"},
+                "IM": product_signal("IM"),
+            },
+        }
+        html_body = digest.build_success_html(payload, "https://example.com/?a=1&b=2")
+        self.assertNotIn("<script>", html_body)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", html_body)
+        self.assertIn("a=1&amp;b=2", html_body)
+
+    def test_wait_iv_is_monitoring_state_not_actionable_change(self) -> None:
+        payload = {
+            "status": "ok",
+            "publication_mode": "close_confirmed",
+            "completed_day": "2026-08-26",
+            "next_trade_day": "2026-08-27",
+            "verified_day": "2026-08-26",
+            "signals": {
+                "IC": product_signal("IC"),
+                "IM": {**product_signal("IM"), "call_action": "WAIT_IV"},
+            },
+        }
+        subject, _, actionable = digest.build_success(payload, "", "")
+        html_body = digest.build_success_html(payload, "")
+        self.assertFalse(actionable)
+        self.assertIn("[无需调整]", subject)
+        self.assertIn("等待IV条件（无需操作）", html_body)
+        self.assertIn("维持现状", html_body)
+
+    def test_failure_html_is_readable_and_escapes_error(self) -> None:
+        html_body = digest.build_failure_html(
+            {
+                "publication_mode": "realtime",
+                "error_type": "RuntimeError",
+                "error": "bad <source>",
+            },
+            "",
+        )
+        self.assertIn("信号生成失败", html_body)
+        self.assertIn("请勿依据旧邮件调整", html_body)
+        self.assertIn("bad &lt;source&gt;", html_body)
+
     def test_failure_digest_blocks_old_signal_use(self) -> None:
         subject, body = digest.build_failure(
             {
