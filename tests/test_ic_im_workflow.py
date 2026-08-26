@@ -26,6 +26,7 @@ class ICIMWorkflowTests(unittest.TestCase):
         self.assertIn("scripts/send_report.py", text)
         self.assertIn("steps.attempt.outputs.final_attempt == 'true'", text)
         self.assertIn("steps.run_signal.outputs.exit_code == '0'", text)
+        self.assertIn("steps.run_signal.outcome != 'skipped'", text)
         self.assertIn("name: Mark digest delivered", text)
         self.assertIn("name: ic-im-v1-2-realtime-digest", text)
 
