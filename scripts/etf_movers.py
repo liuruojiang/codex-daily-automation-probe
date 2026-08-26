@@ -298,6 +298,29 @@ TICKER_DETAILS: dict[str, tuple[str, str]] = {
         "长端利率上行凸性对冲 ETF",
         "主要持有 OTC 利率期权、互换期权和美国国债期货，经济效果近似长期持有 20 年期美国国债看跌期权；主要在长期利率或利率波动率上升时受益，特有风险是期权时间损耗、利率下行、交易对手、估值及衍生品流动性。",
     ),
+    "PDBC": (
+        "主动优化展期广义商品期货 ETF",
+        "主动通过商品挂钩期货和其他金融工具配置 14 种主要交易商品，覆盖能源、金属和农业，并以 DBIQ Optimum Yield Diversified Commodity Index Excess Return 为比较基准；主要受全球供需、通胀和美元驱动，特有风险是能源权重、期货曲线与展期损益、衍生品子公司及抵押品管理。",
+    ),
+    "XOP": (
+        "美国油气勘探生产股票 ETF",
+        "跟踪 S&P Oil & Gas Exploration & Production Select Industry Index，以修正等权方式持有美国综合油气、勘探生产及炼油营销公司；主要受油气价格、产量和资本纪律驱动，特有风险是能源行业集中、商品周期、中小盘波动及指数再平衡。",
+    ),
+}
+
+# Theme classification is used for ranking deduplication. These overrides keep
+# product mechanics separate from Yahoo's inconsistent fund names and group
+# products by the same underlying exposure/economic driver.
+TICKER_THEME_OVERRIDES: dict[str, str] = {
+    "BLOK": "crypto_index",
+    "BWET": "tanker_freight_futures",
+    "COMT": "broad_commodities",
+    "CRAK": "oil_refiners_equity",
+    "DRAM": "semiconductors",
+    "FCG": "energy_equity",
+    "FTXN": "energy_equity",
+    "GSG": "broad_commodities",
+    "PFIX": "rates_up_hedge",
 }
 
 MINING_RESOURCE_THEMES = {
@@ -366,6 +389,17 @@ def average_daily_dollar_volume(row: dict[str, Any]) -> float:
     return price * average_daily_volume(row)
 
 
+def fund_assets(row: dict[str, Any]) -> float:
+    for field in ("netAssets", "totalAssets", "marketCap"):
+        try:
+            value = float(row.get(field) or 0)
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(value) and value > 0:
+            return value
+    return 0.0
+
+
 def is_liquid(row: dict[str, Any]) -> bool:
     return (
         average_daily_volume(row) >= MIN_AVG_DAILY_VOLUME
@@ -374,6 +408,9 @@ def is_liquid(row: dict[str, Any]) -> bool:
 
 
 def theme_key(row: dict[str, Any]) -> str:
+    symbol = str(row.get("symbol") or "").upper()
+    if symbol in TICKER_THEME_OVERRIDES:
+        return TICKER_THEME_OVERRIDES[symbol]
     text = _text(row)
     for key, pattern in THEME_PATTERNS:
         if re.search(pattern, text, flags=re.I):
@@ -471,21 +508,37 @@ def eligible_universe(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]],
 
 
 def _rank(records: list[dict[str, Any]], reverse: bool, limit: int) -> list[dict[str, Any]]:
-    picked: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for record in sorted(records, key=lambda item: float(item["change"]), reverse=reverse):
-        if reverse and float(record["change"]) <= 0:
+    directional = [
+        record
+        for record in records
+        if (float(record["change"]) > 0 if reverse else float(record["change"]) < 0)
+    ]
+    representatives: dict[str, dict[str, Any]] = {}
+    for record in directional:
+        family = str(record["dedupe_family"])
+        current = representatives.get(family)
+        selection_key = (
+            float(record["average_daily_dollar_volume"]),
+            float(record["fund_assets"]),
+            int(record["average_daily_volume"]),
+            str(record["symbol"]),
+        )
+        if current is None:
+            representatives[family] = record
             continue
-        if not reverse and float(record["change"]) >= 0:
-            continue
-        key = str(record["dedupe_family"])
-        if key in seen:
-            continue
-        seen.add(key)
-        picked.append(record)
-        if len(picked) >= limit:
-            break
-    return picked
+        current_key = (
+            float(current["average_daily_dollar_volume"]),
+            float(current["fund_assets"]),
+            int(current["average_daily_volume"]),
+            str(current["symbol"]),
+        )
+        if selection_key > current_key:
+            representatives[family] = record
+    return sorted(
+        representatives.values(),
+        key=lambda item: float(item["change"]),
+        reverse=reverse,
+    )[:limit]
 
 
 def _record(row: dict[str, Any], date_s: str, change: float) -> dict[str, Any] | None:
@@ -505,6 +558,7 @@ def _record(row: dict[str, Any], date_s: str, change: float) -> dict[str, Any] |
         "change": change,
         "average_daily_volume": average_daily_volume(row),
         "average_daily_dollar_volume": average_daily_dollar_volume(row),
+        "fund_assets": fund_assets(row),
     }
 
 
