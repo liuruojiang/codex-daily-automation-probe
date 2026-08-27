@@ -1,30 +1,6 @@
 {
   "items": [
     {
-      "sent_date": "2026-06-27",
-      "source": "Bogleheads.org Forum (comments/replies 43; views 1293)",
-      "title": "Personal Investments • TIAA account question",
-      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8796239#p8796239"
-    },
-    {
-      "sent_date": "2026-06-27",
-      "source": "Reddit r/ETFs (hot RSS rank 3)",
-      "title": "Please eval my portfolio",
-      "url": "https://old.reddit.com/r/ETFs/comments/1ugjjvy/please_eval_my_portfolio/"
-    },
-    {
-      "sent_date": "2026-06-27",
-      "source": "Bogleheads.org Forum (comments/replies 33; views 1407)",
-      "title": "Personal Investments • Does anything beat VTEB for taxable bonds?",
-      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8796238#p8796238"
-    },
-    {
-      "sent_date": "2026-06-27",
-      "source": "Reddit r/ETFs (hot RSS rank 5)",
-      "title": "25 yr old. my portfolio",
-      "url": "https://old.reddit.com/r/ETFs/comments/1ug3ril/25_yr_old_my_portfolio/"
-    },
-    {
       "sent_date": "2026-06-30",
       "source": "The Compound / Animal Spirits（视频/播客）",
       "title": "Invest in the Robot Revolution or Be Crushed by It | LFTC",
@@ -2099,6 +2075,36 @@
       "source": "Bogleheads.org Forum (comments/replies 31; views 1978)",
       "title": "Personal Investments • What bond fund to use if money might be needed within 1yr to 1.5yrs",
       "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8841802#p8841802"
+    },
+    {
+      "sent_date": "2026-08-27",
+      "source": "Quantocracy",
+      "title": "Recent Quant Links from Quantocracy as of 08/25/2026",
+      "url": "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-08252026/"
+    },
+    {
+      "sent_date": "2026-08-27",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Animal Spirits: Are Free Markets Dead?",
+      "url": "https://awealthofcommonsense.com/2026/08/animal-spirits-are-free-markets-dead/"
+    },
+    {
+      "sent_date": "2026-08-27",
+      "source": "Meb Faber（博客）",
+      "title": "10 Stats from Investing in America",
+      "url": "https://mebfaber.com/2026/08/26/10-stats-from-investing-in-america/"
+    },
+    {
+      "sent_date": "2026-08-27",
+      "source": "Bogleheads.org Forum (comments/replies 29; views 902)",
+      "title": "Investing - Theory, News & General • Apparently the benefit of financial advisors is now in Tax Loss Harvesting",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8842857#p8842857"
+    },
+    {
+      "sent_date": "2026-08-27",
+      "source": "Bogleheads.org Forum (comments/replies 29; views 902)",
+      "title": "Investing - Theory, News & General • Apparently the benefit of financial advisors is now in Tax Loss Harvesting",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8842428#p8842428"
     }
   ]
 }
