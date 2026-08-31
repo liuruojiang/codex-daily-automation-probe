@@ -67,14 +67,8 @@ jobs:
         id: publication_mode
         shell: bash
         env:
-          DISPATCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'realtime' }}
-        run: |
-          runner_mode=realtime
-          if [[ "${DISPATCH_MODE}" == "close_confirmed" ]]; then
-            runner_mode=close
-          fi
-          echo "mode=${DISPATCH_MODE}" >> "${GITHUB_OUTPUT}"
-          echo "runner_mode=${runner_mode}" >> "${GITHUB_OUTPUT}"
+          REQUESTED_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'auto' }}
+        run: python automation/scripts/resolve_cn_publication_mode.py --requested "${REQUESTED_MODE}"
 
       - name: Check delivery marker
         id: delivery_gate
@@ -165,7 +159,7 @@ jobs:
         run: python automation/scripts/send_report.py mail-artifacts/metadata.json
 
       - name: Upload successful ledger
-        if: steps.run_signal.outputs.exit_code == '0'
+        if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0'
         uses: actions/upload-artifact@v7
         with:
           name: ic-im-v1-2-ledger
@@ -176,14 +170,14 @@ jobs:
           retention-days: 90
 
       - name: Prepare delivery marker
-        if: steps.send_gmail.outcome == 'success'
+        if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.send_gmail.outcome == 'success'
         shell: bash
         run: |
           mkdir -p delivery-marker
           printf '%s\n' "${GITHUB_RUN_URL}" > delivery-marker/run-url.txt
 
       - name: Mark digest delivered
-        if: steps.send_gmail.outcome == 'success'
+        if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.send_gmail.outcome == 'success'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}
@@ -210,6 +204,8 @@ jobs:
             echo "## IC/IM v1.2 realtime digest"
             echo
             echo "- Publication mode: ${{ steps.publication_mode.outputs.mode }}"
+            echo "- Publication mode basis: ${{ steps.publication_mode.outputs.basis }}"
+            echo "- Resolved at: ${{ steps.publication_mode.outputs.beijing_time }}"
             echo "- Planned: ${PLANNED_BJ}"
             echo "- Trading day: ${{ steps.calendar.outputs.trade_day }}"
             echo "- Final attempt: ${{ steps.attempt.outputs.final_attempt }}"

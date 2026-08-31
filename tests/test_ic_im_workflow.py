@@ -20,6 +20,8 @@ class ICIMWorkflowTests(unittest.TestCase):
         self.assertIn("scripts/restore_ic_im_ledger.py", text)
         self.assertIn("run_ic_im_v1_2_github_digest.py", text)
         self.assertIn("steps.publication_mode.outputs.runner_mode", text)
+        self.assertIn("resolve_cn_publication_mode.py", text)
+        self.assertIn("inputs.publication_mode || 'auto'", text)
         self.assertIn("name: ic-im-v1-2-ledger", text)
         self.assertIn("retention-days: 90", text)
         self.assertIn("scripts/check_ic_im_delivery.py", text)
@@ -29,6 +31,23 @@ class ICIMWorkflowTests(unittest.TestCase):
         self.assertIn("steps.run_signal.outcome != 'skipped'", text)
         self.assertIn("name: Mark digest delivered", text)
         self.assertIn("name: ic-im-v1-2-realtime-digest", text)
+
+    def test_ledger_and_delivery_marker_require_a_real_successful_signal(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        ledger_step = text[
+            text.index("name: Upload successful ledger") : text.index("name: Prepare delivery marker")
+        ]
+        prepare_step = text[
+            text.index("name: Prepare delivery marker") : text.index("name: Mark digest delivered")
+        ]
+        mark_step = text[
+            text.index("name: Mark digest delivered") : text.index("name: Upload audit artifacts")
+        ]
+        for step in (ledger_step, prepare_step, mark_step):
+            self.assertIn("steps.run_signal.outcome == 'success'", step)
+            self.assertIn("steps.run_signal.outputs.exit_code == '0'", step)
+        for step in (prepare_step, mark_step):
+            self.assertIn("steps.send_gmail.outcome == 'success'", step)
 
 
 if __name__ == "__main__":

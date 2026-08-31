@@ -88,6 +88,8 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertNotIn("timeout --foreground 30m python -u microcap_top100", text)
         self.assertIn("publication_mode:", text)
         self.assertIn("- close_confirmed", text)
+        self.assertIn("resolve_cn_publication_mode.py", text)
+        self.assertIn("inputs.publication_mode || 'auto'", text)
         self.assertIn("--publication-mode \"${{ steps.publication_mode.outputs.mode }}\"", text)
         self.assertIn("signal_suffix=latest_signal", text)
         self.assertIn("steps.digest.outputs.status != 'OK'", text)

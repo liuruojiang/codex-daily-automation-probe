@@ -113,8 +113,8 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true'
         shell: bash
         env:
-          DISPATCH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'realtime' }}
-        run: echo "mode=${DISPATCH_MODE}" >> "${GITHUB_OUTPUT}"
+          REQUESTED_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'auto' }}
+        run: python automation/scripts/resolve_cn_publication_mode.py --requested "${REQUESTED_MODE}"
 
       - name: Check out microcap repository
         if: steps.delivery_gate.outputs.should_send == 'true'
@@ -298,6 +298,8 @@ jobs:
             echo "## Microcap signal digest"
             echo
             echo "- Publication mode: ${{ steps.publication_mode.outputs.mode }}"
+            echo "- Publication mode basis: ${{ steps.publication_mode.outputs.basis }}"
+            echo "- Resolved at: ${{ steps.publication_mode.outputs.beijing_time }}"
             echo "- Digest status: ${{ steps.digest.outputs.status }}"
             echo "- Planned: ${PLANNED_BJ}"
             echo "- Started: ${STARTED_BJ}"
