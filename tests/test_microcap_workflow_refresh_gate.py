@@ -41,17 +41,17 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("name: Run v2.3 selected signal", text)
         self.assertIn("name: Run v2.5 selected signal", text)
         self.assertIn("microcap_top100_mom16_biweekly_live_v2_5.py", text)
-        self.assertIn("--result v2.5=microcap/realtime_signal_v2_5_result.txt", text)
+        self.assertIn("--result v2.5=${v25_root}/realtime_signal_v2_5_result.txt", text)
         self.assertIn(
             "--signal-csv v2.0=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_0_${signal_suffix}.csv",
             text,
         )
         self.assertIn(
-            "--signal-csv v2.3=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_3_${signal_suffix}.csv",
+            "--signal-csv v2.3=${v23_root}/outputs/microcap_top100_mom16_biweekly_live_v2_3_${signal_suffix}.csv",
             text,
         )
         self.assertIn(
-            "--signal-csv v2.5=microcap/outputs/microcap_top100_mom16_biweekly_live_v2_5_${signal_suffix}.csv",
+            "--signal-csv v2.5=${v25_root}/outputs/microcap_top100_mom16_biweekly_live_v2_5_${signal_suffix}.csv",
             text,
         )
         self.assertIn("--exit-code \"v2.5=${SIGNAL_V2_5_EXIT_CODE:-unknown}\"", text)
@@ -61,6 +61,16 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('repository: liuruojiang/microcap', text)
         self.assertIn('ref: 8417c023b85af830390e554f1ac6c3df18749dd1', text)
         self.assertNotIn('ref: main', text)
+        self.assertIn("name: Check out isolated v2.3 close-confirmed workspace", text)
+        self.assertIn("name: Check out isolated v2.5 close-confirmed workspace", text)
+        self.assertIn("path: microcap-v23", text)
+        self.assertIn("path: microcap-v25", text)
+        self.assertIn("mode == 'close_confirmed' && 'microcap-v23' || 'microcap'", text)
+        self.assertIn("mode == 'close_confirmed' && 'microcap-v25' || 'microcap'", text)
+        self.assertIn("--result v2.3=${v23_root}/realtime_signal_v2_3_result.txt", text)
+        self.assertIn("--result v2.5=${v25_root}/realtime_signal_v2_5_result.txt", text)
+        self.assertIn("--signal-csv v2.3=${v23_root}/outputs/", text)
+        self.assertIn("--signal-csv v2.5=${v25_root}/outputs/", text)
         sha_step = text[text.index('name: Record microcap strategy SHA') : text.index('name: Install runtime dependencies')]
         self.assertIn('working-directory: microcap', sha_step)
         self.assertIn('echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"', sha_step)
