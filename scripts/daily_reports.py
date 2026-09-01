@@ -3391,10 +3391,12 @@ def append_etf_research_sections(
     strategy_rows: list[dict[str, object]] | None = None,
     mover_rows: list[dict[str, object]] | None = None,
     data_date_s: str = "",
+    include_market_summary: bool = True,
 ) -> int:
-    market_rows = [*(strategy_rows or []), *(mover_rows or [])]
-    lines += ["", "---", "", "## 市场 regime 是否变化", ""]
-    lines.extend(etf_regime_observation(market_rows, data_date_s))
+    if include_market_summary:
+        market_rows = [*(strategy_rows or []), *(mover_rows or [])]
+        lines += ["", "---", "", "## 市场 regime 是否变化", ""]
+        lines.extend(etf_regime_observation(market_rows, data_date_s))
 
     for section in [ASSET_ALLOCATION_SECTION, QUANT_STRATEGY_SECTION, CHINA_HK_SECTION]:
         section_items = [x for x in scored_items if primary_etf_section(x) == section]
@@ -5624,12 +5626,21 @@ MOVER_UNIVERSE = [
 
 def build_etf(out_dir: Path) -> None:
     started = now_bj()
-    strategy_assets = A_STRATEGY_ASSETS + ADK_STRATEGY_ASSETS + B_STRATEGY_ASSETS + D_STRATEGY_ASSETS
-    strategy_rows = fetch_asset_changes(strategy_assets)
-    broad_universe = broad_etf_movers.fetch_universe()
-    daily_movers = broad_etf_movers.daily_rankings(broad_universe)
-    top_rows = broad_mover_rows(daily_movers.gainers)
-    bottom_rows = broad_mover_rows(daily_movers.losers)
+    # Beijing Sunday and Monday correspond to weekend US sessions. Those two
+    # emails remain full source digests but do not replay Friday market tables.
+    include_market_summary = started.weekday() not in {0, 6}
+    strategy_rows: list[dict[str, object]] = []
+    broad_universe: list[dict[str, object]] = []
+    daily_movers: broad_etf_movers.RankingResult | None = None
+    top_rows: list[dict[str, object]] = []
+    bottom_rows: list[dict[str, object]] = []
+    if include_market_summary:
+        strategy_assets = A_STRATEGY_ASSETS + ADK_STRATEGY_ASSETS + B_STRATEGY_ASSETS + D_STRATEGY_ASSETS
+        strategy_rows = fetch_asset_changes(strategy_assets)
+        broad_universe = broad_etf_movers.fetch_universe()
+        daily_movers = broad_etf_movers.daily_rankings(broad_universe)
+        top_rows = broad_mover_rows(daily_movers.gainers)
+        bottom_rows = broad_mover_rows(daily_movers.losers)
     mover_rows = top_rows + bottom_rows
 
     items: list[Item] = []
@@ -5666,18 +5677,30 @@ def build_etf(out_dir: Path) -> None:
 
     date_s = today
     data_dates = sorted({str(r["date"]) for r in strategy_rows + mover_rows})
-    data_date_s = data_dates[-1] if data_dates else "数据不足"
+    data_date_s = data_dates[-1] if data_dates else ""
     md = out_dir / f"us_etf_allocation_digest_{date_s}.md"
 
     lines = [
         f"# 美股 ETF 与资产配置日报 - {date_s}",
         "",
-        f"> 数据日期：最新可取得的收盘数据截至 {data_date_s}；涨跌幅为收盘价相对上一交易日的价格涨跌，不含分红再投资。",
-        "",
-        "## 目录",
-        "- [策略相关 ETF / 指数涨跌](#策略相关-etf--指数涨跌)",
-        "- [ETF 涨跌幅榜](#etf-涨跌幅榜)",
-        "- [市场 regime 是否变化](#市场-regime-是否变化)",
+    ]
+    if include_market_summary:
+        lines += [
+            f"> 数据日期：最新可取得的收盘数据截至 {data_date_s or '数据不足'}；涨跌幅为收盘价相对上一交易日的价格涨跌，不含分红再投资。",
+            "",
+            "## 目录",
+            "- [策略相关 ETF / 指数涨跌](#策略相关-etf--指数涨跌)",
+            "- [ETF 涨跌幅榜](#etf-涨跌幅榜)",
+            "- [市场 regime 是否变化](#市场-regime-是否变化)",
+        ]
+    else:
+        lines += [
+            "> 周末资讯版：北京时间周日和周一不重复周末无新行情的市场快照、ETF 涨跌榜或 regime 判断；所有资讯、研究、博客、播客、论坛和来源审计仍正常更新。",
+            "",
+            "## 目录",
+            "- [周末行情说明](#周末行情说明)",
+        ]
+    lines += [
         "- [资产配置影响](#资产配置影响)",
         "- [量化策略影响](#量化策略影响)",
         "- [A 股 / 港股专项](#a-股--港股专项)",
@@ -5688,33 +5711,46 @@ def build_etf(out_dir: Path) -> None:
         "",
         "## 一句话结论",
         "",
-        "今天的文章部分按 source ranking 和 relevance scoring 过滤，只把内容写成事实层、配置/策略映射和可测试假设；论坛内容只做 idea mining，不进入结论。",
-        "",
-        "## 策略相关 ETF / 指数涨跌",
-        "",
-        f"交易日：{data_date_s}",
-        "",
     ]
-    append_strategy_price_table(lines, strategy_rows)
-
-    lines += [
-        "",
-        "---",
-        "",
-        "## ETF 涨跌幅榜",
-        "",
-        "排行范围：美国上市 ETF 全市场，不使用精选 ETF 池。流动性门槛为近 3 个月平均成交额至少 500 万美元/日且平均成交量至少 5 万份/日。",
-        "",
-        "过滤口径：已排除杠杆、反向/做空、单股日内目标、期权收益增强/定义结果、ETN、单一加密资产和实物/现货信托；正常的商品、外汇、波动率和管理期货 ETF 可以纳入。每个榜单按共同经济驱动强去重；同一经济敞口优先保留近 3 个月平均成交额更高的 ETF，成交额缺失或相同时再比较基金资产规模，涨跌幅不参与同类代表选择。涨幅榜只展示正收益，跌幅榜只展示负收益。",
-        "",
-        "### 涨幅前 10",
-        "",
-    ]
-    append_mover_table(lines, top_rows)
-    if len(top_rows) < 10:
-        lines += ["", f"> 当日符合过滤口径且正收益的候选不足 10 个，仅展示 {len(top_rows)} 个。", ""]
-    lines += ["", "### 跌幅前 10", ""]
-    append_mover_table(lines, bottom_rows)
+    if include_market_summary:
+        lines += [
+            "今天的文章部分按 source ranking 和 relevance scoring 过滤，只把内容写成事实层、配置/策略映射和可测试假设；论坛内容只做 idea mining，不进入结论。",
+            "",
+            "## 策略相关 ETF / 指数涨跌",
+            "",
+            f"交易日：{data_date_s or '数据不足'}",
+            "",
+        ]
+        append_strategy_price_table(lines, strategy_rows)
+        lines += [
+            "",
+            "---",
+            "",
+            "## ETF 涨跌幅榜",
+            "",
+            "排行范围：美国上市 ETF 全市场，不使用精选 ETF 池。流动性门槛为近 3 个月平均成交额至少 500 万美元/日且平均成交量至少 5 万份/日。",
+            "",
+            "过滤口径：已排除杠杆、反向/做空、单股日内目标、期权收益增强/定义结果、ETN、单一加密资产和实物/现货信托；正常的商品、外汇、波动率和管理期货 ETF 可以纳入。每个榜单按共同经济驱动强去重；同一经济敞口优先保留近 3 个月平均成交额更高的 ETF，成交额缺失或相同时再比较基金资产规模，涨跌幅不参与同类代表选择。涨幅榜只展示正收益，跌幅榜只展示负收益。",
+            "",
+            "### 涨幅前 10",
+            "",
+        ]
+        append_mover_table(lines, top_rows)
+        if len(top_rows) < 10:
+            lines += ["", f"> 当日符合过滤口径且正收益的候选不足 10 个，仅展示 {len(top_rows)} 个。", ""]
+        lines += ["", "### 跌幅前 10", ""]
+        append_mover_table(lines, bottom_rows)
+    else:
+        lines += [
+            "周日和周一的邮件只汇总自上一封邮件之后的新资讯，不重复展示上周五行情，也不据旧收盘数据判断市场 regime。",
+            "",
+            "---",
+            "",
+            "## 周末行情说明",
+            "",
+            "本次主动跳过行情快照、策略相关 ETF / 指数涨跌、ETF 全市场涨跌榜和周期涨跌榜；资讯源抓取与去重不受影响。",
+            "",
+        ]
 
     period_movers: dict[str, object] | None = None
     if now_bj().weekday() == 5:
@@ -5727,10 +5763,23 @@ def build_etf(out_dir: Path) -> None:
             lines += ["", f"### {label}跌幅前 10", ""]
             append_mover_table(lines, broad_mover_rows(period_block["losers"]))
 
-    forum_rendered_count = append_etf_research_sections(lines, scored_picked, forum_picked, strategy_rows, mover_rows, data_date_s)
+    forum_rendered_count = append_etf_research_sections(
+        lines,
+        scored_picked,
+        forum_picked,
+        strategy_rows,
+        mover_rows,
+        data_date_s,
+        include_market_summary=include_market_summary,
+    )
     append_etf_research_feed_audit(lines, research_feed_audit)
     fixed_monitor_rendered_count = append_etf_fixed_monitor_section(lines, fixed_monitor_updates, fixed_monitor_audit)
     update_digest_history("etf", [*picked, *fixed_monitor_updates, *forum_picked], days=ETF_HISTORY_DAYS)
+    market_audit_line = (
+        f"- ETF 排行宇宙：扫描 {daily_movers.universe_count} 只美国上市 ETF，流动性及产品结构过滤后合格 {daily_movers.eligible_count} 只；每个涨跌榜按共同经济驱动强去重。"
+        if daily_movers is not None
+        else "- 市场行情：北京时间周日和周一按规则主动跳过，未调用行情快照、ETF 涨跌榜或周期涨跌榜；资讯源与来源审计正常运行。"
+    )
     lines += [
         "## 去重与补充审计",
         "",
@@ -5739,11 +5788,11 @@ def build_etf(out_dir: Path) -> None:
         f"- RSS/研究文章数量：{len(scored_picked)}",
         f"- 固定关注博客/播客更新数量：{fixed_monitor_rendered_count}",
         f"- 论坛/社区 idea mining 数量：{forum_rendered_count}",
-        f"- ETF 排行宇宙：扫描 {daily_movers.universe_count} 只美国上市 ETF，流动性及产品结构过滤后合格 {daily_movers.eligible_count} 只；每个涨跌榜按共同经济驱动强去重。",
+        market_audit_line,
         "",
     ]
     lines.append(f"- 回填去重：文章与论坛回填均排除最近 {ETF_BACKFILL_DEDUPE_DAYS} 天已推送内容，并只统计真正进入正文的条目。")
-    lines += audit_lines("05:30 Asia/Shanghai", started)
+    lines += audit_lines("05:00 Asia/Shanghai", started)
     report_text = "\n".join(lines)
     md.write_text(report_text, encoding="utf-8")
 
@@ -5753,10 +5802,13 @@ def build_etf(out_dir: Path) -> None:
     bottom_preview = "; ".join(
         f"{row['asset'].code} {fmt_change(row['change'])}" for row in bottom_rows[:3] if isinstance(row["asset"], MarketAsset)
     )
-    preheader = (
-        f"数据日期 {data_date_s}；涨幅靠前 {top_preview or '无'}；"
-        f"跌幅靠前 {bottom_preview or '无'}；完整报告直接在邮件正文查看。"
-    )
+    if include_market_summary:
+        preheader = (
+            f"数据日期 {data_date_s or '数据不足'}；涨幅靠前 {top_preview or '无'}；"
+            f"跌幅靠前 {bottom_preview or '无'}；完整报告直接在邮件正文查看。"
+        )
+    else:
+        preheader = "周末资讯版；不重复周末无新行情；资讯、研究、博客、播客、论坛和来源审计正常更新。"
     html_body = markdown_to_email_html(report_text, preheader)
     write_meta(
         out_dir,

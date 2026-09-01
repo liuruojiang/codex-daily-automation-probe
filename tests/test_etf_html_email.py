@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from contextlib import ExitStack
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 
@@ -43,6 +44,12 @@ class EtfHtmlEmailTests(unittest.TestCase):
         patches = [
             mock.patch.object(dr, "now_bj", return_value=fixed_now),
             mock.patch.object(dr, "fetch_asset_changes", return_value=[]),
+            mock.patch.object(dr.broad_etf_movers, "fetch_universe", return_value=[]),
+            mock.patch.object(
+                dr.broad_etf_movers,
+                "daily_rankings",
+                return_value=SimpleNamespace(gainers=[], losers=[], universe_count=0, eligible_count=0),
+            ),
             mock.patch.object(dr, "parse_feed", return_value=[]),
             mock.patch.object(dr, "collect_etf_fixed_monitor_updates_with_audit", return_value=([], [])),
             mock.patch.object(dr, "collect_etf_forum_items", return_value=[]),
@@ -67,6 +74,51 @@ class EtfHtmlEmailTests(unittest.TestCase):
         self.assertIn("<!doctype html>", metadata["html_body"].lower())
         self.assertIn("策略相关 ETF / 指数涨跌", metadata["html_body"])
         self.assertNotIn("完整排版版见附件", metadata["body"])
+
+    def test_sunday_and_monday_emails_skip_market_fetches_but_keep_source_digest(self) -> None:
+        for fixed_now in (
+            dr.datetime(2026, 8, 23, 5, 0, tzinfo=dr.BJ),  # Sunday
+            dr.datetime(2026, 8, 24, 5, 0, tzinfo=dr.BJ),  # Monday
+        ):
+            with self.subTest(report_date=fixed_now.date().isoformat()):
+                with (
+                    mock.patch.object(dr, "now_bj", return_value=fixed_now),
+                    mock.patch.object(dr, "fetch_asset_changes") as fetch_asset_changes,
+                    mock.patch.object(dr.broad_etf_movers, "fetch_universe") as fetch_universe,
+                    mock.patch.object(dr.broad_etf_movers, "daily_rankings") as daily_rankings,
+                    mock.patch.object(dr.broad_etf_movers, "period_rankings") as period_rankings,
+                    mock.patch.object(dr, "parse_feed", return_value=[]) as parse_feed,
+                    mock.patch.object(
+                        dr, "collect_etf_fixed_monitor_updates_with_audit", return_value=([], [])
+                    ) as collect_fixed_monitors,
+                    mock.patch.object(dr, "collect_etf_forum_items", return_value=[]),
+                    mock.patch.object(dr, "update_digest_history", return_value=None),
+                    mock.patch.object(dr.time, "sleep", return_value=None),
+                    tempfile.TemporaryDirectory() as tmp,
+                ):
+                    out_dir = Path(tmp)
+                    dr.build_etf(out_dir)
+                    report = (out_dir / f"us_etf_allocation_digest_{fixed_now.date().isoformat()}.md").read_text(
+                        encoding="utf-8"
+                    )
+                    metadata = json.loads((out_dir / "metadata.json").read_text(encoding="utf-8"))
+
+                fetch_asset_changes.assert_not_called()
+                fetch_universe.assert_not_called()
+                daily_rankings.assert_not_called()
+                period_rankings.assert_not_called()
+                self.assertEqual(parse_feed.call_count, len(dr.ETF_RESEARCH_FEEDS))
+                collect_fixed_monitors.assert_called_once()
+                self.assertIn("周末资讯版", report)
+                self.assertIn("## 资产配置影响", report)
+                self.assertIn("## RSS / 研究来源覆盖审计", report)
+                self.assertIn("## 固定关注博客/播客更新", report)
+                self.assertNotIn("## 策略相关 ETF / 指数涨跌", report)
+                self.assertNotIn("## ETF 涨跌幅榜", report)
+                self.assertNotIn("## 市场 regime 是否变化", report)
+                self.assertIn("资讯源与来源审计正常运行", report)
+                self.assertIsNone(metadata["attachment"])
+                self.assertIn("周末资讯版", metadata["html_body"])
 
 
 if __name__ == "__main__":
