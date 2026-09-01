@@ -2,8 +2,9 @@ name: US ETF & Asset Allocation Digest
 
 on:
   schedule:
-    # 06:00 Asia/Shanghai Tuesday-Saturday == 22:00 UTC Monday-Friday.
-    - cron: "0 22 * * 1-5"
+    # 05:30 Asia/Shanghai Tuesday-Saturday == 21:30 UTC Monday-Friday.
+    # This leaves a 2.5-hour buffer before the downstream 08:00 Codex summary.
+    - cron: "30 21 * * 1-5"
   workflow_dispatch:
 
 permissions:

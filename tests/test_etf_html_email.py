@@ -44,7 +44,7 @@ class EtfHtmlEmailTests(unittest.TestCase):
             mock.patch.object(dr, "now_bj", return_value=fixed_now),
             mock.patch.object(dr, "fetch_asset_changes", return_value=[]),
             mock.patch.object(dr, "parse_feed", return_value=[]),
-            mock.patch.object(dr, "collect_etf_fixed_monitor_updates", return_value=[]),
+            mock.patch.object(dr, "collect_etf_fixed_monitor_updates_with_audit", return_value=([], [])),
             mock.patch.object(dr, "collect_etf_forum_items", return_value=[]),
             mock.patch.object(dr, "supplement_forum_items_with_same_day_new_history", return_value=[]),
             mock.patch.object(dr, "append_etf_research_sections", return_value=0),

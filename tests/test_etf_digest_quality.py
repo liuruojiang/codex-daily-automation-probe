@@ -111,7 +111,10 @@ class EtfDigestQualityTests(unittest.TestCase):
         included = self.item(
             "Portfolio Charts",
             "Fresh portfolio translation note",
-            "portfolio allocation and home country translation",
+            (
+                "The article explains portfolio allocation and home-country translation, including currency, "
+                "inflation, asset-class mapping, rebalancing, and implementation tradeoffs for global investors."
+            ),
             "https://portfoliocharts.com/fresh-portfolio-translation/",
         )
         included.published = "2026-06-27T23:00:00+00:00"
@@ -135,8 +138,11 @@ class EtfDigestQualityTests(unittest.TestCase):
             "AQR Perspectives（页面）",
             "A Positive Stock Bond Correlation",
             "https://www.aqr.com/Insights/Perspectives/a-positive-stock-bond-correlation",
-            "",
-            "factor and allocation page monitor item",
+            "2026-06-27T20:00:00+00:00",
+            (
+                "The article examines stock-bond correlation, portfolio risk budgets, duration exposure, "
+                "and why adding equity risk is not a free substitute for bond diversification."
+            ),
         )
 
         def fake_parse_feed(source: str, url: str, limit: int = 12) -> list[dr.Item]:
@@ -216,6 +222,141 @@ class EtfDigestQualityTests(unittest.TestCase):
         )
 
         self.assertEqual(title, "The Future Of Indexing Passive Isn't Passive")
+
+    def test_fixed_page_monitor_requires_publication_date_and_readable_body(self) -> None:
+        monitor = dr.FixedPageMonitor(
+            "AQR Perspectives",
+            "https://www.aqr.com/Insights/Perspectives",
+            r"/Insights/Perspectives/[^\"'<>#? ]+",
+        )
+        original_fetch = dr.fetch_bytes
+        try:
+            def fake_fetch(url: str, timeout: int = 30, headers: dict[str, str] | None = None) -> bytes:
+                if url == monitor.url:
+                    return b"""
+                    <a href="/Insights/Perspectives/fresh-note">Fresh allocation note</a>
+                    <a href="/Insights/Perspectives/undated-note">Undated note</a>
+                    """
+                if url.endswith("fresh-note"):
+                    return b"""
+                    <meta property="article:published_time" content="2026-08-31T23:00:00+00:00">
+                    <p>This research note tests portfolio allocation, stock bond correlation, duration risk,
+                    expected returns, and implementation tradeoffs using a documented evidence set.</p>
+                    """
+                return b"""
+                <p>This page has readable portfolio discussion but no verifiable publication date,
+                so it must not be labeled as a new daily update.</p>
+                """
+
+            dr.fetch_bytes = fake_fetch
+            items = dr.fixed_page_items(monitor)
+        finally:
+            dr.fetch_bytes = original_fetch
+
+        self.assertEqual([item.title for item in items], ["Fresh allocation note"])
+        self.assertTrue(items[0].published)
+        self.assertGreaterEqual(len(items[0].summary), 80)
+
+    def test_fixed_monitor_excludes_youtube_shorts_and_keeps_full_episode(self) -> None:
+        original_parse_feed = dr.parse_feed
+        original_page_items = dr.fixed_page_items
+        original_sleep = dr.time.sleep
+        original_now_bj = dr.now_bj
+        try:
+            def fake_parse_feed(source: str, url: str, limit: int = 12) -> list[dr.Item]:
+                if source != "Rational Reminder":
+                    return []
+                summary = (
+                    "This full discussion covers private markets, portfolio allocation, fees, liquidity, "
+                    "valuation, diversification, and the evidence investors should verify before implementation."
+                )
+                return [
+                    dr.Item(source, "Short clip", "https://www.youtube.com/shorts/example", "2026-08-31T22:00:00+00:00", summary),
+                    dr.Item(source, "Full episode", "https://www.youtube.com/watch?v=example", "2026-08-31T21:00:00+00:00", summary),
+                ]
+
+            dr.parse_feed = fake_parse_feed
+            dr.fixed_page_items = lambda monitor: []
+            dr.time.sleep = lambda _seconds: None
+            dr.now_bj = lambda: dr.datetime(2026, 9, 1, 8, 0, tzinfo=dr.BJ)
+            with tempfile.TemporaryDirectory() as tmp:
+                original_cwd = Path.cwd()
+                os.chdir(tmp)
+                try:
+                    updates, _audit = dr.collect_etf_fixed_monitor_updates_with_audit()
+                finally:
+                    os.chdir(original_cwd)
+        finally:
+            dr.parse_feed = original_parse_feed
+            dr.fixed_page_items = original_page_items
+            dr.time.sleep = original_sleep
+            dr.now_bj = original_now_bj
+
+        self.assertEqual([item.title for item in updates], ["Full episode"])
+
+    def test_fixed_monitor_rejects_off_topic_body_but_keeps_quant_title(self) -> None:
+        long_body = (
+            "This article mentions markets, portfolio decisions, risk, investing, and returns in passing, "
+            "but its actual subject is general career advice and entertainment. "
+        ) * 3
+        off_topic = dr.Item(
+            "A Wealth of Common Sense（博客）",
+            "Jerry Seinfeld's Evergreen Career Advice",
+            "https://example.com/jerry-seinfeld-evergreen-career-advice",
+            "2026-08-31T22:00:00+00:00",
+            long_body,
+        )
+        quant_item = dr.Item(
+            "Alpha Architect（博客）",
+            "Can ChatGPT Forecast Stock Price Movements?",
+            "https://example.com/chatgpt-forecast-stock-price-movements",
+            "2026-08-31T21:00:00+00:00",
+            (
+                "The article evaluates forecasts, stock-price prediction, model evidence, out-of-sample "
+                "testing, trading costs, and the limits of implementation for systematic investors."
+            ),
+        )
+
+        self.assertIsNone(dr.fixed_monitor_item_with_evidence(off_topic))
+        self.assertIsNotNone(dr.fixed_monitor_item_with_evidence(quant_item))
+
+    def test_etf_email_source_registry_and_dedupe_cover_required_scope(self) -> None:
+        page_sources = {monitor.source for monitor in dr.ETF_FIXED_PAGE_MONITORS}
+        self.assertTrue(
+            {
+                "Top Traders Unplugged Systematic Investor",
+                "Morningstar The Long View",
+                "Dimensional Insights",
+                "Vanguard Advisors Insights",
+                "iShares Portfolio Insights",
+                "BlackRock Capital Market Assumptions",
+                "GMO Research",
+                "S&P Dow Jones Indices Research",
+                "Cboe Insights",
+                "Oaktree Insights",
+                "PIMCO Insights",
+                "Robeco Quantitative Research",
+            }.issubset(page_sources)
+        )
+        feed_urls = {feed.source: feed.url for feed in dr.ETF_RESEARCH_FEEDS}
+        self.assertEqual(feed_urls["RSSHub SSE Rules"], "https://rsshub.app/sse/sselawsrules/latest")
+        self.assertEqual(feed_urls["RSSHub SZSE Rules"], "https://rsshub.app/szse/rule/allrules/bussiness")
+        self.assertEqual(dr.ETF_BACKFILL_DEDUPE_DAYS, dr.ETF_DEDUPE_DAYS)
+        self.assertGreaterEqual(dr.ETF_HISTORY_DAYS, dr.ETF_DEDUPE_DAYS)
+
+    def test_research_feed_audit_reports_coverage_without_claiming_false_success(self) -> None:
+        lines: list[str] = []
+        dr.append_etf_research_feed_audit(
+            lines,
+            [
+                ("Alpha Architect", "已读取", 2),
+                ("MarketWatch MarketPulse", "无可读条目或解析不足", 0),
+            ],
+        )
+        rendered = "\n".join(lines)
+        self.assertIn("RSS / 研究来源覆盖审计", rendered)
+        self.assertIn("| Alpha Architect | 已读取 | 2 |", rendered)
+        self.assertIn("| MarketWatch MarketPulse | 无可读条目或解析不足 | 0 |", rendered)
 
     def test_etf_research_selector_backfills_high_evidence_items_when_primary_is_empty(self) -> None:
         original_now_bj = dr.now_bj
