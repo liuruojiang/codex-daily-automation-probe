@@ -12,6 +12,11 @@ on:
         required: false
         type: boolean
         default: false
+      external_schedule:
+        description: "Apply the trading-day and same-day guards used by an external scheduler"
+        required: false
+        type: boolean
+        default: false
       publication_mode:
         description: "Use close_confirmed for the normal post-close digest; realtime remains manual-only"
         required: true
@@ -72,7 +77,7 @@ jobs:
 
   send:
     needs: check-trading-day
-    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true')
+    if: always() && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 75
     env:
@@ -258,7 +263,7 @@ jobs:
             --signal-csv v2.5=${v25_root}/outputs/microcap_top100_mom16_biweekly_live_v2_5_${signal_suffix}.csv \
             --out-dir artifacts \
             --publication-mode "${{ steps.publication_mode.outputs.mode }}" \
-            --expected-signal-date "${{ github.event_name == 'schedule' && steps.delivery_gate.outputs.delivery_date || '' }}" \
+            --expected-signal-date "${{ (github.event_name == 'schedule' || inputs.external_schedule == true) && steps.delivery_gate.outputs.delivery_date || '' }}" \
             --planned "${PLANNED_BJ}" \
             --started "${STARTED_BJ}" \
             --strategy-sha "${{ steps.microcap_sha.outputs.sha }}" \
