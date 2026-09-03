@@ -147,6 +147,7 @@ jobs:
         shell: bash
         env:
           ICIM_REQUIRE_MIGRATION: "1"
+          ICIM_STATE_DIR: state
         run: |
           set +e
           timeout --foreground 65m python -u strategy/run_ic_im_v1_3_github_digest.py \
@@ -159,6 +160,7 @@ jobs:
           exit 0
 
       - name: Build Gmail digest
+        id: build_digest
         if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped'
         run: |
           python automation/scripts/build_ic_im_v1_3_digest.py \
@@ -168,7 +170,7 @@ jobs:
 
       - name: Send Gmail
         id: send_gmail
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && (steps.run_signal.outputs.exit_code == '0' || steps.attempt.outputs.final_attempt == 'true')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && steps.build_digest.outcome == 'success' && (steps.run_signal.outputs.exit_code == '0' || steps.attempt.outputs.final_attempt == 'true')
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -240,5 +242,5 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Fail when signal publication failed
-        if: steps.run_signal.outputs.exit_code != '' && steps.run_signal.outputs.exit_code != '0'
+        if: always() && steps.run_signal.outputs.exit_code != '' && steps.run_signal.outputs.exit_code != '0'
         run: exit 1
