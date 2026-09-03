@@ -17,11 +17,13 @@ class ICIMV13WorkflowTests(unittest.TestCase):
         self.assertIn("migrate_ic_im_v1_2_to_v1_3_state.py", text)
         self.assertIn("run_ic_im_v1_3_github_digest.py", text)
         self.assertIn('ICIM_REQUIRE_MIGRATION: "1"', text)
+        self.assertIn("ICIM_STATE_DIR: state", text)
         self.assertIn("build_ic_im_v1_3_digest.py", text)
         self.assertIn("prepare_ic_im_v1_3_marker.py", text)
         self.assertIn("state/migration_record.json", text)
         self.assertIn("name: ic-im-v1-3-ledger", text)
         self.assertIn("steps.send_gmail.outcome == 'success'", text)
+        self.assertIn("steps.build_digest.outcome == 'success'", text)
 
 
 if __name__ == "__main__":
