@@ -1,12 +1,10 @@
-name: IC IM v1.3-r5 Realtime Digest
+name: IC IM v1.3-r5 Post-Close Digest
 
 on:
   schedule:
-    # Match Microcap: 13:03/13:18/13:33 Beijing planned triggers. GitHub cron
-    # delay has recently moved actual delivery to roughly 14:20-14:40.
-    - cron: "3 5 * * *"
-    - cron: "18 5 * * *"
-    - cron: "33 5 * * *"
+    # 10:00 UTC = 18:00 Asia/Shanghai.  The strategy runner rechecks the
+    # exchange calendar and completed-session boundary before publication.
+    - cron: "0 10 * * *"
   workflow_dispatch:
     inputs:
       correction:
@@ -15,20 +13,20 @@ on:
         type: boolean
         default: false
       publication_mode:
-        description: "Use realtime during market hours; use close_confirmed only for a manual correction"
+        description: "Post-close is the default; realtime remains available only for explicit diagnostics"
         required: true
         type: choice
         options:
           - realtime
           - close_confirmed
-        default: realtime
+        default: close_confirmed
 
 permissions:
   contents: read
   actions: read
 
 concurrency:
-  group: ic-im-v1-3-r5-realtime-digest
+  group: ic-im-v1-3-r5-post-close-digest
   cancel-in-progress: false
 
 jobs:
@@ -37,7 +35,7 @@ jobs:
     timeout-minutes: 85
     env:
       TZ: Asia/Shanghai
-      PLANNED_BJ: "13:03/13:18/13:33 Asia/Shanghai"
+      PLANNED_BJ: "18:00 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Check out automation repository
@@ -53,21 +51,14 @@ jobs:
       - name: Classify attempt
         id: attempt
         shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          SCHEDULE_VALUE: ${{ github.event.schedule }}
         run: |
-          final=false
-          if [[ "${EVENT_NAME}" != "schedule" || "${SCHEDULE_VALUE}" == "33 5 * * *" ]]; then
-            final=true
-          fi
-          echo "final_attempt=${final}" >> "${GITHUB_OUTPUT}"
+          echo "final_attempt=true" >> "${GITHUB_OUTPUT}"
 
       - name: Resolve publication mode
         id: publication_mode
         shell: bash
         env:
-          REQUESTED_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'auto' }}
+          REQUESTED_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'close_confirmed' }}
         run: python automation/scripts/resolve_cn_publication_mode.py --requested "${REQUESTED_MODE}"
 
       - name: Check delivery marker
@@ -214,7 +205,7 @@ jobs:
         if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
         uses: actions/upload-artifact@v7
         with:
-          name: ic-im-v1-3-r5-realtime-digest
+          name: ic-im-v1-3-r5-post-close-digest
           path: |
             strategy-run.log
             strategy-artifacts/
@@ -227,7 +218,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## IC/IM v1.3-r5 realtime digest"
+            echo "## IC/IM v1.3-r5 post-close digest"
             echo
             echo "- Publication mode: ${{ steps.publication_mode.outputs.mode }}"
             echo "- Publication mode basis: ${{ steps.publication_mode.outputs.basis }}"
