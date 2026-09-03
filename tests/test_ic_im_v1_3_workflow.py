@@ -11,8 +11,15 @@ WORKFLOW = ROOT / ".github" / "workflows" / "ic-im-v1-3-daily-digest.yml"
 class ICIMV13WorkflowTests(unittest.TestCase):
     def test_workflow_uses_r5_migration_persistence_and_gmail_gate(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("name: IC IM v1.3-r5 Realtime Digest", text)
-        self.assertIn('group: ic-im-v1-3-r5-realtime-digest', text)
+        self.assertIn("name: IC IM v1.3-r5 Post-Close Digest", text)
+        self.assertIn('- cron: "0 10 * * *"', text)
+        self.assertNotIn('- cron: "3 5 * * *"', text)
+        self.assertNotIn('- cron: "18 5 * * *"', text)
+        self.assertNotIn('- cron: "33 5 * * *"', text)
+        self.assertIn('group: ic-im-v1-3-r5-post-close-digest', text)
+        self.assertIn("PLANNED_BJ: \"18:00 Asia/Shanghai\"", text)
+        self.assertIn("inputs.publication_mode || 'close_confirmed'", text)
+        self.assertIn("default: close_confirmed", text)
         self.assertIn("restore_ic_im_v1_3_ledger.py", text)
         self.assertIn("migrate_ic_im_v1_2_to_v1_3_state.py", text)
         self.assertIn("run_ic_im_v1_3_github_digest.py", text)
@@ -24,6 +31,7 @@ class ICIMV13WorkflowTests(unittest.TestCase):
         self.assertIn("name: ic-im-v1-3-ledger", text)
         self.assertIn("steps.send_gmail.outcome == 'success'", text)
         self.assertIn("steps.build_digest.outcome == 'success'", text)
+        self.assertIn("name: ic-im-v1-3-r5-post-close-digest", text)
 
 
 if __name__ == "__main__":
