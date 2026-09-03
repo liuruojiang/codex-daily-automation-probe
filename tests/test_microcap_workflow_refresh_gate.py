@@ -30,11 +30,16 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("name: Refresh Top100 realtime state", text)
         self.assertIn('"pandas<3"', text)
         self.assertIn('"akshare==1.18.46"', text)
-        self.assertIn("scripts/realtime_state_bundle.py refresh --root .", text)
+        self.assertIn("scripts/realtime_state_bundle.py refresh", text)
+        self.assertIn("--root .", text)
         refresh_step = text[
             text.index("name: Refresh Top100 realtime state") : text.index("name: Record refresh failure for digest")
         ]
         self.assertIn("--max-workers 1", refresh_step)
+        self.assertIn("--force-refresh-static-inputs", refresh_step)
+        self.assertIn("for attempt in 1 2 3", refresh_step)
+        self.assertIn("timeout --foreground 22m", refresh_step)
+        self.assertNotIn("publication_mode.outputs.mode == 'realtime'", refresh_step)
         self.assertNotIn("--max-workers 2", refresh_step)
         self.assertNotIn("microcap_top100_mom16_biweekly_live_v2_0.py", refresh_step)
         self.assertNotIn("&& python", refresh_step)
@@ -60,7 +65,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('git rev-parse HEAD', text)
         self.assertIn('--strategy-sha "${{ steps.microcap_sha.outputs.sha }}"', text)
         self.assertIn('repository: liuruojiang/microcap', text)
-        self.assertIn('ref: d0ebe889e56419ed87ff729a63ea292e87a2655e', text)
+        self.assertEqual(text.count('ref: 96e7183c90a6f6aa22f54477931638c41a683bb4'), 3)
         self.assertNotIn('ref: main', text)
         self.assertIn("name: Check out isolated v2.3 close-confirmed workspace", text)
         self.assertIn("name: Check out isolated v2.5 close-confirmed workspace", text)
@@ -81,10 +86,28 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             text.index("name: Refresh Top100 realtime state"),
             text.index("name: Run v2.0 selected signal"),
         )
-        self.assertNotIn("if: steps.refresh_state.outputs.exit_code == '0'", text)
+        self.assertIn("steps.state_bundle.outcome == 'success'", text)
+        self.assertIn("name: Pack validated production state", text)
+        self.assertIn("name: Restore state into isolated v2.3 workspace", text)
+        self.assertIn("name: Restore state into isolated v2.5 workspace", text)
+        self.assertLess(
+            text.index("name: Restore state into isolated v2.3 workspace"),
+            text.index("name: Run v2.3 selected signal"),
+        )
+        self.assertLess(
+            text.index("name: Restore state into isolated v2.5 workspace"),
+            text.index("name: Run v2.5 selected signal"),
+        )
         self.assertIn("group: microcap-realtime-digest", text)
         self.assertIn("cancel-in-progress: false", text)
-        self.assertIn("actions: read", text)
+        self.assertIn("actions: write", text)
+        self.assertIn("uses: actions/cache/restore@v4", text)
+        self.assertIn("uses: actions/cache/save@v4", text)
+        self.assertIn("name: Bootstrap full rebalance cache on cold start", text)
+        self.assertIn("microcap-full-rebalance-cache-v1-20260903", text)
+        self.assertIn("ecee736f9bb35ac4b43a63e4fd7c83b0a4e9d8c94903f2631b5763a4e1d46686", text)
+        self.assertIn("scripts/full_rebalance_cache_bundle.py restore", text)
+        self.assertIn("scripts/full_rebalance_cache_bundle.py validate", text)
         self.assertIn("name: Check delivery marker", text)
         self.assertIn("scripts/check_microcap_delivery.py", text)
         self.assertIn("steps.delivery_gate.outputs.should_send == 'true'", text)
@@ -93,10 +116,10 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("subject_prefix", text)
         self.assertIn("--subject-prefix", text)
         self.assertIn("name: Record refresh failure for digest", text)
-        self.assertIn("for version in v2_0 v2_3 v2_5", text)
+        self.assertIn('for item in "microcap:v2_0" "microcap-v23:v2_3" "microcap-v25:v2_5"', text)
         self.assertEqual(text.count('TOP100_REALTIME_REQUIRE_STATE: "1"'), 3)
-        self.assertEqual(text.count("timeout --foreground 60m python -u microcap_top100"), 3)
-        self.assertNotIn("timeout --foreground 30m python -u microcap_top100", text)
+        self.assertEqual(text.count("timeout --foreground 25m python -u microcap_top100"), 3)
+        self.assertNotIn("timeout --foreground 60m python -u microcap_top100", text)
         self.assertIn("publication_mode:", text)
         self.assertIn("- close_confirmed", text)
         self.assertIn("resolve_cn_publication_mode.py", text)
