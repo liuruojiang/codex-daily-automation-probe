@@ -195,7 +195,10 @@ def put_reason(product: str, signal: dict[str, Any]) -> str:
         f"{percent(signal.get('momentum_120'))}，负动量下限给"
         f"{number(signal.get('mom120_floor_puts_per_full_core'))}张；两者取高，本次由"
         f"{signal.get('core_put_driver', '规则判定')}主导。只覆盖0.5倍核心袖，所以规范化目标为"
-        f"{number(signal.get('core_put_target_qty_normalized'))}张；动量袖和网格均不配期权。"
+        f"{number(signal.get('core_put_target_qty_normalized'))}张；独立动量Put按父规则数量×0.5×动量执行权重配置，"
+        f"本次目标为{number(signal.get('momentum_put_target_qty_normalized'))}张 "
+        f"{signal.get('momentum_put_target_contract') or '无'}；合计目标"
+        f"{number(signal.get('total_put_target_qty_normalized'))}张。网格不配Put。"
     )
 
 

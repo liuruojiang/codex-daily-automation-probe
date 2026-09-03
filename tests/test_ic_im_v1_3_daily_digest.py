@@ -101,6 +101,9 @@ class ICIMV13DailyDigestTests(unittest.TestCase):
         self.assertIn("IC 1.3规则明确禁止卖Call", body)
         self.assertIn("合计2.25张", body)
         self.assertIn("动量0.75张 P-MOM-NEXT", body)
+        self.assertIn("独立动量Put按父规则数量×0.5×动量执行权重配置", body)
+        self.assertIn("本次目标为0.75张 P-MOM-NEXT；合计目标2.25张", body)
+        self.assertNotIn("动量袖和网格均不配期权", body)
 
     def test_gate_and_success_marker_are_revision_mode_date_digest_scoped(self) -> None:
         prefix = gate.marker_prefix(date(2026, 9, 3), "realtime")
