@@ -1,12 +1,10 @@
-name: Microcap Realtime Digest
+name: Microcap Post-Close Digest
 
 on:
   schedule:
-    # Redundant off-minute triggers target delivery around 14:20-14:40 Asia/Shanghai
-    # under the latest 65-75 minute GitHub cron delay plus report runtime.
-    - cron: "3 5 * * *"
-    - cron: "18 5 * * *"
-    - cron: "33 5 * * *"
+    # 10:00 UTC is 18:00 Asia/Shanghai. The trading-day gate below suppresses
+    # weekends and exchange holidays.
+    - cron: "0 10 * * *"
   workflow_dispatch:
     inputs:
       correction:
@@ -15,13 +13,13 @@ on:
         type: boolean
         default: false
       publication_mode:
-        description: "Use realtime during market hours; use close_confirmed for a post-close correction"
+        description: "Use close_confirmed for the normal post-close digest; realtime remains manual-only"
         required: true
         type: choice
         options:
           - realtime
           - close_confirmed
-        default: realtime
+        default: close_confirmed
 
 permissions:
   contents: read
@@ -79,7 +77,7 @@ jobs:
     timeout-minutes: 75
     env:
       TZ: Asia/Shanghai
-      PLANNED_BJ: "13:03/13:18/13:33 Asia/Shanghai"
+      PLANNED_BJ: "18:00 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Record workflow start time
@@ -113,7 +111,7 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true'
         shell: bash
         env:
-          REQUESTED_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'auto' }}
+          REQUESTED_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'close_confirmed' }}
         run: python automation/scripts/resolve_cn_publication_mode.py --requested "${REQUESTED_MODE}"
 
       - name: Check out microcap repository
@@ -121,7 +119,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 8417c023b85af830390e554f1ac6c3df18749dd1
+          ref: d0ebe889e56419ed87ff729a63ea292e87a2655e
           path: microcap
 
       - name: Check out isolated v2.3 close-confirmed workspace
@@ -129,7 +127,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 8417c023b85af830390e554f1ac6c3df18749dd1
+          ref: d0ebe889e56419ed87ff729a63ea292e87a2655e
           path: microcap-v23
 
       - name: Check out isolated v2.5 close-confirmed workspace
@@ -137,7 +135,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 8417c023b85af830390e554f1ac6c3df18749dd1
+          ref: d0ebe889e56419ed87ff729a63ea292e87a2655e
           path: microcap-v25
 
       - name: Record microcap strategy SHA
@@ -260,6 +258,7 @@ jobs:
             --signal-csv v2.5=${v25_root}/outputs/microcap_top100_mom16_biweekly_live_v2_5_${signal_suffix}.csv \
             --out-dir artifacts \
             --publication-mode "${{ steps.publication_mode.outputs.mode }}" \
+            --expected-signal-date "${{ github.event_name == 'schedule' && steps.delivery_gate.outputs.delivery_date || '' }}" \
             --planned "${PLANNED_BJ}" \
             --started "${STARTED_BJ}" \
             --strategy-sha "${{ steps.microcap_sha.outputs.sha }}" \

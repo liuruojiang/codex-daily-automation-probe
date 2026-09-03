@@ -753,6 +753,11 @@ def main() -> int:
         default="realtime",
         help="Whether the final CSVs represent an intraday realtime snapshot or a close-confirmed signal.",
     )
+    parser.add_argument(
+        "--expected-signal-date",
+        default="",
+        help="Optional YYYY-MM-DD hard gate for scheduled close-confirmed publication.",
+    )
     parser.add_argument("--exit-code", action="append", default=[], help="Exit code, or version=code. Can be repeated.")
     parser.add_argument(
         "--signal-csv",
@@ -835,6 +840,20 @@ def main() -> int:
             date_s = now_bj().date().isoformat()
         else:
             date_s = next(iter(close_dates))
+        if args.expected_signal_date:
+            expected_signal_date = parse_strict_iso_date(args.expected_signal_date)
+            if expected_signal_date is None or expected_signal_date.isoformat() != args.expected_signal_date:
+                raise ValueError("--expected-signal-date must be an exact YYYY-MM-DD value")
+            if close_dates != {args.expected_signal_date}:
+                actual = ",".join(sorted(close_dates)) if close_dates else "<missing>"
+                for item in results:
+                    item["status"] = "FAILED"
+                    item["status_note"] = (
+                        "publication contract invalid: close-confirmed CSV date does not match "
+                        f"scheduled delivery date; actual={actual} expected={args.expected_signal_date}"
+                    )
+                    item["fields"] = {}
+                date_s = args.expected_signal_date
     else:
         date_s = now_bj().date().isoformat()
     run_url = os.environ.get("GITHUB_RUN_URL", "")
