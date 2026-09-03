@@ -12,6 +12,11 @@ on:
         required: false
         type: boolean
         default: false
+      external_schedule:
+        description: "Apply the trading-day guard used by an external scheduler"
+        required: false
+        type: boolean
+        default: false
       publication_mode:
         description: "Post-close is the default; realtime remains available only for explicit diagnostics"
         required: true
@@ -108,7 +113,7 @@ jobs:
           cat calendar.env >> "${GITHUB_OUTPUT}"
 
       - name: Restore latest v1.3-r6 hash-chained ledger
-        if: steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
+        if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true')
         id: restore_ledger
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -116,7 +121,7 @@ jobs:
           python automation/scripts/restore_ic_im_v1_3_ledger.py --state-dir state
 
       - name: Restore v1.3-r5 migration source
-        if: steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && steps.restore_ledger.outputs.restored != 'true'
+        if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.restore_ledger.outputs.restored != 'true'
         id: restore_r5_ledger
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -126,7 +131,7 @@ jobs:
             --artifact-name ic-im-v1-3-ledger
 
       - name: Migrate v1.3-r5 ledger to v1.3-r6
-        if: steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && steps.restore_ledger.outputs.restored != 'true'
+        if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.restore_ledger.outputs.restored != 'true'
         run: |
           test "${{ steps.restore_r5_ledger.outputs.restored }}" = "true"
           python -u strategy/migrate_ic_im_v1_3_r5_to_r6_state.py \
@@ -134,7 +139,7 @@ jobs:
             --new-state-dir state
 
       - name: Run IC/IM signal
-        if: steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
+        if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true')
         id: run_signal
         shell: bash
         env:
@@ -153,7 +158,7 @@ jobs:
 
       - name: Build Gmail digest
         id: build_digest
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped'
         run: |
           python automation/scripts/build_ic_im_v1_3_digest.py \
             --result strategy-artifacts/result.json \
@@ -162,7 +167,7 @@ jobs:
 
       - name: Send Gmail
         id: send_gmail
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && steps.build_digest.outcome == 'success' && (steps.run_signal.outputs.exit_code == '0' || steps.attempt.outputs.final_attempt == 'true')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && steps.build_digest.outcome == 'success' && (steps.run_signal.outputs.exit_code == '0' || steps.attempt.outputs.final_attempt == 'true')
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -203,7 +208,7 @@ jobs:
           retention-days: 30
 
       - name: Upload audit artifacts
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (github.event_name == 'workflow_dispatch' || steps.calendar.outputs.trade_day == 'true')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true')
         uses: actions/upload-artifact@v7
         with:
           name: ic-im-v1-3-r6-post-close-digest
