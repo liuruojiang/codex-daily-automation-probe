@@ -124,6 +124,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         strategy_sha: str = STRATEGY_SHA,
         signal_csv_paths: dict[str, Path] | None = None,
         publication_mode: str = "realtime",
+        expected_signal_date: str = "",
     ) -> dict[str, object]:
         out_dir = tmp_path / "artifacts"
         argv = ["build_microcap_realtime_digest.py"]
@@ -140,6 +141,8 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         argv += ["--out-dir", str(out_dir), "--planned", "09:30 Asia/Shanghai"]
         argv += ["--strategy-sha", strategy_sha]
         argv += ["--publication-mode", publication_mode]
+        if expected_signal_date:
+            argv += ["--expected-signal-date", expected_signal_date]
         if subject_prefix:
             argv += ["--subject-prefix", subject_prefix]
         for version in outputs:
@@ -208,6 +211,39 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertIn("信号类型：收盘确认", str(meta["body"]))
         self.assertIn("收盘确认日期：2026-08-12", str(meta["body"]))
         self.assertNotIn("不可用", str(meta["body"]))
+
+    def test_scheduled_close_digest_rejects_prior_session_csv(self) -> None:
+        output = "\n".join(
+            [
+                "signal",
+                "strategy_version: v2.5",
+                "signal_date: 2026-08-06",
+                "current_holding: long_microcap_top100",
+                "next_holding: long_microcap_top100",
+            ]
+        )
+        csv_row = {
+            **self.identity_fields("v2.5"),
+            "date": "2026-08-06",
+            "signal_timing": "close_confirmed",
+            "official_close_confirmed_signal": "True",
+            "current_holding": "long_microcap_top100",
+            "next_holding": "long_microcap_top100",
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.run_digest(
+                Path(tmp),
+                {"v2.5": output},
+                {"v2.5": csv_row},
+                publication_mode="close_confirmed",
+                expected_signal_date="2026-08-07",
+            )
+
+        self.assertEqual(meta["status"], "FAILED")
+        self.assertEqual(meta["signal_date"], "2026-08-07")
+        self.assertIn("收盘确认日期：未记录", str(meta["body"]))
+        self.assertIn("close-confirmed CSV date does not match", str(meta["body"]))
 
     def test_actionable_digest_is_compact_and_uses_version_correct_momentum_labels(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
