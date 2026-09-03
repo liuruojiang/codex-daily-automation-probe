@@ -105,6 +105,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("uses: actions/cache/save@v4", text)
         self.assertIn("name: Bootstrap full rebalance cache on cold start", text)
         self.assertIn("microcap-full-rebalance-cache-v1-20260903", text)
+        self.assertIn("microcap-full-rebalance-cache-v1-20260903.zip", text)
         self.assertIn("ecee736f9bb35ac4b43a63e4fd7c83b0a4e9d8c94903f2631b5763a4e1d46686", text)
         self.assertIn("scripts/full_rebalance_cache_bundle.py restore", text)
         self.assertIn("scripts/full_rebalance_cache_bundle.py validate", text)
@@ -131,6 +132,9 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("steps.delivery_gate.outputs.delivery_date", text)
         self.assertIn("signal_suffix=latest_signal", text)
         self.assertIn("steps.digest.outputs.status != 'OK'", text)
+        self.assertIn("steps.refresh_state.outcome == 'success'", text)
+        fail_step = text[text.index("name: Fail job when signal publication failed") :]
+        self.assertIn("if: always()", fail_step)
 
     def test_normal_delivery_marker_requires_all_signal_scripts_to_succeed(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")

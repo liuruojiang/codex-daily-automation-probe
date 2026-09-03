@@ -170,7 +170,7 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache_restore.outputs.cache-matched-key == ''
         shell: bash
         env:
-          CACHE_URL: https://github.com/liuruojiang/microcap/releases/download/microcap-full-rebalance-cache-v1-20260903/microcap-full-rebalance-cache-v1.zip
+          CACHE_URL: https://github.com/liuruojiang/microcap/releases/download/microcap-full-rebalance-cache-v1-20260903/microcap-full-rebalance-cache-v1-20260903.zip
           CACHE_SHA256: ecee736f9bb35ac4b43a63e4fd7c83b0a4e9d8c94903f2631b5763a4e1d46686
         run: |
           cache_bundle="${RUNNER_TEMP}/microcap-full-rebalance-cache-v1.zip"
@@ -195,7 +195,7 @@ jobs:
           exit 0
 
       - name: Clear stale signal outputs
-        if: steps.delivery_gate.outputs.should_send == 'true'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true'
         shell: bash
         run: |
           for root in microcap microcap-v23 microcap-v25; do
@@ -233,7 +233,7 @@ jobs:
           exit 0
 
       - name: Record refresh failure for digest
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.full_cache.outputs.exit_code != '0' || steps.refresh_state.outputs.exit_code != '0')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.full_cache.outcome != 'success' || steps.full_cache.outputs.exit_code != '0' || steps.refresh_state.outcome != 'success' || steps.refresh_state.outputs.exit_code != '0')
         shell: bash
         run: |
           cache_exit="${{ steps.full_cache.outputs.exit_code }}"
@@ -253,7 +253,7 @@ jobs:
 
       - name: Pack validated production state
         id: state_bundle
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.refresh_state.outputs.exit_code == '0'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.refresh_state.outcome == 'success' && steps.refresh_state.outputs.exit_code == '0'
         shell: bash
         run: |
           python microcap/scripts/realtime_state_bundle.py pack \
@@ -470,5 +470,5 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Fail job when signal publication failed
-        if: steps.delivery_gate.outputs.should_send == 'true' && (steps.digest.outputs.status != 'OK' || steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0' || steps.signals_v25.outputs.exit_code != '0')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.digest.outputs.status != 'OK' || steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0' || steps.signals_v25.outputs.exit_code != '0')
         run: exit 1
