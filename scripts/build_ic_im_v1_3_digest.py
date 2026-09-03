@@ -71,9 +71,16 @@ def put_text(product: str, signal: dict[str, Any], target: bool) -> str:
     contract = signal.get(f"put_{prefix}_contract") or "无"
     if product == "IC":
         qty = signal.get(f"put_{prefix}_total_qty", 0)
-    else:
-        qty = signal.get(f"core_put_{prefix}_qty_normalized", 0)
-    return f"{number(qty)}张 {contract}"
+        return f"{number(qty)}张 {contract}"
+    core_qty = signal.get(f"core_put_{prefix}_qty_normalized", 0)
+    momentum_qty = signal.get(f"momentum_put_{prefix}_qty_normalized", 0)
+    total_qty = signal.get(f"total_put_{prefix}_qty_normalized", 0)
+    core_contract = signal.get(f"core_put_{prefix}_contract") or "无"
+    momentum_contract = signal.get(f"momentum_put_{prefix}_contract") or "无"
+    return (
+        f"合计{number(total_qty)}张（核心{number(core_qty)}张 {core_contract}；"
+        f"动量{number(momentum_qty)}张 {momentum_contract}）"
+    )
 
 
 def call_text(signal: dict[str, Any], target: bool) -> str:
@@ -334,7 +341,7 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f2f4f7;"><tr><td align="center" style="padding:20px 10px;">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;">
   <tr><td style="padding:24px 22px;background:#101828;border-radius:16px 16px 0 0;color:#ffffff;">
-    <div style="font-size:12px;letter-spacing:.08em;color:#b9c2d0;font-weight:700;">IC / IM 1.3-r5 · {escaped(mode_text)}</div>
+    <div style="font-size:12px;letter-spacing:.08em;color:#b9c2d0;font-weight:700;">IC / IM 1.3-r6 · {escaped(mode_text)}</div>
     <div style="margin-top:8px;font-size:27px;line-height:1.25;font-weight:780;">{escaped(headline)}</div>
     <div style="margin-top:10px;color:#d0d5dd;font-size:14px;line-height:1.55;">信号日 {escaped(day)} · 下一交易日 {escaped(payload.get('next_trade_day', 'N/A'))}</div>
   </td></tr>
@@ -368,7 +375,7 @@ def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
     return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:24px 10px;background:#f2f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',Arial,sans-serif;color:#101828;">
 <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #fecdca;border-radius:16px;overflow:hidden;">
-  <div style="padding:22px;background:#b42318;color:#ffffff;"><div style="font-size:12px;font-weight:700;">IC / IM 1.3-r5 · {escaped(mode_text)}</div><div style="margin-top:8px;font-size:24px;font-weight:760;">信号生成失败</div></div>
+  <div style="padding:22px;background:#b42318;color:#ffffff;"><div style="font-size:12px;font-weight:700;">IC / IM 1.3-r6 · {escaped(mode_text)}</div><div style="margin-top:8px;font-size:24px;font-weight:760;">信号生成失败</div></div>
   <div style="padding:20px;color:#344054;font-size:14px;line-height:1.7;"><strong>请勿依据旧邮件调整。</strong><p>错误：{escaped(payload.get('error_type', 'RuntimeError'))}: {escaped(payload.get('error', '未知错误'))}</p><p>持久账本没有因本次失败而跳日或部分推进。</p>{link}</div>
 </div></body></html>'''
 
@@ -391,7 +398,7 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
     day = str(
         payload.get("market_date" if realtime else "completed_day", "未知日期")
     )
-    subject = f"{prefix}[{mode_tag}][{tag}] IC/IM 1.3-r5 日报 - {day}"
+    subject = f"{prefix}[{mode_tag}][{tag}] IC/IM 1.3-r6 日报 - {day}"
     lines = [
         "## 今日结论",
         "",
@@ -456,7 +463,7 @@ def build_failure(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
     prefix = f"[{subject_prefix.strip().strip('[]')}]" if subject_prefix.strip() else ""
     day = str(payload.get("generated_at", ""))[:10] or "未知日期"
     realtime = str(payload.get("publication_mode", "close_confirmed")) == "realtime"
-    subject = f"{prefix}[异常][{'盘中实时' if realtime else '收盘确认'}] IC/IM 1.3-r5 日报 - {day}"
+    subject = f"{prefix}[异常][{'盘中实时' if realtime else '收盘确认'}] IC/IM 1.3-r6 日报 - {day}"
     body = "\n".join(
         [
             "## 今日结论",
@@ -485,8 +492,8 @@ def main() -> int:
     args = parser.parse_args()
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
-    if str(payload.get("strategy_revision")) != "r5":
-        raise ValueError("digest requires strategy_revision=r5")
+    if str(payload.get("strategy_revision")) != "r6":
+        raise ValueError("digest requires strategy_revision=r6")
     if not str(payload.get("build", "")).startswith("v1.3-"):
         raise ValueError("digest requires a v1.3 build")
     run_url = os.environ.get("GITHUB_RUN_URL", "")

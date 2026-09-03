@@ -6,14 +6,14 @@ import os
 from pathlib import Path
 
 
-EXPECTED_REVISION = "r5"
+EXPECTED_REVISION = "r6"
 
 
 def marker_name(payload: dict[str, object]) -> str:
     if payload.get("status") != "ok":
         raise ValueError("delivery marker requires a successful signal result")
     if str(payload.get("strategy_revision")) != EXPECTED_REVISION:
-        raise ValueError("delivery marker requires strategy_revision=r5")
+        raise ValueError("delivery marker requires strategy_revision=r6")
     publication_mode = str(payload.get("publication_mode", ""))
     if publication_mode not in {"realtime", "close_confirmed"}:
         raise ValueError("delivery marker has unsupported publication_mode")

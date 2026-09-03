@@ -62,6 +62,14 @@ def signal(product: str) -> dict[str, object]:
             momentum_score_hot=False,
             core_put_current_qty_normalized=1.5,
             core_put_target_qty_normalized=1.5,
+            momentum_put_current_qty_normalized=0.0,
+            momentum_put_target_qty_normalized=0.75,
+            total_put_current_qty_normalized=1.5,
+            total_put_target_qty_normalized=2.25,
+            core_put_current_contract="P-CORE-OLD",
+            core_put_target_contract="P-CORE-NEXT",
+            momentum_put_current_contract=None,
+            momentum_put_target_contract="P-MOM-NEXT",
             valuation_puts_per_full_core=1,
             mom120_floor_puts_per_full_core=3,
             call_has_position=False,
@@ -73,8 +81,8 @@ class ICIMV13DailyDigestTests(unittest.TestCase):
     def test_digest_names_release_and_explains_new_filters(self) -> None:
         payload = {
             "status": "ok",
-            "strategy_revision": "r5",
-            "build": "v1.3-test-r5",
+            "strategy_revision": "r6",
+            "build": "v1.3-test-r6",
             "publication_mode": "realtime",
             "market_date": "2026-09-03",
             "completed_day": "2026-09-02",
@@ -87,16 +95,18 @@ class ICIMV13DailyDigestTests(unittest.TestCase):
         }
         subject, body, actionable = digest.build_success(payload, "", "")
         self.assertTrue(actionable)
-        self.assertIn("IC/IM 1.3-r5", subject)
+        self.assertIn("IC/IM 1.3-r6", subject)
         self.assertIn("6%防守门槛触发并减半", body)
         self.assertIn("Volume/MA160=0.900", body)
         self.assertIn("IC 1.3规则明确禁止卖Call", body)
+        self.assertIn("合计2.25张", body)
+        self.assertIn("动量0.75张 P-MOM-NEXT", body)
 
     def test_gate_and_success_marker_are_revision_mode_date_digest_scoped(self) -> None:
         prefix = gate.marker_prefix(date(2026, 9, 3), "realtime")
         payload = {
             "status": "ok",
-            "strategy_revision": "r5",
+            "strategy_revision": "r6",
             "publication_mode": "realtime",
             "market_date": "2026-09-03",
             "digest": "b" * 64,

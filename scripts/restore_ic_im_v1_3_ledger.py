@@ -12,7 +12,7 @@ from pathlib import Path, PurePosixPath
 
 MAX_ARCHIVE_BYTES = 50 * 1024 * 1024
 MAX_FILES = 500
-ARTIFACT_NAME = "ic-im-v1-3-ledger"
+ARTIFACT_NAME = "ic-im-v1-3-r6-ledger"
 
 
 class StripCrossOriginAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -59,14 +59,14 @@ def latest_artifact(payload: dict[str, object], name: str = ARTIFACT_NAME) -> di
     return max(candidates, key=lambda item: (str(item.get("created_at", "")), int(item.get("id", 0))))
 
 
-def fetch_latest(repository: str, token: str, api_url: str) -> dict[str, object] | None:
-    name = urllib.parse.quote(ARTIFACT_NAME, safe="")
+def fetch_latest(repository: str, token: str, api_url: str, artifact_name: str = ARTIFACT_NAME) -> dict[str, object] | None:
+    name = urllib.parse.quote(artifact_name, safe="")
     url = f"{api_url.rstrip('/')}/repos/{repository}/actions/artifacts?name={name}&per_page=100"
     with urllib.request.urlopen(api_request(url, token), timeout=30) as response:
         payload = json.loads(response.read().decode("utf-8"))
     if not isinstance(payload, dict):
         raise RuntimeError("GitHub artifacts response must be an object")
-    return latest_artifact(payload)
+    return latest_artifact(payload, artifact_name)
 
 
 def download(artifact: dict[str, object], token: str) -> bytes:
@@ -141,10 +141,11 @@ def main() -> int:
     parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY", ""))
     parser.add_argument("--token", default=os.environ.get("GITHUB_TOKEN", ""))
     parser.add_argument("--api-url", default=os.environ.get("GITHUB_API_URL", "https://api.github.com"))
+    parser.add_argument("--artifact-name", default=ARTIFACT_NAME)
     args = parser.parse_args()
     if not args.repository or not args.token:
         raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required")
-    artifact = fetch_latest(args.repository, args.token, args.api_url)
+    artifact = fetch_latest(args.repository, args.token, args.api_url, args.artifact_name)
     if artifact is None:
         write_output(False)
         return 0

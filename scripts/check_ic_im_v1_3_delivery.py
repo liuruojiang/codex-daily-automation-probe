@@ -23,7 +23,7 @@ def delivery_date(value: datetime) -> date:
     return value.astimezone(BJ).date()
 
 
-REVISION = "r5"
+REVISION = "r6"
 
 
 def marker_prefix(value: date, publication_mode: str) -> str:
