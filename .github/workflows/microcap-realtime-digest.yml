@@ -130,7 +130,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: dc0752e67611b765aeada8e3c628c669517de574
+          ref: 106902fab330cb33f07be8d944f23c140f14fc79
           path: microcap
 
       - name: Check out isolated v2.3 close-confirmed workspace
@@ -138,7 +138,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: dc0752e67611b765aeada8e3c628c669517de574
+          ref: 106902fab330cb33f07be8d944f23c140f14fc79
           path: microcap-v23
 
       - name: Check out isolated v2.5 close-confirmed workspace
@@ -146,7 +146,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: dc0752e67611b765aeada8e3c628c669517de574
+          ref: 106902fab330cb33f07be8d944f23c140f14fc79
           path: microcap-v25
 
       - name: Record microcap strategy SHA
@@ -161,6 +161,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install numpy "pandas<3" requests "akshare==1.18.46" matplotlib
+
+      - name: Resolve independent completed session
+        id: market_target
+        if: steps.delivery_gate.outputs.should_send == 'true'
+        working-directory: microcap
+        shell: bash
+        run: |
+          python -c 'from scripts.exchange_calendar import latest_completed_session; print("date=" + latest_completed_session().isoformat())' >> "${GITHUB_OUTPUT}"
 
       - name: Restore persistent full rebalance cache
         id: full_cache_restore
@@ -369,7 +377,7 @@ jobs:
           set +e
           python microcap/scripts/top100_cloud_delivery.py pack \
             --root microcap --v23-root microcap-v23 --v25-root microcap-v25 \
-            --expected-date "${{ steps.delivery_gate.outputs.delivery_date }}" \
+            --expected-date "${{ steps.market_target.outputs.date }}" \
             --bundle "${RUNNER_TEMP}/microcap-whole-delivery-state.zip" 2>&1 | tee microcap/whole_delivery_result.txt
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
