@@ -25,14 +25,19 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         identities = {
             "v2.0": {
                 "version": "2.0",
-                "overlay_type": "volatility_overheat_exit_then_target_volatility_scaling",
-                "overheat_enabled": "True",
-                "overheat_window": "60",
-                "overheat_threshold": "0.23",
-                "overheat_require_signal_reset": "True",
-                "target_vol": "0.15",
-                "target_vol_window": "75",
-                "max_leverage": "1.5",
+                "overlay_type": "plain_mom16_fixed1_20260904",
+                "strategy_revision": "plain_mom16_fixed1_20260904",
+                "overheat_enabled": "False",
+                "overheat_window": "0",
+                "overheat_threshold": "0",
+                "overheat_require_signal_reset": "False",
+                "blocked_until_signal_reset": "False",
+                "target_vol_enabled": "False",
+                "target_vol": "0",
+                "target_vol_window": "0",
+                "max_leverage": "1.0",
+                "lookback": "16",
+                "momentum_gap_exit_buffer": "0",
                 "fixed_hedge_ratio": "0.8",
             },
             "v2.3": {
@@ -82,6 +87,15 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             writer = csv.DictWriter(handle, fieldnames=list(row))
             writer.writeheader()
             writer.writerow(row)
+
+    def test_retired_v20_identity_is_rejected_even_with_same_version(self):
+        fields = self.identity_fields("v2.0")
+        self.assertTrue(digest.validate_strategy_identity("v2.0", fields)[0])
+        for key, old in {"strategy_revision": "", "target_vol_enabled": "True",
+                         "overheat_enabled": "True", "max_leverage": "1.5",
+                         "momentum_gap_exit_buffer": "0.003"}.items():
+            with self.subTest(key=key):
+                self.assertFalse(digest.validate_strategy_identity("v2.0", {**fields, key: old})[0])
 
     def test_validated_state_only_cache_is_not_reported_as_market_data_fallback(self) -> None:
         fields = {
@@ -311,9 +325,9 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             csv_rows = {
                 "v2.0": {
                     **self.identity_fields("v2.0"),
-                    "blocked_until_signal_reset": "True",
-                    "overheat_metric": "0.3296301",
-                    "overheat_threshold": "0.23",
+                    "blocked_until_signal_reset": "False",
+                    "overheat_metric": "",
+                    "overheat_threshold": "0",
                     "next_session_actionable_scale": "0.0",
                 },
                 "v2.3": {
@@ -335,9 +349,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertIn("微盘 **+5.66%**；对冲 **-3.68%**；动量差 **+9.34%**", body)
         self.assertIn("对冲价差年化 WLS 得分 **+166.42%**；R² **0.514**", body)
         self.assertIn("微盘年化 WLS 得分 **+300.68%**；R² **0.783**", body)
-        self.assertIn("**v2.0：**过热退出后锁定", body)
-        self.assertIn("32.96%", body)
-        self.assertIn("23.00%", body)
+        self.assertNotIn("**v2.0：**过热退出后锁定", body)
         self.assertIn("**v2.3：**过热风险关闭中", body)
         self.assertIn("31.77%", body)
         self.assertIn("19.50%", body)
