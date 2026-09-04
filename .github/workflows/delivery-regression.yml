@@ -95,11 +95,13 @@ jobs:
         working-directory: strategy
         env:
           ICIM_STATE_DIR: ${{ runner.temp }}/icim-regression-state
-        run: >-
-          python -X utf8 -m pytest -q
-          test_delivery_transport_retry.py test_ohlcv_provider_validation.py
-          test_poe_ic_im_v1_3_state.py test_run_ic_im_v1_3_github_digest.py
-          --junitxml=regression.xml
+        run: |
+          mkdir -p data/ic_510500_put_proxy_validation_v1
+          cp ../automation/tests/fixtures/icim/sina_000905_index.csv data/ic_510500_put_proxy_validation_v1/sina_000905_index.csv
+          python -X utf8 -m pytest -q \
+            test_delivery_transport_retry.py test_ohlcv_provider_validation.py \
+            test_poe_ic_im_v1_3_state.py test_run_ic_im_v1_3_github_digest.py \
+            --junitxml=regression.xml
       - name: Preserve tests and actual tested strategy SHA
         if: always()
         run: git -C strategy rev-parse HEAD > strategy/tested-sha.txt

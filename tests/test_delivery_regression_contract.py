@@ -2,6 +2,7 @@
 from pathlib import Path
 from datetime import datetime
 import sys
+import hashlib
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
@@ -43,6 +44,13 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
     assert 'ref: ${{ steps.pin.outputs.sha }}' in text
     assert 'tested-sha.txt' in text
     assert '--junitxml=' in text
+
+
+def test_stale_market_fixture_is_frozen_real_data_and_never_in_production_steps():
+    data = (ROOT / 'tests/fixtures/icim/sina_000905_index.csv').read_bytes().replace(b'\r\n', b'\n')
+    assert hashlib.sha256(data).hexdigest() == 'c5121b044133099e250fd5e5e803c447bf8811e5a4ae8cf8f19e2b8f5c2ddcfd'
+    for name in ('microcap-realtime-digest.yml', 'ic-im-v1-3-daily-digest.yml'):
+        assert 'tests/fixtures/' not in (WORKFLOWS / name).read_text(encoding='utf-8')
 
 
 def test_calendar_failure_cannot_be_silent_holiday_or_manual_bypass():
