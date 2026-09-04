@@ -1,0 +1,112 @@
+name: Delivery regression gate
+
+on:
+  pull_request:
+    paths: ['.github/workflows/**', 'scripts/**', 'tests/**']
+  push:
+    branches: [main]
+    paths: ['.github/workflows/**', 'scripts/**', 'tests/**']
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  automation-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'pytest>=8,<9' 'PyYAML>=6,<7'
+      - name: Check delivery contracts and all automation regressions
+        run: python -X utf8 -m pytest -q tests --junitxml=automation-tests.xml
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: automation-regression-${{ github.run_id }}
+          path: automation-tests.xml
+
+  strategy-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - family: microcap
+            repository: liuruojiang/microcap
+            workflow: microcap-realtime-digest.yml
+          - family: icim
+            repository: liuruojiang/ic-im-rolling-arbitrage
+            workflow: ic-im-v1-3-daily-digest.yml
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Resolve exact published strategy pin
+        id: pin
+        env:
+          STRATEGY_REPOSITORY: ${{ matrix.repository }}
+          STRATEGY_WORKFLOW: ${{ matrix.workflow }}
+        run: |
+          python - <<'PY'
+          import os, re
+          from pathlib import Path
+          workflow = Path('automation/.github/workflows') / os.environ['STRATEGY_WORKFLOW']
+          pattern = r'repository: ' + re.escape(os.environ['STRATEGY_REPOSITORY']) + r'\s+ref: ([0-9a-f]{40})\b'
+          pins = set(re.findall(pattern, workflow.read_text(encoding='utf-8')))
+          if len(pins) != 1:
+              raise SystemExit('Expected exactly one consistent immutable strategy SHA')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as handle:
+              handle.write('sha=' + pins.pop() + '\n')
+          PY
+      - uses: actions/checkout@v6
+        with:
+          repository: ${{ matrix.repository }}
+          ref: ${{ steps.pin.outputs.sha }}
+          path: strategy
+          persist-credentials: false
+      - name: Install Microcap regression dependencies
+        if: matrix.family == 'microcap'
+        run: python -m pip install numpy 'pandas<3' requests 'akshare==1.18.46' matplotlib 'pytest>=8,<9' hypothesis
+      - name: Install ICIM regression dependencies
+        if: matrix.family == 'icim'
+        run: python -m pip install -r strategy/requirements-poe-v1.3-server.txt 'pytest>=8,<9' hypothesis
+      - name: Test Microcap state and cloud transport invariants
+        if: matrix.family == 'microcap'
+        working-directory: strategy
+        run: >-
+          python -X utf8 -m pytest -q
+          tests/test_realtime_preflight.py tests/test_top100_delivery.py
+          tests/test_top100_cloud_delivery.py tests/test_full_rebalance_cache_bundle.py
+          tests/test_top100_data_guards.py --junitxml=regression.xml
+      - name: Test ICIM source failover and persistent ledger invariants
+        if: matrix.family == 'icim'
+        working-directory: strategy
+        env:
+          ICIM_STATE_DIR: ${{ runner.temp }}/icim-regression-state
+        run: >-
+          python -X utf8 -m pytest -q
+          test_delivery_transport_retry.py test_ohlcv_provider_validation.py
+          test_poe_ic_im_v1_3_state.py test_run_ic_im_v1_3_github_digest.py
+          --junitxml=regression.xml
+      - name: Preserve tests and actual tested strategy SHA
+        if: always()
+        run: git -C strategy rev-parse HEAD > strategy/tested-sha.txt
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: strategy-regression-${{ matrix.family }}-${{ github.run_id }}
+          path: |
+            strategy/regression.xml
+            strategy/tested-sha.txt

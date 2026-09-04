@@ -23,7 +23,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("name: Check A-share trading day", text)
         self.assertIn("ak.tool_trade_date_hist_sina", text)
         self.assertIn("SHOULD_RUN_MICROCAP=false", text)
-        self.assertIn("needs: check-trading-day", text)
+        self.assertIn("needs: [check-trading-day, regression]", text)
         self.assertIn("external_schedule:", text)
         self.assertIn("inputs.external_schedule != true", text)
         self.assertIn("needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true'", text)
