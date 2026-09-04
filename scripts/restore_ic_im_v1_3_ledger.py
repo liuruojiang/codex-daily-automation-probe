@@ -12,7 +12,7 @@ from pathlib import Path, PurePosixPath
 
 MAX_ARCHIVE_BYTES = 50 * 1024 * 1024
 MAX_FILES = 500
-ARTIFACT_NAME = "ic-im-v1-3-r6-ledger"
+ARTIFACT_NAME = "ic-im-v1-3-r7-ledger"
 
 
 class StripCrossOriginAuthRedirectHandler(urllib.request.HTTPRedirectHandler):

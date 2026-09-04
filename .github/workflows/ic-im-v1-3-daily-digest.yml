@@ -1,4 +1,4 @@
-name: IC IM v1.3-r6 Post-Close Digest
+name: IC IM v1.3-r7 Post-Close Digest
 
 on:
   schedule:
@@ -31,7 +31,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: ic-im-v1-3-r6-post-close-digest
+  group: ic-im-v1-3-r7-post-close-digest
   cancel-in-progress: false
 
 jobs:
@@ -112,7 +112,7 @@ jobs:
           PY
           cat calendar.env >> "${GITHUB_OUTPUT}"
 
-      - name: Restore latest v1.3-r6 hash-chained ledger
+      - name: Restore latest v1.3-r7 hash-chained ledger
         if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true')
         id: restore_ledger
         env:
@@ -120,22 +120,22 @@ jobs:
         run: |
           python automation/scripts/restore_ic_im_v1_3_ledger.py --state-dir state
 
-      - name: Restore v1.3-r5 migration source
+      - name: Restore v1.3-r6 migration source
         if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.restore_ledger.outputs.restored != 'true'
-        id: restore_r5_ledger
+        id: restore_r6_ledger
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           python automation/scripts/restore_ic_im_v1_3_ledger.py \
-            --state-dir state-r5 \
-            --artifact-name ic-im-v1-3-ledger
+            --state-dir state-r6 \
+            --artifact-name ic-im-v1-3-r6-ledger
 
-      - name: Migrate v1.3-r5 ledger to v1.3-r6
+      - name: Migrate v1.3-r6 ledger to v1.3-r7
         if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.restore_ledger.outputs.restored != 'true'
         run: |
-          test "${{ steps.restore_r5_ledger.outputs.restored }}" = "true"
-          python -u strategy/migrate_ic_im_v1_3_r5_to_r6_state.py \
-            --old-state-dir state-r5 \
+          test "${{ steps.restore_r6_ledger.outputs.restored }}" = "true"
+          python -u strategy/migrate_ic_im_v1_3_r6_to_r7_state.py \
+            --old-state-dir state-r6 \
             --new-state-dir state
 
       - name: Run IC/IM signal
@@ -182,7 +182,7 @@ jobs:
         if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0'
         uses: actions/upload-artifact@v7
         with:
-          name: ic-im-v1-3-r6-ledger
+          name: ic-im-v1-3-r7-ledger
           path: |
             state/latest.json
             state/journal/
@@ -211,7 +211,7 @@ jobs:
         if: always() && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true')
         uses: actions/upload-artifact@v7
         with:
-          name: ic-im-v1-3-r6-post-close-digest
+          name: ic-im-v1-3-r7-post-close-digest
           path: |
             strategy-run.log
             strategy-artifacts/
@@ -224,7 +224,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## IC/IM v1.3-r6 post-close digest"
+            echo "## IC/IM v1.3-r7 post-close digest"
             echo
             echo "- Publication mode: ${{ steps.publication_mode.outputs.mode }}"
             echo "- Publication mode basis: ${{ steps.publication_mode.outputs.basis }}"
@@ -233,7 +233,7 @@ jobs:
             echo "- Trading day: ${{ steps.calendar.outputs.trade_day }}"
             echo "- Final attempt: ${{ steps.attempt.outputs.final_attempt }}"
             echo "- Ledger restored: ${{ steps.restore_ledger.outputs.restored }}"
-            echo "- v1.3-r5 migration source restored: ${{ steps.restore_r5_ledger.outputs.restored }}"
+            echo "- v1.3-r6 migration source restored: ${{ steps.restore_r6_ledger.outputs.restored }}"
             echo "- Signal exit code: ${{ steps.run_signal.outputs.exit_code }}"
             echo "- Gmail outcome: ${{ steps.send_gmail.outcome }}"
           } >> "${GITHUB_STEP_SUMMARY}"
