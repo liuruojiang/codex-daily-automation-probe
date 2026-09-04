@@ -211,6 +211,8 @@ def parse_number(value: str) -> float | None:
         number = float(cleaned)
     except ValueError:
         return None
+    if not math.isfinite(number):
+        return None
     return number / 100.0 if is_percent else number
 
 
@@ -262,11 +264,17 @@ STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
         "bool": {
             "overheat_enabled": True,
             "target_vol_enabled": False,
+            "r2_gate_enabled": False,
+            "cash_day_yield_enabled": False,
+            "financing_enabled": False,
         },
         "number": {
             "lookback": 25.0,
             "halflife": 2.5,
             "r2_entry_gate": 0.0,
+            "signal_spread_hedge_ratio": 1.0,
+            "momentum_gap_entry_threshold": 0.0,
+            "momentum_gap_exit_buffer": 0.08,
             "execution_hedge_ratio": 0.8,
             "overheat_feature_window": 10.0,
             "overheat_trigger_threshold": 0.26,
@@ -380,7 +388,33 @@ def validate_publication_contract(
     publication_mode: str,
     fields: dict[str, str],
 ) -> tuple[bool, str]:
+    actionable = parse_strict_bool(first_value(fields, "member_rebalance_actionable")) is True
+    if actionable:
+        signal_date = parse_strict_iso_date(first_value(fields, "member_rebalance_signal_date"))
+        execution_date = parse_strict_iso_date(first_value(fields, "member_rebalance_execution_date"))
+        publication_date = parse_strict_iso_date(first_value(
+            fields, "date" if publication_mode == "close_confirmed" else "quote_trade_date"
+        ))
+        action_date = signal_date if publication_mode == "close_confirmed" else execution_date
+        if publication_date is None or action_date != publication_date:
+            return False, "member action contract invalid: actionable date does not match publication session"
     if publication_mode != "close_confirmed":
+        quote = parse_strict_iso_date(first_value(fields, "quote_trade_date"))
+        anchor = parse_strict_iso_date(first_value(fields, "latest_anchor_trade_date"))
+        expected_anchor = parse_strict_iso_date(first_value(fields, "expected_latest_completed_trade_date"))
+        if quote != now_bj().date() or parse_strict_iso_date(first_value(fields, "date")) != quote:
+            return False, "publication contract invalid: realtime final CSV must match today's quote session"
+        if anchor is None or expected_anchor is None or anchor != expected_anchor or anchor >= quote:
+            return False, "publication contract invalid: realtime final CSV anchor must match the verified previous completed session"
+        try:
+            snapshot = datetime.fromisoformat(first_value(fields, "snapshot_time"))
+        except ValueError:
+            return False, "publication contract invalid: invalid final CSV snapshot_time"
+        if snapshot.tzinfo is None or snapshot.astimezone(BJ).date() != quote:
+            return False, "publication contract invalid: final CSV snapshot must be timezone-aware and match quote session"
+        if (parse_strict_bool(first_value(fields, "official_close_confirmed_signal")) is not False
+                or first_value(fields, "signal_timing") != "intraday_hypothetical_if_now_close"):
+            return False, "publication contract invalid: realtime cannot use a close-confirmed final CSV"
         return True, ""
     if parse_strict_bool(first_value(fields, "official_close_confirmed_signal")) is not True:
         return False, "publication contract invalid: official_close_confirmed_signal must be True"
@@ -388,6 +422,22 @@ def validate_publication_contract(
         return False, "publication contract invalid: signal_timing must be close_confirmed"
     if parse_strict_iso_date(first_value(fields, "date")) is None:
         return False, "publication contract invalid: final CSV date must be YYYY-MM-DD"
+    return True, ""
+
+
+def validate_execution_contract(version: str, fields: dict[str, str]) -> tuple[bool, str]:
+    active_holding = "long_microcap_top100" if version == "v2.5" else "long_microcap_short_zz1000"
+    for holding_key, scale_key in (
+        ("current_holding", "current_execution_scale"),
+        ("next_holding", "next_session_actionable_scale"),
+    ):
+        holding = first_value(fields, holding_key)
+        if holding not in {"cash", active_holding}:
+            return False, f"final CSV execution contract invalid: {holding_key} missing or unsupported"
+        scale = parse_number(first_value(fields, scale_key))
+        expected = 0.0 if holding == "cash" else 1.0
+        if scale is None or not math.isclose(scale, expected, rel_tol=0.0, abs_tol=1e-9):
+            return False, f"final CSV execution contract invalid: {scale_key} must be finite and match fixed holding scale {expected:g}"
     return True, ""
 
 
@@ -476,19 +526,10 @@ def action_label(item: dict[str, object]) -> str:
             return "平仓"
         return "调仓"
 
-    holding_state = first_value(fields, "holding_trade_state").lower()
-    trade_state = first_value(fields, "trade_state").lower()
-    if holding_state not in {"", "hold"} or trade_state not in {"", "hold"}:
-        state = holding_state if holding_state not in {"", "hold"} else trade_state
-        if state in {"enter", "entry", "open", "buy"}:
-            return "开仓"
-        if state in {"exit", "close", "sell"}:
-            return "平仓"
-        return "调仓"
-
     actions: list[str] = []
-    scale_state = first_value(fields, "scale_trade_state").lower()
-    if parse_bool(first_value(fields, "scale_trade_required")) or scale_state not in {"", "hold_scale"}:
+    current_scale = parse_number(first_value(fields, "current_execution_scale"))
+    next_scale = parse_number(first_value(fields, "next_session_actionable_scale"))
+    if current_scale is not None and next_scale is not None and not math.isclose(current_scale, next_scale, rel_tol=0, abs_tol=1e-9):
         actions.append("调整仓位")
     member_action = member_rebalance_action(fields)
     if member_action:
@@ -815,12 +856,17 @@ def main() -> int:
                 status = "FAILED"
                 status_note = publication_note
         if status == "OK":
-            fields = dict(stdout_fields)
-            fields.update(csv_fields)
-            missing = [key for key in ("current_holding", "next_holding") if not first_value(fields, key)]
-            if missing:
+            execution_ok, execution_note = validate_execution_contract(version, csv_fields)
+            if not execution_ok:
                 status = "FAILED"
-                status_note = "required signal fields are missing: " + ", ".join(missing)
+                status_note = execution_note
+            else:
+                # The final CSV alone owns trading state, dates, risk and identity.
+                # Logs may supplement only non-authoritative presentation metadata.
+                fields = dict(csv_fields)
+                for key in ("quote_coverage", "quote_source"):
+                    if not first_value(fields, key) and first_value(stdout_fields, key):
+                        fields[key] = stdout_fields[key]
         results.append(
             {
                 "version": version,

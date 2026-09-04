@@ -49,6 +49,12 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 "lookback": "25",
                 "halflife": "2.5",
                 "r2_entry_gate": "0.0",
+                "r2_gate_enabled": "False",
+                "signal_spread_hedge_ratio": "1.0",
+                "momentum_gap_entry_threshold": "0.0",
+                "momentum_gap_exit_buffer": "0.08",
+                "cash_day_yield_enabled": "False",
+                "financing_enabled": "False",
                 "execution_hedge_ratio": "0.8",
                 "overheat_enabled": "True",
                 "overheat_feature_window": "10",
@@ -89,6 +95,23 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             writer = csv.DictWriter(handle, fieldnames=list(row))
             writer.writeheader()
             writer.writerow(row)
+
+    def signal_fields(self, version: str, current: str = "cash", next_holding: str = "cash") -> dict[str, str]:
+        """Explicit complete normal fixture; identity_fields remains identity-only.
+
+        Neither write_csv nor run_digest repairs missing fields: negative tests
+        therefore retain exactly their malformed final CSV payloads.
+        """
+        return {**self.identity_fields(version), "current_holding": current,
+                "next_holding": next_holding, "current_execution_scale": "0" if current == "cash" else "1",
+                "next_session_actionable_scale": "0" if next_holding == "cash" else "1",
+                "trade_state": "hold" if current == next_holding else "open",
+                "holding_trade_state": "hold" if current == next_holding else "enter",
+                "scale_trade_state": "hold_scale", "scale_trade_required": "False",
+                "snapshot_time": "2026-08-07 09:33:00+08:00", "quote_trade_date": "2026-08-07",
+                "latest_anchor_trade_date": "2026-08-06", "expected_latest_completed_trade_date": "2026-08-06",
+                "date": "2026-08-07", "official_close_confirmed_signal": "False",
+                "signal_timing": "intraday_hypothetical_if_now_close"}
 
     def test_retired_v20_identity_is_rejected_even_with_same_version(self):
         fields = self.identity_fields("v2.0")
@@ -215,7 +238,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 ]
             )
             csv_rows[version] = {
-                **self.identity_fields(version),
+                **self.signal_fields(version, current, next_holding),
                 "date": "2026-08-12",
                 "signal_timing": "close_confirmed",
                 "official_close_confirmed_signal": "True",
@@ -348,21 +371,24 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             }
             csv_rows = {
                 "v2.0": {
-                    **self.identity_fields("v2.0"),
+                    **self.signal_fields("v2.0"),
+                    "microcap_mom": "0.056597", "hedge_mom": "-0.036763", "momentum_gap": "0.093360",
                     "blocked_until_signal_reset": "False",
                     "overheat_metric": "",
                     "overheat_threshold": "0",
                     "next_session_actionable_scale": "0.0",
                 },
                 "v2.3": {
-                    **self.identity_fields("v2.3"),
+                    **self.signal_fields("v2.3"),
+                    "annualized_log_wls_score": "1.664220", "log_wls_r2": "0.5144",
                     "overheat_risk_off": "True",
                     "overheat_feature_value": "0.3177309",
                     "overheat_trigger_threshold": "0.26",
                     "overheat_recovery_threshold": "0.20",
                     "next_session_actionable_scale": "0.0",
                 },
-                "v2.5": {**self.identity_fields("v2.5"), "next_session_actionable_scale": "1.0"},
+                "v2.5": {**self.signal_fields("v2.5", "cash", "long_microcap_top100"),
+                         "annualized_log_wls_score": "3.006818", "log_wls_r2": "0.7828"},
             }
             meta = self.run_digest(tmp_path, outputs, csv_rows)
 
@@ -385,7 +411,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertNotIn(str(tmp_path), body)
         self.assertFalse(meta.get("attachment"))
 
-    def test_no_action_digest_uses_no_action_subject_and_stdout_fallback(self) -> None:
+    def test_no_action_digest_uses_final_csv_not_legacy_stdout_scale(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             meta = self.run_digest(
                 Path(tmp),
@@ -409,7 +435,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                         ]
                     )
                 },
-                {"v2.0": self.identity_fields("v2.0")},
+                {"v2.0": self.signal_fields("v2.0", "long_microcap_short_zz1000", "long_microcap_short_zz1000")},
             )
 
         body = str(meta["body"])
@@ -417,7 +443,8 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertIn("**所有版本均无需调仓。**", body)
         self.assertIn("微盘 Top100＋空头中证1000 → 微盘 Top100＋空头中证1000", body)
         self.assertIn("| v2.0 |", body)
-        self.assertIn("| 0.72 |", body)
+        self.assertIn("| 1.00 |", body)
+        self.assertNotIn("| 0.72 |", body)
         self.assertIn("风险/数据异常：无", body)
 
     def test_member_rebalance_is_actionable_only_when_official_and_includes_dates(self) -> None:
@@ -448,13 +475,13 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 },
                 {
                     "v2.0": {
-                        **self.identity_fields("v2.0"),
+                        **self.signal_fields("v2.0", "long_microcap_short_zz1000", "long_microcap_short_zz1000"),
                         "member_rebalance_required": "True",
                         "member_rebalance_state": "rebalance",
                         "member_rebalance_actionable": "True",
                         "member_rebalance_official": "True",
-                        "member_rebalance_signal_date": "2026-08-07",
-                        "member_rebalance_execution_date": "2026-08-10",
+                        "member_rebalance_signal_date": "2026-08-06",
+                        "member_rebalance_execution_date": "2026-08-07",
                         "member_enter_count": "7",
                         "member_exit_count": "7",
                         "member_rebalance_label": "名单调仓（调入 7，调出 7）",
@@ -464,7 +491,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
 
         body = str(meta["body"])
         self.assertEqual(meta["subject"], "[需操作] 微盘股 v2.0 日报 - 2026-08-07")
-        dated_action = "名单调仓（调入 7，调出 7；信号日 2026-08-07，执行日 2026-08-10）"
+        dated_action = "名单调仓（调入 7，调出 7；信号日 2026-08-06，执行日 2026-08-07）"
         self.assertIn(f"**v2.0 需要{dated_action}。**", body)
         self.assertIn(f"| {dated_action} |", body)
         self.assertLess(body.index("**v2.0：微盘 Top100＋空头中证1000 → 微盘 Top100＋空头中证1000"), body.index(dated_action))
@@ -492,7 +519,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 },
                 {
                     "v2.0": {
-                        **self.identity_fields("v2.0"),
+                        **self.signal_fields("v2.0", "long_microcap_short_zz1000", "long_microcap_short_zz1000"),
                         "member_rebalance_required": "True",
                         "member_rebalance_actionable": "False",
                         "member_rebalance_official": "True",
@@ -529,7 +556,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 },
                 {
                     "v2.0": {
-                        **self.identity_fields("v2.0"),
+                        **self.signal_fields("v2.0", "long_microcap_short_zz1000", "long_microcap_short_zz1000"),
                         "member_rebalance_required": "True",
                         "member_rebalance_actionable": "False",
                         "member_rebalance_official": "False",
@@ -545,7 +572,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertIn("**所有版本均无需调仓。**", str(meta["body"]))
         self.assertNotIn("名单调仓", str(meta["body"]))
 
-    def test_scale_and_member_rebalances_are_both_visible(self) -> None:
+    def test_fixed_scale_alias_cannot_add_trade_to_member_rebalance(self) -> None:
         fields = {
             "current_holding": "long_microcap_short_zz1000",
             "next_holding": "long_microcap_short_zz1000",
@@ -553,6 +580,8 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             "trade_state": "hold",
             "scale_trade_state": "rebalance_scale",
             "scale_trade_required": "True",
+            "current_execution_scale": "1.0",
+            "next_session_actionable_scale": "1.0",
             "member_rebalance_required": "True",
             "member_rebalance_actionable": "True",
             "member_rebalance_official": "True",
@@ -564,7 +593,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
 
         self.assertEqual(
             digest.action_label({"status": "OK", "fields": fields}),
-            "调整仓位；名单调仓（调入 3，调出 3；信号日 2026-08-07，执行日 2026-08-10）",
+            "名单调仓（调入 3，调出 3；信号日 2026-08-07，执行日 2026-08-10）",
         )
 
     def test_corrected_dispatch_adds_visible_subject_prefix(self) -> None:
@@ -585,7 +614,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                         ]
                     )
                 },
-                {"v2.5": self.identity_fields("v2.5")},
+                {"v2.5": self.signal_fields("v2.5", "long_microcap_top100", "long_microcap_top100")},
                 subject_prefix="纠正版",
             )
 
@@ -623,6 +652,9 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertNotIn("Digest status", body)
 
     def test_missing_required_holdings_is_abnormal_instead_of_no_action(self) -> None:
+        missing_holdings = self.signal_fields("v2.5")
+        missing_holdings.pop("current_holding")
+        missing_holdings.pop("next_holding")
         with tempfile.TemporaryDirectory() as tmp:
             meta = self.run_digest(
                 Path(tmp),
@@ -638,14 +670,13 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                         ]
                     )
                 },
-                {"v2.5": self.identity_fields("v2.5")},
+                {"v2.5": missing_holdings},
             )
 
         body = str(meta["body"])
         self.assertEqual(meta["subject"], "[异常] 微盘股 v2.5 日报 - 2026-08-07")
-        self.assertIn("缺少必要信号字段", body)
+        self.assertIn("final CSV execution contract invalid", body)
         self.assertIn("current_holding", body)
-        self.assertIn("next_holding", body)
 
     def test_preflight_refresh_failure_uses_refresh_reason(self) -> None:
         status, note = digest.classify_signal_output(
@@ -729,7 +760,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             )
             for version in ("v2.0", "v2.3", "v2.5")
         }
-        csv_rows = {version: self.identity_fields(version) for version in outputs}
+        csv_rows = {version: self.signal_fields(version) for version in outputs}
 
         with tempfile.TemporaryDirectory() as tmp:
             meta = self.run_digest(Path(tmp), outputs, csv_rows)
@@ -939,21 +970,21 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             self.assertNotIn("需要开仓", body)
 
     def test_untrusted_values_cannot_inject_markdown_structure(self) -> None:
-        holding = "rogue\n## INJECT-HOLDING\n**break-holding**"
+        holding = "long_microcap_short_zz1000"
         csv_row = {
-            **self.identity_fields("v2.0"),
+            **self.signal_fields("v2.0", holding, holding),
             "current_holding": holding,
             "next_holding": holding,
-            "next_session_actionable_scale": "0.73",
+            "next_session_actionable_scale": "1",
             "member_rebalance_required": "True",
             "member_rebalance_actionable": "True",
             "member_rebalance_official": "True",
-            "member_rebalance_signal_date": "2026-08-07",
-            "member_rebalance_execution_date": "2026-08-10",
+            "member_rebalance_signal_date": "2026-08-06",
+            "member_rebalance_execution_date": "2026-08-07",
             "member_enter_count": "1",
             "member_exit_count": "1",
             "member_rebalance_label": "名单调仓\n## INJECT-MEMBER\n**break-member** [click](https://evil.invalid)",
-            "snapshot_time": "2026-08-07 09:33\n## INJECT-SNAPSHOT\n**break-snapshot**",
+            "snapshot_time": "2026-08-07 09:33:00+08:00",
             "quote_coverage": "100/100\n## INJECT-COVERAGE\n**break-coverage**",
         }
         output = "\n".join(
@@ -980,11 +1011,12 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             )
 
         body = str(meta["body"])
+        self.assertEqual(meta["status"], "OK")
         headings = [line for line in body.splitlines() if line.startswith("## ")]
         self.assertEqual(headings, ["## 今日结论", "## 需要关注"])
         self.assertTrue(body.splitlines()[2].startswith("**") and body.splitlines()[2].endswith("**"))
         self.assertTrue(body.splitlines()[4].startswith("**") and body.splitlines()[4].endswith("**"))
-        for marker in ("holding", "member", "snapshot", "coverage", "sha"):
+        for marker in ("member", "coverage", "sha"):
             self.assertNotIn(f"**break-{marker}**", body)
             self.assertIn(f"\\*\\*break-{marker}\\*\\*", body)
         self.assertNotIn("[click](https://evil.invalid)", body)

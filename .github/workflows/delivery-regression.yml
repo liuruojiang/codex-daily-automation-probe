@@ -33,7 +33,7 @@ jobs:
           TEST_FAMILY: ${{ inputs.family || 'all' }}
         run: |
           case "${TEST_FAMILY}" in
-            microcap) suites=(tests/test_microcap_*.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_adversarial_delivery.py) ;;
+            microcap) suites=(tests/test_microcap_*.py tests/test_v23_identity_adversarial.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_adversarial_delivery.py) ;;
             icim) suites=(tests/test_ic_im_v1_3_*.py tests/test_ic_im_r7_spread.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_adversarial_delivery.py) ;;
             all) suites=(tests) ;;
             *) echo "Unknown test family"; exit 1 ;;
@@ -98,7 +98,10 @@ jobs:
           tests/test_top100_cloud_delivery.py tests/test_full_rebalance_cache_bundle.py
           tests/test_top100_data_guards.py tests/test_adversarial_microcap_delivery.py
           tests/test_realtime_exchange_calendar.py tests/test_exchange_calendar_provider.py
-          tests/test_v20_plain_promotion.py tests/test_v23_plain_promotion.py --junitxml=regression.xml
+          tests/test_v20_plain_promotion.py tests/test_v23_plain_promotion.py
+          tests/test_adversarial_v20_plain_20260904.py tests/test_adversarial_v23_plain_20260904.py
+          tests/test_adversarial_delivery_plain_20260904.py tests/test_adversarial_delivery_state_consistency.py
+          tests/test_v23_identity_adversarial.py --junitxml=regression.xml
       - name: Test ICIM source failover and persistent ledger invariants
         if: matrix.family == 'icim'
         working-directory: strategy
