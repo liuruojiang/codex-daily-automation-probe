@@ -255,9 +255,9 @@ STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
         "text": {
             "version": "2.3",
             "strategy_version": "v2.3",
-            "overlay_type": "spread_nav_log_wls_lb25_vol10_overheat",
-            "strategy_revision": "spread_nav_log_wls_lb25_vol10_overheat",
-            "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2gate0p08_signal1p0_exec0p8_vol10_overheat",
+            "overlay_type": "plain_lb25_hl2p5_r2off_vol10_26_20_20260904",
+            "strategy_revision": "plain_lb25_hl2p5_r2off_vol10_26_20_20260904",
+            "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2off_signal1p0_exec0p8_vol10_overheat26_recovery20",
         },
         "bool": {
             "overheat_enabled": True,
@@ -266,11 +266,11 @@ STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
         "number": {
             "lookback": 25.0,
             "halflife": 2.5,
-            "r2_entry_gate": 0.08,
+            "r2_entry_gate": 0.0,
             "execution_hedge_ratio": 0.8,
             "overheat_feature_window": 10.0,
             "overheat_trigger_threshold": 0.26,
-            "overheat_recovery_threshold": 0.195,
+            "overheat_recovery_threshold": 0.20,
             "target_vol": 0.0,
             "target_vol_window": 0.0,
         },
@@ -727,6 +727,8 @@ def build_compact_digest(
     warnings = [warning for item in results for warning in risk_warnings(item)]
     if date_s == "2026-09-04" and any(item["version"] == "v2.0" and item["status"] == "OK" for item in results):
         warnings.insert(0, "v2.0：今日已切换为朴素固定1倍规则；旧版模型为空仓，新版模型为持仓。上方无操作仅指新模型内部状态，不表示实盘已完成切换；请按账户实际持仓核对，本日报未发送订单。")
+    if date_s == "2026-09-04" and any(item["version"] == "v2.3" and item["status"] == "OK" for item in results):
+        warnings.insert(0, "v2.3：今日替换为朴素版，R²入场过滤关闭，过热26%触发/20%恢复；动量25天、半衰期2.5天、入场0、退出缓冲0.08、执行对冲0.8不变。模型持仓不代表账户已完成切换，请核对实际持仓；本日报未发送订单。")
     lines += ["", "## 需要关注", ""]
     if warnings:
         lines += [f"- **{warning.split('：', 1)[0]}：**{warning.split('：', 1)[1]}" for warning in warnings]
