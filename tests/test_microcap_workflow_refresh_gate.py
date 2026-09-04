@@ -65,7 +65,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('git rev-parse HEAD', text)
         self.assertIn('--strategy-sha "${{ steps.microcap_sha.outputs.sha }}"', text)
         self.assertIn('repository: liuruojiang/microcap', text)
-        self.assertEqual(text.count('ref: dc0752e67611b765aeada8e3c628c669517de574'), 3)
+        self.assertEqual(text.count('ref: 106902fab330cb33f07be8d944f23c140f14fc79'), 3)
         self.assertNotIn('ref: main', text)
         self.assertIn("name: Check out isolated v2.3 close-confirmed workspace", text)
         self.assertIn("name: Check out isolated v2.5 close-confirmed workspace", text)
@@ -158,7 +158,11 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertLess(text.index("name: Verify and pack all three final deliveries"),
                         text.index("name: Build Markdown digest"))
         self.assertIn("scripts/top100_cloud_delivery.py pack", text)
-        self.assertIn('--expected-date "${{ steps.delivery_gate.outputs.delivery_date }}"', text)
+        self.assertIn('--expected-date "${{ steps.market_target.outputs.date }}"', text)
+        self.assertIn('from scripts.exchange_calendar import latest_completed_session', text)
+        # Scheduled emails still require today's signal. Manual weekend correction
+        # verifies the actual last completed session instead of inventing weekend bars.
+        self.assertIn('--expected-signal-date "${{ (github.event_name == \'schedule\' || inputs.external_schedule == true) && steps.delivery_gate.outputs.delivery_date || \'\' }}"', text)
         self.assertIn("SIGNAL_V2_${version}_EXIT_CODE=whole_delivery_failed", text)
         self.assertIn("name: microcap-whole-delivery-state", text)
         self.assertIn("microcap/whole_delivery_result.txt", text)

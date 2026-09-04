@@ -101,7 +101,7 @@ jobs:
           tests/test_v20_plain_promotion.py tests/test_v23_plain_promotion.py
           tests/test_adversarial_v20_plain_20260904.py tests/test_adversarial_v23_plain_20260904.py
           tests/test_adversarial_delivery_plain_20260904.py tests/test_adversarial_delivery_state_consistency.py
-          tests/test_v23_identity_adversarial.py --junitxml=regression.xml
+          tests/test_v23_identity_adversarial.py tests/test_index_history_preflight.py --junitxml=regression.xml
       - name: Test ICIM source failover and persistent ledger invariants
         if: matrix.family == 'icim'
         working-directory: strategy
