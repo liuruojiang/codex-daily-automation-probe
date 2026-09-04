@@ -35,7 +35,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  regression:
+    uses: ./.github/workflows/delivery-regression.yml
+    with:
+      family: icim
+
   send:
+    needs: regression
     runs-on: ubuntu-latest
     timeout-minutes: 85
     env:

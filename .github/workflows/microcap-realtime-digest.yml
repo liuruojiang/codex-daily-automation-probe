@@ -35,6 +35,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  regression:
+    uses: ./.github/workflows/delivery-regression.yml
+    with:
+      family: microcap
+
   check-trading-day:
     runs-on: ubuntu-latest
     outputs:
@@ -63,10 +68,12 @@ jobs:
           try:
               trade_dates = ak.tool_trade_date_hist_sina()
               dates = set(pd.to_datetime(trade_dates["trade_date"]).dt.date)
+              if not dates or not min(dates) <= today <= max(dates):
+                  raise ValueError("Trading calendar does not cover today's date")
               should_run = today in dates
           except Exception as exc:
               print(f"A_SHARE_CALENDAR_ERROR={type(exc).__name__}: {exc}")
-              should_run = False
+              raise RuntimeError("Trading calendar unavailable; not a confirmed holiday") from exc
           print(f"A_SHARE_TODAY={today.isoformat()}")
           if should_run:
               print("SHOULD_RUN_MICROCAP=true")
@@ -76,8 +83,8 @@ jobs:
           cat calendar.env >> "$GITHUB_OUTPUT"
 
   send:
-    needs: check-trading-day
-    if: always() && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true')
+    needs: [check-trading-day, regression]
+    if: always() && needs.regression.result == 'success' && needs.check-trading-day.result == 'success' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 100
     env:
