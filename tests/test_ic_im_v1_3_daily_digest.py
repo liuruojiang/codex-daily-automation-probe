@@ -81,8 +81,8 @@ class ICIMV13DailyDigestTests(unittest.TestCase):
     def test_digest_names_release_and_explains_new_filters(self) -> None:
         payload = {
             "status": "ok",
-            "strategy_revision": "r6",
-            "build": "v1.3-test-r6",
+            "strategy_revision": "r7",
+            "build": "v1.3-test-r7",
             "publication_mode": "realtime",
             "market_date": "2026-09-03",
             "completed_day": "2026-09-02",
@@ -95,7 +95,7 @@ class ICIMV13DailyDigestTests(unittest.TestCase):
         }
         subject, body, actionable = digest.build_success(payload, "", "")
         self.assertTrue(actionable)
-        self.assertIn("IC/IM 1.3-r6", subject)
+        self.assertIn("IC/IM 1.3-r7", subject)
         self.assertIn("6%防守门槛触发并减半", body)
         self.assertIn("Volume/MA160=0.900", body)
         self.assertIn("IC 1.3规则明确禁止卖Call", body)
@@ -109,7 +109,7 @@ class ICIMV13DailyDigestTests(unittest.TestCase):
         prefix = gate.marker_prefix(date(2026, 9, 3), "realtime")
         payload = {
             "status": "ok",
-            "strategy_revision": "r6",
+            "strategy_revision": "r7",
             "publication_mode": "realtime",
             "market_date": "2026-09-03",
             "digest": "b" * 64,
