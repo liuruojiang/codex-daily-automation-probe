@@ -27,7 +27,7 @@ class ICIMV13WorkflowTests(unittest.TestCase):
         self.assertIn("migrate_ic_im_v1_3_r6_to_r7_state.py", text)
         self.assertIn("--artifact-name ic-im-v1-3-r6-ledger", text)
         self.assertIn("run_ic_im_v1_3_github_digest.py", text)
-        self.assertIn("ref: 2ff781f348aa8ebe1925671881b47c2c8c317000", text)
+        self.assertIn("ref: cdab4eee6445bf9042860d17795bb2070cade5b3", text)
         self.assertNotIn("ref: main", text)
         self.assertIn("strategy-artifacts/strategy-sha.txt", text)
         self.assertIn('--expected-market-date "${{ steps.calendar.outputs.today }}"', text)
