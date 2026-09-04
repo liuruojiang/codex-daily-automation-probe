@@ -180,9 +180,28 @@ jobs:
             --out-dir mail-artifacts \
             --subject-prefix "${{ steps.delivery_gate.outputs.subject_prefix }}"
 
+      - name: Prepare delivery marker
+        id: prepare_marker
+        if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success'
+        shell: bash
+        run: |
+          python automation/scripts/prepare_ic_im_v1_3_marker.py \
+            --result strategy-artifacts/result.json \
+            --marker-dir delivery-marker
+
+      - name: Persist normal-send intent before SMTP
+        id: send_intent
+        if: steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.prepare_marker.outputs.marker_name }}-send-intent
+          path: mail-artifacts/metadata.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Send Gmail
         id: send_gmail
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && steps.build_digest.outcome == 'success' && (steps.run_signal.outputs.exit_code == '0' || steps.attempt.outputs.final_attempt == 'true')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && steps.build_digest.outcome == 'success' && ((steps.run_signal.outputs.exit_code == '0' && steps.send_intent.outcome == 'success') || (steps.run_signal.outputs.exit_code != '0' && steps.attempt.outputs.final_attempt == 'true'))
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -204,15 +223,6 @@ jobs:
             state/migration_record.json
           if-no-files-found: error
           retention-days: 90
-
-      - name: Prepare delivery marker
-        id: prepare_marker
-        if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.send_gmail.outcome == 'success'
-        shell: bash
-        run: |
-          python automation/scripts/prepare_ic_im_v1_3_marker.py \
-            --result strategy-artifacts/result.json \
-            --marker-dir delivery-marker
 
       - name: Mark digest delivered
         if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.send_gmail.outcome == 'success'

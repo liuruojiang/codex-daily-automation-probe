@@ -40,13 +40,32 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
     for required in ('test_realtime_preflight.py', 'test_top100_cloud_delivery.py',
                      'test_top100_delivery.py', 'test_ohlcv_provider_validation.py',
                      'test_delivery_transport_retry.py', 'test_poe_ic_im_v1_3_state.py',
-                     'test_run_ic_im_v1_3_github_digest.py'):
+                     'test_run_ic_im_v1_3_github_digest.py', 'test_adversarial_delivery.py',
+                     'test_adversarial_microcap_delivery.py', 'test_adversarial_icim_delivery.py'):
         assert required in text
     assert 'ref: ${{ steps.pin.outputs.sha }}' in text
     assert 'tested-sha.txt' in text
     assert '--junitxml=' in text
     assert workflow['on']['workflow_call']['inputs']['family']['default'] == 'all'
     assert 'fromJSON(inputs.family' in workflow['jobs']['strategy-tests']['strategy']['matrix']['family']
+
+
+@pytest.mark.parametrize('name', ['microcap-realtime-digest.yml', 'ic-im-v1-3-daily-digest.yml'])
+def test_normal_smtp_requires_durable_intent_and_mode_specific_preflight(name):
+    steps = read(name)['jobs']['send']['steps']
+    indexed = {s.get('id'): (i, s) for i, s in enumerate(steps) if s.get('id')}
+    assert indexed['publication_mode'][0] < indexed['delivery_gate'][0]
+    assert '--publication-mode "${{ steps.publication_mode.outputs.mode }}"' in indexed['delivery_gate'][1]['run']
+    assert indexed['send_intent'][0] < indexed['send_gmail'][0]
+    intent = indexed['send_intent'][1]
+    assert intent['uses'] == 'actions/upload-artifact@v7'
+    marker_source = 'delivery_gate' if name.startswith('microcap') else 'prepare_marker'
+    assert intent['with']['name'] == '${{ steps.' + marker_source + '.outputs.marker_name }}-send-intent'
+    if marker_source == 'prepare_marker':
+        assert indexed['prepare_marker'][0] < indexed['send_intent'][0]
+    assert intent['with']['if-no-files-found'] == 'error'
+    assert 'continue-on-error' not in intent
+    assert "steps.send_intent.outcome == 'success'" in indexed['send_gmail'][1]['if']
 
 
 def test_stale_market_fixture_is_frozen_real_data_and_never_in_production_steps():

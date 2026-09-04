@@ -33,8 +33,8 @@ jobs:
           TEST_FAMILY: ${{ inputs.family || 'all' }}
         run: |
           case "${TEST_FAMILY}" in
-            microcap) suites=(tests/test_microcap_*.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py) ;;
-            icim) suites=(tests/test_ic_im_v1_3_*.py tests/test_ic_im_r7_spread.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py) ;;
+            microcap) suites=(tests/test_microcap_*.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_adversarial_delivery.py) ;;
+            icim) suites=(tests/test_ic_im_v1_3_*.py tests/test_ic_im_r7_spread.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_adversarial_delivery.py) ;;
             all) suites=(tests) ;;
             *) echo "Unknown test family"; exit 1 ;;
           esac
@@ -96,18 +96,20 @@ jobs:
           python -X utf8 -m pytest -q
           tests/test_realtime_preflight.py tests/test_top100_delivery.py
           tests/test_top100_cloud_delivery.py tests/test_full_rebalance_cache_bundle.py
-          tests/test_top100_data_guards.py --junitxml=regression.xml
+          tests/test_top100_data_guards.py tests/test_adversarial_microcap_delivery.py --junitxml=regression.xml
       - name: Test ICIM source failover and persistent ledger invariants
         if: matrix.family == 'icim'
         working-directory: strategy
         env:
           ICIM_STATE_DIR: ${{ runner.temp }}/icim-regression-state
+          ICIM_REQUIRE_MIGRATION: '0'
         run: |
           mkdir -p data/ic_510500_put_proxy_validation_v1
           cp ../automation/tests/fixtures/icim/sina_000905_index.csv data/ic_510500_put_proxy_validation_v1/sina_000905_index.csv
           python -X utf8 -m pytest -q \
             test_delivery_transport_retry.py test_ohlcv_provider_validation.py \
             test_poe_ic_im_v1_3_state.py test_run_ic_im_v1_3_github_digest.py \
+            test_adversarial_icim_delivery.py \
             --junitxml=regression.xml
       - name: Preserve tests and actual tested strategy SHA
         if: always()
