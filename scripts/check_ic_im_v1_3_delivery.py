@@ -38,13 +38,34 @@ def marker_exists(payload: dict[str, object], prefix: str) -> bool:
     return isinstance(artifacts, list) and any(
         isinstance(item, dict)
         and str(item.get("name", "")).startswith(prefix)
+        and not str(item.get("name", "")).endswith("-send-intent")
         and item.get("expired") is not True
         for item in artifacts
     )
 
 
+def pending_send_exists(payload: dict[str, object], prefix: str) -> bool:
+    return any(isinstance(item, dict) and str(item.get("name", "")).startswith(prefix)
+               and str(item.get("name", "")).endswith("-send-intent")
+               and item.get("expired") is not True for item in payload.get("artifacts", []))
+
+
 def fetch_artifacts(repository: str, token: str, api_url: str) -> dict[str, object]:
+    artifacts: list[object] = []
+    for page in range(1, 101):
+        payload = fetch_artifact_page(repository, token, api_url, page)
+        items = payload.get("artifacts")
+        if not isinstance(items, list):
+            raise RuntimeError("GitHub artifacts response must contain an artifacts list")
+        artifacts.extend(items)
+        if len(items) < 100:
+            return {"artifacts": artifacts}
+    raise RuntimeError("GitHub artifacts pagination exceeded safety limit; refusing uncertain dedupe")
+
+
+def fetch_artifact_page(repository: str, token: str, api_url: str, page: int) -> dict[str, object]:
     url = f"{api_url.rstrip('/')}/repos/{repository}/actions/artifacts?per_page=100"
+    url += f"&page={page}"
     request = urllib.request.Request(
         url,
         headers={
@@ -90,9 +111,10 @@ def main() -> int:
     if not args.correction:
         if not args.repository or not args.token:
             raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required")
-        exists = marker_exists(
-            fetch_artifacts(args.repository, args.token, args.api_url), prefix
-        )
+        artifacts = fetch_artifacts(args.repository, args.token, args.api_url)
+        exists = marker_exists(artifacts, prefix)
+        if not exists and pending_send_exists(artifacts, prefix):
+            raise RuntimeError("BLOCKED: prior SMTP send intent has no completion marker; delivery is uncertain, reconcile Gmail before explicit correction")
     write_outputs(
         {
             "should_send": str(args.correction or not exists).lower(),

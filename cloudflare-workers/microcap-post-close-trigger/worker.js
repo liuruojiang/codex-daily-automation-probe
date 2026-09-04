@@ -24,6 +24,7 @@ async function dispatchWorkflow(env, workflow) {
     try {
       response = await fetch(dispatchUrl, {
         method: "POST",
+        signal: AbortSignal.timeout(30000),
         headers: {
           Accept: "application/vnd.github+json",
           Authorization: `Bearer ${env.GITHUB_TOKEN}`,

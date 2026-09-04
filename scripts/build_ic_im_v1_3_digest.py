@@ -398,7 +398,41 @@ def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
 </div></body></html>'''
 
 
+def validate_success_payload(payload: dict[str, Any]) -> None:
+    from datetime import date
+    import math
+    from prepare_ic_im_v1_3_marker import marker_name
+
+    marker_name(payload)
+    days = {}
+    for field in ("market_date", "completed_day", "verified_day", "next_trade_day"):
+        value = payload.get(field)
+        if not isinstance(value, str) or len(value) != 10:
+            raise ValueError(f"successful digest requires ISO {field}")
+        days[field] = date.fromisoformat(value)
+    if days["verified_day"] != days["completed_day"]:
+        raise ValueError("verified ledger day must equal completed day")
+    if payload["publication_mode"] == "close_confirmed":
+        if days["market_date"] != days["completed_day"]:
+            raise ValueError("close-confirmed market and ledger dates must match")
+    elif days["completed_day"] >= days["market_date"]:
+        raise ValueError("realtime digest must retain prior completed ledger day")
+    if days["next_trade_day"] <= days["market_date"]:
+        raise ValueError("next trade day must follow market day")
+    signals = payload.get("signals")
+    if not isinstance(signals, dict) or set(signals) != {"IC", "IM"}:
+        raise ValueError("result must contain IC and IM signals")
+    for product, signal in signals.items():
+        if not isinstance(signal, dict):
+            raise ValueError(f"invalid {product} signal")
+        for field in ("total_units_current", "total_units_target", "momentum_current_weight", "momentum_next_weight", "grid_current", "grid_target"):
+            value = signal.get(field)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                raise ValueError(f"{product} requires finite numeric {field}")
+
+
 def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) -> tuple[str, str, bool]:
+    validate_success_payload(payload)
     signals = payload.get("signals", {})
     if set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
