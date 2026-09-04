@@ -92,7 +92,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 2ff781f348aa8ebe1925671881b47c2c8c317000
+          ref: cdab4eee6445bf9042860d17795bb2070cade5b3
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -230,6 +230,7 @@ jobs:
         with:
           name: ${{ steps.prepare_marker.outputs.marker_name }}
           path: delivery-marker/delivery.json
+          if-no-files-found: error
           retention-days: 30
 
       - name: Upload audit artifacts

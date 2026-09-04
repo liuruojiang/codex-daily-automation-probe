@@ -66,6 +66,11 @@ def test_normal_smtp_requires_durable_intent_and_mode_specific_preflight(name):
     assert intent['with']['if-no-files-found'] == 'error'
     assert 'continue-on-error' not in intent
     assert "steps.send_intent.outcome == 'success'" in indexed['send_gmail'][1]['if']
+    completion = next(s for s in steps if s.get('name') == 'Mark digest delivered')
+    assert completion['with']['if-no-files-found'] == 'error'
+    if name.startswith('microcap'):
+        for guarded in (intent, indexed['send_gmail'][1]):
+            assert "steps.whole_delivery.outputs.exit_code == '0'" in guarded['if']
 
 
 def test_stale_market_fixture_is_frozen_real_data_and_never_in_production_steps():
