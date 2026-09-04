@@ -43,17 +43,17 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             "v2.3": {
                 "version": "2.3",
                 "strategy_version": "v2.3",
-                "overlay_type": "spread_nav_log_wls_lb25_vol10_overheat",
-                "strategy_revision": "spread_nav_log_wls_lb25_vol10_overheat",
-                "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2gate0p08_signal1p0_exec0p8_vol10_overheat",
+                "overlay_type": "plain_lb25_hl2p5_r2off_vol10_26_20_20260904",
+                "strategy_revision": "plain_lb25_hl2p5_r2off_vol10_26_20_20260904",
+                "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2off_signal1p0_exec0p8_vol10_overheat26_recovery20",
                 "lookback": "25",
                 "halflife": "2.5",
-                "r2_entry_gate": "0.08",
+                "r2_entry_gate": "0.0",
                 "execution_hedge_ratio": "0.8",
                 "overheat_enabled": "True",
                 "overheat_feature_window": "10",
                 "overheat_trigger_threshold": "0.26",
-                "overheat_recovery_threshold": "0.195",
+                "overheat_recovery_threshold": "0.20",
                 "target_vol_enabled": "False",
                 "target_vol": "0.0",
                 "target_vol_window": "0",
@@ -98,6 +98,14 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                          "momentum_gap_exit_buffer": "0.003"}.items():
             with self.subTest(key=key):
                 self.assertFalse(digest.validate_strategy_identity("v2.0", {**fields, key: old})[0])
+
+    def test_retired_v23_identity_is_rejected_even_with_same_version(self):
+        fields = self.identity_fields("v2.3")
+        self.assertTrue(digest.validate_strategy_identity("v2.3", fields)[0])
+        for key, old in {"strategy_revision": "spread_nav_log_wls_lb25_vol10_overheat",
+                         "r2_entry_gate": "0.08", "overheat_recovery_threshold": "0.195"}.items():
+            with self.subTest(key=key):
+                self.assertFalse(digest.validate_strategy_identity("v2.3", {**fields, key: old})[0])
 
     def test_siblings_cannot_borrow_v20_revision(self):
         for version in ("v2.3", "v2.5"):
@@ -351,7 +359,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                     "overheat_risk_off": "True",
                     "overheat_feature_value": "0.3177309",
                     "overheat_trigger_threshold": "0.26",
-                    "overheat_recovery_threshold": "0.195",
+                    "overheat_recovery_threshold": "0.20",
                     "next_session_actionable_scale": "0.0",
                 },
                 "v2.5": {**self.identity_fields("v2.5"), "next_session_actionable_scale": "1.0"},
@@ -368,7 +376,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertNotIn("**v2.0：**过热退出后锁定", body)
         self.assertIn("**v2.3：**过热风险关闭中", body)
         self.assertIn("31.77%", body)
-        self.assertIn("19.50%", body)
+        self.assertIn("20.00%", body)
         self.assertIn("[查看完整诊断与原始输出](https://github.com/example/actions/runs/123)", body)
         self.assertIn(self.STRATEGY_SHA, body)
         self.assertNotIn("原始实时信号输出", body)
