@@ -119,7 +119,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("name: Record refresh failure for digest", text)
         self.assertIn('for item in "microcap:v2_0" "microcap-v23:v2_3" "microcap-v25:v2_5"', text)
         self.assertEqual(text.count('TOP100_REALTIME_REQUIRE_STATE: "1"'), 3)
-        self.assertEqual(text.count("timeout --foreground 25m python -u microcap_top100"), 3)
+        self.assertEqual(text.count("timeout --foreground 25m python -u microcap_top100"), 6)
         self.assertNotIn("timeout --foreground 60m python -u microcap_top100", text)
         self.assertIn("publication_mode:", text)
         self.assertIn("- close_confirmed", text)
@@ -162,6 +162,15 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("SIGNAL_V2_${version}_EXIT_CODE=whole_delivery_failed", text)
         self.assertIn("name: microcap-whole-delivery-state", text)
         self.assertIn("microcap/whole_delivery_result.txt", text)
+
+    def test_close_confirmed_cold_outputs_require_a_second_audited_generation(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        for version in ("0", "3", "5"):
+            step = text.split(f"name: Run v2.{version} selected signal", 1)[1].split("\n      - name:", 1)[0]
+            self.assertEqual(step.count(f"python -u microcap_top100_mom16_biweekly_live_v2_{version}.py"), 2)
+            self.assertIn('if [[ "${status}" -eq 0 && "${{ steps.publication_mode.outputs.mode }}" == "close_confirmed" ]]', step)
+            self.assertIn(f"tee -a realtime_signal_v2_{version}_result.txt", step)
+            self.assertLess(step.rindex("status=${PIPESTATUS[0]}"), step.index('echo "exit_code=${status}"'))
 
 
 if __name__ == "__main__":
