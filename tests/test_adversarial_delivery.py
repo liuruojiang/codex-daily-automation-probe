@@ -182,7 +182,7 @@ def test_smtp_timeout_is_not_automatically_retried(monkeypatch):
     assert smtp.send_message.call_count == 1
 
 
-@pytest.mark.parametrize('scenario', ['one_fails','transient','timeout'])
+@pytest.mark.parametrize('scenario', ['one_fails','transient','timeout','body_disconnect','body_timeout','body_403'])
 def test_real_worker_dispatches_independently_and_bounds_retries(scenario):
     root=Path(__file__).resolve().parents[1]
     source=(root/'cloudflare-workers/microcap-post-close-trigger/worker.js').read_text(encoding='utf-8')
@@ -199,6 +199,12 @@ globalThis.fetch = async (url, options) => {
     return {ok:false,status:403,text:async ()=>'rejected fixture'};
   if (name.startsWith('microcap') && scenario === 'timeout')
     throw new DOMException('fixture timed out', 'TimeoutError');
+  if (name.startsWith('microcap') && scenario.startsWith('body_') &&
+      (scenario !== 'body_disconnect' || calls[name] < 3))
+    return {ok:false,status:scenario === 'body_403' ? 403 : 503,text:async () => {
+      if (scenario === 'body_disconnect') throw new TypeError('fixture body disconnected');
+      throw new DOMException('fixture body timed out', 'TimeoutError');
+    }};
   if (scenario === 'transient' && calls[name] < 3)
     return {ok:false,status:503,text:async ()=>'fixture unavailable'};
   return {ok:true,status:204};
@@ -213,9 +219,11 @@ console.log(JSON.stringify({calls,error}));
     assert 'MISSING_TIMEOUT_SIGNAL' not in observed['error']
     assert len(observed['calls']) == 2
     assert all(1 <= count <= 3 for count in observed['calls'].values())
-    if scenario == 'transient':
+    if scenario in ('transient','body_disconnect'):
         assert observed['error'] == ''
-        assert set(observed['calls'].values()) == {3}
+        assert observed['calls']['microcap-realtime-digest.yml'] == 3
+        assert observed['calls']['ic-im-v1-3-daily-digest.yml'] == (3 if scenario == 'transient' else 1)
     else:
         assert observed['error']
         assert observed['calls']['ic-im-v1-3-daily-digest.yml'] == 1
+        assert observed['calls']['microcap-realtime-digest.yml'] == (1 if scenario in ('one_fails','body_403') else 3)

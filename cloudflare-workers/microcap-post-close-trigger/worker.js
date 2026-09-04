@@ -55,7 +55,14 @@ async function dispatchWorkflow(env, workflow) {
       return;
     }
 
-    const detail = (await response.text()).slice(0, 500);
+    let detail;
+    try {
+      detail = (await response.text()).slice(0, 500);
+    } catch (error) {
+      // The fetch deadline also covers reading its response body. Preserve the
+      // HTTP status: a broken 503 body is retryable, while a 403 never is.
+      detail = `response body unavailable (${error?.name ?? "Error"})`;
+    }
     lastError = new Error(
       `${workflow}: GitHub dispatch failed (${response.status}): ${detail}`,
     );
