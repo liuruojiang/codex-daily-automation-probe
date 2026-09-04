@@ -256,6 +256,7 @@ STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
             "version": "2.3",
             "strategy_version": "v2.3",
             "overlay_type": "spread_nav_log_wls_lb25_vol10_overheat",
+            "strategy_revision": "spread_nav_log_wls_lb25_vol10_overheat",
             "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2gate0p08_signal1p0_exec0p8_vol10_overheat",
         },
         "bool": {
@@ -279,6 +280,7 @@ STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
             "version": "2.5",
             "strategy_version": "v2.5",
             "overlay_type": "microcap_only_log_wls_threshold_no_target_vol",
+            "strategy_revision": "microcap_only_log_wls_threshold_no_target_vol",
             "signal_model": "microcap_only_log_wls_exp_halflife_3p0_lb17_entry46_exit25_no_targetvol",
         },
         "bool": {
@@ -723,6 +725,8 @@ def build_compact_digest(
         )
 
     warnings = [warning for item in results for warning in risk_warnings(item)]
+    if date_s == "2026-09-04" and any(item["version"] == "v2.0" and item["status"] == "OK" for item in results):
+        warnings.insert(0, "v2.0：今日已切换为朴素固定1倍规则；旧版模型为空仓，新版模型为持仓。上方无操作仅指新模型内部状态，不表示实盘已完成切换；请按账户实际持仓核对，本日报未发送订单。")
     lines += ["", "## 需要关注", ""]
     if warnings:
         lines += [f"- **{warning.split('：', 1)[0]}：**{warning.split('：', 1)[1]}" for warning in warnings]

@@ -44,6 +44,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 "version": "2.3",
                 "strategy_version": "v2.3",
                 "overlay_type": "spread_nav_log_wls_lb25_vol10_overheat",
+                "strategy_revision": "spread_nav_log_wls_lb25_vol10_overheat",
                 "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2gate0p08_signal1p0_exec0p8_vol10_overheat",
                 "lookback": "25",
                 "halflife": "2.5",
@@ -61,6 +62,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 "version": "2.5",
                 "strategy_version": "v2.5",
                 "overlay_type": "microcap_only_log_wls_threshold_no_target_vol",
+                "strategy_revision": "microcap_only_log_wls_threshold_no_target_vol",
                 "signal_model": "microcap_only_log_wls_exp_halflife_3p0_lb17_entry46_exit25_no_targetvol",
                 "execution_hedge_ratio": "0.0",
                 "fixed_hedge_ratio": "0.0",
@@ -96,6 +98,20 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                          "momentum_gap_exit_buffer": "0.003"}.items():
             with self.subTest(key=key):
                 self.assertFalse(digest.validate_strategy_identity("v2.0", {**fields, key: old})[0])
+
+    def test_siblings_cannot_borrow_v20_revision(self):
+        for version in ("v2.3", "v2.5"):
+            fields = self.identity_fields(version)
+            self.assertTrue(digest.validate_strategy_identity(version, fields)[0])
+            fields["strategy_revision"] = "plain_mom16_fixed1_20260904"
+            self.assertFalse(digest.validate_strategy_identity(version, fields)[0])
+
+    def test_promotion_day_explains_model_account_boundary(self):
+        item = {"version": "v2.0", "status": "OK", "status_note": "", "fields": {
+            **self.identity_fields("v2.0"), "current_holding": "long_microcap_short_zz1000",
+            "next_holding": "long_microcap_short_zz1000", "next_session_actionable_scale": "1.0"}}
+        _, body = digest.build_compact_digest([item], date_s="2026-09-04", run_url="", strategy_sha=self.STRATEGY_SHA)
+        self.assertIn("不表示实盘已完成切换", body)
 
     def test_validated_state_only_cache_is_not_reported_as_market_data_fallback(self) -> None:
         fields = {
