@@ -37,6 +37,8 @@ concurrency:
 jobs:
   regression:
     uses: ./.github/workflows/delivery-regression.yml
+    with:
+      family: icim
 
   send:
     needs: regression

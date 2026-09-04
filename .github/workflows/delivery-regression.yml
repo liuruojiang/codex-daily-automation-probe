@@ -8,6 +8,10 @@ on:
     paths: ['.github/workflows/**', 'scripts/**', 'tests/**']
   workflow_dispatch:
   workflow_call:
+    inputs:
+      family:
+        type: string
+        default: all
 
 permissions:
   contents: read
@@ -25,7 +29,16 @@ jobs:
           python-version: '3.11'
       - run: python -m pip install 'pytest>=8,<9' 'PyYAML>=6,<7'
       - name: Check delivery contracts and all automation regressions
-        run: python -X utf8 -m pytest -q tests --junitxml=automation-tests.xml
+        env:
+          TEST_FAMILY: ${{ inputs.family || 'all' }}
+        run: |
+          case "${TEST_FAMILY}" in
+            microcap) suites=(tests/test_microcap_*.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py) ;;
+            icim) suites=(tests/test_ic_im_v1_3_*.py tests/test_ic_im_r7_spread.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py) ;;
+            all) suites=(tests) ;;
+            *) echo "Unknown test family"; exit 1 ;;
+          esac
+          python -X utf8 -m pytest -q "${suites[@]}" --junitxml=automation-tests.xml
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -35,16 +48,13 @@ jobs:
   strategy-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      STRATEGY_REPOSITORY: ${{ matrix.family == 'microcap' && 'liuruojiang/microcap' || 'liuruojiang/ic-im-rolling-arbitrage' }}
+      STRATEGY_WORKFLOW: ${{ matrix.family == 'microcap' && 'microcap-realtime-digest.yml' || 'ic-im-v1-3-daily-digest.yml' }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - family: microcap
-            repository: liuruojiang/microcap
-            workflow: microcap-realtime-digest.yml
-          - family: icim
-            repository: liuruojiang/ic-im-rolling-arbitrage
-            workflow: ic-im-v1-3-daily-digest.yml
+        family: ${{ fromJSON(inputs.family == 'microcap' && '["microcap"]' || inputs.family == 'icim' && '["icim"]' || '["microcap","icim"]') }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -55,9 +65,6 @@ jobs:
           python-version: '3.11'
       - name: Resolve exact published strategy pin
         id: pin
-        env:
-          STRATEGY_REPOSITORY: ${{ matrix.repository }}
-          STRATEGY_WORKFLOW: ${{ matrix.workflow }}
         run: |
           python - <<'PY'
           import os, re
@@ -72,7 +79,7 @@ jobs:
           PY
       - uses: actions/checkout@v6
         with:
-          repository: ${{ matrix.repository }}
+          repository: ${{ env.STRATEGY_REPOSITORY }}
           ref: ${{ steps.pin.outputs.sha }}
           path: strategy
           persist-credentials: false

@@ -23,6 +23,7 @@ def test_production_depends_on_current_revision_regressions(name):
     assert jobs['regression']['uses'] == './.github/workflows/delivery-regression.yml'
     assert 'secrets' not in jobs['regression']
     assert 'continue-on-error' not in jobs['regression']
+    assert jobs['regression']['with']['family'] == ('microcap' if name.startswith('microcap') else 'icim')
     assert 'regression' in jobs['send']['needs']
     if 'always()' in jobs['send'].get('if', ''):
         assert "needs.regression.result == 'success'" in jobs['send']['if']
@@ -44,6 +45,8 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
     assert 'ref: ${{ steps.pin.outputs.sha }}' in text
     assert 'tested-sha.txt' in text
     assert '--junitxml=' in text
+    assert workflow['on']['workflow_call']['inputs']['family']['default'] == 'all'
+    assert 'fromJSON(inputs.family' in workflow['jobs']['strategy-tests']['strategy']['matrix']['family']
 
 
 def test_stale_market_fixture_is_frozen_real_data_and_never_in_production_steps():
