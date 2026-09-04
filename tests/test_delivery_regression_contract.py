@@ -41,7 +41,8 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
                      'test_top100_delivery.py', 'test_ohlcv_provider_validation.py',
                      'test_delivery_transport_retry.py', 'test_poe_ic_im_v1_3_state.py',
                      'test_run_ic_im_v1_3_github_digest.py', 'test_adversarial_delivery.py',
-                     'test_adversarial_microcap_delivery.py', 'test_adversarial_icim_delivery.py'):
+                     'test_adversarial_microcap_delivery.py', 'test_adversarial_icim_delivery.py',
+                     'test_realtime_exchange_calendar.py', 'test_exchange_calendar_provider.py'):
         assert required in text
     assert 'ref: ${{ steps.pin.outputs.sha }}' in text
     assert 'tested-sha.txt' in text
