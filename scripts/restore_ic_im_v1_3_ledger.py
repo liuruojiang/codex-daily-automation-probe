@@ -61,12 +61,34 @@ def latest_artifact(payload: dict[str, object], name: str = ARTIFACT_NAME) -> di
 
 def fetch_latest(repository: str, token: str, api_url: str, artifact_name: str = ARTIFACT_NAME) -> dict[str, object] | None:
     name = urllib.parse.quote(artifact_name, safe="")
-    url = f"{api_url.rstrip('/')}/repos/{repository}/actions/artifacts?name={name}&per_page=100"
-    with urllib.request.urlopen(api_request(url, token), timeout=30) as response:
-        payload = json.loads(response.read().decode("utf-8"))
-    if not isinstance(payload, dict):
-        raise RuntimeError("GitHub artifacts response must be an object")
-    return latest_artifact(payload, artifact_name)
+    base = f"{api_url.rstrip('/')}/repos/{repository}/actions"
+    candidates = []
+    for page in range(1, 101):
+        url = f"{base}/artifacts?name={name}&per_page=100&page={page}"
+        with urllib.request.urlopen(api_request(url, token), timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        if not isinstance(payload, dict) or not isinstance(payload.get("artifacts"), list):
+            raise RuntimeError("GitHub artifacts response must contain an artifacts list")
+        candidates.extend(payload["artifacts"])
+        if len(payload["artifacts"]) < 100:
+            break
+    else:
+        raise RuntimeError("GitHub artifact pagination exceeded safety limit")
+    while (artifact := latest_artifact({"artifacts": candidates}, artifact_name)) is not None:
+        candidates.remove(artifact)
+        run_id = (artifact.get("workflow_run") or {}).get("id")
+        if not isinstance(run_id, int) or run_id <= 0:
+            continue
+        with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}", token), timeout=30) as response:
+            run = json.loads(response.read().decode("utf-8"))
+        if (isinstance(run, dict) and run.get("id") == run_id
+                and run.get("status") == "completed" and run.get("conclusion") == "success"
+                and run.get("head_branch") == "main"
+                and str(run.get("path", "")).split("@", 1)[0] == ".github/workflows/ic-im-v1-3-daily-digest.yml"):
+            if artifact["archive_download_url"] != f"{base}/artifacts/{artifact['id']}/zip":
+                raise RuntimeError("ledger archive download URL does not match trusted repository")
+            return artifact
+    return None
 
 
 def download(artifact: dict[str, object], token: str) -> bytes:
@@ -86,11 +108,15 @@ def safe_members(data: bytes) -> list[zipfile.ZipInfo]:
         raise RuntimeError("ledger artifact contains too many files")
     if sum(item.file_size for item in members) > MAX_ARCHIVE_BYTES:
         raise RuntimeError("ledger artifact expands beyond safety limit")
+    seen = set()
     for item in members:
         path = PurePosixPath(item.filename)
+        if str(path).casefold() in seen:
+            raise RuntimeError("duplicate ledger artifact member")
+        seen.add(str(path).casefold())
         if item.flag_bits & 0x1:
             raise RuntimeError("encrypted ledger artifact is not allowed")
-        if path.is_absolute() or ".." in path.parts:
+        if path.is_absolute() or ".." in path.parts or "\\" in item.filename or ":" in item.filename:
             raise RuntimeError("unsafe ledger artifact path")
         if item.is_dir():
             continue
@@ -110,15 +136,21 @@ def safe_members(data: bytes) -> list[zipfile.ZipInfo]:
 def extract(data: bytes, destination: Path) -> None:
     if destination.exists() and any(destination.iterdir()):
         raise RuntimeError("ledger destination must be empty")
-    destination.mkdir(parents=True, exist_ok=True)
     members = safe_members(data)
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        names = {item.filename for item in members if not item.is_dir()}
+        for required in ("latest.json", "migration_record.json"):
+            if required not in names:
+                raise RuntimeError(f"v1.3 ledger artifact is missing {required}")
+        # Read and CRC-check every entry before changing the destination.
+        contents = {item.filename: archive.read(item) for item in members if not item.is_dir()}
+        destination.mkdir(parents=True, exist_ok=True)
         for item in members:
             if item.is_dir():
                 continue
             target = destination.joinpath(*PurePosixPath(item.filename).parts)
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(archive.read(item))
+            target.write_bytes(contents[item.filename])
     if not (destination / "latest.json").is_file():
         raise RuntimeError("ledger artifact is missing latest.json")
     if not (destination / "migration_record.json").is_file():

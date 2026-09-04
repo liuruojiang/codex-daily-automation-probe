@@ -49,9 +49,13 @@ def send_mail(
     if use_ssl:
         with smtplib.SMTP_SSL(server, port, context=context, timeout=30) as smtp:
             smtp.login(os.environ["MAIL_USERNAME"], os.environ["MAIL_PASSWORD"])
-            smtp.send_message(message)
+            refused = smtp.send_message(message)
+            if refused:
+                raise smtplib.SMTPRecipientsRefused(refused)
     else:
         with smtplib.SMTP(server, port, timeout=30) as smtp:
             smtp.starttls(context=context)
             smtp.login(os.environ["MAIL_USERNAME"], os.environ["MAIL_PASSWORD"])
-            smtp.send_message(message)
+            refused = smtp.send_message(message)
+            if refused:
+                raise smtplib.SMTPRecipientsRefused(refused)

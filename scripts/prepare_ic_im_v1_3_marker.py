@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
+from datetime import date
 from pathlib import Path
 
 
@@ -17,10 +19,11 @@ def marker_name(payload: dict[str, object]) -> str:
     publication_mode = str(payload.get("publication_mode", ""))
     if publication_mode not in {"realtime", "close_confirmed"}:
         raise ValueError("delivery marker has unsupported publication_mode")
-    market_date = str(payload.get("market_date", ""))[:10]
+    market_date = str(payload.get("market_date", ""))
     digest = str(payload.get("digest", ""))
-    if len(market_date) != 10 or len(digest) != 64:
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", market_date) or not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise ValueError("delivery marker requires market_date and full SHA-256 digest")
+    date.fromisoformat(market_date)
     return (
         f"ic-im-v1-3-{EXPECTED_REVISION}-{publication_mode}-digest-delivered-"
         f"{market_date}-{digest[:12]}"

@@ -105,6 +105,13 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Resolve publication mode
+        id: publication_mode
+        shell: bash
+        env:
+          REQUESTED_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'close_confirmed' }}
+        run: python automation/scripts/resolve_cn_publication_mode.py --requested "${REQUESTED_MODE}"
+
       - name: Check delivery marker
         id: delivery_gate
         shell: bash
@@ -116,22 +123,14 @@ jobs:
           if [[ "${CORRECTION}" == "true" ]]; then
             args+=(--correction)
           fi
-          python automation/scripts/check_microcap_delivery.py "${args[@]}"
-
-      - name: Resolve publication mode
-        id: publication_mode
-        if: steps.delivery_gate.outputs.should_send == 'true'
-        shell: bash
-        env:
-          REQUESTED_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'close_confirmed' }}
-        run: python automation/scripts/resolve_cn_publication_mode.py --requested "${REQUESTED_MODE}"
+          python automation/scripts/check_microcap_delivery.py --publication-mode "${{ steps.publication_mode.outputs.mode }}" "${args[@]}"
 
       - name: Check out microcap repository
         if: steps.delivery_gate.outputs.should_send == 'true'
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 57908e584a292aecea5991750f8c082760f4a539
+          ref: 56f731bb70fcc3d8b06c72e88a3b355b351482db
           path: microcap
 
       - name: Check out isolated v2.3 close-confirmed workspace
@@ -139,7 +138,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 57908e584a292aecea5991750f8c082760f4a539
+          ref: 56f731bb70fcc3d8b06c72e88a3b355b351482db
           path: microcap-v23
 
       - name: Check out isolated v2.5 close-confirmed workspace
@@ -147,7 +146,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 57908e584a292aecea5991750f8c082760f4a539
+          ref: 56f731bb70fcc3d8b06c72e88a3b355b351482db
           path: microcap-v25
 
       - name: Record microcap strategy SHA
@@ -414,9 +413,19 @@ jobs:
           digest_status=$(python -c 'import json; print(json.load(open("artifacts/metadata.json", encoding="utf-8"))["status"])')
           echo "status=${digest_status}" >> "${GITHUB_OUTPUT}"
 
+      - name: Persist normal-send intent before SMTP
+        id: send_intent
+        if: steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outputs.status == 'OK' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.delivery_gate.outputs.marker_name }}-send-intent
+          path: artifacts/metadata.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Send Gmail
         id: send_gmail
-        if: always() && steps.delivery_gate.outputs.should_send == 'true'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outcome == 'success' && (steps.digest.outputs.status != 'OK' || (steps.send_intent.outcome == 'success' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')))
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -449,6 +458,7 @@ jobs:
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}
           path: delivery-marker/run-url.txt
+          if-no-files-found: error
           retention-days: 30
 
       - name: Upload signal outputs
