@@ -1,6 +1,6 @@
 """The recurring production paths must not bypass the no-secrets regression gate."""
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 import hashlib
 from types import SimpleNamespace
@@ -65,7 +65,7 @@ def test_calendar_failure_cannot_be_silent_holiday_or_manual_bypass():
     assert 'should_run = False' not in failure
 
 
-@pytest.mark.parametrize('case', ['trading', 'holiday', 'unavailable'])
+@pytest.mark.parametrize('case', ['trading', 'holiday', 'unavailable', 'empty', 'expired'])
 def test_actual_calendar_step_distinguishes_unknown_from_holiday(monkeypatch, capsys, case):
     """Execute the actual embedded workflow code with an isolated provider fixture."""
     job = read('microcap-realtime-digest.yml')['jobs']['check-trading-day']
@@ -74,10 +74,13 @@ def test_actual_calendar_step_distinguishes_unknown_from_holiday(monkeypatch, ca
     def fetch():
         if case == 'unavailable':
             raise ConnectionError('simulated calendar disconnect')
-        return {'trade_date': [datetime.now(ZoneInfo('Asia/Shanghai')).date()] if case == 'trading' else []}
+        today = datetime.now(ZoneInfo('Asia/Shanghai')).date()
+        dates = {'trading': [today], 'holiday': [today-timedelta(days=3), today+timedelta(days=3)],
+                 'empty': [], 'expired': [today-timedelta(days=3)]}[case]
+        return {'trade_date': dates}
     monkeypatch.setitem(sys.modules, 'akshare', SimpleNamespace(tool_trade_date_hist_sina=fetch))
     monkeypatch.setitem(sys.modules, 'pandas', SimpleNamespace(to_datetime=lambda values: SimpleNamespace(dt=SimpleNamespace(date=values))))
-    if case == 'unavailable':
+    if case in ('unavailable', 'empty', 'expired'):
         with pytest.raises(RuntimeError, match='not a confirmed holiday'):
             exec(compile(code, '<actual workflow calendar>', 'exec'), {})
         assert 'SHOULD_RUN_MICROCAP=false' not in capsys.readouterr().out

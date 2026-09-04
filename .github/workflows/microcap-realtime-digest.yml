@@ -68,6 +68,8 @@ jobs:
           try:
               trade_dates = ak.tool_trade_date_hist_sina()
               dates = set(pd.to_datetime(trade_dates["trade_date"]).dt.date)
+              if not dates or not min(dates) <= today <= max(dates):
+                  raise ValueError("Trading calendar does not cover today's date")
               should_run = today in dates
           except Exception as exc:
               print(f"A_SHARE_CALENDAR_ERROR={type(exc).__name__}: {exc}")
