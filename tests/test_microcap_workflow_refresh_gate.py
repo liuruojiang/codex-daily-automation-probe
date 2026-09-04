@@ -65,7 +65,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('git rev-parse HEAD', text)
         self.assertIn('--strategy-sha "${{ steps.microcap_sha.outputs.sha }}"', text)
         self.assertIn('repository: liuruojiang/microcap', text)
-        self.assertEqual(text.count('ref: 96e7183c90a6f6aa22f54477931638c41a683bb4'), 3)
+        self.assertEqual(text.count('ref: 57908e584a292aecea5991750f8c082760f4a539'), 3)
         self.assertNotIn('ref: main', text)
         self.assertIn("name: Check out isolated v2.3 close-confirmed workspace", text)
         self.assertIn("name: Check out isolated v2.5 close-confirmed workspace", text)
@@ -151,6 +151,17 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             self.assertIn("steps.signals_v20.outputs.exit_code == '0'", step)
             self.assertIn("steps.signals_v23.outputs.exit_code == '0'", step)
             self.assertIn("steps.signals_v25.outputs.exit_code == '0'", step)
+            self.assertIn("steps.whole_delivery.outputs.exit_code == '0'", step)
+
+    def test_whole_delivery_is_verified_before_email_and_retained(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertLess(text.index("name: Verify and pack all three final deliveries"),
+                        text.index("name: Build Markdown digest"))
+        self.assertIn("scripts/top100_cloud_delivery.py pack", text)
+        self.assertIn('--expected-date "${{ steps.delivery_gate.outputs.delivery_date }}"', text)
+        self.assertIn("SIGNAL_V2_${version}_EXIT_CODE=whole_delivery_failed", text)
+        self.assertIn("name: microcap-whole-delivery-state", text)
+        self.assertIn("microcap/whole_delivery_result.txt", text)
 
 
 if __name__ == "__main__":
