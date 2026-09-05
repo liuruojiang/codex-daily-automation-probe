@@ -67,18 +67,21 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             "v2.5": {
                 "version": "2.5",
                 "strategy_version": "v2.5",
-                "overlay_type": "microcap_only_log_wls_threshold_no_target_vol",
-                "strategy_revision": "microcap_only_log_wls_threshold_no_target_vol",
-                "signal_model": "microcap_only_log_wls_exp_halflife_3p0_lb17_entry46_exit25_no_targetvol",
+                "overlay_type": "plain_lb20_hl3_entry0_exit0_20260905",
+                "strategy_revision": "plain_lb20_hl3_entry0_exit0_20260905",
+                "signal_model": "microcap_only_log_wls_exp_halflife_3p0_lb20_entry0_exit0_no_targetvol",
+                "signal_spread_hedge_ratio": "0.0",
                 "execution_hedge_ratio": "0.0",
                 "fixed_hedge_ratio": "0.0",
                 "hedge_removed": "True",
-                "lookback": "17",
+                "lookback": "20",
                 "halflife": "3.0",
-                "entry_threshold": "0.46",
-                "exit_threshold": "0.25",
+                "entry_threshold": "0.0",
+                "exit_threshold": "0.0",
                 "overheat_enabled": "False",
                 "target_vol_enabled": "False",
+                "cash_day_yield_enabled": "False",
+                "financing_enabled": "False",
                 "target_vol": "0.0",
                 "target_vol_window": "0",
             },
@@ -129,6 +132,18 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                          "r2_entry_gate": "0.08", "overheat_recovery_threshold": "0.195"}.items():
             with self.subTest(key=key):
                 self.assertFalse(digest.validate_strategy_identity("v2.3", {**fields, key: old})[0])
+
+    def test_retired_v25_identity_is_rejected_even_with_same_version(self):
+        fields = self.identity_fields("v2.5")
+        self.assertTrue(digest.validate_strategy_identity("v2.5", fields)[0])
+        for key, old in {
+            "strategy_revision": "microcap_only_log_wls_threshold_no_target_vol",
+            "lookback": "17",
+            "entry_threshold": "0.46",
+            "exit_threshold": "0.25",
+        }.items():
+            with self.subTest(key=key):
+                self.assertFalse(digest.validate_strategy_identity("v2.5", {**fields, key: old})[0])
 
     def test_siblings_cannot_borrow_v20_revision(self):
         for version in ("v2.3", "v2.5"):

@@ -98,7 +98,7 @@ jobs:
           tests/test_top100_cloud_delivery.py tests/test_full_rebalance_cache_bundle.py
           tests/test_top100_data_guards.py tests/test_adversarial_microcap_delivery.py
           tests/test_realtime_exchange_calendar.py tests/test_exchange_calendar_provider.py
-          tests/test_v20_plain_promotion.py tests/test_v23_plain_promotion.py
+          tests/test_v20_plain_promotion.py tests/test_v23_plain_promotion.py tests/test_v25_plain_promotion.py
           tests/test_adversarial_v20_plain_20260904.py tests/test_adversarial_v23_plain_20260904.py
           tests/test_adversarial_delivery_plain_20260904.py tests/test_adversarial_delivery_state_consistency.py
           tests/test_v23_identity_adversarial.py tests/test_index_history_preflight.py --junitxml=regression.xml
