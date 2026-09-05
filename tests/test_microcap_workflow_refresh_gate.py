@@ -65,7 +65,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('git rev-parse HEAD', text)
         self.assertIn('--strategy-sha "${{ steps.microcap_sha.outputs.sha }}"', text)
         self.assertIn('repository: liuruojiang/microcap', text)
-        self.assertEqual(text.count('ref: 169a07f5838a435fd06dede63e0c123674a122b0'), 3)
+        self.assertEqual(text.count('ref: b10064622ace49bcaa5038d41423df03a17a9b14'), 3)
         self.assertNotIn('ref: main', text)
         self.assertIn("name: Check out isolated v2.3 close-confirmed workspace", text)
         self.assertIn("name: Check out isolated v2.5 close-confirmed workspace", text)
