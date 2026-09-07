@@ -78,6 +78,18 @@ def signal(product: str) -> dict[str, object]:
 
 
 class ICIMV13DailyDigestTests(unittest.TestCase):
+    def test_legacy_seed_cutoff_excludes_post_fix_artifact(self) -> None:
+        payload = {
+            "artifacts": [
+                {"id": 1, "name": restore.ARTIFACT_NAME, "created_at": "2026-09-04T07:52:39Z", "expired": False, "archive_download_url": "a"},
+                {"id": 2, "name": restore.ARTIFACT_NAME, "created_at": "2026-09-07T10:03:16Z", "expired": False, "archive_download_url": "b"},
+            ]
+        }
+        selected = restore.latest_artifact(
+            payload, restore.ARTIFACT_NAME, "2026-09-07T00:00:00Z"
+        )
+        self.assertEqual(selected["id"], 1)
+
     def test_digest_names_release_and_explains_new_filters(self) -> None:
         payload = {
             "status": "ok",
