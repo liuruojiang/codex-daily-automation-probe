@@ -42,7 +42,11 @@ def api_request(url: str, token: str) -> urllib.request.Request:
     )
 
 
-def latest_artifact(payload: dict[str, object], name: str = ARTIFACT_NAME) -> dict[str, object] | None:
+def latest_artifact(
+    payload: dict[str, object],
+    name: str = ARTIFACT_NAME,
+    before_created_at: str = "",
+) -> dict[str, object] | None:
     items = payload.get("artifacts", [])
     if not isinstance(items, list):
         return None
@@ -53,13 +57,20 @@ def latest_artifact(payload: dict[str, object], name: str = ARTIFACT_NAME) -> di
         and item.get("name") == name
         and item.get("expired") is not True
         and item.get("archive_download_url")
+        and (not before_created_at or str(item.get("created_at", "")) < before_created_at)
     ]
     if not candidates:
         return None
     return max(candidates, key=lambda item: (str(item.get("created_at", "")), int(item.get("id", 0))))
 
 
-def fetch_latest(repository: str, token: str, api_url: str, artifact_name: str = ARTIFACT_NAME) -> dict[str, object] | None:
+def fetch_latest(
+    repository: str,
+    token: str,
+    api_url: str,
+    artifact_name: str = ARTIFACT_NAME,
+    before_created_at: str = "",
+) -> dict[str, object] | None:
     name = urllib.parse.quote(artifact_name, safe="")
     base = f"{api_url.rstrip('/')}/repos/{repository}/actions"
     candidates = []
@@ -74,7 +85,9 @@ def fetch_latest(repository: str, token: str, api_url: str, artifact_name: str =
             break
     else:
         raise RuntimeError("GitHub artifact pagination exceeded safety limit")
-    while (artifact := latest_artifact({"artifacts": candidates}, artifact_name)) is not None:
+    while (artifact := latest_artifact(
+        {"artifacts": candidates}, artifact_name, before_created_at
+    )) is not None:
         candidates.remove(artifact)
         run_id = (artifact.get("workflow_run") or {}).get("id")
         if not isinstance(run_id, int) or run_id <= 0:
@@ -174,10 +187,17 @@ def main() -> int:
     parser.add_argument("--token", default=os.environ.get("GITHUB_TOKEN", ""))
     parser.add_argument("--api-url", default=os.environ.get("GITHUB_API_URL", "https://api.github.com"))
     parser.add_argument("--artifact-name", default=ARTIFACT_NAME)
+    parser.add_argument("--before-created-at", default="")
     args = parser.parse_args()
     if not args.repository or not args.token:
         raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required")
-    artifact = fetch_latest(args.repository, args.token, args.api_url, args.artifact_name)
+    artifact = fetch_latest(
+        args.repository,
+        args.token,
+        args.api_url,
+        args.artifact_name,
+        args.before_created_at,
+    )
     if artifact is None:
         write_output(False)
         return 0
