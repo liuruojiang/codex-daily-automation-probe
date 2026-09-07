@@ -33,6 +33,7 @@ class ICIMV13WorkflowTests(unittest.TestCase):
         self.assertIn("strategy-artifacts/strategy-sha.txt", text)
         self.assertIn('strategy.BUILD_ID == "v1.3-20260907-r7-put-monthly-fix1"', text)
         self.assertIn('strategy.IM_PUT_EXECUTION_REVISION == "im_monthly_reset_20260907_v1"', text)
+        self.assertLess(text.index("Install strategy dependencies"), text.index("Verify corrected IM Put build"))
         self.assertIn('--expected-market-date "${{ steps.calendar.outputs.today }}"', text)
         self.assertIn('ICIM_REQUIRE_MIGRATION: "1"', text)
         self.assertIn("ICIM_STATE_DIR: state", text)
