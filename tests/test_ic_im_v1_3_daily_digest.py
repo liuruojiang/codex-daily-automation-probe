@@ -8,6 +8,7 @@ import unittest
 import zipfile
 from datetime import date
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -78,6 +79,20 @@ def signal(product: str) -> dict[str, object]:
 
 
 class ICIMV13DailyDigestTests(unittest.TestCase):
+    def test_required_restore_fails_when_no_seed_artifact_exists(self) -> None:
+        argv = [
+            "restore_ic_im_v1_3_ledger.py",
+            "--state-dir", "state",
+            "--repository", "owner/repo",
+            "--token", "token",
+            "--required",
+        ]
+        with mock.patch.object(sys, "argv", argv), mock.patch.object(
+            restore, "fetch_latest", return_value=None
+        ), mock.patch.object(restore, "write_output") as output:
+            self.assertEqual(restore.main(), 1)
+        output.assert_called_once_with(False)
+
     def test_legacy_seed_cutoff_excludes_post_fix_artifact(self) -> None:
         payload = {
             "artifacts": [

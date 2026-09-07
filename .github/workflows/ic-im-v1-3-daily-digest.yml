@@ -157,8 +157,8 @@ jobs:
           python automation/scripts/restore_ic_im_v1_3_ledger.py \
             --state-dir state \
             --artifact-name ic-im-v1-3-r7-ledger \
-            --before-created-at 2026-09-07T00:00:00Z
-          test "${{ steps.restore_prefx_ledger.outputs.restored }}" = "true"
+            --before-created-at 2026-09-07T00:00:00Z \
+            --required
 
       - name: Run IC/IM signal
         if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true')
