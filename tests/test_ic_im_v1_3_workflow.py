@@ -27,6 +27,8 @@ class ICIMV13WorkflowTests(unittest.TestCase):
         self.assertIn("--artifact-name ic-im-v1-3-r7-put-monthly-fix1-ledger", text)
         self.assertIn("--artifact-name ic-im-v1-3-r7-ledger", text)
         self.assertIn("--before-created-at 2026-09-07T00:00:00Z", text)
+        self.assertIn("--required", text)
+        self.assertNotIn('test "${{ steps.restore_prefx_ledger.outputs.restored }}"', text)
         self.assertIn("run_ic_im_v1_3_github_digest.py", text)
         self.assertIn("ref: a3a6db43bb56c19200d4ea3625842ce29ecfda1d", text)
         self.assertNotIn("ref: main", text)

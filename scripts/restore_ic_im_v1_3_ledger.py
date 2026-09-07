@@ -188,6 +188,7 @@ def main() -> int:
     parser.add_argument("--api-url", default=os.environ.get("GITHUB_API_URL", "https://api.github.com"))
     parser.add_argument("--artifact-name", default=ARTIFACT_NAME)
     parser.add_argument("--before-created-at", default="")
+    parser.add_argument("--required", action="store_true")
     args = parser.parse_args()
     if not args.repository or not args.token:
         raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required")
@@ -200,7 +201,7 @@ def main() -> int:
     )
     if artifact is None:
         write_output(False)
-        return 0
+        return 1 if args.required else 0
     extract(download(artifact, args.token), Path(args.state_dir))
     write_output(True, str(artifact.get("id", "")))
     return 0
