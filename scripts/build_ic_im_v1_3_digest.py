@@ -263,6 +263,16 @@ def valuation_disclosure(signal: dict[str, Any]) -> str:
                 f"{p.get('reason', '旧账本未记录VIP接入，保留原代理结果')}；"
                 f"可用真实数据日期 {p.get('real_data_date') or '未收到/未通过校验'}；"
                 f"代理锚点 {p.get('proxy_anchor_date', '2026-08-14')}，按指数价格比例推算。")
+    rate = p.get("gov10y")
+    if rate:
+        if rate.get("mode") == "official_actual":
+            text += (f"国债利率：中债官方10年期 {float(rate['yield_decimal']):.4%}，"
+                     f"数据日期 {rate['used_date']}（估值与期权定价共用）。")
+        else:
+            text += (f"国债利率回退：{rate['reason']}；沿用 {rate['used_date']} 冻结值 "
+                     f"{float(rate['yield_decimal']):.4%}，非当日利率；"
+                     f"本次源日期 {rate.get('observed_date') or '未取得'}（估值与期权定价共用）。")
+        return text + "股息和相对估值阈值沿用原冻结口径。"
     return text + "国债收益率、股息和相对估值阈值沿用原冻结口径。"
 
 

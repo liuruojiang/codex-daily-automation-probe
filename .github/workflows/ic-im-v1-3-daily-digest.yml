@@ -92,7 +92,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 3bbedf19c1a959ddc6d794e210998b3f97bab7d5
+          ref: c4771cad05ff1066583cddf1ec35a43271be5970
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -168,7 +168,15 @@ jobs:
           ICIM_REQUIRE_MIGRATION: "1"
           ICIM_STATE_DIR: state
           ICIM_LEGULEGU_DAILY_SNAPSHOT: ${{ secrets.ICIM_LEGULEGU_DAILY_SNAPSHOT }}
+          ICIM_CHINABOND_SNAPSHOT_FILE: strategy-artifacts/chinabond.json
         run: |
+          # A failed/late bond source falls back explicitly; never stop the
+          # existing market/ledger gates or relabel old yield as today's rate.
+          mkdir -p strategy-artifacts
+          rm -f strategy-artifacts/chinabond.json
+          timeout --foreground 90s python -u strategy/ic_im_chinabond.py \
+            --expected-date "${{ steps.calendar.outputs.today }}" \
+            --output strategy-artifacts/chinabond.json || echo "ChinaBond fetch unavailable; use disclosed frozen fallback"
           set +e
           timeout --foreground 65m python -u strategy/run_ic_im_v1_3_github_digest.py \
             --state-dir state \

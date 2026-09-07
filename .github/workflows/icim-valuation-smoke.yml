@@ -1,6 +1,11 @@
 name: ICIM valuation input smoke check
 on:
   workflow_dispatch:
+    inputs:
+      expected_bond_date:
+        description: "Expected completed trading date for official ChinaBond source check (YYYY-MM-DD)"
+        required: true
+        type: string
 permissions:
   contents: read
 jobs:
@@ -59,3 +64,32 @@ jobs:
           print('verified_snapshot_sha256=' + hashlib.sha256(raw.encode()).hexdigest())
           print('actual_and_stale_fallback=passed; email_sent=false; ledger_written=false')
           PY
+      - name: Install official bond source dependency
+        run: python -m pip install 'requests>=2.31,<3'
+      - name: Fetch real ChinaBond data from GitHub without email or ledger writes
+        working-directory: strategy
+        env:
+          EXPECTED_BOND_DATE: ${{ inputs.expected_bond_date }}
+        run: |
+          timeout --foreground 90s python -u ic_im_chinabond.py \
+            --expected-date "${EXPECTED_BOND_DATE}" \
+            --output chinabond-smoke.json --require-current
+          python - <<'PY'
+          import json, os
+          from datetime import date, datetime, timedelta
+          import ic_im_chinabond as c
+          day = date.fromisoformat(os.environ['EXPECTED_BOND_DATE'])
+          os.environ[c.FILE_ENV] = 'chinabond-smoke.json'
+          now = datetime.now(c.BEIJING)
+          actual = c.resolve(day, now, .016964, date(2026, 8, 14))
+          assert actual['mode'] == 'official_actual'
+          stale = c.resolve(day + timedelta(days=1), now, .016964, date(2026, 8, 14))
+          assert stale['mode'] == 'frozen_fallback'
+          assert '非当日利率' in c.disclosure(stale)
+          print('chinabond_direct_fetch_and_stale_fallback=passed; email_sent=false; ledger_written=false')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: chinabond-source-smoke
+          path: strategy/chinabond-smoke.json

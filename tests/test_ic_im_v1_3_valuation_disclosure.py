@@ -28,3 +28,17 @@ def test_actual_inputs_are_not_claimed_to_refresh_other_factors():
     assert "真实PE/PB：乐咕VIP" in text
     assert "国债收益率、股息和相对估值阈值沿用原冻结口径" in text
     assert "代理估值" not in text
+
+
+def test_bond_actual_and_fallback_visible_without_claiming_fresh_dividends():
+    for mode in ("official_actual", "frozen_fallback"):
+        p = {"mode": "vip_actual", "real_data_date": "2026-09-08", "gov10y": {
+            "mode": mode, "yield_decimal": .016798, "used_date": "2026-09-08",
+            "reason": "模拟来源失败", "observed_date": "2026-09-07"}}
+        text = digest.valuation_disclosure({"valuation_provenance": p})
+        assert "1.6798%" in text
+        assert "股息和相对估值阈值沿用原冻结口径" in text
+        if mode == "frozen_fallback":
+            assert "非当日利率" in text and "模拟来源失败" in text
+        else:
+            assert "国债利率：中债官方10年期" in text
