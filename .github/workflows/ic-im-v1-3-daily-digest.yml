@@ -92,7 +92,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: a3a6db43bb56c19200d4ea3625842ce29ecfda1d
+          ref: 3bbedf19c1a959ddc6d794e210998b3f97bab7d5
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -167,6 +167,7 @@ jobs:
         env:
           ICIM_REQUIRE_MIGRATION: "1"
           ICIM_STATE_DIR: state
+          ICIM_LEGULEGU_DAILY_SNAPSHOT: ${{ secrets.ICIM_LEGULEGU_DAILY_SNAPSHOT }}
         run: |
           set +e
           timeout --foreground 65m python -u strategy/run_ic_im_v1_3_github_digest.py \

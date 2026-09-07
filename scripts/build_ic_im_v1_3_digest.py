@@ -244,6 +244,7 @@ def quarter_spread_reason(signal: dict[str, Any]) -> str:
 
 def product_reasons(product: str, signal: dict[str, Any]) -> list[str]:
     return [
+        valuation_disclosure(signal),
         momentum_reason(product, signal),
         grid_reason(product, signal),
         put_reason(product, signal),
@@ -251,6 +252,22 @@ def product_reasons(product: str, signal: dict[str, Any]) -> list[str]:
         roll_reason(signal),
         quarter_spread_reason(signal),
     ]
+
+
+def valuation_disclosure(signal: dict[str, Any]) -> str:
+    p = signal.get("valuation_provenance") or {}
+    if p.get("mode") == "vip_actual":
+        text = f"真实PE/PB：乐咕VIP，数据日期 {p.get('real_data_date')}。"
+    else:
+        text = ("代理估值／非当日真实PE、PB："
+                f"{p.get('reason', '旧账本未记录VIP接入，保留原代理结果')}；"
+                f"可用真实数据日期 {p.get('real_data_date') or '未收到/未通过校验'}；"
+                f"代理锚点 {p.get('proxy_anchor_date', '2026-08-14')}，按指数价格比例推算。")
+    return text + "国债收益率、股息和相对估值阈值沿用原冻结口径。"
+
+
+def valuation_banner(signals: dict[str, Any]) -> str:
+    return "；".join(f"{product}：{valuation_disclosure(signals[product])}" for product in ("IC", "IM"))
 
 
 def reasons_html(product: str, signal: dict[str, Any]) -> str:
@@ -365,6 +382,7 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
   </td></tr>
   <tr><td style="padding:18px 18px 2px;background:#f8fafc;">
     <div style="margin-bottom:16px;padding:14px 15px;background:{banner_bg};border:1px solid {accent}33;border-radius:12px;color:#344054;font-size:14px;line-height:1.6;"><strong style="color:{accent};">{escaped(headline)}</strong><br>{escaped(warning)}</div>
+    <div style="margin-bottom:16px;padding:14px 15px;background:#fffaeb;border:1px solid #fedf89;border-radius:12px;color:#7a2e0e;font-size:14px;line-height:1.6;"><strong>估值数据来源</strong><br>{escaped(valuation_banner(signals))}</div>
     {cards}
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:2px 0 16px;background:#ffffff;border:1px solid #e4e7ec;border-radius:12px;">
       <tr><td style="padding:15px 16px;color:#667085;font-size:12px;line-height:1.65;">
@@ -465,6 +483,8 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         ),
         "",
         f"信号日：**{day}**｜下一交易日：**{payload.get('next_trade_day', 'N/A')}**",
+        "",
+        "**估值数据来源：" + valuation_banner(signals) + "**",
         "",
         "| 品种 | 期货总仓 | 动量袖 | 网格 | Put | Call | 预估变化 |",
         "|---|---:|---:|---:|---|---|---|",

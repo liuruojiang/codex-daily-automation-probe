@@ -1,0 +1,61 @@
+name: ICIM valuation input smoke check
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+          persist-credentials: false
+      - name: Resolve daily strategy pin
+        id: pin
+        run: |
+          python - <<'PY'
+          import os, re
+          from pathlib import Path
+          text = Path('automation/.github/workflows/ic-im-v1-3-daily-digest.yml').read_text()
+          sha = re.search(r'repository: liuruojiang/ic-im-rolling-arbitrage\s+ref: ([0-9a-f]{40})', text).group(1)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              stream.write('sha=' + sha + '\n')
+          PY
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/ic-im-rolling-arbitrage
+          ref: ${{ steps.pin.outputs.sha }}
+          path: strategy
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Verify actual uploaded snapshot without sending mail or writing ledger
+        working-directory: strategy
+        env:
+          ICIM_LEGULEGU_DAILY_SNAPSHOT: ${{ secrets.ICIM_LEGULEGU_DAILY_SNAPSHOT }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from datetime import date, datetime, timedelta
+          import ic_im_daily_valuation as v
+          raw = os.environ[v.ENV]
+          value = v.validate_snapshot(json.loads(raw))
+          day = date.fromisoformat(value['valuation_date'])
+          clock = datetime.now(v.BEIJING)
+          assert day <= clock.date()
+          # Resolve real uploaded data; proxy anchor is only a diagnostic fixture.
+          frozen = {'price': 1.0, 'pe': 1.0, 'pb': 1.0}
+          for product in ('IC', 'IM'):
+              actual = v.resolve(product, day, clock, price=1.0, frozen=frozen, anchor_day=date(2026, 8, 14))
+              assert actual['provenance']['mode'] == 'vip_actual'
+              assert actual['pe'] == value['indices'][v.CODES[product]]['pe_aggregate_ttm']
+              stale = v.resolve(product, day + timedelta(days=1), clock, price=1.0, frozen=frozen, anchor_day=date(2026, 8, 14))
+              assert stale['provenance']['mode'] == 'proxy'
+              assert '代理估值' in v.disclosure(stale['provenance'])
+          print('verified_snapshot_date=' + day.isoformat())
+          print('verified_snapshot_sha256=' + hashlib.sha256(raw.encode()).hexdigest())
+          print('actual_and_stale_fallback=passed; email_sent=false; ledger_written=false')
+          PY
