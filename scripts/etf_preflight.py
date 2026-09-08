@@ -47,12 +47,25 @@ def audit(manifest: dict, metadata: dict, history_before: dict, run: dict) -> di
     if not manifest:
         return {"status": "PARTIAL", "gaps": [{"reason": "legacy_email_missing_collection_snapshot"}], "failures": [], "decisions": []}
     try:
-        cutoff = utc(run["build_started_at"])
+        step_started = utc(run["build_started_at"])
         manifest_cutoff = utc(manifest["cutoff_utc"])
     except (KeyError, ValueError, TypeError):
         return {"status": "PARTIAL", "gaps": [{"reason": "invalid_or_naive_cutoff"}], "failures": [], "decisions": []}
-    if manifest_cutoff != cutoff:
-        gap("cutoff_mismatch")
+    cutoff = manifest_cutoff
+    cutoff_verified = True
+    if run.get("build_completed_at"):
+        try:
+            step_completed = utc(run["build_completed_at"])
+            if not step_started <= cutoff <= step_completed:
+                cutoff_verified = False
+                gap("snapshot_cutoff_outside_build_step", step_started_at=run["build_started_at"], step_completed_at=run["build_completed_at"])
+        except (ValueError, TypeError):
+            cutoff_verified = False
+            gap("invalid_or_naive_build_completed_at")
+    elif manifest_cutoff != step_started:
+        # Strict compatibility with older proof files lacking completedAt.
+        cutoff_verified = False
+        gap("cutoff_mismatch_without_build_interval")
     if not run.get("run_id") or not run.get("head_sha") or str(manifest.get("run_id")) != str(run.get("run_id")) or manifest.get("head_sha") != run.get("head_sha"):
         gap("run_provenance_mismatch")
     if run.get("conclusion") != "success" or run.get("send_gmail") != "success":
@@ -110,6 +123,9 @@ def audit(manifest: dict, metadata: dict, history_before: dict, run: dict) -> di
         if url not in displayed:
             fail("unrendered_item_written_to_sent_history", url=url)
     for item in manifest.get("candidates", []):
+        if not cutoff_verified:
+            # Invalid time provenance cannot establish a time-window omission.
+            continue
         url = canonical(item["url"])
         detail = {"url": url, "title": item.get("title", ""), "source": item.get("source", ""), "published": item.get("published", "")}
         try:
@@ -161,4 +177,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

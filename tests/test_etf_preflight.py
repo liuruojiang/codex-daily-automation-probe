@@ -127,7 +127,40 @@ class AdversarialPreflightTests(unittest.TestCase):
         del self.manifest["run_id"]
         self.assertEqual(self.check()["status"], "PARTIAL")
 
+    def test_script_start_inside_actual_build_step_is_cutoff(self):
+        self.run["build_started_at"] = "2026-09-07T20:59:58Z"
+        self.run["build_completed_at"] = "2026-09-07T21:02:00Z"
+        self.manifest["candidates"] = [{**self.item, "published": "2026-09-07T20:59:59Z"}]
+        result = self.check()
+        self.assertEqual(result["status"], "FAILED")
+        self.assertEqual(result["failures"][0]["reason"], "confirmed_omission")
+        self.assertEqual(result["cutoff_utc"], "2026-09-07T21:00:00+00:00")
+        self.assertFalse(any("cutoff" in gap["reason"] for gap in result["gaps"]))
+
+    def test_snapshot_outside_build_step_cannot_pass(self):
+        self.run["build_started_at"] = "2026-09-07T21:00:01Z"
+        self.run["build_completed_at"] = "2026-09-07T21:02:00Z"
+        self.assertEqual(self.check()["status"], "PARTIAL")
+        self.run["build_started_at"] = "2026-09-07T20:58:00Z"
+        self.run["build_completed_at"] = "2026-09-07T20:59:59Z"
+        self.assertEqual(self.check()["status"], "PARTIAL")
+
+    def test_legacy_proof_without_completion_keeps_exact_comparison(self):
+        self.run["build_started_at"] = "2026-09-07T20:59:59Z"
+        self.assertEqual(self.check()["status"], "PARTIAL")
+
+    def test_naive_build_completion_cannot_pass(self):
+        self.run["build_completed_at"] = "2026-09-07T21:02:00"
+        self.assertEqual(self.check()["status"], "PARTIAL")
+
+    def test_invalid_cutoff_cannot_manufacture_confirmed_omission(self):
+        self.run["build_started_at"] = "2026-09-07T20:58:00Z"
+        self.run["build_completed_at"] = "2026-09-07T20:59:59Z"
+        self.manifest["candidates"] = [self.item]
+        result = self.check()
+        self.assertEqual(result["status"], "PARTIAL")
+        self.assertEqual(result["failures"], [])
+
 
 if __name__ == "__main__":
     unittest.main()
-

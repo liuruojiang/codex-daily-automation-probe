@@ -244,7 +244,7 @@ def now_bj() -> datetime:
 
 
 def report_date() -> str:
-    return now_bj().date().isoformat()
+    return (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(BJ).date().isoformat()
 
 
 def fetch_bytes(url: str, timeout: int = 30, headers: dict[str, str] | None = None) -> bytes:
@@ -1354,7 +1354,7 @@ def load_digest_history(kind: str) -> dict[str, object]:
 
 def filter_previously_sent(kind: str, items: list[Item], days: int = 7, ignore_dates: set[str] | None = None) -> list[Item]:
     history = load_digest_history(kind)
-    cutoff = now_bj().date() - timedelta(days=days)
+    cutoff = (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(BJ).date() - timedelta(days=days)
     ignore_dates = ignore_dates or set()
     sent_urls: set[str] = set()
     sent_titles: set[str] = set()
@@ -1384,7 +1384,7 @@ def update_digest_history(kind: str, items: list[Item], days: int = 10) -> None:
     path = Path("digest_history") / f"{kind}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     history = load_digest_history(kind)
-    cutoff = now_bj().date() - timedelta(days=days)
+    cutoff = (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(BJ).date() - timedelta(days=days)
     records: list[dict[str, str]] = []
     for rec in history.get("items", []):
         if not isinstance(rec, dict):
@@ -1400,6 +1400,7 @@ def update_digest_history(kind: str, items: list[Item], days: int = 10) -> None:
         if key in existing:
             continue
         records.append({"sent_date": today, "source": item.source, "title": item.title, "url": item.url})
+        existing.add(key)
     path.write_text(json.dumps({"items": records}, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
