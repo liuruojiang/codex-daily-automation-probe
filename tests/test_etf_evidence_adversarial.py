@@ -79,6 +79,11 @@ class EvidenceAdversarialTests(unittest.TestCase):
         page = '<script type="application/ld+json">[{"@type":"Article","datePublished":"2026-09-07"},{"@type":"Article","datePublished":"2026-09-08"}]</script>'
         self.assertIsNone(dr.fixed_page_publication_date(page))
 
+    def test_yoast_webpage_date_requires_canonical_identity(self):
+        page = '<head><link rel="canonical" href="https://example.org/current"></head><script type="application/ld+json">{"@type":"WebPage","url":"https://example.org/current","datePublished":"2026-09-07"}</script>'
+        self.assertEqual(dr.fixed_page_publication_date(page).date().isoformat(), "2026-09-07")
+        self.assertIsNone(dr.fixed_page_publication_date(page.replace('"url":"https://example.org/current"', '"url":"https://example.org/related"')))
+
 
 if __name__ == "__main__":
     unittest.main()

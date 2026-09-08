@@ -1489,7 +1489,7 @@ class EtfDigestQualityTests(unittest.TestCase):
             "ETF Trends",
             "Goldman Sachs: Active ETFs Win the Liquidity Race",
             (
-                "The article discusses active ETFs, liquidity, trading volume, bid-ask spreads, and how the ETF wrapper "
+                "The article discusses active ETFs, liquidity, trading costs, bid-ask spreads, and how the ETF wrapper "
                 "can provide intraday access compared with mutual funds. The liquidity study tests portfolio trading costs and risks."
             ),
             "https://www.etftrends.com/future-etfs-content-hub/goldman-sachs-active-etfs-win-liquidity-race/",

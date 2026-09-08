@@ -3351,6 +3351,14 @@ def fixed_page_publication_date(page: str) -> datetime | None:
             if parsed:
                 return parsed
     dates: set[datetime] = set()
+    document_urls: set[str] = set()
+    for tag in re.findall(r"<link\b[^>]*>", meta_scope, re.I | re.S):
+        attrs = {
+            name.lower(): html.unescape(value)
+            for name, _, value in re.findall(r"""([\w:-]+)\s*=\s*(["'])(.*?)\2""", tag, re.S)
+        }
+        if "canonical" in attrs.get("rel", "").lower().split() and attrs.get("href"):
+            document_urls.add(canonical_url(attrs["href"]))
     for script in re.findall(r"""<script\b[^>]*type\s*=\s*["']application/ld\+json["'][^>]*>(.*?)</script>""", page, re.I | re.S):
         try:
             payload = json.loads(script)
@@ -3364,7 +3372,14 @@ def fixed_page_publication_date(page: str) -> datetime | None:
                 continue
             types = entry.get("@type", [])
             types = [types] if isinstance(types, str) else types
-            if not any(t in {"Article", "NewsArticle", "BlogPosting", "ScholarlyArticle", "PodcastEpisode"} for t in types):
+            if not isinstance(types, list):
+                continue
+            canonical_webpage = (
+                "WebPage" in types
+                and isinstance(entry.get("url"), str)
+                and canonical_url(entry["url"]) in document_urls
+            )
+            if not canonical_webpage and not any(t in {"Article", "NewsArticle", "BlogPosting", "ScholarlyArticle", "PodcastEpisode"} for t in types):
                 continue
             published = entry.get("datePublished")
             parsed = parse_date(published) if isinstance(published, str) else None
