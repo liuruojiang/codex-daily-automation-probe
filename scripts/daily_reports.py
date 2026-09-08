@@ -5,6 +5,7 @@ import concurrent.futures
 import csv
 import email.utils
 import html
+import hashlib
 import json
 import os
 import re
@@ -13,7 +14,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass
+from contextvars import ContextVar
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 from pathlib import Path
@@ -24,6 +26,8 @@ import etf_movers as broad_etf_movers
 
 BJ = ZoneInfo("Asia/Shanghai")
 UA = "Mozilla/5.0 (Codex daily digest; +https://github.com/liuruojiang/codex-daily-automation-probe)"
+ETF_BUILD_CUTOFF: ContextVar[datetime | None] = ContextVar("etf_build_cutoff", default=None)
+ETF_COLLECTION_SNAPSHOT: ContextVar[dict | None] = ContextVar("etf_collection_snapshot", default=None)
 
 
 @dataclass
@@ -240,7 +244,7 @@ def now_bj() -> datetime:
 
 
 def report_date() -> str:
-    return now_bj().date().isoformat()
+    return (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(BJ).date().isoformat()
 
 
 def fetch_bytes(url: str, timeout: int = 30, headers: dict[str, str] | None = None) -> bytes:
@@ -339,7 +343,8 @@ def parse_feed(source: str, url: str, limit: int = 12) -> list[Item]:
             dt = parse_date(published)
             engagement = feed_forum_engagement_text(summary)
             item_source = source
-            item_summary = clean_text(summary, 700)
+            # Keep official abstract conclusions and limitations past 700 chars.
+            item_summary = clean_text(strip_noncontent_html(summary), 20000 if source.startswith("arXiv") else 700)
             if engagement and "comments/replies" not in item_source.lower():
                 item_source = f"{item_source} ({engagement})"
                 item_summary = clean_text(f"{item_summary} Engagement: {engagement}.", 1200)
@@ -413,40 +418,49 @@ def fetch_reddit_listing_items(subreddit: str, sort: str = "hot", limit: int = 1
     return reddit_listing_items_from_payload(payload, default_subreddit=subreddit)
 
 
+def strip_noncontent_html(page: str) -> str:
+    # Remove whole blocks before finding paragraphs; scripts can contain HTML
+    # strings that never appeared in the visible article.
+    return re.sub(
+        r"<(script|style|template|noscript|nav|footer|aside|form|svg)\b[^>]*>.*?</\1\s*>",
+        " ", page, flags=re.I | re.S,
+    )
+
+
+def article_evidence_paragraphs(page: str, limit: int = 8) -> list[str]:
+    page = strip_noncontent_html(page)
+    scope = re.search(r"<article\b[^>]*>(.*?)</article\s*>", page, re.I | re.S)
+    if scope:
+        page = scope.group(1)
+    blocks = re.findall(r"<(p|li|tr|blockquote)\b[^>]*>(.*?)</\1\s*>", page, re.I | re.S)
+    noise = (
+        "expert insights content hubs", "nothing in this blog constitutes",
+        "please read the alpha architect disclosures", "check out our t-shirts",
+        "subscribe", "advertisement", "cookie", "privacy policy",
+        "all rights reserved", "data:image", "wp-image",
+    )
+    out: list[str] = []
+    seen: set[str] = set()
+    for _, block in blocks:
+        text = clean_text(block, 12000)
+        if len(text) < 55 or any(word in text.lower() for word in noise):
+            continue
+        key = norm_title(text)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(text)
+        if len(out) >= limit:
+            break
+    return out
+
+
 def article_paragraphs(url: str, limit: int = 8) -> list[str]:
     try:
         page = fetch_bytes(url, timeout=20).decode("utf-8", "ignore")
     except Exception:
         return []
-    raw_blocks: list[str] = []
-    for tag in ("p", "li", "tr"):
-        raw_blocks.extend(re.findall(rf"<{tag}[^>]*>(.*?)</{tag}>", page, flags=re.I | re.S))
-    out: list[str] = []
-    noise = (
-        "expert insights content hubs",
-        "nothing in this blog constitutes",
-        "please read the alpha architect disclosures",
-        "was originally published",
-        "check out our t-shirts",
-        "posted may ",
-        "subscribe",
-        "advertisement",
-        "cookie",
-        "privacy policy",
-    )
-    for block in raw_blocks:
-        text = clean_text(block, 900)
-        lower = text.lower()
-        if len(text) < 55:
-            continue
-        if any(x in lower for x in noise):
-            continue
-        if "data:image" in lower or "wp-image" in lower:
-            continue
-        out.append(text)
-        if len(out) >= limit:
-            break
-    return out
+    return article_evidence_paragraphs(page, limit)
 
 
 def reddit_json_url(url: str) -> str:
@@ -663,7 +677,7 @@ def enrich_article_item(item: Item) -> Item:
     is_reddit = item.source.startswith("r/") or "reddit" in item.source.lower() or "reddit.com" in host
     forum_paras = reddit_thread_paragraphs(item.url, limit=20) if is_reddit else []
     paras = forum_paras or article_paragraphs(item.url, limit=60)
-    base = clean_text(" ".join([item.summary, *paras]), 20000) if paras else item.summary
+    base = clean_text(strip_noncontent_html(" ".join([item.summary, *paras])), 20000)
     summary = enrich_aggregator_item(item, base)
     source = reddit_source_with_engagement(item.source, item.url) if is_reddit else item.source
     return Item(source, item.title, item.url, item.published, summary)
@@ -674,8 +688,9 @@ def sort_recent(items: list[Item]) -> list[Item]:
 
 
 def filter_recent_published(items: list[Item], max_age_hours: int) -> list[Item]:
-    cutoff = now_bj().astimezone(timezone.utc) - timedelta(hours=max_age_hours)
-    return [item for item in items if (parse_date(item.published) or datetime.min.replace(tzinfo=timezone.utc)) >= cutoff]
+    end = (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(timezone.utc)
+    cutoff = end - timedelta(hours=max_age_hours)
+    return [item for item in items if (published := parse_date(item.published)) and cutoff <= published <= end]
 
 
 def chinese_topic(title: str, summary: str = "") -> str:
@@ -1339,7 +1354,7 @@ def load_digest_history(kind: str) -> dict[str, object]:
 
 def filter_previously_sent(kind: str, items: list[Item], days: int = 7, ignore_dates: set[str] | None = None) -> list[Item]:
     history = load_digest_history(kind)
-    cutoff = now_bj().date() - timedelta(days=days)
+    cutoff = (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(BJ).date() - timedelta(days=days)
     ignore_dates = ignore_dates or set()
     sent_urls: set[str] = set()
     sent_titles: set[str] = set()
@@ -1369,7 +1384,7 @@ def update_digest_history(kind: str, items: list[Item], days: int = 10) -> None:
     path = Path("digest_history") / f"{kind}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     history = load_digest_history(kind)
-    cutoff = now_bj().date() - timedelta(days=days)
+    cutoff = (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(BJ).date() - timedelta(days=days)
     records: list[dict[str, str]] = []
     for rec in history.get("items", []):
         if not isinstance(rec, dict):
@@ -1385,6 +1400,7 @@ def update_digest_history(kind: str, items: list[Item], days: int = 10) -> None:
         if key in existing:
             continue
         records.append({"sent_date": today, "source": item.source, "title": item.title, "url": item.url})
+        existing.add(key)
     path.write_text(json.dumps({"items": records}, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
@@ -1646,150 +1662,10 @@ def etf_display_title(item: Item) -> str:
 
 
 def etf_chinese_fact(item: Item) -> str:
-    title = clean_text(item.title, 220)
-    text = clean_text(item.summary, 3000)
-    lower = f"{title} {text}".lower()
-    title_lower = title.lower()
-    parts: list[str] = []
-
-    if "world markets watchlist" in lower:
-        parts.append(
-            "文章跟踪全球九个主要股票指数，截至 2026 年 5 月 11 日，其中六个指数年内仍为正收益。"
-            "日本 Nikkei 225 年内上涨约 24.0%，领先观察清单；美国 S&P 500 上涨约 8.3%，加拿大 TSX 上涨约 7.7%。"
-            "表现较弱的是印度 BSE SENSEX，年内下跌约 10.8%；德国 DAXK 和法国 CAC 40 分别下跌约 2.6% 和 1.1%。"
-        )
-    elif "tactical yield" in lower:
-        parts.append(
-            "文章测试 Meb Faber 的 Tactical Yield 思路：在 T-Bills、美国国债久期和公司债信用风险之间做切换。"
-            "核心依据是收益率本身对未来债券回报的解释力，尤其是 10 年期初始收益率对后续长期回报的预测作用。"
-            "这类策略的重点不是追逐债券单日涨跌，而是判断现金收益率是否已经足够高，是否值得少承担久期或信用风险。"
-        )
-    elif "attention factor" in lower and ("crypto" in lower or "bitcoin" in lower or "btc" in lower):
-        parts.append(
-            "文章讨论“投机注意力/投机情绪”这一共同风险因子：BTC、0DTE 期权、零佣金券商、社交情绪股票和部分加密相关股票可能受同一批边际投机资金影响。"
-            "核心主旨不是问组合有没有直接买加密资产，而是检查股票和 ETF 里是否已经隐含了加密情绪、投机参与度和风险偏好传导。"
-            "因此配置判断应从二元的“有无 crypto”转向连续的投机情绪暴露评估。"
-        )
-    elif "volatility forecasts lead to better portfolios" in lower or (
-        "graph neural networks" in lower and "realized volatility" in lower and "portfolio performance" in lower
-    ):
-        parts.append(
-            "文章检验更好的波动率预测是否真的能转化为更好的组合表现，而不是只停留在预测误差更低。"
-            "样本层面，摘要给出 2015-2025 年 465 只 S&P 500 股票的周度已实现波动率，并把 HAR、LSTM 基准与基于滚动相关性、行业相似度和供应链网络特征的 GraphSAGE 模型比较。"
-            "对 ETF/组合研究的意义在于：这类论文只有在能改善权重、目标波动率缩放或风险预算后的样本外收益回撤时，才有配置价值。"
-        )
-    elif "weekly economic snapshot" in lower and "labor market" in lower:
-        parts.append(
-            "文章的核心是美国劳动力市场仍然强于预期：4 月新增就业 11.5 万，高于市场预期的 4.6 万。"
-            "3 月就业数据被上修至 18.5 万，2 月则下修为减少 15.6 万，失业率维持在 4.3%。"
-            "文章认为，这组数据让美联储在降息时点上仍有等待空间，同时市场把它解读为增长韧性信号，S&P 500 因此延续周度上涨并刷新高位。"
-        )
-    elif "hits $6.5 billion" in lower or "record pace" in lower:
-        parts.append(
-            "文章关注 Roundhill Memory ETF（DRAM）的资产规模扩张：截至 2026 年 5 月 11 日，该 ETF 上市 36 天内达到 65 亿美元 AUM。"
-            "文中引用 Bloomberg 的 Eric Balchunas 观点称，这一速度快于 IBIT 达到同一规模所用的 43 天。"
-            "DRAM 的卖点是聚焦 AI 基础设施所需的存储芯片、内存与数据存储相关公司，因此这条信息更多反映 AI 硬件主题 ETF 的资金拥挤度。"
-        )
-    elif "private equity" in lower and ("401k" in lower or "401 k" in lower):
-        parts.append(
-            "文章讨论私募股权是否适合进入 401K 这类退休账户。事实层面，私募股权与普通公募基金的主要差异在于流动性更低、估值频率更慢、费用层级更复杂，且底层资产透明度较弱。"
-            "这类产品如果进入退休账户，核心问题不是“是否另类资产更高级”，而是普通退休投资者是否理解锁定期、估值滞后和费用拖累。"
-        )
-    elif "trend following" in lower or "regime-dependent" in lower:
-        parts.append(
-            "文章讨论趋势跟踪与状态依赖配置，重点是组合权重不必始终维持固定比例，而可以根据市场状态改变风险资产、避险资产和现金类资产的暴露。"
-            "这类框架通常需要明确趋势指标、状态划分、再平衡频率和信号滞后，否则容易把事后解释误当成可执行规则。"
-        )
-    elif "animal spirits" in lower or "stock market is doing something" in lower:
-        parts.append(
-            "文章讨论股市出现少见强势走势时的市场心理。核心事实是，当行情快速走强时，投资者容易把近期上涨外推成后续收益预期，风险偏好会随价格本身上升而强化。"
-            "这类内容适合作为市场情绪观察，而不应直接等同于买入或卖出信号。"
-        )
-    elif "institutional investor attention" in lower or ("macro news" in lower and "volatility" in lower):
-        parts.append(
-            "文章基于机构投资者实际在线阅读行为来研究“注意力”如何影响基金决策。"
-            "论文发现，当总体波动率升高时，机构会把注意力从个股新闻更多转向宏观和市场层面的新闻。"
-        )
-        if "0.48%" in lower or "1.9%" in lower:
-            parts.append("文中还给出量化结果：宏观注意力切换能力较高的基金，未来表现约高出 0.48%/季，折合约 1.9% 年化，且这种差异在高波动环境中更明显。")
-        if "stocks they own" in lower or "position and trading decisions" in lower:
-            parts.append("文章还指出，基金会更关注自己持有的股票，这种注意力有助于提升仓位管理和交易决策的价值。")
-    elif "nuclear" in lower:
-        parts.append(
-            "文章关注美国核能主题的产业进展：Brookfield Asset Management 与 The Nuclear Company 合作推进 Westinghouse AP1000 和 AP300 反应堆部署，Blue Energy 与 GE Vernova 则推进天然气加核能的混合方案。"
-            "文章还提到新的 Gallup 民调显示美国公众对核能支持度处于高位，这些因素共同构成核能主题 ETF 的基本面叙事。"
-            "VettaFi Nuclear Renaissance Index（NUKZX）覆盖反应堆技术、设备供应和服务公司，并作为 Range Nuclear Renaissance Index ETF（NUKZ）的底层指数。"
-        )
-    elif "securitization" in lower:
-        parts.append(
-            "文章是关于证券化投资的访谈，嘉宾来自 Janus Henderson Investors，主题包括证券化产品如何运作、CLO 投资、证券化市场规模，以及固定收益投资方式的变化。"
-            "从资产配置角度看，证券化资产本质上是把贷款、应收账款或其他现金流资产打包后形成的信用暴露，收益来源和风险都不同于单纯持有国债。"
-        )
-    elif "melt-up" in lower:
-        parts.append(
-            "文章讨论美股可能进入 melt-up（快速上冲）阶段：S&P 500 在 3 月底年内仍下跌约 7%，随后反弹到 2026 年内上涨接近 9%。"
-            "作者把这种行情与 AI 交易升温、市场迅速消化地缘政治担忧联系起来，重点是价格上涨本身可能继续吸引追涨资金，形成短期动量强化。"
-        )
-    elif "hedge fund" in lower or "bearish" in lower:
-        parts.append(
-            "文章讨论为什么许多知名对冲基金经理经常公开表达偏空观点。文中提到 Ray Dalio、Paul Tudor Jones、Stanley Druckenmiller 等人长期有过谨慎或偏空预测，但这并不代表他们的基金完全按这些宏观判断单边下注。"
-            "文中引用 Tudor Jones 对市场估值的担忧，包括美国股市总市值/GDP 达到约 252%、S&P 500 在 22 倍 PE 附近买入时十年前瞻收益可能偏低等观点。"
-            "作者强调，这些人更像交易者而非买入并长期持有的投资者，因此他们的公开叙事、实际仓位和长期资产配置含义需要分开看。"
-        )
-    elif "recent quant links from quantocracy" in title_lower:
-        parts.append(
-            "Quantocracy 是量化文章聚合入口，本条本身不是一篇完整研究，而是一组近期量化链接。日报应把它当作线索池：只挑出能落到信号定义、数据源、交易成本、回测窗口或风险控制的子议题。"
-            "如果链接池没有明确可测试问题，就不应把它写成市场结论。"
-        )
-    elif "commodity futures returns since 1871" in lower:
-        parts.append(
-            "Quantpedia 文章围绕 1871 年以来商品期货收益指数展开，价值在于把商品暴露放到更长历史中观察，而不是只看近几十年的 ETF 样本。"
-            "这类材料适合检查商品风险溢价、通胀对冲、股票/债券相关性和滚动收益在不同制度环境中的表现。"
-        )
-    elif "dual momentum allocation between physical gold and bitcoin" in lower:
-        parts.append(
-            "Quantpedia 文章讨论在实物黄金与比特币之间做双动量配置。核心不是把比特币简单视为“数字黄金”，而是检验两类资产在趋势、波动率、回撤和危机相关性上的差异。"
-            "对 ETF 组合而言，相关代理通常会落到 GLDM/IAU 一类黄金 ETF 与 IBIT 等现货比特币产品。"
-        )
-    elif "surfing the equity curve" in lower:
-        parts.append(
-            "Allocate Smartly 文章讨论用策略自身权益曲线的趋势来决定策略开关。这个想法本质上是对策略做二级趋势过滤：策略表现处于上行状态时启用，权益曲线走弱时暂停或降权。"
-            "风险点在于权益曲线过滤容易过拟合，且可能在震荡期反复开关，必须把延迟、换手和错过反弹一起纳入回测。"
-        )
-    elif "active etfs win the liquidity race" in title_lower:
-        parts.append(
-            "文章讨论主动 ETF 相比传统共同基金在交易流动性上的优势，重点变量包括盘中交易、成交量、买卖价差和 ETF 包装本身带来的交易便利。"
-            "它不是资本市场预期文章，不能据此推断股债长期收益；更适合放在 ETF 产品结构、交易执行和流动性评估框架里。"
-        )
-    elif "economic policy uncertainty and aggregate economic activity in india" in title_lower:
-        parts.append(
-            "FRED Blog 文章讨论印度经济政策不确定性与总体经济活动之间的关系，属于宏观数据解释而不是因子轮动研究。"
-            "对资产配置的用途是观察印度/新兴市场风险溢价、增长预期和政策不确定性是否影响区域股票或债券配置。"
-        )
-    elif "stock market prediction using node transformer" in title_lower:
-        parts.append(
-            "arXiv 论文标题显示其研究 Node Transformer 架构结合 BERT 情绪分析用于股市预测。"
-            "日报只能把它作为机器学习预测方法线索；在没有复现代码、样本外结果和交易成本验证前，不能把它写成有效因子结论。"
-        )
-    elif "縮短香港股票現貨市場結算週期" in title or "shortening hong kong stock settlement cycle" in lower:
-        parts.append(
-            "HKEX 发布缩短香港股票现货市场结算周期的咨询文件。核心事实是交易后结算安排可能变化，影响券商、托管、资金调拨和跨市场交易流程。"
-            "这属于市场结构和交易规则变化，不应被写成一般资产配置观点。"
-        )
-    elif "capital market" in lower or "expected return" in lower:
-        parts.append("文章围绕长期资本市场假设、估值和预期收益展开，重点是不同资产类别未来回报与风险补偿的变化。")
-    elif "treasury" in lower or "duration" in lower or "bond" in lower or "yield" in lower:
-        parts.append("文章关注债券、收益率或久期变化，核心事实是利率路径会直接影响长债、短债和信用债 ETF 的价格弹性。")
-    elif "factor" in lower or "momentum" in lower or "value" in lower or "quality" in lower:
-        parts.append("文章讨论因子或风格表现，重点在价值、动量、质量等风险因子是否继续获得市场补偿。")
-    elif "commodity" in lower or "gold" in lower or "inflation" in lower:
-        parts.append("文章关注商品、黄金或通胀相关资产，核心事实是实物资产的表现通常与通胀预期、美元和实际利率有关。")
-    elif text:
-        parts.append("正文未提取到足够可核验内容；日报不据此归纳文章主旨。")
-    else:
-        parts.append("RSS 未提供可核验摘要；日报不据此归纳文章主旨。")
-
-    return "".join(parts)
+    # Familiar titles and keywords are not evidence for numerical claims.
+    if not etf_has_enough_summary_evidence(item):
+        return "正文未提取到足够可核验内容；日报不据此归纳文章主旨。"
+    return "已取得可读原文，具体中文解读需要逐项核验；本条提供原始标题、来源与正文链接。"
 
 
 def etf_follow_up_point(title: str, summary: str = "") -> str:
@@ -1943,118 +1819,9 @@ def translate_detail_terms(sentence: str) -> str:
 
 
 def detail_sentence_chinese_summary(sentence: str) -> str:
-    lower = sentence.lower()
-    nums = ", ".join(re.findall(r"-?\d+(?:\.\d+)?(?:\s*|-)?(?:%|bps|bp|years?|months?|days?|x)", sentence, flags=re.I))
-    if "weekly realized" in lower and "465" in lower and "s&p 500" in lower:
-        return "论文摘要给出明确样本：使用 2015-2025 年 465 只 S&P 500 股票的周度已实现波动率，检验波动率预测能否改善组合表现。"
-    if "graphsage" in lower or ("har" in lower and "lstm" in lower and "baselines" in lower):
-        return "论文把 HAR、LSTM 等基准模型与 GraphSAGE 网络模型比较，网络特征包括滚动相关性、行业相似度和供应链关系。"
-    if "backtested results from 1930" in lower:
-        return "文章回测从 1930 年开始，并把结果与 50% IEF / 50% LQD 的中期国债加公司债基准组合比较。"
-    if "results are net of" in lower and ("transaction" in lower or "cost" in lower):
-        return "文章报告的回测结果已经扣除交易成本，因此更接近可执行策略评估，而不是无成本纸面收益。"
-    if "initial 10-year yield" in lower and "86%" in lower:
-        return "文章强调 10 年期初始收益率对后续 10 年总回报有很强解释力，文中给出的解释度约为 86%。"
-    if "tactical yield" in lower and ("t-bills" in lower or "duration" in lower or "credit" in lower):
-        return "文章的核心规则是用 Tactical Yield 判断何时持有 T-Bills，何时承担久期或信用风险。"
-    if "commodity" in lower and "risk-free" in lower and ("5.4%" in lower or "6%" in lower):
-        return "文章给出商品期货相对无风险收益率的长期回报证据：年化风险溢价约为 5.4%，真实收益溢价超过 6%。"
-    if ("equities" in lower or "equity" in lower or "stocks" in lower) and ("cash" in lower or "6.8%" in lower):
-        return "文章把商品风险溢价与股票收益做对比：同期股票相对现金的超额收益约为 6.8%，用于衡量商品风险溢价的量级。"
-    if "commodity" in lower and "risk-free" in lower and ("equities" in lower or "equity" in lower or "stocks" in lower):
-        return f"文章把商品期货与无风险收益率和股票收益做横向比较：商品期货相对无风险收益率的年化风险溢价约为 5.4%，真实收益溢价超过 6%，同期股票相对现金约为 6.8%。"
-    if "average annual risk premium" in lower and "commodity" in lower:
-        suffix = f"关键数字：{nums}。" if nums else ""
-        return f"文章给出商品期货长期风险溢价证据，强调它不是单纯现货价格暴露；{suffix}"
-    if "futures returns" in lower and "spot" in lower:
-        return "文章把期货收益拆成现货价格变化和利息调整后的基差，认为商品期货相对现货的超额部分具有跨周期持续性。"
-    if "uncorrelated" in lower and "equity risk" in lower:
-        return "文章强调商品期货收益驱动与传统股票风险因子相关性较低，因此更适合作为分散化风险溢价观察。"
-    if "macro news" in lower and ("volatility" in lower or "uncertainty" in lower):
-        return "文章发现高波动/高不确定性阶段，机构投资者会把注意力从个股新闻转向宏观和市场层面新闻。"
-    if "0.48%" in lower or "1.9%" in lower:
-        return "文章报告宏观注意力切换能力较强的基金未来表现更好，量级约为每季 0.48%、年化约 1.9%。"
-    if "stocks they own" in lower or "positions" in lower:
-        return "文章指出基金更关注自己持有的股票，这种持仓相关注意力可能改善仓位管理和交易决策。"
-    if "regressing bitcoin returns" in lower and "residual connectedness" in lower:
-        return "文章在控制全球股票收益和风险偏好后，仍发现 Bitcoin 与部分投机相关股票之间存在残余联动。"
-    if "speculative participation" in lower and any(k in lower for k in ["coinbase", "robinhood", "draftkings", "buzz"]):
-        return "文章把 Coinbase、Robinhood、DraftKings、BUZZ 等标的视为投机参与度暴露较高的股票/ETF，用来解释加密情绪向股票市场传导。"
-    if "spectrum-based assessment" in lower or "binary crypto yes/no" in lower:
-        return "文章主张用连续谱评估投机情绪暴露，而不是把组合简单分成“有加密/无加密”的二元判断。"
-    if "speculative cohort" in lower or "0dte" in lower or "commission-free brokerages" in lower:
-        return "文章认为边际投机资金的情绪变化会在 BTC、0DTE 期权、零佣金券商和社交情绪股票之间传播，形成共同风险因子。"
-    if "switched on and off" in lower and "trend" in lower:
-        return "文章测试把每个 TAA 策略按趋势跟踪规则打开或关闭，也就是用策略自身权益曲线做二级过滤。"
-    if "combining multiple taa strategies" in lower or "model portfolios" in lower:
-        return "文章建议把多个 TAA 策略组合成模型组合，以降低单一策略阶段性失效对总组合的影响。"
-    if "dual momentum" in lower and "annualized return" in lower and "maximum drawdown" in lower:
-        pairs = re.findall(r"(dual momentum|bitcoin buy-and-hold|gold alone)[^.]*?annualized return of (-?\d+(?:\.\d+)?%)[^.]*?maximum drawdown of (-?\d+(?:\.\d+)?%)", lower, flags=re.I)
-        if pairs:
-            labels = {
-                "dual momentum": "双动量策略",
-                "bitcoin buy-and-hold": "比特币买入持有",
-                "gold alone": "单独黄金",
-            }
-            parts = [f"{labels.get(name.lower(), name)}年化收益 {ret}、最大回撤 {dd}" for name, ret, dd in pairs]
-            return "文章比较不同情景的收益回撤：" + "；".join(parts) + "。"
-        return f"文章比较不同情景的年化收益和最大回撤，关键数字包括：{nums}。"
-    if "bitcoin buy-and-hold" in lower and "annualized return" in lower and "maximum drawdown" in lower:
-        return f"比特币买入持有情景的收益更高但回撤更深，文中给出的年化收益和最大回撤为：{nums}。"
-    if "gold alone" in lower and "annualized return" in lower and "maximum drawdown" in lower:
-        return f"单独黄金情景的收益和回撤更低，文中给出的年化收益和最大回撤为：{nums}。"
-    if "annualized return" in lower and "maximum drawdown" in lower and ("bitcoin" in lower or "gold" in lower):
-        return f"文章围绕黄金、比特币或双动量组合比较年化收益和最大回撤，关键数字包括：{nums}。"
-    if "benchmarks reveal" in lower and "bitcoin" in lower and "gold" in lower:
-        return "文章的基准对比显示：Bitcoin 绝对收益更高但波动和回撤极大，黄金收益较低但更稳定；关键数字包括：" + nums + "。"
-    if "max drawdown" in lower and ("sharpe" in lower or "calmar" in lower or "volatility" in lower):
-        if not nums:
-            return ""
-        return f"文章表格给出多种情景的绩效指标，包括波动率、Sharpe Ratio、最大回撤和 Calmar Ratio；关键数字包括：{nums}。"
-    if ("cagr" in lower or "annualized" in lower) and ("bitcoin" in lower or "gold" in lower or "50/50" in lower):
-        return f"文章表格比较 Bitcoin、黄金和组合情景的年化收益/波动率等指标；关键数字包括：{nums}。"
-    if "drawdown" in lower or "whipsaw" in lower or "missed rebound" in lower:
-        suffix = f"关键度量：{nums}。" if nums else ""
-        return f"文章把最大回撤、反复开关风险、错过反弹和换手成本作为评估重点。{suffix}"
-    if "moving average" in lower or "lookback" in lower:
-        suffix = f"文中涉及的窗口/参数包括：{nums}。" if nums else ""
-        return f"文章围绕移动均线、回看窗口或趋势信号定义策略开关规则。{suffix}"
-    if "overfit" in lower and ("equity-curve" in lower or "equity curve" in lower or "strategy's own" in lower):
-        return "文章警告权益曲线开关容易过拟合，因为过滤器使用的是策略自身历史表现，而不是独立的市场变量。"
-    if "recent quant links from quantocracy" in lower or "summary of links" in lower:
-        return "这是 Quantocracy 的近期量化链接汇总，本身只适合做线索池；需要继续打开子链接才能形成策略规则。"
-    if "bitcoin" in lower and "gold" in lower and "momentum" in lower:
-        return "文章比较黄金与比特币的动量配置关系，重点应落到趋势持续性、波动率、回撤和危机相关性。"
-    if "bitfinex" in lower or "btc/usd" in lower or "gld" in lower:
-        return "文章说明比特币与黄金测试使用 BTC/USD 与 GLD 等可交易代理，并把样本起点、频率对齐和数据连续性作为回测前提。"
-    if "risk-adjusted returns" in lower:
-        return "文章把讨论落到实际组合构建和风险调整后收益，而不是停留在“比特币是否是数字黄金”的叙事层。"
-    if "correlation with risk assets" in lower:
-        return "文章提醒比特币在压力阶段可能与风险资产相关性上升，因此不能直接替代黄金的避险角色。"
-    if "annual return" in lower and "sharpe" in lower:
-        return "文章会用年化收益和 Sharpe Ratio 等指标评估策略效果，不能只看是否降低回撤。"
-    if "managing losses" in lower and "trend" in lower:
-        return "文章把趋势跟踪的主要价值定位为管理损失，因此权益曲线开关的重点应看回撤和错过反弹的权衡。"
-    if "geopolitical" in lower or "supply-chain" in lower or "resource nationalism" in lower:
-        return "文章把地缘政治、通胀不确定性、供应链碎片化和资源民族主义列为重新重视商品资产的宏观背景。"
-
-    entities = re.findall(r"\b[A-Z][A-Za-z0-9&./-]{1,12}\b", sentence)
-    tickers = [x for x in entities if x.isupper() or x in {"Bitcoin", "Treasuries"}][:5]
-    suffix = ""
-    if nums:
-        suffix += f"关键数字：{nums}。"
-    if tickers:
-        suffix += f"涉及标的/变量：{', '.join(dict.fromkeys(tickers))}。"
-    label = chinese_detail_prefix(sentence)
-    if "风险" in label:
-        return f"文章这一段强调风险来源、相关性或回撤控制，需要在回测中单独验证。{suffix}"
-    if "信号" in label:
-        return f"文章这一段涉及信号定义或策略开关规则，需要明确窗口、触发条件和调仓频率。{suffix}"
-    if "配置" in label:
-        return f"文章这一段讨论影响配置判断的变量，需要映射到可观察数据再使用。{suffix}"
-    if "交易成本" in label:
-        return f"文章这一段涉及交易成本或再平衡摩擦，不能按无成本策略理解。{suffix}"
-    return f"文章这一段提供背景或方法信息；日报只保留其可验证含义，避免直接照搬英文叙述。{suffix}"
+    # Keyword substitutions cannot establish what an author actually claims.
+    # Downstream Chinese interpretation must be checked against the source.
+    return ""
 
 
 def etf_article_detail_points(item: Item, limit: int = 4) -> list[str]:
@@ -2101,8 +1868,6 @@ def etf_article_detail_points(item: Item, limit: int = 4) -> list[str]:
         points.append(detail)
         if len(points) >= limit:
             break
-    if "commodity futures returns since 1871" in title_lower and not any("43%" in point for point in points):
-        points.append("文章还把商品期货与股票做横向比较：商品期货约在 43% 的年份跑赢股票，并在每五个十年中约两个十年跑赢股票。")
     return points[:limit]
 
 
@@ -2153,27 +1918,17 @@ def etf_title_has_specific_signal(item: Item) -> bool:
 
 
 def etf_has_enough_summary_evidence(item: Item) -> bool:
-    if etf_title_has_specific_signal(item):
-        return True
-    # New research must not require a hard-coded title translation to pass the
-    # evidence gate. Two source-derived, domain-specific details are sufficient
-    # after the separate relevance and source-quality checks.
-    if len(etf_article_detail_points(item, limit=2)) >= 2:
-        return True
-    profile = etf_feed_profile(item.source)
-    trusted_research_source = item.source.startswith("arXiv") or bool(
-        profile
-        and any(marker in profile.tier for marker in ("核心", "高质量", "官方", "论文"))
-    )
-    specific_sentences = [
-        sentence for sentence in split_article_sentences(item.summary) if detail_sentence_score(sentence) >= 8
-    ]
-    if trusted_research_source and len(clean_text(item.summary, 5000)) >= 240 and len(specific_sentences) >= 2:
-        return True
-    fact = etf_chinese_fact(item)
-    if low_information_fact(fact) or generic_etf_fact(fact):
+    if not clean_text(item.title, 500):
         return False
-    return bool(clean_text(fact, 1000))
+    summary = clean_text(strip_noncontent_html(item.summary), 20000)
+    if len(summary) < 160:
+        return False
+    sentences = {
+        norm_title(sentence)
+        for sentence in split_article_sentences(summary)
+        if detail_sentence_score(sentence) >= 8
+    }
+    return len(sentences) >= 2
 
 
 def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
@@ -3275,14 +3030,18 @@ def ensure_non_reddit_forum_mix(
 def collect_etf_forum_items() -> list[Item]:
     forum_items: list[Item] = []
     for subreddit in ETF_FORUM_SUBREDDITS:
+        subreddit_start = len(forum_items)
         for sort in ETF_REDDIT_FORUM_SORTS:
             forum_items.extend(fetch_reddit_listing_items(subreddit, sort, limit=ETF_REDDIT_LISTING_LIMIT))
             time.sleep(0.2)
         reddit_rss_items = parse_feed(f"Reddit r/{subreddit}", f"https://old.reddit.com/r/{subreddit}/hot/.rss", limit=ETF_REDDIT_LISTING_LIMIT)
         forum_items.extend(reddit_hot_rss_ranked_items(reddit_rss_items))
+        record_etf_source("reddit", subreddit, f"https://old.reddit.com/r/{subreddit}/", forum_items[subreddit_start:])
         time.sleep(0.2)
     for source, url, limit in ETF_EXTERNAL_FORUM_FEEDS:
-        forum_items.extend(parse_feed(source, url, limit=limit))
+        parsed_forum = parse_feed(source, url, limit=limit)
+        record_etf_source("forum", source, url, parsed_forum)
+        forum_items.extend(parsed_forum)
         time.sleep(0.2)
     if not forum_items:
         forum_feeds = {
@@ -3441,7 +3200,7 @@ def append_etf_research_sections(
         if not section_items:
             lines.append("今日没有足够高相关、未重复的新内容进入本段；不从低质量新闻里硬写。")
             continue
-        for i, scored in enumerate(section_items[:4], 1):
+        for i, scored in enumerate(section_items, 1):
             append_scored_item(lines, scored, i)
 
     lines += ["", "---", "", "## 论坛与社区 idea mining", "", "论坛和社区只用于发现待验证问题，不是事实结论，也不进入一句话结论。", ""]
@@ -3576,41 +3335,88 @@ def fixed_page_article_title(page: str) -> str:
 
 
 def fixed_page_publication_date(page: str) -> datetime | None:
-    patterns = (
-        r'property=["\']article:published_time["\'][^>]+content=["\']([^"\']+)',
-        r'content=["\']([^"\']+)["\'][^>]+property=["\']article:published_time["\']',
-        r'(?:name|itemprop|property)=["\'](?:date|publish-date|publication_date|datePublished|parsely-pub-date)["\'][^>]+content=["\']([^"\']+)',
-        r'content=["\']([^"\']+)["\'][^>]+(?:name|itemprop|property)=["\'](?:date|publish-date|publication_date|datePublished|parsely-pub-date)["\']',
-        r'"datePublished"\s*:\s*"([^"]+)"',
-        r'<time[^>]+datetime=["\']([^"\']+)',
-        r'(?:data-publish-date|data-publication-date)=["\']([^"\']+)',
-        r'(?:Published|Publication date|Date published)\s*(?:on|:)?\s*(?:</?[^>]+>\s*)?([A-Z][a-z]+ \d{1,2}, \d{4})',
-    )
-    for pattern in patterns:
-        for match in re.finditer(pattern, page, flags=re.I):
-            parsed = parse_date(html.unescape(match.group(1)))
+    # A bare date elsewhere on a page is not the article publication date.
+    head = re.search(r"<head\b[^>]*>(.*?)</head\s*>", page, re.I | re.S)
+    meta_scope = head.group(1) if head else strip_noncontent_html(page)
+    for tag in re.findall(r"<meta\b[^>]*>", meta_scope, re.I | re.S):
+        attrs = {
+            name.lower(): html.unescape(value)
+            for name, _, value in re.findall(r"""([\w:-]+)\s*=\s*(["'])(.*?)\2""", tag, re.S)
+        }
+        label = attrs.get("property") or attrs.get("name") or attrs.get("itemprop") or ""
+        if label.lower() in {
+            "article:published_time", "publish-date", "publication_date",
+            "datepublished", "parsely-pub-date",
+        }:
+            parsed = parse_date(attrs.get("content"))
             if parsed:
                 return parsed
-    return None
+    dates: set[datetime] = set()
+    document_urls: set[str] = set()
+    for tag in re.findall(r"<link\b[^>]*>", meta_scope, re.I | re.S):
+        attrs = {
+            name.lower(): html.unescape(value)
+            for name, _, value in re.findall(r"""([\w:-]+)\s*=\s*(["'])(.*?)\2""", tag, re.S)
+        }
+        if "canonical" in attrs.get("rel", "").lower().split() and attrs.get("href"):
+            document_urls.add(canonical_url(attrs["href"]))
+    for script in re.findall(r"""<script\b[^>]*type\s*=\s*["']application/ld\+json["'][^>]*>(.*?)</script>""", page, re.I | re.S):
+        try:
+            payload = json.loads(script)
+        except (ValueError, TypeError):
+            continue
+        entries = payload if isinstance(payload, list) else [payload]
+        if isinstance(payload, dict) and isinstance(payload.get("@graph"), list):
+            entries = payload["@graph"]
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            types = entry.get("@type", [])
+            types = [types] if isinstance(types, str) else types
+            if not isinstance(types, list):
+                continue
+            entity_url = entry.get("url") or entry.get("@id")
+            if document_urls and isinstance(entity_url, str) and canonical_url(entity_url) not in document_urls:
+                continue
+            canonical_webpage = (
+                "WebPage" in types
+                and isinstance(entry.get("url"), str)
+                and canonical_url(entry["url"]) in document_urls
+            )
+            if not canonical_webpage and not any(t in {"Article", "NewsArticle", "BlogPosting", "ScholarlyArticle", "PodcastEpisode"} for t in types):
+                continue
+            published = entry.get("datePublished")
+            parsed = parse_date(published) if isinstance(published, str) else None
+            if parsed:
+                dates.add(parsed)
+    if len(dates) == 1:
+        return next(iter(dates))
+    if len(dates) > 1:
+        return None
+    visible = strip_noncontent_html(page)
+    articles = re.findall(r"<article\b[^>]*>(.*?)</article\s*>", visible, re.I | re.S)
+    if len(articles) > 1:
+        return None
+    if len(articles) == 1:
+        for date in re.findall(r"""<time\b[^>]*datetime\s*=\s*["']([^"']+)""", articles[0], re.I):
+            parsed = parse_date(date)
+            if parsed:
+                dates.add(parsed)
+        if dates:
+            return next(iter(dates)) if len(dates) == 1 else None
+        visible = articles[0]
+    for match in re.finditer(
+        r"(?:Published|Publication date|Date published)\s*(?:on|:)?\s*(?:</?[^>]+>\s*)?([A-Z][a-z]+ \d{1,2}, \d{4})",
+        visible, re.I,
+    ):
+        parsed = parse_date(match.group(1))
+        if parsed:
+            dates.add(parsed)
+    return next(iter(dates)) if len(dates) == 1 else None
 
 
 def fixed_page_article_summary(page: str) -> str:
-    blocks: list[str] = []
-    for tag in ("p", "li"):
-        for raw in re.findall(rf"<{tag}[^>]*>(.*?)</{tag}>", page, flags=re.I | re.S):
-            text = fixed_page_text(raw)
-            lower = text.lower()
-            if len(text) < 45 or any(
-                marker in lower
-                for marker in ["cookie", "privacy policy", "subscribe", "sign up", "all rights reserved"]
-            ):
-                continue
-            blocks.append(text)
-            if len(blocks) >= 8:
-                break
-        if len(blocks) >= 8:
-            break
-    return clean_text(" ".join(blocks), 4000)
+    return clean_text(" ".join(article_evidence_paragraphs(page, limit=8)), 12000)
 
 
 def fixed_page_items(monitor: FixedPageMonitor) -> list[Item]:
@@ -3752,6 +3558,7 @@ def collect_etf_fixed_monitor_updates_with_audit(
                 feed_results[feed.source] = []
     for feed in ETF_FIXED_MONITOR_FEEDS:
         raw = feed_results.get(feed.source, [])
+        record_etf_source("fixed_feed", feed.source, feed.url, raw)
         recent = filter_recent_published(sort_recent(dedupe_items(raw)), ETF_ARTICLE_MAX_AGE_HOURS)
         unseen = filter_previously_sent("etf", recent, days=ETF_DEDUPE_DAYS)
         verified: list[Item] = []
@@ -3793,6 +3600,7 @@ def collect_etf_fixed_monitor_updates_with_audit(
                 page_results[monitor.source] = []
     for monitor in ETF_FIXED_PAGE_MONITORS:
         raw = page_results.get(monitor.source, [])
+        record_etf_source("fixed_page", monitor.source, monitor.url, raw)
         recent = filter_recent_published(sort_recent(dedupe_items(raw)), ETF_ARTICLE_MAX_AGE_HOURS)
         unseen = filter_previously_sent("etf", recent, days=ETF_DEDUPE_DAYS)
         verified = [prepared for item in unseen if (prepared := fixed_monitor_item_with_evidence(item))]
@@ -5736,8 +5544,61 @@ MOVER_UNIVERSE = [
 ]
 
 
+def etf_configured_source_ids() -> list[str]:
+    return [
+        *[f"research|{feed.source}|{feed.url}" for feed in ETF_RESEARCH_FEEDS],
+        *[f"fixed_feed|{feed.source}|{feed.url}" for feed in ETF_FIXED_MONITOR_FEEDS],
+        *[f"fixed_page|{feed.source}|{feed.url}" for feed in ETF_FIXED_PAGE_MONITORS],
+        *[f"forum|{source}|{url}" for source, url, _limit in ETF_EXTERNAL_FORUM_FEEDS],
+        *[f"reddit|{subreddit}" for subreddit in ETF_FORUM_SUBREDDITS],
+    ]
+
+
+def record_etf_source(kind: str, source: str, url: str, items: list[Item]) -> None:
+    snapshot = ETF_COLLECTION_SNAPSHOT.get()
+    if snapshot is None:
+        return
+    source_id = f"{kind}|{source}|{url}" if kind != "reddit" else f"reddit|{source}"
+    # A bounded feed/listing is evidence of what was seen, not proof that no
+    # other publication existed. The independent preflight resolves coverage.
+    snapshot["source_audit"].append({
+        "source_id": source_id, "coverage": "partial",
+        "status": "bounded_listing_read" if items else "empty_or_unavailable",
+        "evidence": {"url": url, "captured_count": len(items)},
+    })
+    for item in items:
+        snapshot["candidates"].append({
+            **asdict(item), "source_id": source_id,
+            "independent_eligible": None,
+            "exclusion_reason": "requires_independent_review",
+            "is_aggregator": "quantocracy.com" in item.url,
+            "children_checked": False,
+        })
+
+
 def build_etf(out_dir: Path) -> None:
-    started = now_bj()
+    token = ETF_BUILD_CUTOFF.set(now_bj())
+    snapshot_token = ETF_COLLECTION_SNAPSHOT.set({
+        "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
+        "head_sha": os.environ.get("GITHUB_SHA", "local-unverified"),
+        "cutoff_utc": ETF_BUILD_CUTOFF.get().astimezone(timezone.utc).isoformat(),
+        "capture_mode": "build_snapshot",
+        "configured_sources": etf_configured_source_ids(),
+        "source_audit": [], "candidates": [],
+    })
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        before = {**load_digest_history("etf"), "phase": "before_build",
+                  "head_sha": os.environ.get("GITHUB_SHA", "local-unverified")}
+        (out_dir / "history_before.json").write_text(json.dumps(before, ensure_ascii=False, indent=2), encoding="utf-8")
+        _build_etf(out_dir)
+    finally:
+        ETF_COLLECTION_SNAPSHOT.reset(snapshot_token)
+        ETF_BUILD_CUTOFF.reset(token)
+
+
+def _build_etf(out_dir: Path) -> None:
+    started = ETF_BUILD_CUTOFF.get() or now_bj()
     # Beijing Sunday and Monday correspond to weekend US sessions. Those two
     # emails remain full source digests but do not replay Friday market tables.
     include_market_summary = started.weekday() not in {0, 6}
@@ -5771,6 +5632,7 @@ def build_etf(out_dir: Path) -> None:
                 research_results[feed.source] = []
     for feed in ETF_RESEARCH_FEEDS:
         parsed = research_results.get(feed.source, [])
+        record_etf_source("research", feed.source, feed.url, parsed)
         items.extend(parsed)
         recent_count = len(filter_recent_published(parsed, ETF_ARTICLE_MAX_AGE_HOURS))
         status = "已读取" if parsed else "无可读条目或解析不足"
@@ -5782,6 +5644,8 @@ def build_etf(out_dir: Path) -> None:
     )
 
     forum_items = collect_etf_forum_items()
+    forum_items = [item for item in forum_items if not parse_date(item.published)
+                   or parse_date(item.published) <= started.astimezone(timezone.utc)]
     today = report_date()
     fresh_forum_items = filter_previously_sent("etf", forum_items, days=ETF_DEDUPE_DAYS)
     forum_picked = select_etf_forum_items(fresh_forum_items, limit=ETF_FORUM_DISPLAY_LIMIT)
@@ -5886,7 +5750,6 @@ def build_etf(out_dir: Path) -> None:
     )
     append_etf_research_feed_audit(lines, research_feed_audit)
     fixed_monitor_rendered_count = append_etf_fixed_monitor_section(lines, fixed_monitor_updates, fixed_monitor_audit)
-    update_digest_history("etf", [*picked, *fixed_monitor_updates, *forum_picked], days=ETF_HISTORY_DAYS)
     market_audit_line = (
         f"- ETF 排行宇宙：扫描 {daily_movers.universe_count} 只美国上市 ETF，流动性及产品结构过滤后合格 {daily_movers.eligible_count} 只；每个涨跌榜按共同经济驱动强去重。"
         if daily_movers is not None
@@ -5906,6 +5769,15 @@ def build_etf(out_dir: Path) -> None:
     lines.append(f"- 回填去重：文章与论坛回填均排除最近 {ETF_BACKFILL_DEDUPE_DAYS} 天已推送内容，并只统计真正进入正文的条目。")
     lines += audit_lines("05:00 Asia/Shanghai", started)
     report_text = "\n".join(lines)
+    displayed_urls = {canonical_url(url) for url in re.findall(r"(?m)^- 链接：\s*(https?://\S+)\s*$", report_text)}
+    rendered_items = dedupe_items([
+        item for item in [*picked, *fixed_monitor_updates, *forum_picked]
+        if canonical_url(item.url) in displayed_urls
+    ])
+    required_urls = {canonical_url(item.url) for item in [*picked, *fixed_monitor_updates]}
+    if not required_urls <= displayed_urls:
+        raise ValueError("ETF selected research/fixed item missing from rendered email")
+    update_digest_history("etf", rendered_items, days=ETF_HISTORY_DAYS)
     md.write_text(report_text, encoding="utf-8")
 
     top_preview = "; ".join(
@@ -5929,6 +5801,15 @@ def build_etf(out_dir: Path) -> None:
         None,
         html_body=html_body,
     )
+    snapshot = ETF_COLLECTION_SNAPSHOT.get()
+    if snapshot is not None:
+        snapshot.update({
+            "captured_at_utc": now_bj().astimezone(timezone.utc).isoformat(),
+            "body_sha256": hashlib.sha256(report_text.encode("utf-8")).hexdigest(),
+            "selected_items": [asdict(item) for item in rendered_items],
+            "history_added_items": [asdict(item) for item in rendered_items],
+        })
+        (out_dir / "collection_manifest.json").write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def fetch_json(url: str) -> object:

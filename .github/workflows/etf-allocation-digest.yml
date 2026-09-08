@@ -6,6 +6,11 @@ on:
     # This leaves a 3-hour buffer before the downstream 08:00 Codex summary.
     - cron: "0 21 * * *"
   workflow_dispatch:
+    inputs:
+      send_email:
+        description: "Send the validated email and persist sent history (false runs collection and validation only)"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -25,7 +30,10 @@ jobs:
         run: python -m pip install "yfinance==0.2.66"
       - name: Build US ETF and asset allocation digest
         run: python scripts/daily_reports.py etf --out-dir artifacts
+      - name: Validate ETF delivery artifacts
+        run: python scripts/validate_etf_delivery.py artifacts/metadata.json
       - name: Send Gmail
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -36,6 +44,7 @@ jobs:
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
         run: python scripts/send_report.py artifacts/metadata.json
       - name: Persist digest history
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
         run: |
           if [ -n "$(git status --porcelain digest_history)" ]; then
             git config user.name "github-actions[bot]"

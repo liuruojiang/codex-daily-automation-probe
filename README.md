@@ -13,3 +13,25 @@ Run the regression suite with:
 ```powershell
 python -m pytest -q
 ```
+
+## ETF collection and delivery integrity
+
+ETF builds freeze the publication cutoff at script start and retain `collection_manifest.json`
+and `history_before.json` alongside the exact plain/HTML email metadata. The manifest records
+bounded source observations, raw candidates and rendered items; a bounded or empty listing
+does not establish complete source coverage. Only actually rendered items enter sent history,
+which the workflow persists after successful Gmail delivery.
+
+`python scripts/validate_etf_delivery.py artifacts/metadata.json` is a mandatory pre-send gate.
+It rejects body-hash, rendered-link, HTML-link and history mismatches. A manual ETF workflow
+with `send_email=false` exercises the same build/gate/artifact path without sending or persisting
+history; scheduled and default manual runs retain normal delivery.
+
+The local 08:00 reader runs `scripts/etf_preflight.py` against the original run's artifacts,
+GitHub step evidence and independently recovered source inventory. It preserves same-day
+earlier sends. `FAILED` overrides `PARTIAL`, which overrides `PASS`; missing historical snapshots,
+unresolved source coverage or unchecked aggregation children must not become a clean PASS.
+The audit does not replace source reading or make production scoring independent evidence.
+Automated Chinese text must not invent article facts from familiar titles or keywords; when
+translation evidence is insufficient, the email labels the limitation and the local reader
+performs source-checked interpretation.

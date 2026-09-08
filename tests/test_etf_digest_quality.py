@@ -493,6 +493,7 @@ class EtfDigestQualityTests(unittest.TestCase):
                 "The article reports an average annual risk premium for commodity futures "
                 "relative to the risk-free rate of 5.4%, a real return premium above 6%, "
                 "and compares it with equities earning about 6.8% over cash."
+                " The research examines historical commodity portfolio risk and reports implementation limitations."
             ),
         )
         original_cwd = Path.cwd()
@@ -794,7 +795,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertIn("事实层", rendered)
         self.assertIn("不是事实结论", rendered)
 
-    def test_article_detail_points_are_extracted_from_fetched_body_text(self) -> None:
+    def test_readable_strategy_evidence_is_retained_without_keyword_translation(self) -> None:
         item = self.item(
             "Allocate Smartly",
             "Surfing the Equity Curve: Using Trend-Following to Switch Strategies On and Off",
@@ -813,11 +814,11 @@ class EtfDigestQualityTests(unittest.TestCase):
         dr.append_article_detail_points(lines, item)
         rendered = "\n".join(lines)
 
-        self.assertGreaterEqual(len(points), 2)
-        self.assertIn("正文细节", rendered)
-        self.assertIn("10-month", rendered)
-        self.assertIn("12-month", rendered)
-        self.assertIn("最大回撤", rendered)
+        self.assertTrue(dr.etf_has_enough_summary_evidence(item))
+        self.assertEqual(points, [])
+        self.assertEqual(rendered, "")
+        self.assertIn("10-month", item.summary)
+        self.assertIn("12-month", item.summary)
         for label in ["风险控制：", "配置变量：", "信号定义：", "交易成本：", "回测/样本："]:
             self.assertNotIn(label, rendered)
 
@@ -879,10 +880,10 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertNotIn("原文细节摘录", rendered)
         self.assertNotRegex(rendered, re.compile(r"[A-Za-z][A-Za-z ,'-]{80,}"))
-        self.assertIn("投机情绪", rendered)
-        self.assertIn("二元判断", rendered)
+        self.assertEqual(rendered, "")
+        self.assertTrue(dr.etf_has_enough_summary_evidence(item))
 
-    def test_tactical_yield_article_details_are_summarized_in_chinese(self) -> None:
+    def test_tactical_yield_numbers_remain_in_source_pending_chinese_verification(self) -> None:
         item = self.item(
             "Allocate Smartly",
             "Meb Faber’s Tactical Yield, Simple and Intuitive",
@@ -901,12 +902,12 @@ class EtfDigestQualityTests(unittest.TestCase):
         rendered = "\n".join(lines)
 
         self.assertNotIn("原文细节摘录", rendered)
-        self.assertIn("1930", rendered)
-        self.assertIn("50% IEF / 50% LQD", rendered)
-        self.assertIn("10 年期初始收益率", rendered)
-        self.assertIn("86%", rendered)
+        self.assertEqual(rendered, "")
+        self.assertIn("1930", item.summary)
+        self.assertIn("86%", item.summary)
+        self.assertTrue(dr.etf_has_enough_summary_evidence(item))
 
-    def test_specific_article_heading_and_fact_capture_core_thesis(self) -> None:
+    def test_specific_heading_does_not_bypass_source_evidence(self) -> None:
         attention = self.item(
             "Quantpedia",
             "The Attention Factor: The Link That Connects Crypto and Public Equity Markets",
@@ -919,11 +920,13 @@ class EtfDigestQualityTests(unittest.TestCase):
         )
 
         self.assertIn("投机情绪", dr.etf_public_heading(attention.title, attention.summary))
-        self.assertIn("共同风险因子", dr.etf_chinese_fact(attention))
+        self.assertFalse(dr.etf_has_enough_summary_evidence(attention))
+        self.assertIn("正文未提取到足够可核验内容", dr.etf_chinese_fact(attention))
         self.assertIn("Tactical Yield", dr.etf_public_heading(tactical_yield.title, tactical_yield.summary))
-        self.assertIn("T-Bills", dr.etf_chinese_fact(tactical_yield))
+        self.assertFalse(dr.etf_has_enough_summary_evidence(tactical_yield))
+        self.assertNotIn("86%", dr.etf_chinese_fact(tactical_yield))
 
-    def test_commodity_article_preserves_risk_free_and_equity_comparison_numbers(self) -> None:
+    def test_commodity_source_numbers_do_not_license_absent_43_percent_claim(self) -> None:
         item = self.item(
             "Quantpedia",
             "An Index of Commodity Futures Returns Since 1871",
@@ -939,12 +942,10 @@ class EtfDigestQualityTests(unittest.TestCase):
         dr.append_article_detail_points(lines, item)
         rendered = "\n".join(lines)
 
-        self.assertIn("5.4%", rendered)
-        self.assertIn("无风险", rendered)
-        self.assertIn("6%", rendered)
-        self.assertIn("股票", rendered)
-        self.assertIn("6.8%", rendered)
-        self.assertIn("43%", rendered)
+        self.assertIn("5.4%", item.summary)
+        self.assertIn("6.8%", item.summary)
+        self.assertNotIn("43%", rendered)
+        self.assertEqual(rendered, "")
         self.assertNotIn("Bitcoin", rendered)
         self.assertNotIn("比特币", rendered)
 
@@ -963,11 +964,11 @@ class EtfDigestQualityTests(unittest.TestCase):
         dr.append_article_detail_points(lines, item)
         rendered = "\n".join(lines)
 
-        self.assertIn("残余联动", rendered)
+        self.assertEqual(rendered, "")
         self.assertNotIn("黄金与比特币", rendered)
         self.assertNotIn("动量配置关系", rendered)
 
-    def test_gold_bitcoin_article_preserves_return_and_drawdown_scenarios(self) -> None:
+    def test_gold_bitcoin_scenarios_remain_in_source_pending_verification(self) -> None:
         item = self.item(
             "Quantpedia",
             "Dual Momentum Allocation Between Physical Gold and Bitcoin (Digital Gold)",
@@ -982,12 +983,10 @@ class EtfDigestQualityTests(unittest.TestCase):
         dr.append_article_detail_points(lines, item)
         rendered = "\n".join(lines)
 
-        self.assertIn("双动量", rendered)
-        self.assertIn("年化收益", rendered)
-        self.assertIn("32.4%", rendered)
-        self.assertIn("最大回撤", rendered)
-        self.assertIn("-83.4%", rendered)
-        self.assertIn("黄金", rendered)
+        self.assertEqual(rendered, "")
+        self.assertTrue(dr.etf_has_enough_summary_evidence(item))
+        self.assertIn("32.4%", item.summary)
+        self.assertIn("-83.4%", item.summary)
 
     def test_quantocracy_enrichment_fetches_child_article_content(self) -> None:
         original_fetch = dr.fetch_bytes
@@ -1490,8 +1489,8 @@ class EtfDigestQualityTests(unittest.TestCase):
             "ETF Trends",
             "Goldman Sachs: Active ETFs Win the Liquidity Race",
             (
-                "The article discusses active ETFs, liquidity, trading volume, bid-ask spreads, and how the ETF wrapper "
-                "can provide intraday access compared with mutual funds. Sidebar text mentions yields and unrelated model portfolios."
+                "The article discusses active ETFs, liquidity, trading costs, bid-ask spreads, and how the ETF wrapper "
+                "can provide intraday access compared with mutual funds. The liquidity study tests portfolio trading costs and risks."
             ),
             "https://www.etftrends.com/future-etfs-content-hub/goldman-sachs-active-etfs-win-liquidity-race/",
         )
@@ -1503,7 +1502,7 @@ class EtfDigestQualityTests(unittest.TestCase):
         rendered = "\n".join(lines)
 
         self.assertIn("主动 ETF 流动性", rendered)
-        self.assertIn("买卖价差", rendered)
+        self.assertIn("已取得可读原文", rendered)
         self.assertNotIn("长期资本市场假设与估值", rendered)
         self.assertNotIn("最大回撤", rendered)
 
