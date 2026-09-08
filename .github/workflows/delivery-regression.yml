@@ -114,7 +114,7 @@ jobs:
           python -X utf8 -m pytest -q \
             test_delivery_transport_retry.py test_ohlcv_provider_validation.py \
             test_poe_ic_im_v1_3_state.py test_run_ic_im_v1_3_github_digest.py \
-            test_ic_im_daily_valuation.py \
+            test_ic_im_daily_valuation.py test_im_put_policy.py \
             test_ic_im_chinabond.py \
             test_adversarial_icim_delivery.py \
             --junitxml=regression.xml

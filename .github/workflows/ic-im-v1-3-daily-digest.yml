@@ -92,7 +92,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: c4771cad05ff1066583cddf1ec35a43271be5970
+          ref: b6567f3292e47c4983c3167319ae2a01763e158d
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -117,8 +117,10 @@ jobs:
           import sys
           sys.path.insert(0, "strategy")
           import poe_ic_im_mainline_v1_3_bot as strategy
-          assert strategy.BUILD_ID == "v1.3-20260907-r7-put-monthly-fix1"
+          assert strategy.BUILD_ID == "v1.3-20260908-r7-mom120-put102-v1"
           assert strategy.IM_PUT_EXECUTION_REVISION == "im_monthly_reset_20260907_v1"
+          assert strategy.IM_PUT_POLICY_REVISION == "im_mom120_put102_20260908_v1"
+          assert strategy.im_put_policy.TARGET_MONEYNESS == 1.02
           PY
 
       - name: Check A-share trading day

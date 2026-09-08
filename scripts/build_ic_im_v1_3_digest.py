@@ -195,7 +195,7 @@ def put_reason(product: str, signal: dict[str, Any]) -> str:
         f"{percent(signal.get('momentum_120'))}，负动量下限给"
         f"{number(signal.get('mom120_floor_puts_per_full_core'))}张；两者取高，本次由"
         f"{signal.get('core_put_driver', '规则判定')}主导。只覆盖0.5倍核心袖，所以规范化目标为"
-        f"{number(signal.get('core_put_target_qty_normalized'))}张；独立动量Put按父规则数量×0.5×动量执行权重配置，"
+        f"{number(signal.get('core_put_target_qty_normalized'))}张；{signal.get('im_put_policy_description', '历史政策：独立动量Put按父规则数量×0.5×动量执行权重配置')}，"
         f"本次目标为{number(signal.get('momentum_put_target_qty_normalized'))}张 "
         f"{signal.get('momentum_put_target_contract') or '无'}；合计目标"
         f"{number(signal.get('total_put_target_qty_normalized'))}张。网格不配Put。"
@@ -307,6 +307,16 @@ def leg_row(label: str, current: Any, target: Any, note: str = "") -> str:
     </tr>'''
 
 
+def iv_warning_text(signal: dict[str, Any]) -> str:
+    return str((signal.get("iv_warning") or {}).get("text", "IV预警：N/A（历史记录未保存IV监测值）"))
+
+
+def iv_warning_html(signal: dict[str, Any]) -> str:
+    level = (signal.get("iv_warning") or {}).get("level", "unavailable")
+    color = {"critical": "#b42318", "high": "#b54708", "normal": "#344054", "unavailable": "#667085"}.get(level, "#667085")
+    return f'<div style="margin:12px 0;padding:10px;border:2px solid {color};color:{color};font-weight:700;">{escaped(iv_warning_text(signal))}</div>'
+
+
 def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
     title = "IC / 中证500" if product == "IC" else "IM / 中证1000"
     accent = "#f79009" if actionable else "#12b76a"
@@ -342,6 +352,7 @@ def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
           <td align="right"><span style="display:inline-block;padding:5px 9px;border-radius:999px;background:{badge_bg};color:{accent};font-size:12px;font-weight:700;">{escaped(badge_text)}</span></td>
         </tr>
       </table>
+      {iv_warning_html(signal)}
       <div style="margin-top:14px;color:#667085;font-size:12px;">期货总仓</div>
       <div style="margin-top:3px;font-size:24px;line-height:1.2;color:#101828;font-weight:760;">{escaped(current_total)}倍 <span style="color:#98a2b3;font-weight:500;">→</span> <span style="color:{accent};">{escaped(target_total)}倍</span></div>
     </td>
@@ -495,6 +506,10 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         f"信号日：**{day}**｜下一交易日：**{payload.get('next_trade_day', 'N/A')}**",
         "",
         "**估值数据来源：" + valuation_banner(signals) + "**",
+        "",
+        "**IC：" + iv_warning_text(signals["IC"]) + "**",
+        "",
+        "**IM：" + iv_warning_text(signals["IM"]) + "**",
         "",
         "| 品种 | 期货总仓 | 动量袖 | 网格 | Put | Call | 预估变化 |",
         "|---|---:|---:|---:|---|---|---|",
