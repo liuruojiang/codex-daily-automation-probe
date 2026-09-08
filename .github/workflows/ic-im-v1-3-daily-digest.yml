@@ -2,9 +2,9 @@ name: IC IM v1.3-r7 Post-Close Digest
 
 on:
   schedule:
-    # 10:00 UTC = 18:00 Asia/Shanghai.  The strategy runner rechecks the
+    # 12:00 UTC = 20:00 Asia/Shanghai.  The strategy runner rechecks the
     # exchange calendar and completed-session boundary before publication.
-    - cron: "0 10 * * *"
+    - cron: "0 12 * * *"
   workflow_dispatch:
     inputs:
       correction:
@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 85
     env:
       TZ: Asia/Shanghai
-      PLANNED_BJ: "18:00 Asia/Shanghai"
+      PLANNED_BJ: "20:00 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Check out automation repository

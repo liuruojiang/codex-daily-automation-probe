@@ -77,12 +77,12 @@ async function dispatchWorkflow(env, workflow) {
   throw lastError ?? new Error(`${workflow}: GitHub dispatch failed`);
 }
 
-async function dispatchAllDigests(env) {
+async function dispatchAllDigests(env, workflows = WORKFLOWS) {
   const results = await Promise.allSettled(
-    WORKFLOWS.map((workflow) => dispatchWorkflow(env, workflow)),
+    workflows.map((workflow) => dispatchWorkflow(env, workflow)),
   );
   const failures = results
-    .map((result, index) => ({ result, workflow: WORKFLOWS[index] }))
+    .map((result, index) => ({ result, workflow: workflows[index] }))
     .filter(({ result }) => result.status === "rejected");
 
   if (failures.length > 0) {
@@ -95,7 +95,10 @@ async function dispatchAllDigests(env) {
 }
 
 export default {
-  async scheduled(_controller, env, ctx) {
-    ctx.waitUntil(dispatchAllDigests(env));
+  async scheduled(controller, env, ctx) {
+    const workflows = controller.cron === "0 10 * * MON-FRI"
+      ? [WORKFLOWS[0]]
+      : controller.cron === "0 12 * * MON-FRI" ? [WORKFLOWS[1]] : [];
+    ctx.waitUntil(dispatchAllDigests(env, workflows));
   },
 };

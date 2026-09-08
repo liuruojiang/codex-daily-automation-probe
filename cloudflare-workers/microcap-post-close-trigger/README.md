@@ -8,7 +8,8 @@ email.
 Cloudflare dashboard configuration:
 
 - Secret: `GITHUB_TOKEN`
-- Cron Trigger: `0 10 * * MON-FRI` (10:00 UTC = 18:00 Asia/Shanghai)
+- Microcap Cron: `0 10 * * MON-FRI` (18:00 Asia/Shanghai, unchanged)
+- IC/IM Cron: `0 12 * * MON-FRI` (20:00 Asia/Shanghai, after the independent 19:30 VIP sync)
 - Worker source: `worker.js`
 
 The fine-grained GitHub token only needs access to
@@ -19,7 +20,7 @@ in this trigger token.
 Merging this directory does not deploy the Worker. Production is complete only
 after `wrangler deploy` succeeds against the intended Cloudflare account, the
 `GITHUB_TOKEN` secret is present on the deployed Worker, the Cron Trigger is
-visible in Cloudflare, and an 18:00 Beijing dispatch appears in GitHub Actions as
+visible in Cloudflare, and a dispatch at the respective Beijing time appears in GitHub Actions as
 `workflow_dispatch` with the external-schedule guard path. A native GitHub
 `schedule` run proves only that the fallback fired; it is not Worker deployment
 evidence.
