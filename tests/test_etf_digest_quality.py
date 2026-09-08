@@ -257,6 +257,41 @@ class EtfDigestQualityTests(unittest.TestCase):
         self.assertTrue(items[0].published)
         self.assertGreaterEqual(len(items[0].summary), 80)
 
+    def test_fixed_page_monitor_accepts_absolute_episode_links_and_current_podcast_path(self) -> None:
+        monitor = dr.FixedPageMonitor(
+            "Top Traders Unplugged Systematic Investor",
+            "https://www.toptradersunplugged.com/podcasts/systematic-investor/",
+            r"/podcast/[^\"'<>#? ]+",
+            "播客页面",
+        )
+        episode_url = "https://www.toptradersunplugged.com/podcast/137-years-of-trend/"
+        original_fetch = dr.fetch_bytes
+        try:
+            def fake_fetch(url: str, timeout: int = 30, headers: dict[str, str] | None = None) -> bytes:
+                if url == monitor.url:
+                    return f'<a href="{episode_url}">137 Years of Trend</a>'.encode()
+                if url == episode_url:
+                    return b"""
+                    <meta itemprop="datePublished" content="2026-09-05T04:05:00+00:00">
+                    <p>This episode reviews 137 years of trend-following evidence, diversification,
+                    volatility scaling, rates, commodities, CTA ETFs, implementation costs, and robustness.</p>
+                    """
+                raise AssertionError(url)
+
+            dr.fetch_bytes = fake_fetch
+            items = dr.fixed_page_items(monitor)
+        finally:
+            dr.fetch_bytes = original_fetch
+
+        self.assertEqual([item.url for item in items], [episode_url])
+        self.assertEqual(items[0].published, "2026-09-05T04:05:00+00:00")
+
+    def test_fixed_page_publication_date_accepts_visible_published_label(self) -> None:
+        parsed = dr.fixed_page_publication_date("<div>Published on September 7, 2026</div>")
+
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed.date().isoformat(), "2026-09-07")
+
     def test_fixed_monitor_excludes_youtube_shorts_and_keeps_full_episode(self) -> None:
         original_parse_feed = dr.parse_feed
         original_page_items = dr.fixed_page_items
@@ -319,6 +354,87 @@ class EtfDigestQualityTests(unittest.TestCase):
 
         self.assertIsNone(dr.fixed_monitor_item_with_evidence(off_topic))
         self.assertIsNotNone(dr.fixed_monitor_item_with_evidence(quant_item))
+
+    def test_concentration_blog_is_relevant_to_both_research_and_fixed_monitor_paths(self) -> None:
+        item = dr.Item(
+            "A Wealth of Common Sense（博客）",
+            "It's a Concentrated World",
+            "https://awealthofcommonsense.com/2026/09/its-a-concentrated-world/",
+            "2026-09-07T03:09:43+00:00",
+            (
+                "The S&P 500 top ten holdings are nearly 40% of the index, compared with 17% in 2015. "
+                "The article compares market concentration across countries and examines the earnings share "
+                "of the largest firms, diversification risk, index construction, and portfolio implications."
+            ),
+        )
+
+        self.assertTrue(dr.etf_research_relevant(item))
+        self.assertTrue(dr.fixed_monitor_title_relevant(item))
+        scored = dr.score_etf_research_item(item)
+        self.assertIsNotNone(scored)
+        self.assertGreaterEqual(scored.score, 55)
+
+    def test_quantocracy_collection_is_relevant_before_child_link_enrichment(self) -> None:
+        item = dr.Item(
+            "Quantocracy",
+            "Recent Quant Links from Quantocracy as of 09/06/2026",
+            "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-09062026/",
+            "2026-09-07T05:15:05+00:00",
+            "This is a recent collection of quantitative research links.",
+        )
+
+        self.assertTrue(dr.etf_research_relevant(item))
+        enriched = dr.Item(item.source, item.title, item.url, item.published, item.summary + " A child discusses a leveraged ETF.")
+        self.assertIsNotNone(dr.score_etf_research_item(enriched))
+
+    def test_research_ranking_does_not_collapse_distinct_papers_with_same_public_topic(self) -> None:
+        first = dr.Item(
+            "arXiv q-fin.PM",
+            "First New Portfolio Optimization Paper",
+            "https://arxiv.org/abs/2609.00001",
+            "2026-09-07T01:00:00+00:00",
+            "Portfolio optimization research with allocation constraints and risk evidence.",
+        )
+        second = dr.Item(
+            "arXiv q-fin.PM",
+            "Second New Portfolio Optimization Paper",
+            "https://arxiv.org/abs/2609.00002",
+            "2026-09-07T02:00:00+00:00",
+            "Portfolio optimization research with allocation constraints and risk evidence.",
+        )
+
+        ranked = dr.rank_etf_research_items([first, second], limit=8)
+
+        self.assertEqual({item.item.url for item in ranked}, {first.url, second.url})
+
+    def test_new_relevant_paper_can_pass_evidence_without_hard_coded_title(self) -> None:
+        item = dr.Item(
+            "arXiv q-fin.PM",
+            "Portfolio Diversification and Concentration under Dependence Uncertainty: A Majorization Approach",
+            "https://arxiv.org/abs/2609.04496",
+            "2026-09-07T00:00:00+00:00",
+            (
+                "This paper studies portfolio diversification under dependence uncertainty using majorization. "
+                "It proves robust ordering results for portfolio risk when marginal distributions are known but "
+                "dependence is ambiguous. The analysis identifies a concentration paradox in worst-case portfolio "
+                "optimization and discusses the implications for allocation constraints and risk management."
+            ),
+        )
+
+        self.assertTrue(dr.etf_research_relevant(item))
+        self.assertTrue(dr.etf_has_enough_summary_evidence(item))
+
+    def test_empty_fixed_section_does_not_claim_complete_no_update_when_collection_unconfirmed(self) -> None:
+        lines: list[str] = []
+        dr.append_etf_fixed_monitor_section(
+            lines,
+            [],
+            [("AQR Research", "采集未确认（未找到带日期正文，可能为访问、链接或日期解析问题）", 0)],
+        )
+        rendered = "\n".join(lines)
+
+        self.assertIn("不能解释为所有来源均无更新", rendered)
+        self.assertNotIn("确认没有未推送过的新内容", rendered)
 
     def test_etf_email_source_registry_and_dedupe_cover_required_scope(self) -> None:
         page_sources = {monitor.source for monitor in dr.ETF_FIXED_PAGE_MONITORS}

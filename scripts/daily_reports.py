@@ -15,6 +15,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from html.parser import HTMLParser
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -189,7 +190,7 @@ ETF_FIXED_PAGE_MONITORS: tuple[FixedPageMonitor, ...] = (
     FixedPageMonitor("BlackRock Capital Market Assumptions", "https://www.blackrock.com/us/financial-professionals/insights/capital-market-assumptions", r"/us/financial-professionals/insights/[^\\\"'<>#? ]+", "页面", 5),
     FixedPageMonitor("GMO Research", "https://www.gmo.com/americas/research-library/", r"/americas/research-library/[^\\\"'<>#? ]+", "页面", 5),
     FixedPageMonitor("Kitces Retirement Planning", "https://www.kitces.com/blog/category/6-retirement-planning/", r"/blog/[^\\\"'<>#? ]+", "页面", 5),
-    FixedPageMonitor("Top Traders Unplugged Systematic Investor", "https://www.toptradersunplugged.com/podcasts/systematic-investor/", r"/podcasts/(?:systematic-investor/)?[^\\\"'<>#? ]+", "播客页面", 5),
+    FixedPageMonitor("Top Traders Unplugged Systematic Investor", "https://www.toptradersunplugged.com/podcasts/systematic-investor/", r"/podcast/[^\\\"'<>#? ]+", "播客页面", 5),
     FixedPageMonitor("Morningstar The Long View", "https://www.morningstar.com/podcasts/the-long-view", r"/(?:podcasts|content)/[^\\\"'<>#? ]+", "播客页面", 5),
     FixedPageMonitor("Morningstar Retirement Research", "https://www.morningstar.com/retirement/morningstars-retirement-income-research-finding-your-safe-withdrawal-rate", r"/retirement/[^\\\"'<>#? ]+", "页面", 5),
     FixedPageMonitor("Dimensional Insights", "https://www.dimensional.com/us-en/insights", r"/us-en/insights/[^\\\"'<>#? ]+", "页面", 5),
@@ -207,7 +208,7 @@ ETF_FIXED_PAGE_MONITORS: tuple[FixedPageMonitor, ...] = (
     FixedPageMonitor("Klement on Investing", "https://klementoninvesting.substack.com/", r"/p/[^\\\"'<>#? ]+", "条件页面", 5),
     FixedPageMonitor("Two Sigma Venn Insights", "https://www.venn.twosigma.com/insights/", r"/insights/[^\\\"'<>#? ]+", "条件页面", 5),
     FixedPageMonitor("Bridgewater Research", "https://www.bridgewater.com/research-and-insights", r"/research-and-insights/[^\\\"'<>#? ]+", "条件页面", 5),
-    FixedPageMonitor("Top Traders Unplugged Allocator", "https://www.toptradersunplugged.com/podcasts/allocator/", r"/podcasts/(?:allocator/)?[^\\\"'<>#? ]+", "条件播客页面", 5),
+    FixedPageMonitor("Top Traders Unplugged Allocator", "https://www.toptradersunplugged.com/podcasts/allocator/", r"/podcast/[^\\\"'<>#? ]+", "条件播客页面", 5),
 )
 
 ETF_EXTERNAL_FORUM_FEEDS: tuple[tuple[str, str, int], ...] = (
@@ -272,7 +273,15 @@ def parse_date(text: str | None) -> datetime | None:
         try:
             parsed = email.utils.parsedate_to_datetime(text)
         except Exception:
-            return None
+            parsed = None
+            for fmt in ("%B %d, %Y", "%b %d, %Y"):
+                try:
+                    parsed = datetime.strptime(text, fmt)
+                    break
+                except ValueError:
+                    continue
+            if parsed is None:
+                return None
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.astimezone(timezone.utc)
@@ -1279,6 +1288,13 @@ def etf_research_relevant(item: Item) -> bool:
         "rebalance",
         "expected return",
         "valuation",
+        "concentration",
+        "concentrated",
+        "quantocracy",
+        "quant links",
+        "cross-impact",
+        "asset-liability",
+        "automated investing",
     ]
     return any(x in text for x in inclusions)
 
@@ -2137,12 +2153,27 @@ def etf_title_has_specific_signal(item: Item) -> bool:
 
 
 def etf_has_enough_summary_evidence(item: Item) -> bool:
+    if etf_title_has_specific_signal(item):
+        return True
+    # New research must not require a hard-coded title translation to pass the
+    # evidence gate. Two source-derived, domain-specific details are sufficient
+    # after the separate relevance and source-quality checks.
+    if len(etf_article_detail_points(item, limit=2)) >= 2:
+        return True
+    profile = etf_feed_profile(item.source)
+    trusted_research_source = item.source.startswith("arXiv") or bool(
+        profile
+        and any(marker in profile.tier for marker in ("核心", "高质量", "官方", "论文"))
+    )
+    specific_sentences = [
+        sentence for sentence in split_article_sentences(item.summary) if detail_sentence_score(sentence) >= 8
+    ]
+    if trusted_research_source and len(clean_text(item.summary, 5000)) >= 240 and len(specific_sentences) >= 2:
+        return True
     fact = etf_chinese_fact(item)
     if low_information_fact(fact) or generic_etf_fact(fact):
         return False
-    if etf_title_has_specific_signal(item):
-        return True
-    return len(etf_article_detail_points(item, limit=2)) >= 2
+    return bool(clean_text(fact, 1000))
 
 
 def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
@@ -2976,6 +3007,7 @@ def etf_item_sections(item: Item) -> tuple[str, ...]:
 
 def score_etf_research_item(item: Item) -> ScoredResearchItem | None:
     text = f"{item.source} {item.title} {item.summary} {item.url}".lower()
+    is_quantocracy_collection = "recent quant links from quantocracy" in item.title.lower()
     hard_exclusions = [
         "single-stock",
         "single stock",
@@ -2990,7 +3022,9 @@ def score_etf_research_item(item: Item) -> ScoredResearchItem | None:
         "celebrity",
         "sports betting",
     ]
-    if any(k in text for k in hard_exclusions):
+    # Aggregator collections are retained as a review pool. A single child link
+    # mentioning an excluded product must not discard every other child link.
+    if not is_quantocracy_collection and any(k in text for k in hard_exclusions):
         return None
 
     profile = etf_feed_profile(item.source)
@@ -3018,6 +3052,7 @@ def score_etf_research_item(item: Item) -> ScoredResearchItem | None:
         (("treasury", "yield curve", "fed", "inflation", "credit spread", "dollar", "volatility"), 12, "宏观数据/regime"),
         (("hkex", "stock connect", "sse", "szse", "a-share", "listing rule", "china a", "hong kong"), 16, "中港市场结构"),
         (("flow", "aum", "expense ratio", "etf structure", "spiva", "index"), 8, "ETF/指数结构"),
+        (("concentration", "concentrated", "majorization", "dependence uncertainty"), 12, "集中度/分散化"),
     ]
     for keys, weight, reason in keyword_groups:
         if any(k in text for k in keys):
@@ -3058,7 +3093,9 @@ def rank_etf_research_items(items: list[Item], limit: int = 8, require_evidence:
     out: list[ScoredResearchItem] = []
     seen_public_titles: set[tuple[str, str]] = set()
     for val in ranked:
-        display_key = (val.item.source, etf_public_heading(val.item.title, val.item.summary))
+        # Different articles from the same publisher can share a broad Chinese
+        # topic label. Deduplicate on the original title, not that display label.
+        display_key = (val.item.source, norm_title(val.item.title))
         if display_key in seen_public_titles:
             continue
         seen_public_titles.add(display_key)
@@ -3485,13 +3522,69 @@ def fixed_page_text(body: str) -> str:
     return clean_text(html.unescape(text), 600)
 
 
+class FixedPageAnchorParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.anchors: list[tuple[str, str]] = []
+        self._href = ""
+        self._text: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() != "a" or self._href:
+            return
+        href = next((value for name, value in attrs if name.lower() == "href" and value), "")
+        if href:
+            self._href = href
+            self._text = []
+
+    def handle_data(self, data: str) -> None:
+        if self._href:
+            self._text.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() == "a" and self._href:
+            self.anchors.append((self._href, " ".join(self._text)))
+            self._href = ""
+            self._text = []
+
+
+def fixed_page_anchors(page: str) -> list[tuple[str, str]]:
+    parser = FixedPageAnchorParser()
+    try:
+        parser.feed(page)
+        parser.close()
+    except Exception:
+        return []
+    return parser.anchors
+
+
+def fixed_page_article_title(page: str) -> str:
+    patterns = (
+        r'property=["\']og:title["\'][^>]+content=["\']([^"\']+)',
+        r'content=["\']([^"\']+)["\'][^>]+property=["\']og:title["\']',
+        r'name=["\']twitter:title["\'][^>]+content=["\']([^"\']+)',
+        r'<h1[^>]*>(.*?)</h1>',
+        r'<title[^>]*>(.*?)</title>',
+    )
+    for pattern in patterns:
+        match = re.search(pattern, page, flags=re.I | re.S)
+        if match:
+            title = fixed_page_text(match.group(1))
+            if title:
+                return clean_text(title, 180)
+    return ""
+
+
 def fixed_page_publication_date(page: str) -> datetime | None:
     patterns = (
         r'property=["\']article:published_time["\'][^>]+content=["\']([^"\']+)',
         r'content=["\']([^"\']+)["\'][^>]+property=["\']article:published_time["\']',
-        r'name=["\'](?:date|publish-date|publication_date)["\'][^>]+content=["\']([^"\']+)',
+        r'(?:name|itemprop|property)=["\'](?:date|publish-date|publication_date|datePublished|parsely-pub-date)["\'][^>]+content=["\']([^"\']+)',
+        r'content=["\']([^"\']+)["\'][^>]+(?:name|itemprop|property)=["\'](?:date|publish-date|publication_date|datePublished|parsely-pub-date)["\']',
         r'"datePublished"\s*:\s*"([^"]+)"',
         r'<time[^>]+datetime=["\']([^"\']+)',
+        r'(?:data-publish-date|data-publication-date)=["\']([^"\']+)',
+        r'(?:Published|Publication date|Date published)\s*(?:on|:)?\s*(?:</?[^>]+>\s*)?([A-Z][a-z]+ \d{1,2}, \d{4})',
     )
     for pattern in patterns:
         for match in re.finditer(pattern, page, flags=re.I):
@@ -3525,21 +3618,23 @@ def fixed_page_items(monitor: FixedPageMonitor) -> list[Item]:
         page = fetch_bytes(monitor.url, timeout=12).decode("utf-8", "ignore")
     except Exception:
         return []
-    anchor_re = re.compile(
-        r"<a\s+[^>]*href=[\"'](?P<href>" + monitor.href_pattern + r")[\"'][^>]*>(?P<body>.*?)</a>",
-        flags=re.I | re.S,
-    )
+    # Parse anchors before matching the normalized URL path. This accepts both
+    # relative and absolute links and avoids regex corruption from complex HTML
+    # attributes while preserving each monitor's path allowlist.
+    href_re = re.compile(monitor.href_pattern, flags=re.I)
     out: list[Item] = []
     seen: set[str] = set()
     attempted = 0
-    for match in anchor_re.finditer(page):
-        href = html.unescape(match.group("href")).rstrip("\\")
+    for raw_href, anchor_text in fixed_page_anchors(page):
+        href = html.unescape(raw_href).rstrip("\\")
         url = urllib.parse.urljoin(monitor.url, href)
+        if not href_re.search(urllib.parse.urlsplit(url).path):
+            continue
         key = canonical_url(url)
         if key in seen:
             continue
         seen.add(key)
-        title = fixed_page_text(match.group("body")) or fixed_page_title_from_url(url)
+        title = fixed_page_text(anchor_text) or fixed_page_title_from_url(url)
         title = clean_text(title, 180)
         if not title or url.rstrip("/") == monitor.url.rstrip("/"):
             continue
@@ -3552,6 +3647,7 @@ def fixed_page_items(monitor: FixedPageMonitor) -> list[Item]:
             continue
         published = fixed_page_publication_date(article_page)
         summary = fixed_page_article_summary(article_page)
+        title = fixed_page_article_title(article_page) or title
         # A newly discovered landing-page link is not a new publication. Both a
         # verifiable publication date and readable article evidence are required.
         if not published or len(summary) < 80:
@@ -3589,6 +3685,8 @@ def fixed_monitor_title_relevant(item: Item) -> bool:
         "bond",
         "cash",
         "correlation",
+        "concentration",
+        "concentrated",
         "diversification",
         "etf",
         "factor",
@@ -3671,10 +3769,14 @@ def collect_etf_fixed_monitor_updates_with_audit(
         feed_items.extend(verified)
         if verified:
             status = "有可核验新增"
-        elif raw:
-            status = "无可核验新增（已去重、过期、短视频片段或正文不足）"
+        elif not raw:
+            status = "采集未确认（源无条目，可能无更新或访问/解析失败）"
+        elif not recent:
+            status = "无时间窗内条目"
+        elif not unseen:
+            status = "时间窗内条目均已去重"
         else:
-            status = "无可读条目或解析不足"
+            status = "时间窗内候选未通过相关性、Shorts或正文核验"
         audit.append((feed.source, status, len(verified)))
 
     page_items: list[Item] = []
@@ -3697,10 +3799,14 @@ def collect_etf_fixed_monitor_updates_with_audit(
         page_items.extend(verified)
         if verified:
             status = "有可核验新增"
-        elif raw:
-            status = "无新增（已去重或超出时间窗）"
+        elif not raw:
+            status = "采集未确认（未找到带日期正文，可能为访问、链接或日期解析问题）"
+        elif not recent:
+            status = "无时间窗内条目"
+        elif not unseen:
+            status = "时间窗内条目均已去重"
         else:
-            status = "无带日期正文的新条目或解析不足"
+            status = "时间窗内候选未通过相关性或正文核验"
         audit.append((monitor.source, status, len(verified)))
 
     out: list[Item] = []
@@ -3743,7 +3849,13 @@ def append_etf_fixed_monitor_section(
         "",
     ]
     if not updates:
-        lines.append(f"过去 {ETF_ARTICLE_MAX_AGE_HOURS} 小时没有发现未推送过的新内容；不补旧文。")
+        if audit and any("采集未确认" in status for _source, status, _count in audit):
+            lines.append(
+                f"过去 {ETF_ARTICLE_MAX_AGE_HOURS} 小时没有确认到可发布新增；部分来源采集未确认，"
+                "因此不能解释为所有来源均无更新，也不以旧文补位。"
+            )
+        else:
+            lines.append(f"过去 {ETF_ARTICLE_MAX_AGE_HOURS} 小时确认没有未推送过的新内容；不补旧文。")
         lines.append("")
 
     for idx, item in enumerate(updates[:ETF_FIXED_MONITOR_DISPLAY_LIMIT], 1):
