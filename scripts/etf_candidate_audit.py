@@ -66,6 +66,22 @@ def audit_candidates(manifest: dict, history_before: dict | None = None) -> dict
         failures.append({"reason": "candidate_ledger_missing"})
         return result()
     selected = {canonical(row["url"]) for row in manifest.get("selected_items", [])}
+    def article_identity(row: dict) -> tuple:
+        # A URL alone does not establish that two source captures describe the
+        # same selected publication. Keep conflicting dates/evidence visible.
+        try:
+            published = utc(row["published"])
+        except (KeyError, ValueError, TypeError):
+            published = None
+        return (canonical(row.get("url", "")), row.get("source", ""),
+                re.sub(r"\W+", " ", row.get("title", "").lower()).strip(), published)
+
+    selected_identities = {article_identity(row) for row in manifest.get("selected_items", [])}
+    research_representatives = {
+        article_identity(row): row.get("source_id") for row in candidates
+        if str(row.get("source_id", "")).startswith("research|")
+        and article_identity(row) in selected_identities
+    }
     selected_titles = {re.sub(r"\W+", " ", row.get("title", "").lower()).strip(): canonical(row["url"])
                        for row in manifest.get("selected_items", []) if row.get("title")}
     captured = {canonical(row.get("url", "")) for row in candidates}
@@ -112,6 +128,14 @@ def audit_candidates(manifest: dict, history_before: dict | None = None) -> dict
             continue
         if not shown and title and title in selected_titles:
             decisions.append({"decision": "same_run_title_duplicate", "represented_by": selected_titles[title], **detail})
+            continue
+        if (shown and str(row.get("source_id", "")).startswith(("fixed_feed|", "fixed_page|"))
+                and article_identity(row) in research_representatives):
+            # The research capture is independently checked below, including
+            # the 14-day limit and enriched prose. A second fixed-source capture
+            # is not a second rendered article in the strict 36-hour section.
+            decisions.append({"decision": "same_run_research_capture_duplicate",
+                              "represented_by": research_representatives[article_identity(row)], **detail})
             continue
         primary = published >= cutoff - timedelta(hours=36)
         forum = str(row.get("source_id", "")).startswith(("forum|", "reddit|"))

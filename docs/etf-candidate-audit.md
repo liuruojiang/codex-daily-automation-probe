@@ -41,6 +41,14 @@ separate. Publication after the frozen build cutoff is never eligible. Dedup
 uses 365-day pre-build history, preserving earlier same-day deliveries, and
 same-run original-title duplicates map to an actual selected representative.
 
+When a research feed and a fixed monitor capture the same selected publication
+(canonical URL, publisher, normalized title and publication timestamp all match),
+the fixed capture points to the independently audited research representative.
+This preserves the research backfill window without treating its duplicate
+capture as a new fixed-section update. Fixed-only articles still require 36-hour
+freshness; missing research evidence, conflicting identities and articles older
+than the research backfill limit still block delivery.
+
 The 08:00 preflight recomputes schema-2 audits from immutable artifacts. A cutoff
 not verified against the real Build interval cannot establish an omission.
 Legacy artifacts remain PARTIAL; current re-fetches do not prove past coverage.

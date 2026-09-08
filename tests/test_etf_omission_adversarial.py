@@ -227,6 +227,55 @@ class OmissionAdversarialTests(unittest.TestCase):
                 self.select()
                 self.assertNotEqual(self.check()["status"], "FAILED")
 
+    def add_fixed_capture(self):
+        duplicate = deepcopy(self.item)
+        duplicate["source_id"] = self.item["source_id"].replace("research|", "fixed_feed|", 1)
+        duplicate["summary"] = "Short feed teaser."
+        duplicate.pop("enrichment", None)
+        self.manifest["candidates"].append(duplicate)
+        self.manifest["configured_sources"].append(duplicate["source_id"])
+        self.manifest["source_audit"].append({"source_id": duplicate["source_id"], "coverage": "complete", "evidence": {"captured_count": 1}})
+        return duplicate
+
+    def test_research_backfill_also_captured_by_fixed_feed_is_one_article(self):
+        self.item["published"] = "2026-09-05T12:00:00Z"
+        self.select()
+        duplicate = self.add_fixed_capture()
+        # This order also occurs with concurrent collection; attribution must
+        # not depend on encountering the research row first.
+        self.manifest["candidates"].reverse()
+        result = self.check()
+        self.assertEqual(result["status"], "PASS", result)
+        self.assertTrue(any(row["decision"] == "same_run_research_capture_duplicate" for row in result["decisions"]))
+        self.item["summary"] = "Insufficient evidence."
+        self.item.pop("enrichment")
+        self.assertIn("selected_evidence_requires_review", self.reasons(self.check()))
+
+    def test_duplicate_capture_cannot_extend_research_backfill_window(self):
+        self.item["published"] = "2026-08-24T20:59:59Z"
+        self.select()
+        self.add_fixed_capture()
+        self.assertIn("stale_item_rendered", self.reasons(self.check()))
+
+    def test_fixed_only_backfill_still_fails(self):
+        self.item["published"] = "2026-09-05T12:00:00Z"
+        duplicate = self.add_fixed_capture()
+        self.manifest["candidates"] = [duplicate]
+        self.manifest["source_audit"][0]["evidence"]["captured_count"] = 0
+        self.select()
+        self.assertIn("stale_item_rendered", self.reasons(self.check()))
+
+    def test_conflicting_capture_identity_is_not_excused_by_shared_url(self):
+        self.item["published"] = "2026-09-05T12:00:00Z"
+        self.select()
+        duplicate = self.add_fixed_capture()
+        original = deepcopy(duplicate)
+        for field, value in (("published", "2026-09-04T12:00:00Z"), ("title", "Another portfolio article"), ("source", "Other publisher")):
+            with self.subTest(field=field):
+                duplicate.update(original)
+                duplicate[field] = value
+                self.assertIn("stale_item_rendered", self.reasons(self.check()))
+
     def test_local_preflight_unverified_cutoff_does_not_certify_timed_omission(self):
         from etf_preflight import audit
         metadata = {"body": "# Audit fixture", "attachment": None,
