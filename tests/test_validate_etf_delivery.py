@@ -57,13 +57,26 @@ class DeliveryGateTests(unittest.TestCase):
         self.assertEqual(validate(self.metadata, self.manifest), [])
 
     def test_cli_failure_really_returns_nonzero_before_send(self):
+        # The CLI requires the new independent ledger, not just rendered URLs.
+        source_id = "research|fixture|https://example.com/feed"
+        self.manifest.update(schema_version=2, decision_policy="etf-candidates-v1",
+                             head_sha="fixture", cutoff_utc="2026-09-07T21:00:00Z",
+                             configured_sources=[source_id],
+                             source_audit=[{"source_id": source_id, "coverage": "complete", "evidence": {"captured_count": 1}}],
+                             candidates=[{"source_id": source_id, "url": self.url, "title": "Portfolio methodology",
+                                          "published": "2026-09-07T12:00:00Z", "pipeline_decision": {"reason": "rendered"},
+                                          "summary": "This study examines how different portfolio construction methods respond to changes in the underlying investment opportunity set. We compare the resulting allocations across multiple evaluation periods and document where the conclusions depend on assumptions about implementation and information availability."}])
         with tempfile.TemporaryDirectory() as directory:
             metadata_path = Path(directory) / "metadata.json"
             manifest_path = Path(directory) / "collection_manifest.json"
             metadata_path.write_text(json.dumps(self.metadata), encoding="utf-8")
             manifest_path.write_text(json.dumps(self.manifest), encoding="utf-8")
+            (Path(directory) / "history_before.json").write_text(json.dumps({"phase": "before_build", "head_sha": "fixture", "items": []}), encoding="utf-8")
             command = [sys.executable, str(ROOT / "scripts/validate_etf_delivery.py"), str(metadata_path)]
             self.assertEqual(subprocess.run(command, capture_output=True).returncode, 0)
+            self.manifest["candidates"] = []
+            manifest_path.write_text(json.dumps(self.manifest), encoding="utf-8")
+            self.assertNotEqual(subprocess.run(command, capture_output=True).returncode, 0)
             manifest_path.unlink()
             result = subprocess.run(command, capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
