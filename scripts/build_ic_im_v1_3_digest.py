@@ -248,6 +248,7 @@ def product_reasons(product: str, signal: dict[str, Any]) -> list[str]:
         momentum_reason(product, signal),
         grid_reason(product, signal),
         put_reason(product, signal),
+        f"Put报价口径：{signal.get('put_market') or 'N/A（缺少报价证据）'}",
         call_reason(product, signal),
         roll_reason(signal),
         quarter_spread_reason(signal),

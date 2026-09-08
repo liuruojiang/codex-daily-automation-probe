@@ -17,3 +17,8 @@ def test_new_momentum_rule_replaces_old_formula():
     text=digest.put_reason('IM',signal)
     assert '动量Put仅MOM120' in text and '102%' in text
     assert '动量Put按父规则数量' not in text
+
+
+def test_estimated_price_basis_is_preserved_in_report():
+    signal={'put_market':'核心：MO2612-P-8600，当日结算估计1323.6（零成交量；非成交价）；动量：无'}
+    assert any(signal['put_market'] in reason for reason in digest.product_reasons('IM', signal))

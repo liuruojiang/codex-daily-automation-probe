@@ -115,6 +115,9 @@ jobs:
             test_delivery_transport_retry.py test_ohlcv_provider_validation.py \
             test_poe_ic_im_v1_3_state.py test_run_ic_im_v1_3_github_digest.py \
             test_ic_im_daily_valuation.py test_im_put_policy.py \
+            test_adversarial_im_ledger_20260908.py test_adversarial_im_report_iv_20260908.py \
+            test_adversarial_im_put_execution_20260908.py test_im_put_price_basis.py \
+            test_live_mo_put_midpoint_20260908.py \
             test_ic_im_chinabond.py \
             test_adversarial_icim_delivery.py \
             --junitxml=regression.xml
