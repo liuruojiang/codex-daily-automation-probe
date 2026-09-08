@@ -3374,6 +3374,9 @@ def fixed_page_publication_date(page: str) -> datetime | None:
             types = [types] if isinstance(types, str) else types
             if not isinstance(types, list):
                 continue
+            entity_url = entry.get("url") or entry.get("@id")
+            if document_urls and isinstance(entity_url, str) and canonical_url(entity_url) not in document_urls:
+                continue
             canonical_webpage = (
                 "WebPage" in types
                 and isinstance(entry.get("url"), str)

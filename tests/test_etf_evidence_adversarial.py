@@ -83,6 +83,8 @@ class EvidenceAdversarialTests(unittest.TestCase):
         page = '<head><link rel="canonical" href="https://example.org/current"></head><script type="application/ld+json">{"@type":"WebPage","url":"https://example.org/current","datePublished":"2026-09-07"}</script>'
         self.assertEqual(dr.fixed_page_publication_date(page).date().isoformat(), "2026-09-07")
         self.assertIsNone(dr.fixed_page_publication_date(page.replace('"url":"https://example.org/current"', '"url":"https://example.org/related"')))
+        related_article = page.replace('"WebPage"', '"BlogPosting"').replace('"url":"https://example.org/current"', '"url":"https://example.org/related"')
+        self.assertIsNone(dr.fixed_page_publication_date(related_article))
 
 
 if __name__ == "__main__":
