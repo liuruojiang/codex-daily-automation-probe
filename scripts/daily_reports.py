@@ -5,6 +5,7 @@ import concurrent.futures
 import csv
 import email.utils
 import html
+import hashlib
 import json
 import os
 import re
@@ -13,7 +14,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass
+from contextvars import ContextVar
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 from pathlib import Path
@@ -24,6 +26,8 @@ import etf_movers as broad_etf_movers
 
 BJ = ZoneInfo("Asia/Shanghai")
 UA = "Mozilla/5.0 (Codex daily digest; +https://github.com/liuruojiang/codex-daily-automation-probe)"
+ETF_BUILD_CUTOFF: ContextVar[datetime | None] = ContextVar("etf_build_cutoff", default=None)
+ETF_COLLECTION_SNAPSHOT: ContextVar[dict | None] = ContextVar("etf_collection_snapshot", default=None)
 
 
 @dataclass
@@ -674,8 +678,9 @@ def sort_recent(items: list[Item]) -> list[Item]:
 
 
 def filter_recent_published(items: list[Item], max_age_hours: int) -> list[Item]:
-    cutoff = now_bj().astimezone(timezone.utc) - timedelta(hours=max_age_hours)
-    return [item for item in items if (parse_date(item.published) or datetime.min.replace(tzinfo=timezone.utc)) >= cutoff]
+    end = (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(timezone.utc)
+    cutoff = end - timedelta(hours=max_age_hours)
+    return [item for item in items if (published := parse_date(item.published)) and cutoff <= published <= end]
 
 
 def chinese_topic(title: str, summary: str = "") -> str:
@@ -3275,14 +3280,18 @@ def ensure_non_reddit_forum_mix(
 def collect_etf_forum_items() -> list[Item]:
     forum_items: list[Item] = []
     for subreddit in ETF_FORUM_SUBREDDITS:
+        subreddit_start = len(forum_items)
         for sort in ETF_REDDIT_FORUM_SORTS:
             forum_items.extend(fetch_reddit_listing_items(subreddit, sort, limit=ETF_REDDIT_LISTING_LIMIT))
             time.sleep(0.2)
         reddit_rss_items = parse_feed(f"Reddit r/{subreddit}", f"https://old.reddit.com/r/{subreddit}/hot/.rss", limit=ETF_REDDIT_LISTING_LIMIT)
         forum_items.extend(reddit_hot_rss_ranked_items(reddit_rss_items))
+        record_etf_source("reddit", subreddit, f"https://old.reddit.com/r/{subreddit}/", forum_items[subreddit_start:])
         time.sleep(0.2)
     for source, url, limit in ETF_EXTERNAL_FORUM_FEEDS:
-        forum_items.extend(parse_feed(source, url, limit=limit))
+        parsed_forum = parse_feed(source, url, limit=limit)
+        record_etf_source("forum", source, url, parsed_forum)
+        forum_items.extend(parsed_forum)
         time.sleep(0.2)
     if not forum_items:
         forum_feeds = {
@@ -3441,7 +3450,7 @@ def append_etf_research_sections(
         if not section_items:
             lines.append("今日没有足够高相关、未重复的新内容进入本段；不从低质量新闻里硬写。")
             continue
-        for i, scored in enumerate(section_items[:4], 1):
+        for i, scored in enumerate(section_items, 1):
             append_scored_item(lines, scored, i)
 
     lines += ["", "---", "", "## 论坛与社区 idea mining", "", "论坛和社区只用于发现待验证问题，不是事实结论，也不进入一句话结论。", ""]
@@ -3752,6 +3761,7 @@ def collect_etf_fixed_monitor_updates_with_audit(
                 feed_results[feed.source] = []
     for feed in ETF_FIXED_MONITOR_FEEDS:
         raw = feed_results.get(feed.source, [])
+        record_etf_source("fixed_feed", feed.source, feed.url, raw)
         recent = filter_recent_published(sort_recent(dedupe_items(raw)), ETF_ARTICLE_MAX_AGE_HOURS)
         unseen = filter_previously_sent("etf", recent, days=ETF_DEDUPE_DAYS)
         verified: list[Item] = []
@@ -3793,6 +3803,7 @@ def collect_etf_fixed_monitor_updates_with_audit(
                 page_results[monitor.source] = []
     for monitor in ETF_FIXED_PAGE_MONITORS:
         raw = page_results.get(monitor.source, [])
+        record_etf_source("fixed_page", monitor.source, monitor.url, raw)
         recent = filter_recent_published(sort_recent(dedupe_items(raw)), ETF_ARTICLE_MAX_AGE_HOURS)
         unseen = filter_previously_sent("etf", recent, days=ETF_DEDUPE_DAYS)
         verified = [prepared for item in unseen if (prepared := fixed_monitor_item_with_evidence(item))]
@@ -5736,8 +5747,61 @@ MOVER_UNIVERSE = [
 ]
 
 
+def etf_configured_source_ids() -> list[str]:
+    return [
+        *[f"research|{feed.source}|{feed.url}" for feed in ETF_RESEARCH_FEEDS],
+        *[f"fixed_feed|{feed.source}|{feed.url}" for feed in ETF_FIXED_MONITOR_FEEDS],
+        *[f"fixed_page|{feed.source}|{feed.url}" for feed in ETF_FIXED_PAGE_MONITORS],
+        *[f"forum|{source}|{url}" for source, url, _limit in ETF_EXTERNAL_FORUM_FEEDS],
+        *[f"reddit|{subreddit}" for subreddit in ETF_FORUM_SUBREDDITS],
+    ]
+
+
+def record_etf_source(kind: str, source: str, url: str, items: list[Item]) -> None:
+    snapshot = ETF_COLLECTION_SNAPSHOT.get()
+    if snapshot is None:
+        return
+    source_id = f"{kind}|{source}|{url}" if kind != "reddit" else f"reddit|{source}"
+    # A bounded feed/listing is evidence of what was seen, not proof that no
+    # other publication existed. The independent preflight resolves coverage.
+    snapshot["source_audit"].append({
+        "source_id": source_id, "coverage": "partial",
+        "status": "bounded_listing_read" if items else "empty_or_unavailable",
+        "evidence": {"url": url, "captured_count": len(items)},
+    })
+    for item in items:
+        snapshot["candidates"].append({
+            **asdict(item), "source_id": source_id,
+            "independent_eligible": None,
+            "exclusion_reason": "requires_independent_review",
+            "is_aggregator": "quantocracy.com" in item.url,
+            "children_checked": False,
+        })
+
+
 def build_etf(out_dir: Path) -> None:
-    started = now_bj()
+    token = ETF_BUILD_CUTOFF.set(now_bj())
+    snapshot_token = ETF_COLLECTION_SNAPSHOT.set({
+        "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
+        "head_sha": os.environ.get("GITHUB_SHA", "local-unverified"),
+        "cutoff_utc": ETF_BUILD_CUTOFF.get().astimezone(timezone.utc).isoformat(),
+        "capture_mode": "build_snapshot",
+        "configured_sources": etf_configured_source_ids(),
+        "source_audit": [], "candidates": [],
+    })
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        before = {**load_digest_history("etf"), "phase": "before_build",
+                  "head_sha": os.environ.get("GITHUB_SHA", "local-unverified")}
+        (out_dir / "history_before.json").write_text(json.dumps(before, ensure_ascii=False, indent=2), encoding="utf-8")
+        _build_etf(out_dir)
+    finally:
+        ETF_COLLECTION_SNAPSHOT.reset(snapshot_token)
+        ETF_BUILD_CUTOFF.reset(token)
+
+
+def _build_etf(out_dir: Path) -> None:
+    started = ETF_BUILD_CUTOFF.get() or now_bj()
     # Beijing Sunday and Monday correspond to weekend US sessions. Those two
     # emails remain full source digests but do not replay Friday market tables.
     include_market_summary = started.weekday() not in {0, 6}
@@ -5771,6 +5835,7 @@ def build_etf(out_dir: Path) -> None:
                 research_results[feed.source] = []
     for feed in ETF_RESEARCH_FEEDS:
         parsed = research_results.get(feed.source, [])
+        record_etf_source("research", feed.source, feed.url, parsed)
         items.extend(parsed)
         recent_count = len(filter_recent_published(parsed, ETF_ARTICLE_MAX_AGE_HOURS))
         status = "已读取" if parsed else "无可读条目或解析不足"
@@ -5782,6 +5847,8 @@ def build_etf(out_dir: Path) -> None:
     )
 
     forum_items = collect_etf_forum_items()
+    forum_items = [item for item in forum_items if not parse_date(item.published)
+                   or parse_date(item.published) <= started.astimezone(timezone.utc)]
     today = report_date()
     fresh_forum_items = filter_previously_sent("etf", forum_items, days=ETF_DEDUPE_DAYS)
     forum_picked = select_etf_forum_items(fresh_forum_items, limit=ETF_FORUM_DISPLAY_LIMIT)
@@ -5886,7 +5953,6 @@ def build_etf(out_dir: Path) -> None:
     )
     append_etf_research_feed_audit(lines, research_feed_audit)
     fixed_monitor_rendered_count = append_etf_fixed_monitor_section(lines, fixed_monitor_updates, fixed_monitor_audit)
-    update_digest_history("etf", [*picked, *fixed_monitor_updates, *forum_picked], days=ETF_HISTORY_DAYS)
     market_audit_line = (
         f"- ETF 排行宇宙：扫描 {daily_movers.universe_count} 只美国上市 ETF，流动性及产品结构过滤后合格 {daily_movers.eligible_count} 只；每个涨跌榜按共同经济驱动强去重。"
         if daily_movers is not None
@@ -5906,6 +5972,15 @@ def build_etf(out_dir: Path) -> None:
     lines.append(f"- 回填去重：文章与论坛回填均排除最近 {ETF_BACKFILL_DEDUPE_DAYS} 天已推送内容，并只统计真正进入正文的条目。")
     lines += audit_lines("05:00 Asia/Shanghai", started)
     report_text = "\n".join(lines)
+    displayed_urls = {canonical_url(url) for url in re.findall(r"(?m)^- 链接：\s*(https?://\S+)\s*$", report_text)}
+    rendered_items = dedupe_items([
+        item for item in [*picked, *fixed_monitor_updates, *forum_picked]
+        if canonical_url(item.url) in displayed_urls
+    ])
+    required_urls = {canonical_url(item.url) for item in [*picked, *fixed_monitor_updates]}
+    if not required_urls <= displayed_urls:
+        raise ValueError("ETF selected research/fixed item missing from rendered email")
+    update_digest_history("etf", rendered_items, days=ETF_HISTORY_DAYS)
     md.write_text(report_text, encoding="utf-8")
 
     top_preview = "; ".join(
@@ -5929,6 +6004,15 @@ def build_etf(out_dir: Path) -> None:
         None,
         html_body=html_body,
     )
+    snapshot = ETF_COLLECTION_SNAPSHOT.get()
+    if snapshot is not None:
+        snapshot.update({
+            "captured_at_utc": now_bj().astimezone(timezone.utc).isoformat(),
+            "body_sha256": hashlib.sha256(report_text.encode("utf-8")).hexdigest(),
+            "selected_items": [asdict(item) for item in rendered_items],
+            "history_added_items": [asdict(item) for item in rendered_items],
+        })
+        (out_dir / "collection_manifest.json").write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def fetch_json(url: str) -> object:
