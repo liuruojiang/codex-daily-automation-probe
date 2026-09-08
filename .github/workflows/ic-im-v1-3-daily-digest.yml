@@ -78,7 +78,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           CORRECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.correction && 'true' || 'false' }}
+          SCHEDULED_ATTEMPT: ${{ github.event_name == 'schedule' || inputs.external_schedule == true }}
         run: |
+          # Ignore stale external 18:00 dispatches; manual diagnostics remain available.
+          if [[ "${SCHEDULED_ATTEMPT}" == "true" && "$(date +%H)" -lt 20 ]]; then
+            echo "should_send=false" >> "${GITHUB_OUTPUT}"
+            echo "Scheduled ICIM delivery is not due before 20:00 Asia/Shanghai"
+            exit 0
+          fi
           args=()
           if [[ "${CORRECTION}" == "true" ]]; then
             args+=(--correction)

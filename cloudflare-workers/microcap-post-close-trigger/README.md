@@ -1,5 +1,10 @@
 # Microcap and IC/IM post-close Cloudflare trigger
 
+2026-09-08 release note: the split Worker schedule below is prepared but not deployed
+because local Wrangler is not authenticated. GitHub's IC/IM schedule is published at
+20:00 Beijing and rejects scheduled/external attempts before 20:00, so the old
+18:00 Worker dispatch cannot send IC/IM email. Microcap remains unchanged.
+
 This Worker dispatches the existing microcap and IC/IM GitHub Actions workflows
 in `close_confirmed` mode. Both workflows keep their GitHub schedules as
 fallbacks and use delivery markers and concurrency groups to prevent duplicate
