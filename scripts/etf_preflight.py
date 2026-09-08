@@ -24,7 +24,7 @@ def utc(value: str) -> datetime:
 
 def canonical(value: str) -> str:
     parts = urlsplit(value.strip())
-    query = [(k, v) for k, v in parse_qsl(parts.query) if not k.lower().startswith("utm_")]
+    query = [(k, v) for k, v in parse_qsl(parts.query) if not k.lower().startswith("utm_") and k.lower() not in {"source", "rss"}]
     return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip("/"), urlencode(query), ""))
 
 
@@ -159,6 +159,15 @@ def audit(manifest: dict, metadata: dict, history_before: dict, run: dict) -> di
             gap("candidate_needs_independent_review", pipeline_reason=item.get("exclusion_reason", ""), **detail)
         else:
             decisions.append({"decision": "rendered" if url in displayed else "excluded", **detail})
+    if (manifest.get("schema_version") == 2 and cutoff_verified
+            and str(manifest.get("run_id")) == str(run.get("run_id"))
+            and manifest.get("head_sha") == run.get("head_sha")
+            and manifest.get("capture_mode") == "build_snapshot"):
+        # Recompute from immutable inputs, never trust a stored producer PASS.
+        from etf_candidate_audit import audit_candidates
+        candidate_result = audit_candidates(manifest, history_before)
+        failures.extend(candidate_result["failures"])
+        gaps.extend(candidate_result["gaps"])
     return {"status": "FAILED" if failures else "PARTIAL" if gaps else "PASS", "cutoff_utc": cutoff.isoformat(), "failures": failures, "gaps": gaps, "decisions": decisions}
 
 

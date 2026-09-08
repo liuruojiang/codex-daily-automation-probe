@@ -680,6 +680,11 @@ def enrich_article_item(item: Item) -> Item:
     base = clean_text(strip_noncontent_html(" ".join([item.summary, *paras])), 20000)
     summary = enrich_aggregator_item(item, base)
     source = reddit_source_with_engagement(item.source, item.url) if is_reddit else item.source
+    snapshot = ETF_COLLECTION_SNAPSHOT.get()
+    if snapshot is not None:
+        for candidate in snapshot["candidates"]:
+            if canonical_url(candidate["url"]) == canonical_url(item.url):
+                candidate["enrichment"] = {"attempted": True, "body_paragraphs": len(paras), "summary": summary}
     return Item(source, item.title, item.url, item.published, summary)
 
 
@@ -1917,18 +1922,77 @@ def etf_title_has_specific_signal(item: Item) -> bool:
     ) or "縮短香港股票現貨市場結算週期" in item.title or "shortening hong kong stock settlement cycle" in text
 
 
-def etf_has_enough_summary_evidence(item: Item) -> bool:
-    if not clean_text(item.title, 500):
-        return False
+def etf_summary_evidence_sentences(item: Item) -> list[str]:
+    """Identify readable evidence, not topic relevance or investment merit.
+
+    An official abstract can be sufficient evidence for an abstract-level note;
+    passing here does not imply full-text access, verified claims, a confirmed
+    publication date, or selection. Those are independent checks. In particular,
+    method papers need not mention a familiar asset or report numeric returns.
+    """
+    title = norm_title(clean_text(item.title, 500))
+    if not title:
+        return []
     summary = clean_text(strip_noncontent_html(item.summary), 20000)
     if len(summary) < 160:
-        return False
-    sentences = {
-        norm_title(sentence)
-        for sentence in split_article_sentences(summary)
-        if detail_sentence_score(sentence) >= 8
-    }
-    return len(sentences) >= 2
+        return []
+    # Preserve whole sentences (the detail renderer truncates at 420 chars).
+    # Chinese punctuation need not be followed by whitespace.
+    chunks = re.split(r"(?<=[.!?])\s+|(?<=[。！？])", summary)
+    noise = re.compile(
+        r"\b(?:subscrib\w*|sign\s*(?:in|up)|log\s*in|create (?:an? |your )?account|"
+        r"unlock (?:this |the |full |premium )?content|continue reading|"
+        r"advertisement|privacy policy|cookie|all rights reserved|"
+        r"terms (?:of use|and conditions)|share this|follow us|"
+        r"click here|buy now|shop now|limited.time offer|"
+        r"use (?:the |our )?(?:promo |discount )?code|"
+        r"sponsored (?:by|content)|brought to you by|"
+        r"appeared first on|not (?:investment|financial) advice)\b|"
+        r"订阅|立即购买|登录后|注册账号|隐私政策|版权所有",
+        re.I,
+    )
+    evidence: list[str] = []
+    seen: list[set[str]] = []
+    for chunk in chunks:
+        sentence = chunk.strip()
+        if len(sentence) < 55 or noise.search(sentence):
+            continue
+        normalized = norm_title(sentence)
+        if normalized == title or normalized in title:
+            continue
+        # Lists of links, keywords, a repeated title, and numeric tables are not
+        # prose evidence. This is language structure, not a finance vocabulary.
+        words = re.findall(r"[a-z]+(?:['’-][a-z]+)*", sentence.lower())
+        chinese = re.findall(r"[\u3400-\u9fff]", sentence)
+        tokens = set(words) if len(chinese) < 30 else set(chinese)
+        if len(chinese) < 30:
+            if len(words) < 8 or len(tokens) < 7:
+                continue
+            if not tokens.intersection({
+                "a", "an", "the", "this", "these", "that", "those", "it",
+                "we", "they", "our", "their", "its", "which", "because",
+                "while", "although", "where", "when", "is", "are", "was",
+                "were", "has", "have", "can", "could", "will", "would",
+                "may", "might", "must", "should",
+            }):
+                continue
+        elif len(tokens) < 18:
+            continue
+        letters = sum(char.isalpha() for char in sentence)
+        if letters / len(sentence) < 0.60:
+            continue
+        # Repeating a clause with punctuation or a different lead-in cannot
+        # manufacture the second independent piece of evidence.
+        if any(len(tokens & prior) / len(tokens | prior) >= 0.85 for prior in seen):
+            continue
+        seen.append(tokens)
+        evidence.append(sentence)
+    return evidence
+
+
+def etf_has_enough_summary_evidence(item: Item) -> bool:
+    sentences = etf_summary_evidence_sentences(item)
+    return len(sentences) >= 2 and sum(map(len, sentences)) >= 160
 
 
 def forum_thread_summary_points(item: Item, limit: int = 6) -> list[str]:
@@ -2861,7 +2925,7 @@ def rank_etf_research_items(items: list[Item], limit: int = 8, require_evidence:
 
 
 def enrich_ranked_research_items(candidates: list[Item], limit: int) -> list[ScoredResearchItem]:
-    pre_ranked = rank_etf_research_items(candidates, limit=max(limit * 2, 14))
+    pre_ranked = rank_etf_research_items(candidates, limit=max(len(candidates), 1))
     enriched = [enrich_article_item(x.item) for x in pre_ranked]
     return rank_etf_research_items(enriched, limit=limit, require_evidence=True)
 
@@ -3625,8 +3689,6 @@ def collect_etf_fixed_monitor_updates_with_audit(
             continue
         seen.add(key)
         out.append(item)
-        if len(out) >= ETF_FIXED_MONITOR_DISPLAY_LIMIT:
-            break
     return out, audit
 
 
@@ -5576,9 +5638,51 @@ def record_etf_source(kind: str, source: str, url: str, items: list[Item]) -> No
         })
 
 
+def finalize_etf_candidate_decisions(snapshot: dict, rendered_items: list[Item], history_before: dict) -> dict:
+    """Production attribution only; the independent auditor recomputes its verdict."""
+    from etf_candidate_audit import audit_candidates
+    snapshot["selected_items"] = [asdict(item) for item in rendered_items]
+    displayed = {canonical_url(item.url) for item in rendered_items}
+    cutoff = (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(timezone.utc)
+    earliest = (cutoff.astimezone(BJ).date() - timedelta(days=ETF_DEDUPE_DAYS)).isoformat()
+    prior = [row for row in history_before.get("items", []) if earliest <= row.get("sent_date", "") <= cutoff.astimezone(BJ).date().isoformat()]
+    seen_urls = {canonical_url(row.get("url", "")) for row in prior}
+    seen_titles = {norm_title(row.get("title", "")) for row in prior}
+    for row in snapshot["candidates"]:
+        item = Item(row["source"], row["title"], row["url"], row["published"], row.get("enrichment", {}).get("summary") or row["summary"])
+        stamp = parse_date(item.published)
+        kind = row["source_id"].split("|", 1)[0]
+        scored = score_etf_research_item(item) if kind == "research" else None
+        if canonical_url(item.url) in displayed:
+            reason = "rendered"
+        elif canonical_url(item.url) in seen_urls or norm_title(item.title) in seen_titles:
+            reason = "previously_sent"
+        elif stamp is None:
+            reason = "publication_unconfirmed"
+        elif stamp > cutoff:
+            reason = "after_cutoff"
+        elif stamp < cutoff - timedelta(hours=ETF_ARTICLE_MAX_AGE_HOURS):
+            reason = "outside_primary_window"
+        elif kind == "research" and (not etf_research_relevant(item) or scored is None):
+            reason = "relevance_filter"
+        elif kind.startswith("fixed") and not fixed_monitor_title_relevant(item):
+            reason = "relevance_filter"
+        elif kind in {"forum", "reddit"}:
+            reason = "forum_quality_or_priority_review"
+        elif not etf_has_enough_summary_evidence(item):
+            reason = "body_insufficient" if row.get("enrichment", {}).get("attempted") else "evidence_not_acquired"
+        else:
+            reason = "qualified_but_not_rendered"
+        row["pipeline_decision"] = {"reason": reason, "score": scored.score if scored else None,
+                                    "evidence_gate": etf_has_enough_summary_evidence(item)}
+        row["exclusion_reason"] = reason
+    return audit_candidates(snapshot, history_before)
+
+
 def build_etf(out_dir: Path) -> None:
     token = ETF_BUILD_CUTOFF.set(now_bj())
     snapshot_token = ETF_COLLECTION_SNAPSHOT.set({
+        "schema_version": 2, "decision_policy": "etf-candidates-v1",
         "run_id": os.environ.get("GITHUB_RUN_ID", "local"),
         "head_sha": os.environ.get("GITHUB_SHA", "local-unverified"),
         "cutoff_utc": ETF_BUILD_CUTOFF.get().astimezone(timezone.utc).isoformat(),
@@ -5637,7 +5741,8 @@ def _build_etf(out_dir: Path) -> None:
         recent_count = len(filter_recent_published(parsed, ETF_ARTICLE_MAX_AGE_HOURS))
         status = "已读取" if parsed else "无可读条目或解析不足"
         research_feed_audit.append((feed.source, status, recent_count))
-    scored_picked = select_etf_research_items(items, limit=9)
+    # Rank for presentation, not silent truncation of qualifying research.
+    scored_picked = select_etf_research_items(items, limit=max(len(items), 9))
     picked = [x.item for x in scored_picked]
     fixed_monitor_updates, fixed_monitor_audit = collect_etf_fixed_monitor_updates_with_audit(
         exclude_urls={canonical_url(item.url) for item in picked}
@@ -5777,6 +5882,30 @@ def _build_etf(out_dir: Path) -> None:
     required_urls = {canonical_url(item.url) for item in [*picked, *fixed_monitor_updates]}
     if not required_urls <= displayed_urls:
         raise ValueError("ETF selected research/fixed item missing from rendered email")
+    snapshot = ETF_COLLECTION_SNAPSHOT.get()
+    if snapshot is not None:
+        before = json.loads((out_dir / "history_before.json").read_text(encoding="utf-8"))
+        candidate_audit = finalize_etf_candidate_decisions(snapshot, rendered_items, before)
+        (out_dir / "candidate_audit.json").write_text(json.dumps(candidate_audit, ensure_ascii=False, indent=2), encoding="utf-8")
+        review = [row for row in [*candidate_audit["failures"], *candidate_audit["gaps"]] if row.get("url")]
+        review_urls: set[str] = set()
+        review_labels = {
+            "unexplained_priority_omission": "重点候选未入正文，需排查",
+            "candidate_needs_independent_review": "未入选原因待独立核验",
+            "candidate_publication_unconfirmed": "发布时间待核验",
+            "aggregator_children_not_checked": "聚合页子链接尚未完整核验",
+            "selected_evidence_requires_review": "已选条目的正文证据待核验",
+            "history_record_date_unknown": "历史记录日期待核验",
+        }
+        lines += ["", "## 发送前缺漏检查与待核验清单", "",
+                  f"- 发送前缺漏检查：{candidate_audit['status']}；这是独立规则复核，不代表所有来源已完整覆盖。",
+                  "- 来源访问或有界列表覆盖不足仍保留为缺口，不能表述为全部来源无更新；下列条目仅为审计线索，不计入已发送文章历史。"]
+        for row in review:
+            if row["url"] not in review_urls:
+                review_urls.add(row["url"])
+                label = review_labels.get(row["reason"], "完整性异常待核验")
+                lines.append(f"- 待核验：{row.get('source', '')}｜原题：{row.get('title', '')}｜{row.get('published', '')}｜{label}｜{row['url']}")
+        report_text = "\n".join(lines)
     update_digest_history("etf", rendered_items, days=ETF_HISTORY_DAYS)
     md.write_text(report_text, encoding="utf-8")
 

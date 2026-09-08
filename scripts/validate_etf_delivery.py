@@ -10,6 +10,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 from etf_preflight import canonical, rendered_urls
+from etf_candidate_audit import audit_candidates
 
 
 class LinkParser(HTMLParser):
@@ -24,7 +25,7 @@ class LinkParser(HTMLParser):
                     self.links.add(canonical(value))
 
 
-def validate(metadata: dict, manifest: dict) -> list[str]:
+def validate(metadata: dict, manifest: dict, history_before: dict | None = None, *, require_candidate_audit: bool = False) -> list[str]:
     errors: list[str] = []
     body = metadata.get("body")
     if not isinstance(body, str) or not body.strip():
@@ -61,6 +62,11 @@ def validate(metadata: dict, manifest: dict) -> list[str]:
         missing = actual - parser.links
         if missing:
             errors.append(f"html_body is missing clickable article links: {sorted(missing)}")
+    if require_candidate_audit or history_before is not None:
+        candidate_result = audit_candidates(manifest, history_before)
+        errors.extend(f"candidate audit: {row['reason']} {row.get('url', '')}" for row in candidate_result["failures"])
+        if candidate_result["status"] == "PARTIAL" and "发送前缺漏检查：PARTIAL" not in body:
+            errors.append("unresolved candidate/source coverage must be disclosed in the email")
     return errors
 
 
@@ -68,14 +74,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("metadata", type=Path)
     parser.add_argument("--manifest", type=Path)
+    parser.add_argument("--history-before", type=Path)
     args = parser.parse_args()
     manifest_path = args.manifest or args.metadata.with_name("collection_manifest.json")
     try:
         metadata = json.loads(args.metadata.read_text(encoding="utf-8-sig"))
         manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
+        history_path = args.history_before or args.metadata.with_name("history_before.json")
+        history_before = json.loads(history_path.read_text(encoding="utf-8-sig"))
         if not isinstance(metadata, dict) or not isinstance(manifest, dict):
             raise ValueError("metadata and manifest must be JSON objects")
-        errors = validate(metadata, manifest)
+        errors = validate(metadata, manifest, history_before, require_candidate_audit=True)
+        candidate_result = audit_candidates(manifest, history_before)
+        args.metadata.with_name("candidate_audit.json").write_text(json.dumps(candidate_result, ensure_ascii=False, indent=2), encoding="utf-8")
     except (OSError, ValueError, TypeError) as exc:
         errors = [f"cannot validate delivery artifacts: {exc}"]
     print(json.dumps({"status": "FAILED" if errors else "PASS", "errors": errors}, ensure_ascii=False, indent=2))
