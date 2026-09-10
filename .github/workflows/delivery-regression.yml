@@ -117,7 +117,7 @@ jobs:
             test_ic_im_daily_valuation.py test_im_put_policy.py \
             test_adversarial_im_ledger_20260908.py test_adversarial_im_report_iv_20260908.py \
             test_adversarial_im_put_execution_20260908.py test_im_put_price_basis.py \
-            test_live_mo_put_midpoint_20260908.py \
+            test_live_mo_put_midpoint_20260908.py test_external_review_fixes_20260911.py \
             test_ic_im_chinabond.py \
             test_adversarial_icim_delivery.py \
             --junitxml=regression.xml
