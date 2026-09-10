@@ -70,7 +70,7 @@ class OmissionAdversarialTests(unittest.TestCase):
 
     def test_omission_cannot_send_silently_or_with_hidden_html_warning(self):
         from validate_etf_delivery import validate
-        for html in ("<p>发送前缺漏检查：PASS</p>", "<p>发送前缺漏检查：FAILED</p>"):
+        for html in ("", "<p>发送前缺漏检查：PASS</p>", "<p>发送前缺漏检查：FAILED</p>"):
             body = f"发送前缺漏检查：FAILED\n- 待核验：{self.item['url']}"
             self.manifest["body_sha256"] = hashlib.sha256(body.encode()).hexdigest()
             metadata = {"body": body, "attachment": None, "html_body": html}

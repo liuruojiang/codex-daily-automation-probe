@@ -2872,13 +2872,16 @@ def score_etf_research_item(item: Item) -> ScoredResearchItem | None:
         (("treasury", "yield curve", "fed", "inflation", "credit spread", "dollar", "volatility"), 12, "宏观数据/regime"),
         (("hkex", "stock connect", "sse", "szse", "a-share", "listing rule", "china a", "hong kong"), 16, "中港市场结构"),
         (("flow", "aum", "expense ratio", "etf structure", "spiva", "index"), 8, "ETF/指数结构"),
-        (("portfolio", "etf", "fund holdings", "trading spread"), 8, "组合/ETF研究"),
         (("concentration", "concentrated", "majorization", "dependence uncertainty"), 12, "集中度/分散化"),
     ]
     for keys, weight, reason in keyword_groups:
         if any(k in text for k in keys):
             score += weight
             reasons.append(reason)
+
+    if re.search(r"\b(?:portfolios?|etfs?)\b", item.title, re.I):
+        score += 8
+        reasons.append("组合/ETF研究")
 
     if re.search(r"\b[A-Z]{2,5}\b", item.title) and re.search(r"\bsingle[ -](?:company|security|equity)\b", text) and "market" not in text:
         score -= 30

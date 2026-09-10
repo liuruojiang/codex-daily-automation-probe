@@ -52,10 +52,10 @@ def validate(metadata: dict, manifest: dict, history_before: dict | None = None,
             extra = sorted(recorded - actual)
             errors.append(f"{field} differs from the actual email article links; missing={missing}, extra={extra}")
     html = metadata.get("html_body")
+    parser = LinkParser()
     if not isinstance(html, str) or not html.strip():
         errors.append("html_body must contain the complete report")
     else:
-        parser = LinkParser()
         try:
             parser.feed(html)
         except Exception as exc:
