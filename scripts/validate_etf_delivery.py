@@ -1,9 +1,10 @@
-"""Fail-closed validation of the exact ETF email artifacts before delivery."""
+"""Validate delivery integrity; disclosed editorial omissions are advisory."""
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 from html.parser import HTMLParser
@@ -51,10 +52,10 @@ def validate(metadata: dict, manifest: dict, history_before: dict | None = None,
             extra = sorted(recorded - actual)
             errors.append(f"{field} differs from the actual email article links; missing={missing}, extra={extra}")
     html = metadata.get("html_body")
+    parser = LinkParser()
     if not isinstance(html, str) or not html.strip():
         errors.append("html_body must contain the complete report")
     else:
-        parser = LinkParser()
         try:
             parser.feed(html)
         except Exception as exc:
@@ -64,9 +65,18 @@ def validate(metadata: dict, manifest: dict, history_before: dict | None = None,
             errors.append(f"html_body is missing clickable article links: {sorted(missing)}")
     if require_candidate_audit or history_before is not None:
         candidate_result = audit_candidates(manifest, history_before)
-        errors.extend(f"candidate audit: {row['reason']} {row.get('url', '')}" for row in candidate_result["failures"])
-        if candidate_result["status"] == "PARTIAL" and "发送前缺漏检查：PARTIAL" not in body:
-            errors.append("unresolved candidate/source coverage must be disclosed in the email")
+        advisory = {"unexplained_priority_omission", "selected_evidence_requires_review", "history_record_date_unknown"}
+        errors.extend(f"candidate audit: {row['reason']} {row.get('url', '')}"
+                      for row in candidate_result["failures"] if row["reason"] not in advisory)
+        if candidate_result["status"] != "PASS":
+            marker = f"发送前缺漏检查：{candidate_result['status']}"
+            if marker not in body or marker not in (html or ""):
+                errors.append("unresolved candidate/source coverage must be disclosed in both email bodies")
+            for row in candidate_result["failures"]:
+                if row["reason"] in advisory and row.get("url"):
+                    url = canonical(row["url"])
+                    if url not in {canonical(u) for u in re.findall(r"https?://[^\s<>]+", body)} or (isinstance(html, str) and url not in parser.links):
+                        errors.append(f"candidate warning must include a clickable source: {url}")
     return errors
 
 
@@ -77,6 +87,7 @@ def main() -> int:
     parser.add_argument("--history-before", type=Path)
     args = parser.parse_args()
     manifest_path = args.manifest or args.metadata.with_name("collection_manifest.json")
+    candidate_result = None
     try:
         metadata = json.loads(args.metadata.read_text(encoding="utf-8-sig"))
         manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
@@ -89,7 +100,19 @@ def main() -> int:
         args.metadata.with_name("candidate_audit.json").write_text(json.dumps(candidate_result, ensure_ascii=False, indent=2), encoding="utf-8")
     except (OSError, ValueError, TypeError) as exc:
         errors = [f"cannot validate delivery artifacts: {exc}"]
-    print(json.dumps({"status": "FAILED" if errors else "PASS", "errors": errors}, ensure_ascii=False, indent=2))
+    warnings = candidate_result["failures"] + candidate_result["gaps"] if candidate_result else []
+    status = "FAILED" if errors else "PASS_WITH_WARNINGS" if warnings else "PASS"
+    print(json.dumps({"status": status, "errors": errors,
+                      "candidate_audit_status": candidate_result["status"] if candidate_result else None,
+                      "warning_count": len(warnings)}, ensure_ascii=False, indent=2))
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary_path:
+        with open(summary_path, "a", encoding="utf-8") as summary:
+            summary.write(f"## ETF delivery validation: {status}\n\n")
+            if candidate_result:
+                summary.write(f"Content audit: **{candidate_result['status']}**; {len(warnings)} findings. Disclosed content warnings do not block delivery.\n\n")
+                for row in candidate_result["failures"]:
+                    summary.write(f"- {row['reason']}: {row.get('title', '')} {row.get('url', '')}\n")
     return 1 if errors else 0
 
 

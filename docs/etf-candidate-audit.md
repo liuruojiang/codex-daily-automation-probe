@@ -13,8 +13,15 @@ selection API; the scheduled build asks for all qualifying research candidates.
 `validate_etf_delivery.py` requires the manifest and run-bound
 `history_before.json`. It validates the exact text/HTML/selection/history link
 sets, then independently recomputes `etf_candidate_audit.audit_candidates`.
-Missing ledgers, capture-count inconsistencies, corrupt history dates, selected
-invalid items, and unexplained priority omissions fail closed before Send Gmail.
+Missing ledgers, capture-count inconsistencies, and selected
+invalid items fail closed before Send Gmail. From 2026-09-10, unexplained priority
+omissions, selected-evidence review and unknown historical dates are content
+advisories: preserve FAILED/PARTIAL audit results, disclose the exact status in
+both email bodies and link affected candidates, then continue sending. Delivery
+validation reports PASS_WITH_WARNINGS and records the findings in the Actions
+summary. Hash/HTML/history consistency and invalid rendered dates remain blocking.
+The email starts with a visible same-day collection alert; audit-only candidates
+do not enter sent-article history. This changes delivery policy, not audit truth.
 Production scores, `independent_eligible=false`, an arbitrary capacity reason,
 and a stored PASS do not excuse contradictory evidence.
 
@@ -46,8 +53,8 @@ When a research feed and a fixed monitor capture the same selected publication
 the fixed capture points to the independently audited research representative.
 This preserves the research backfill window without treating its duplicate
 capture as a new fixed-section update. Fixed-only articles still require 36-hour
-freshness; missing research evidence, conflicting identities and articles older
-than the research backfill limit still block delivery.
+freshness; conflicting identities and articles older than the research backfill
+limit still block delivery. Missing research evidence is disclosed for review.
 
 The 08:00 preflight recomputes schema-2 audits from immutable artifacts. A cutoff
 not verified against the real Build interval cannot establish an omission.
