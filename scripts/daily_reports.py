@@ -1278,7 +1278,8 @@ def etf_research_relevant(item: Item) -> bool:
         return False
     if re.search(r"\([A-Z]{2,5}\)", item.title) and ("surge" in text or "boosts" in text):
         return False
-    if re.search(r"\b(stock|shares)\b", text) and "market" not in text and "sector" not in text:
+    if (re.search(r"\b(stock|shares)\b", text) and "market" not in text and "sector" not in text
+            and not re.search(r"\b(?:portfolios?|allocation|diversification|etfs?|bonds?)\b", text)):
         return False
     inclusions = [
         "allocation",
@@ -2871,6 +2872,7 @@ def score_etf_research_item(item: Item) -> ScoredResearchItem | None:
         (("treasury", "yield curve", "fed", "inflation", "credit spread", "dollar", "volatility"), 12, "宏观数据/regime"),
         (("hkex", "stock connect", "sse", "szse", "a-share", "listing rule", "china a", "hong kong"), 16, "中港市场结构"),
         (("flow", "aum", "expense ratio", "etf structure", "spiva", "index"), 8, "ETF/指数结构"),
+        (("portfolio", "etf", "fund holdings", "trading spread"), 8, "组合/ETF研究"),
         (("concentration", "concentrated", "majorization", "dependence uncertainty"), 12, "集中度/分散化"),
     ]
     for keys, weight, reason in keyword_groups:
@@ -2878,7 +2880,7 @@ def score_etf_research_item(item: Item) -> ScoredResearchItem | None:
             score += weight
             reasons.append(reason)
 
-    if re.search(r"\b[A-Z]{2,5}\b", item.title) and "single" in text and "market" not in text:
+    if re.search(r"\b[A-Z]{2,5}\b", item.title) and re.search(r"\bsingle[ -](?:company|security|equity)\b", text) and "market" not in text:
         score -= 30
     if "product launch" in text or "passes $" in text:
         score -= 8
@@ -5663,8 +5665,10 @@ def finalize_etf_candidate_decisions(snapshot: dict, rendered_items: list[Item],
             reason = "after_cutoff"
         elif stamp < cutoff - timedelta(hours=ETF_ARTICLE_MAX_AGE_HOURS):
             reason = "outside_primary_window"
-        elif kind == "research" and (not etf_research_relevant(item) or scored is None):
+        elif kind == "research" and not etf_research_relevant(item):
             reason = "relevance_filter"
+        elif kind == "research" and scored is None:
+            reason = "score_or_product_filter"
         elif kind.startswith("fixed") and not fixed_monitor_title_relevant(item):
             reason = "relevance_filter"
         elif kind in {"forum", "reddit"}:
@@ -5887,6 +5891,11 @@ def _build_etf(out_dir: Path) -> None:
         before = json.loads((out_dir / "history_before.json").read_text(encoding="utf-8"))
         candidate_audit = finalize_etf_candidate_decisions(snapshot, rendered_items, before)
         (out_dir / "candidate_audit.json").write_text(json.dumps(candidate_audit, ensure_ascii=False, indent=2), encoding="utf-8")
+        if candidate_audit["status"] != "PASS":
+            lines[2:2] = [
+                f"**今日采集提醒：{candidate_audit['status']}；缺漏/内容警报 {len(candidate_audit['failures'])} 项，待核验缺口 {len(candidate_audit['gaps'])} 项。**",
+                "内容缺漏和来源访问问题按带警报方式发送，不代表完整性检查通过；具体来源与候选见文末清单。", "",
+            ]
         review = [row for row in [*candidate_audit["failures"], *candidate_audit["gaps"]] if row.get("url")]
         review_urls: set[str] = set()
         review_labels = {

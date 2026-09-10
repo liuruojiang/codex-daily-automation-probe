@@ -1,0 +1,23 @@
+[
+  {
+    "source": "arXiv q-fin.PM",
+    "title": "Simple Dynamic Stock/Bond/Gold Portfolios",
+    "url": "https://arxiv.org/abs/2609.07946",
+    "published": "2026-09-09T04:00:00+00:00",
+    "summary": "arXiv:2609.07946v1 Announce Type: new Abstract: For more than four decades, the 60/40 stock/bond portfolio has served as a benchmark for delivering reasonable returns without excessive risk. More recently, a 50/30/20 stock/bond/alternative portfolio has been suggested. We use gold as the alternative and as an inflation hedge. In this paper we ask: how much improvement over these benchmark fixed-weight portfolios can be obtained using widely available public data and standard methods from quantitative finance? We restrict ourselves to long-only dynamic portfolios of stocks, bonds, and gold, plus cash, rebalancing monthly, using only publicly available data. We evaluate portfolios on the conventional metrics: return, volatility, Sharpe ratio (computed in excess of the federal funds rate), drawdown, and turnover, in addition to consistency of performance over time, judged by the consistency of the realized annual volatility. Over the 20--year period 2006--2026, using a conservative estimate of trading costs, we show that all risk-adjusted and drawdown metrics are improved using simple volatility control, where we dynamically mix the fixed-weight portfolios with cash so as to target a fixed volatility. This method relies on a simple estimate of portfolio volatility derived from past returns. We also demonstrate that more sophisticated portfolios based on convex optimization---similar to those used in quantitative hedge funds---yield further substantial improvement in return and risk-adjusted return. We consider two such portfolios, one that uses a simple estimate of future returns based on past returns, and one that forecasts future returns based on past returns and just a handful of widely available public economic data. These portfolios also outperform a suite of standard risk-based allocation methods, such as risk parity and minimum variance, evaluated on the same assets and data."
+  },
+  {
+    "source": "Yahoo Finance ETF Headlines",
+    "title": "How to Research Any ETF in Five Minutes",
+    "url": "http://www.etf.com/sections/features/how-research-any-etf-five-minutes?utm_source=yahoo-finance&utm_medium=rss&utm_campaign=yahoo-finance-rss&.tsrc=rss",
+    "published": "2026-09-09T18:12:53+00:00",
+    "summary": "Before you buy any ETF, there's one page you should visit first: its ETF.com fund page. Type any ticker after etf.com — like etf.com/QQQ — and you land on a single, comprehensive dashboard that tells you everything you need to know about the fund, from its live price to what it holds to how efficiently it trades. Here's a guided tour of what an ETF.com fund page offers, and how to use it to make smarter decisions."
+  },
+  {
+    "source": "Yahoo Finance ETF Headlines",
+    "title": "VOO vs. QQQ: Which Popular ETF Is Right for Your Portfolio in 2026?",
+    "url": "http://www.etf.com/sections/news/voo-vs-qqq-which-popular-etf-right-your-portfolio-2026?utm_source=yahoo-finance&utm_medium=rss&utm_campaign=yahoo-finance-rss&.tsrc=rss",
+    "published": "2026-09-09T18:11:39+00:00",
+    "summary": "They're two of the most popular ETFs on the planet, held by tens of millions of investors and they're often pitched as alternatives to each other. But VOO and QQQ are built for different jobs. One gives you the broad U.S. market at rock-bottom cost; the other concentrates your money in the biggest growth and tech names for higher potential returns and higher risk. Here's a complete VO"
+  }
+]

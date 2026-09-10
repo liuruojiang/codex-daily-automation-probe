@@ -56,6 +56,26 @@ class OmissionAdversarialTests(unittest.TestCase):
             "history_added_items": [],
         }
 
+    def test_disclosed_omission_sends_without_changing_failed_audit(self):
+        from validate_etf_delivery import validate
+        body = f"发送前缺漏检查：FAILED\n- 待核验：{self.item['url']}"
+        metadata = {"body": body, "attachment": None,
+                    "html_body": f'<p>发送前缺漏检查：FAILED</p><a href="{self.item["url"]}">待核验</a>'}
+        self.manifest["body_sha256"] = hashlib.sha256(body.encode()).hexdigest()
+        self.assertEqual(self.check()["status"], "FAILED")
+        self.assertEqual(validate(metadata, self.manifest, self.history), [])
+        # Advisory URLs must never enter sent-article history.
+        self.manifest["history_added_items"] = [self.item]
+        self.assertTrue(validate(metadata, self.manifest, self.history))
+
+    def test_omission_cannot_send_silently_or_with_hidden_html_warning(self):
+        from validate_etf_delivery import validate
+        for html in ("<p>发送前缺漏检查：PASS</p>", "<p>发送前缺漏检查：FAILED</p>"):
+            body = f"发送前缺漏检查：FAILED\n- 待核验：{self.item['url']}"
+            self.manifest["body_sha256"] = hashlib.sha256(body.encode()).hexdigest()
+            metadata = {"body": body, "attachment": None, "html_body": html}
+            self.assertTrue(validate(metadata, self.manifest, self.history))
+
     def check(self):
         return audit_candidates(deepcopy(self.manifest), deepcopy(self.history))
 
