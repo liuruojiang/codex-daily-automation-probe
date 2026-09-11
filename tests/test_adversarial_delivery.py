@@ -177,5 +177,3 @@ def test_smtp_timeout_is_not_automatically_retried(monkeypatch):
     with pytest.raises(TimeoutError):
         mail_utils.send_mail('fixture','fixture')
     assert smtp.send_message.call_count == 1
-
-
