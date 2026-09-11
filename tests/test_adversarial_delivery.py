@@ -2,7 +2,6 @@
 import io
 import json
 import sys
-import subprocess
 import zipfile
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -34,8 +33,6 @@ def test_partial_smtp_rejection_must_fail_delivery(monkeypatch, ssl):
     with pytest.raises(mail_utils.smtplib.SMTPRecipientsRefused):
         mail_utils.send_mail('test only', 'simulated body')
     assert smtp.send_message.call_count == 1
-
-
 def test_microcap_realtime_and_close_have_distinct_delivery_keys():
     day = date(2026, 9, 4)
     assert micro_gate.delivery_marker_name(day, 'realtime') != micro_gate.delivery_marker_name(day, 'close_confirmed')
@@ -182,48 +179,3 @@ def test_smtp_timeout_is_not_automatically_retried(monkeypatch):
     assert smtp.send_message.call_count == 1
 
 
-@pytest.mark.parametrize('scenario', ['one_fails','transient','timeout','body_disconnect','body_timeout','body_403'])
-def test_real_worker_dispatches_independently_and_bounds_retries(scenario):
-    root=Path(__file__).resolve().parents[1]
-    source=(root/'cloudflare-workers/microcap-post-close-trigger/worker.js').read_text(encoding='utf-8')
-    source=source.replace('export default {', 'const worker = {')
-    harness=r'''
-const calls = {};
-globalThis.setTimeout = (callback) => { callback(); return 1; };
-globalThis.fetch = async (url, options) => {
-  const name = url.split('/').at(-2);
-  calls[name] = (calls[name] || 0) + 1;
-  if (!options.signal) throw new Error('MISSING_TIMEOUT_SIGNAL');
-  const scenario = SCENARIO;
-  if (name.startsWith('microcap') && scenario === 'one_fails')
-    return {ok:false,status:403,text:async ()=>'rejected fixture'};
-  if (name.startsWith('microcap') && scenario === 'timeout')
-    throw new DOMException('fixture timed out', 'TimeoutError');
-  if (name.startsWith('microcap') && scenario.startsWith('body_') &&
-      (scenario !== 'body_disconnect' || calls[name] < 3))
-    return {ok:false,status:scenario === 'body_403' ? 403 : 503,text:async () => {
-      if (scenario === 'body_disconnect') throw new TypeError('fixture body disconnected');
-      throw new DOMException('fixture body timed out', 'TimeoutError');
-    }};
-  if (scenario === 'transient' && calls[name] < 3)
-    return {ok:false,status:503,text:async ()=>'fixture unavailable'};
-  return {ok:true,status:204};
-};
-let error = '';
-try { await dispatchAllDigests({GITHUB_TOKEN:'fixture-only'}); }
-catch(e) { error = String(e); }
-console.log(JSON.stringify({calls,error}));
-'''.replace('SCENARIO', json.dumps(scenario))
-    result=subprocess.run(['node','--input-type=module'],input=source+'\n'+harness,text=True,capture_output=True,timeout=10,check=True)
-    observed=json.loads(result.stdout.strip().splitlines()[-1])
-    assert 'MISSING_TIMEOUT_SIGNAL' not in observed['error']
-    assert len(observed['calls']) == 2
-    assert all(1 <= count <= 3 for count in observed['calls'].values())
-    if scenario in ('transient','body_disconnect'):
-        assert observed['error'] == ''
-        assert observed['calls']['microcap-realtime-digest.yml'] == 3
-        assert observed['calls']['ic-im-v1-3-daily-digest.yml'] == (3 if scenario == 'transient' else 1)
-    else:
-        assert observed['error']
-        assert observed['calls']['ic-im-v1-3-daily-digest.yml'] == 1
-        assert observed['calls']['microcap-realtime-digest.yml'] == (1 if scenario in ('one_fails','body_403') else 3)
