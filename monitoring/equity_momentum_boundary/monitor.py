@@ -34,6 +34,12 @@ PAPER_URL = "https://onlinelibrary.wiley.com/doi/full/10.1111/fima.70055"
 SHILLER_PAGE_URL = "https://shillerdata.com/"
 FRED_GRAPH_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
 FRED_SERIES_URL = "https://fred.stlouisfed.org/series/{series_id}"
+H15_TREASURY_CSV_URL = (
+    "https://www.federalreserve.gov/datadownload/Output.aspx?"
+    "rel=H15&series=bf17364827e38702b42a58cf8eaa3f78&lastobs=&from=&to="
+    "&filetype=csv&label=include&layout=seriescolumn&type=package"
+)
+YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=2y&interval=1d"
 USER_AGENT = "equity-momentum-boundary-monitor/1.0"
 
 
@@ -153,17 +159,102 @@ def load_fred_series_bulk(series_ids: list[str]) -> dict[str, tuple[pd.Series, S
     return result
 
 
-def build_term_spread_proxy() -> tuple[pd.DataFrame, list[SourceResult]]:
+def load_h15_treasury_rates() -> tuple[pd.DataFrame, list[SourceResult]]:
+    """Load official Federal Reserve H.15 Treasury constant-maturity rates.
+
+    The H.15 download is a bounded fallback for the FRED graph endpoint.  It
+    contains the 3-month, 2-year, and 10-year Treasury series needed by the
+    core term-spread proxy and its curve context.
+    """
+
+    payload = fetch_bytes(H15_TREASURY_CSV_URL)
+    frame = pd.read_csv(io.BytesIO(payload), skiprows=5, dtype=str)
+    columns = {
+        "date": "Time Period",
+        "three_month": "RIFLGFCM03_N.B",
+        "two_year": "RIFLGFCY02_N.B",
+        "ten_year": "RIFLGFCY10_N.B",
+    }
+    missing = set(columns.values()).difference(frame.columns)
+    if missing:
+        raise RuntimeError(f"Federal Reserve H.15 response omitted {sorted(missing)}")
+    out = pd.DataFrame(index=pd.to_datetime(frame[columns["date"]], errors="coerce"))
+    for key, column in columns.items():
+        if key != "date":
+            out[key] = pd.to_numeric(frame[column], errors="coerce").to_numpy()
+    out = out[~out.index.isna()].sort_index()
+    if out[["three_month", "ten_year"]].dropna(how="all").empty:
+        raise RuntimeError("Federal Reserve H.15 returned no Treasury observations")
+    sources: list[SourceResult] = []
+    for key, label in (
+        ("three_month", "H.15 3M Treasury constant maturity"),
+        ("two_year", "H.15 2Y Treasury constant maturity"),
+        ("ten_year", "H.15 10Y Treasury constant maturity"),
+    ):
+        series = out[key].dropna()
+        sources.append(
+            SourceResult(
+                label,
+                H15_TREASURY_CSV_URL,
+                series.index.max().strftime("%Y-%m-%d") if not series.empty else None,
+                "ok",
+                "official Federal Reserve H.15 fallback for the unavailable FRED graph endpoint",
+            )
+        )
+    return out, sources
+
+
+def load_yahoo_chart_series(symbol: str, label: str) -> tuple[pd.Series, SourceResult]:
+    """Load a daily index series from Yahoo's public chart endpoint as a labelled proxy."""
+
+    url = YAHOO_CHART_URL.format(symbol=symbol)
+    payload = json.loads(fetch_bytes(url).decode("utf-8"))
+    result = (((payload.get("chart") or {}).get("result") or [None])[0])
+    if not isinstance(result, dict) or not result.get("timestamp"):
+        raise RuntimeError(f"Yahoo chart returned no observations for {symbol}")
+    timestamps = pd.to_datetime(result["timestamp"], unit="s", utc=True).tz_convert(None)
+    quote = (((result.get("indicators") or {}).get("quote") or [None])[0])
+    closes = quote.get("close") if isinstance(quote, dict) else None
+    if not isinstance(closes, list):
+        raise RuntimeError(f"Yahoo chart omitted close values for {symbol}")
+    series = pd.Series(pd.to_numeric(closes, errors="coerce"), index=timestamps).dropna().sort_index()
+    if series.empty:
+        raise RuntimeError(f"Yahoo chart returned no numeric observations for {symbol}")
+    return series, SourceResult(
+        label,
+        url,
+        series.index.max().strftime("%Y-%m-%d"),
+        "ok",
+        "Yahoo Finance chart API fallback; proxy for the unavailable FRED series",
+    )
+
+
+def build_term_spread_proxy() -> tuple[pd.DataFrame, list[SourceResult], list[str]]:
     """Monthly long-minus-short Treasury proxy matching the paper's structure."""
 
-    fred = load_fred_series_bulk(["GS10", "TB3MS"])
-    long_rate, long_source = fred["GS10"]
-    short_rate, short_source = fred["TB3MS"]
+    warnings: list[str] = []
+    try:
+        fred = load_fred_series_bulk(["GS10", "TB3MS"])
+        long_rate, long_source = fred["GS10"]
+        short_rate, short_source = fred["TB3MS"]
+        two_year_rate = None
+        sources = [long_source, short_source]
+    except Exception as exc:  # noqa: BLE001 - use an official fallback, with disclosure
+        h15, h15_sources = load_h15_treasury_rates()
+        long_rate = h15["ten_year"].dropna()
+        short_rate = h15["three_month"].dropna()
+        two_year_rate = h15["two_year"].dropna()
+        sources = h15_sources
+        warnings.append(f"FRED term-spread data unavailable; used official Federal Reserve H.15 fallback: {exc}")
     long_month = long_rate.groupby(long_rate.index.to_period("M")).last()
     short_month = short_rate.groupby(short_rate.index.to_period("M")).last()
     frame = pd.concat({"long_rate": long_month, "short_rate": short_month}, axis=1).dropna()
     frame["term_spread"] = frame["long_rate"] - frame["short_rate"]
-    return frame, [long_source, short_source]
+    if two_year_rate is not None:
+        two_year_month = two_year_rate.groupby(two_year_rate.index.to_period("M")).last()
+        frame["two_year_rate"] = two_year_month.reindex(frame.index)
+        frame["term_spread_10y2y"] = frame["long_rate"] - frame["two_year_rate"]
+    return frame, sources, warnings
 
 
 def scale_to_signed(value: float, low: float, high: float) -> float:
@@ -301,54 +392,90 @@ def _percentile_of_tail(series: pd.Series, observations: int = 252) -> float | N
     return _safe_float((tail <= tail.iloc[-1]).mean())
 
 
+def _build_sp500_context(series: pd.Series, source: SourceResult) -> dict[str, Any]:
+    latest = series.iloc[-1]
+    result: dict[str, Any] = {
+        "as_of": source.as_of,
+        "price": _safe_float(latest),
+        "weekly_change": _weekly_change(series),
+        "momentum_1m": _safe_float(latest / series.iloc[-22] - 1) if len(series) >= 22 else None,
+        "momentum_3m": _safe_float(latest / series.iloc[-64] - 1) if len(series) >= 64 else None,
+        "momentum_6m": _safe_float(latest / series.iloc[-127] - 1) if len(series) >= 127 else None,
+        "momentum_12m": _safe_float(latest / series.iloc[-253] - 1) if len(series) >= 253 else None,
+    }
+    log_return = (series / series.shift(1)).apply(lambda x: math.log(x) if x > 0 else float("nan"))
+    result["realized_vol_20d_annualized"] = _safe_float(log_return.tail(20).std(ddof=1) * math.sqrt(252)) if len(log_return) >= 20 else None
+    result["recent_reversal_flag"] = bool(
+        result["momentum_12m"] is not None
+        and result["momentum_1m"] is not None
+        and result["momentum_12m"] * result["momentum_1m"] < 0
+    )
+    return result
+
+
+def _add_series_context(context: dict[str, Any], label: str, series: pd.Series, source: SourceResult) -> None:
+    context[label] = {
+        "as_of": source.as_of,
+        "value": _safe_float(series.iloc[-1]),
+        "weekly_change": _weekly_change(series),
+        "one_year_percentile": _percentile_of_tail(series),
+        "source_url": source.url,
+    }
+
+
 def build_supplemental_context() -> tuple[dict[str, Any], list[SourceResult], list[str]]:
     context: dict[str, Any] = {}
     sources: list[SourceResult] = []
     warnings: list[str] = []
 
-    fred: dict[str, tuple[pd.Series, SourceResult]] = {}
-    fred_error: Exception | None = None
     try:
         fred = load_fred_series_bulk(["SP500", "VIXCLS", "BAA10Y", "T10Y3M", "T10Y2Y"])
-        sp500, source = fred["SP500"]
-        sources.append(source)
-        latest = sp500.iloc[-1]
-        result: dict[str, Any] = {
-            "as_of": source.as_of,
-            "price": _safe_float(latest),
-            "weekly_change": _weekly_change(sp500),
-            "momentum_1m": _safe_float(latest / sp500.iloc[-22] - 1) if len(sp500) >= 22 else None,
-            "momentum_3m": _safe_float(latest / sp500.iloc[-64] - 1) if len(sp500) >= 64 else None,
-            "momentum_6m": _safe_float(latest / sp500.iloc[-127] - 1) if len(sp500) >= 127 else None,
-            "momentum_12m": _safe_float(latest / sp500.iloc[-253] - 1) if len(sp500) >= 253 else None,
-        }
-        log_return = (sp500 / sp500.shift(1)).apply(lambda x: math.log(x) if x > 0 else float("nan"))
-        result["realized_vol_20d_annualized"] = _safe_float(log_return.tail(20).std(ddof=1) * math.sqrt(252)) if len(log_return) >= 20 else None
-        result["recent_reversal_flag"] = bool(
-            result["momentum_12m"] is not None
-            and result["momentum_1m"] is not None
-            and result["momentum_12m"] * result["momentum_1m"] < 0
-        )
-        context["sp500_price_momentum"] = result
-    except Exception as exc:  # noqa: BLE001 - report source failure in the email
-        fred_error = exc
-        warnings.append(f"FRED supplemental context unavailable: {exc}")
-
-    for series_id, label in (("VIXCLS", "vix"), ("BAA10Y", "baa_minus_10y"), ("T10Y3M", "term_spread_10y3m"), ("T10Y2Y", "term_spread_10y2y")):
-        if fred_error is not None:
-            continue
-        try:
+        sp500, sp500_source = fred["SP500"]
+        sources.append(sp500_source)
+        context["sp500_price_momentum"] = _build_sp500_context(sp500, sp500_source)
+        for series_id, label in (("VIXCLS", "vix"), ("BAA10Y", "baa_minus_10y"), ("T10Y3M", "term_spread_10y3m"), ("T10Y2Y", "term_spread_10y2y")):
             series, source = fred[series_id]
             sources.append(source)
-            context[label] = {
-                "as_of": source.as_of,
-                "value": _safe_float(series.iloc[-1]),
-                "weekly_change": _weekly_change(series),
-                "one_year_percentile": _percentile_of_tail(series),
-                "source_url": source.url,
-            }
-        except Exception as exc:  # noqa: BLE001 - report source failure in the email
-            warnings.append(f"{series_id} supplemental context unavailable: {exc}")
+            _add_series_context(context, label, series, source)
+        return context, sources, warnings
+    except Exception as exc:  # noqa: BLE001 - use labelled public fallbacks
+        warnings.append(f"FRED supplemental context unavailable; trying public fallbacks: {exc}")
+
+    try:
+        sp500, source = load_yahoo_chart_series("%5EGSPC", "Yahoo Finance S&P 500")
+        sources.append(source)
+        context["sp500_price_momentum"] = _build_sp500_context(sp500, source)
+    except Exception as exc:  # noqa: BLE001 - disclose unavailable supplemental data
+        warnings.append(f"S&P 500 supplemental fallback unavailable: {exc}")
+
+    try:
+        vix, source = load_yahoo_chart_series("%5EVIX", "Yahoo Finance VIX")
+        sources.append(source)
+        _add_series_context(context, "vix", vix, source)
+    except Exception as exc:  # noqa: BLE001 - disclose unavailable supplemental data
+        warnings.append(f"VIX supplemental fallback unavailable: {exc}")
+
+    try:
+        h15, h15_sources = load_h15_treasury_rates()
+        sources.extend(h15_sources)
+        ten_year = h15["ten_year"].dropna()
+        three_month = h15["three_month"].dropna()
+        two_year = h15["two_year"].dropna()
+        curve_10y3m = (ten_year - three_month).dropna()
+        curve_10y2y = (ten_year - two_year).dropna()
+        curve_source = SourceResult(
+            "H.15 Treasury curve fallback",
+            H15_TREASURY_CSV_URL,
+            curve_10y3m.index.max().strftime("%Y-%m-%d") if not curve_10y3m.empty else None,
+            "ok",
+            "official Federal Reserve H.15 10Y-minus-3M/2Y curve fallback",
+        )
+        _add_series_context(context, "term_spread_10y3m", curve_10y3m, curve_source)
+        _add_series_context(context, "term_spread_10y2y", curve_10y2y, curve_source)
+    except Exception as exc:  # noqa: BLE001 - disclose unavailable supplemental data
+        warnings.append(f"Treasury curve supplemental fallback unavailable: {exc}")
+
+    warnings.append("BAA10Y supplemental context has no configured public fallback and is omitted when FRED is unavailable")
     return context, sources, warnings
 
 
@@ -369,8 +496,9 @@ def build_report() -> dict[str, Any]:
             warnings.append(
                 f"Shiller dividend yield is stale relative to CAPE: latest complete {dividend_latest}, CAPE {cape_latest}"
             )
-        term, term_sources = build_term_spread_proxy()
+        term, term_sources, term_warnings = build_term_spread_proxy()
         sources.extend(term_sources)
+        warnings.extend(term_warnings)
         for value_column, label in (("cape", "Shiller CAPE"), ("dividend_yield", "market dividend yield")):
             key = "cape" if value_column == "cape" else "dividend_yield"
             for years in (10, 20):
@@ -387,7 +515,7 @@ def build_report() -> dict[str, Any]:
             "latest_value": _safe_float(term["term_spread"].iloc[-1]),
             "cape_latest_as_of": _period_string(cape_latest),
             "dividend_yield_latest_as_of": _period_string(dividend_latest),
-            "source_urls": [FRED_SERIES_URL.format(series_id="GS10"), FRED_SERIES_URL.format(series_id="TB3MS")],
+            "source_urls": [source.url for source in term_sources],
         }
     except Exception as exc:  # noqa: BLE001 - produce a degraded report rather than fabricate values
         warnings.append(f"Core paper-like data unavailable: {exc}")
@@ -396,6 +524,14 @@ def build_report() -> dict[str, Any]:
     supplemental, supplemental_sources, supplemental_warnings = build_supplemental_context()
     sources.extend(supplemental_sources)
     warnings.extend(supplemental_warnings)
+    unique_sources: list[SourceResult] = []
+    seen_sources: set[tuple[str, str]] = set()
+    for source in sources:
+        key = (source.name, source.url)
+        if key not in seen_sources:
+            unique_sources.append(source)
+            seen_sources.add(key)
+    sources = unique_sources
 
     variants = [value for key, value in core.items() if key.endswith("_boundary_10y") or key.endswith("_boundary_20y")]
     if not variants or any(value.get("status") != "ok" for value in variants):
@@ -416,7 +552,7 @@ def build_report() -> dict[str, Any]:
         "paper_url": PAPER_URL,
         "definition": {
             "core": "CAPE/dividend yield and term-spread proxy, each using 12M moving averages and rolling 10Y/20Y min-max scaling",
-            "supplemental": "S&P 500 price momentum/reversal, realized volatility, VIX, and Baa-minus-10Y credit spread",
+            "supplemental": "S&P 500 price momentum/reversal, realized volatility, VIX, Baa-minus-10Y credit spread, and curve context",
             "boundary_threshold": "A component is marked extreme at the rolling 10th or 90th percentile; this is a monitoring classification, not a trading rule",
         },
         "core": core,
@@ -497,7 +633,7 @@ def render_text(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "方法说明：论文的期限利差原始序列使用长期债券利率减短期国债利率；本报告用 FRED GS10−TB3MS 作为公开可复现代理，并将其明确标注为 proxy。",
+            "方法说明：论文的期限利差原始序列使用长期债券利率减短期国债利率；本报告优先用 FRED GS10−TB3MS，FRED 不可用时改用官方 Federal Reserve H.15 10Y−3M，并在来源与警告中明确标注 proxy/fallback。",
             f"论文链接：{PAPER_URL}",
         ]
     )
@@ -538,7 +674,7 @@ def render_html(report: dict[str, Any]) -> str:
 <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse">
 <thead><tr><th>指标</th><th>日期</th><th>读数</th></tr></thead><tbody>{''.join(supplemental_rows)}</tbody></table>
 <h3>数据质量</h3><ul>{warnings}</ul><ul>{sources}</ul>
-<p>期限利差核心口径采用 FRED GS10−TB3MS 公开代理；论文原始口径为长期债券利率减短期国债利率。<br>
+<p>期限利差核心口径优先采用 FRED GS10−TB3MS；FRED 不可用时采用官方 Federal Reserve H.15 10Y−3M fallback，并在来源与警告中披露。论文原始口径为长期债券利率减短期国债利率。<br>
 <a href="{PAPER_URL}">论文：Boundaries of Time-Series Momentum</a></p>
 </body></html>"""
 
