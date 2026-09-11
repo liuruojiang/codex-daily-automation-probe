@@ -74,6 +74,12 @@ def signal(product: str) -> dict[str, object]:
             valuation_puts_per_full_core=1,
             mom120_floor_puts_per_full_core=3,
             call_has_position=False,
+            im_put_calendar_revision="execution_day_20260911_v1",
+            put_monthly_reset_preview=True,
+            option_monthly_reset_due=False,
+            put_monthly_reset_execution_date="2026-09-18",
+            put_reference_future="IM2609",
+            put_reference_price_date="2026-09-17",
         )
     return value
 
@@ -131,6 +137,36 @@ class ICIMV13DailyDigestTests(unittest.TestCase):
         self.assertIn("独立动量Put按父规则数量×0.5×动量执行权重配置", body)
         self.assertIn("本次目标为0.75张 P-MOM-NEXT；合计目标2.25张", body)
         self.assertNotIn("动量袖和网格均不配期权", body)
+        self.assertIn("月度Put维护预告：2026-09-18执行", body)
+        self.assertIn("当前不锁定新合约", body)
+
+    def test_digest_explains_execution_day_reference_contract_and_price_date(self) -> None:
+        execution = signal("IM")
+        execution.update(
+            put_monthly_reset_preview=False,
+            option_monthly_reset_due=True,
+            put_monthly_reset_execution_date="2026-09-18",
+            put_reference_future="IM2612",
+            put_reference_price_date="2026-09-18",
+        )
+        payload = {
+            "status": "ok",
+            "strategy_revision": "r7",
+            "build": "v1.3-test-r7",
+            "publication_mode": "close_confirmed",
+            "market_date": "2026-09-18",
+            "completed_day": "2026-09-18",
+            "next_trade_day": "2026-09-21",
+            "verified_day": "2026-09-18",
+            "sequence": 8,
+            "digest": "c" * 64,
+            "advanced_sessions": 1,
+            "signals": {"IC": signal("IC"), "IM": execution},
+        }
+        _subject, body, _actionable = digest.build_success(payload, "", "")
+        self.assertIn("月度Put执行日：2026-09-18", body)
+        self.assertIn("参考期货IM2612，取价日2026-09-18", body)
+        self.assertIn("当天按该参考期货价格重选Put并写入执行记录", body)
 
     def test_gate_and_success_marker_are_revision_mode_date_digest_scoped(self) -> None:
         prefix = gate.marker_prefix(date(2026, 9, 3), "realtime")

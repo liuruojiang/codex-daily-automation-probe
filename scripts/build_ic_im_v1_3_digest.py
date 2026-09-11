@@ -176,6 +176,30 @@ def grid_reason(product: str, signal: dict[str, Any]) -> str:
     return f"估值网格：当前估值分{decimal(score_value)}；{conclusion}。网格腿不配置Put或Call。"
 
 
+def im_put_calendar_reason(signal: dict[str, Any]) -> str:
+    """Explain the execution-day Put calendar in the delivered digest."""
+    revision = signal.get("im_put_calendar_revision")
+    if not revision:
+        return ""
+    reference_future = signal.get("put_reference_future") or "N/A"
+    price_date = signal.get("put_reference_price_date") or signal.get("market_date") or "N/A"
+    execution_date = signal.get("put_monthly_reset_execution_date") or "N/A"
+    if bool(signal.get("put_monthly_reset_preview")):
+        return (
+            f"月度Put维护预告：{execution_date}执行；当前为预告日，沿用既有合约，"
+            f"当天按已持有IM价格重选，当前不锁定新合约；日历版本{revision}。"
+        )
+    if bool(signal.get("option_monthly_reset_due")):
+        return (
+            f"月度Put执行日：{execution_date}；参考期货{reference_future}，取价日{price_date}；"
+            f"当天按该参考期货价格重选Put并写入执行记录，不提前锁定；日历版本{revision}。"
+        )
+    return (
+        f"月度Put日历：本日非重置执行日，沿用既有合约；参考期货{reference_future}，"
+        f"取价日{price_date}；日历版本{revision}。"
+    )
+
+
 def put_reason(product: str, signal: dict[str, Any]) -> str:
     if product == "IC":
         return (
@@ -187,7 +211,7 @@ def put_reason(product: str, signal: dict[str, Any]) -> str:
             f"{percent(signal.get('momentum_put_target_delta'), 1)}，合计目标"
             f"{percent(signal.get('total_put_target_delta'), 1)}。"
         )
-    return (
+    text = (
         f"Put保护：估值分{decimal(signal.get('score'))}；绝对轴为"
         f"{signal.get('absolute_valuation_tier_label', '未知档位')}，相对轴为"
         f"{signal.get('relative_valuation_tier_label', '未知档位')}。估值给每1倍核心IM "
@@ -200,6 +224,8 @@ def put_reason(product: str, signal: dict[str, Any]) -> str:
         f"{signal.get('momentum_put_target_contract') or '无'}；合计目标"
         f"{number(signal.get('total_put_target_qty_normalized'))}张。网格不配Put。"
     )
+    calendar_reason = im_put_calendar_reason(signal)
+    return f"{text} {calendar_reason}".strip() if calendar_reason else text
 
 
 def call_reason(product: str, signal: dict[str, Any]) -> str:
