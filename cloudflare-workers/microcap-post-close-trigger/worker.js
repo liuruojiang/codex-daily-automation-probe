@@ -96,7 +96,7 @@ async function dispatchAllDigests(env, workflows = WORKFLOWS) {
 
 export default {
   async scheduled(controller, env, ctx) {
-    const workflows = controller.cron === "0 10 * * MON-FRI"
+    const workflows = controller.cron === "0 8 * * MON-FRI"
       ? [WORKFLOWS[0]]
       : controller.cron === "0 12 * * MON-FRI" ? [WORKFLOWS[1]] : [];
     ctx.waitUntil(dispatchAllDigests(env, workflows));

@@ -13,7 +13,7 @@ email.
 Cloudflare dashboard configuration:
 
 - Secret: `GITHUB_TOKEN`
-- Microcap Cron: `0 10 * * MON-FRI` (18:00 Asia/Shanghai, unchanged)
+- Microcap Cron: `0 8 * * MON-FRI` (16:00 Asia/Shanghai)
 - IC/IM Cron: `0 12 * * MON-FRI` (20:00 Asia/Shanghai, after the independent 19:30 VIP sync)
 - Worker source: `worker.js`
 

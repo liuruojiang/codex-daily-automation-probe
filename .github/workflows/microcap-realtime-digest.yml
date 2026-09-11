@@ -2,9 +2,9 @@ name: Microcap Post-Close Digest
 
 on:
   schedule:
-    # 10:00 UTC is 18:00 Asia/Shanghai. The trading-day gate below suppresses
+    # 08:00 UTC is 16:00 Asia/Shanghai. The trading-day gate below suppresses
     # weekends and exchange holidays.
-    - cron: "0 10 * * *"
+    - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
       correction:
@@ -89,7 +89,7 @@ jobs:
     timeout-minutes: 100
     env:
       TZ: Asia/Shanghai
-      PLANNED_BJ: "18:00 Asia/Shanghai"
+      PLANNED_BJ: "16:00 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Record workflow start time

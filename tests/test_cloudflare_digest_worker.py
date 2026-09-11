@@ -18,7 +18,7 @@ class CloudflareDigestWorkerTests(unittest.TestCase):
         const calls = [];
         globalThis.fetch = async url => { calls.push(url.split('/').at(-2)); return {ok:true,status:204}; };
         const outcomes = [];
-        for (const cron of ['0 10 * * MON-FRI','0 12 * * MON-FRI','unexpected']) {
+        for (const cron of ['0 8 * * MON-FRI','0 12 * * MON-FRI','unexpected']) {
           calls.length = 0;
           let pending;
           await worker.scheduled({cron}, {GITHUB_TOKEN:'fixture'}, {waitUntil:p=>pending=p});
@@ -48,7 +48,7 @@ class CloudflareDigestWorkerTests(unittest.TestCase):
         self.assertEqual(config["main"], "./worker.js")
         self.assertFalse(config["workers_dev"])
         self.assertFalse(config["preview_urls"])
-        self.assertEqual(config["triggers"]["crons"], ["0 10 * * MON-FRI", "0 12 * * MON-FRI"])
+        self.assertEqual(config["triggers"]["crons"], ["0 8 * * MON-FRI", "0 12 * * MON-FRI"])
         self.assertTrue(config["observability"]["enabled"])
 
 
