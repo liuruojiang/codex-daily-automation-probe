@@ -33,7 +33,7 @@ class ICIMV13WorkflowTests(unittest.TestCase):
         self.assertIn("--required", text)
         self.assertNotIn('test "${{ steps.restore_prefx_ledger.outputs.restored }}"', text)
         self.assertIn("run_ic_im_v1_3_github_digest.py", text)
-        self.assertIn("ref: 3e31f2cfe26624e87a3c674d7186d6bc429e2015", text)
+        self.assertIn("ref: 48929d3b48126cfa6a7435467d031abf4ebc79f0", text)
         self.assertIn("ICIM_LEGULEGU_DAILY_SNAPSHOT: ${{ secrets.ICIM_LEGULEGU_DAILY_SNAPSHOT }}", text)
         self.assertIn("ICIM_CHINABOND_SNAPSHOT_FILE: strategy-artifacts/chinabond.json", text)
         self.assertIn("timeout --foreground 90s python -u strategy/ic_im_chinabond.py", text)
