@@ -124,7 +124,9 @@ jobs:
           import sys
           sys.path.insert(0, "strategy")
           import poe_ic_im_mainline_v1_3_bot as strategy
-          assert strategy.BUILD_ID == "v1.3-20260908-r7-mom120-put102-fix1"
+          assert strategy.BUILD_ID == "v1.3-20260913-r7-grid-half-v1"
+          assert strategy.GRID_POLICY_REVISION == "ic_im_grid_half_20260913_v1"
+          assert strategy.V13_GRID_RULES == {"IC": {"entry": 0.5, "exit": 1.0, "units": 0.5}, "IM": {"entry": 0.9, "exit": 1.7, "units": 0.5}}
           assert strategy.IM_EXECUTION_FIX_REVISION == "im_put_execution_guards_20260908_v2"
           assert strategy.IM_PUT_EXECUTION_REVISION == "im_monthly_reset_20260907_v1"
           assert strategy.IM_PUT_POLICY_REVISION == "im_mom120_put102_20260908_v1"
