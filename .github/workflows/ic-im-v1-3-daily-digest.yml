@@ -144,9 +144,11 @@ jobs:
           from zoneinfo import ZoneInfo
           sys.path.insert(0, "strategy")
           import poe_ic_im_mainline_v1_3_bot as strategy
-          today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+          clock = datetime.now(ZoneInfo("Asia/Shanghai"))
+          today = clock.date()
           print(f"trade_day={str(strategy._is_exchange_trading_day(today)).lower()}")
           print(f"today={today.isoformat()}")
+          print(f"completed_day={strategy._latest_completed_exchange_day(clock).isoformat()}")
           PY
           cat calendar.env >> "${GITHUB_OUTPUT}"
 
@@ -195,7 +197,7 @@ jobs:
             --out-dir strategy-artifacts \
             --mode "${{ steps.publication_mode.outputs.runner_mode }}" \
             --max-sessions 20 \
-            --expected-market-date "${{ steps.calendar.outputs.today }}" 2>&1 | tee strategy-run.log
+            --expected-market-date "${{ steps.publication_mode.outputs.mode == 'realtime' && steps.calendar.outputs.today || steps.calendar.outputs.completed_day }}" 2>&1 | tee strategy-run.log
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
           exit 0
