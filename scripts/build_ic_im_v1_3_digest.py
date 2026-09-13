@@ -431,6 +431,7 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
   <tr><td style="padding:18px 18px 2px;background:#f8fafc;">
     <div style="margin-bottom:16px;padding:14px 15px;background:{banner_bg};border:1px solid {accent}33;border-radius:12px;color:#344054;font-size:14px;line-height:1.6;"><strong style="color:{accent};">{escaped(headline)}</strong><br>{escaped(warning)}</div>
     <div style="margin-bottom:16px;padding:14px 15px;background:#fffaeb;border:1px solid #fedf89;border-radius:12px;color:#7a2e0e;font-size:14px;line-height:1.6;"><strong>估值数据来源</strong><br>{escaped(valuation_banner(signals))}</div>
+    <div style="margin-bottom:16px;font-size:14px;line-height:1.6;">{escaped(payload.get('grid_release_note', ''))}</div>
     {cards}
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:2px 0 16px;background:#ffffff;border:1px solid #e4e7ec;border-radius:12px;">
       <tr><td style="padding:15px 16px;color:#667085;font-size:12px;line-height:1.65;">
@@ -566,6 +567,7 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         "## 审计状态",
         "",
         f"- 构建：`{payload.get('build', 'N/A')}`",
+        str(payload.get('grid_release_note', '')),
         f"- 已核验账本日：`{payload.get('verified_day', 'N/A')}`",
         f"- 账本序号：`{payload.get('sequence', 'N/A')}`",
         f"- 账本摘要：`{str(payload.get('digest', ''))[:12]}`",
