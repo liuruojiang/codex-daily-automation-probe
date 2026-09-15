@@ -74,6 +74,26 @@ class MicrocapDeliveryGateTests(unittest.TestCase):
         self.assertIn("should_send=true", output)
         self.assertIn("subject_prefix=纠正版", output)
 
+    def test_accepted_smtp_receipt_suppresses_duplicate_send(self) -> None:
+        day = datetime(2026, 8, 7, 9, tzinfo=timezone.utc)
+        marker_name = gate.delivery_marker_name(day.date(), "close_confirmed")
+        payloads = {
+            marker_name: {"artifacts": []},
+            marker_name + "-smtp-accepted": {
+                "artifacts": [{"name": marker_name + "-smtp-accepted", "expired": False}]
+            },
+        }
+        outputs: list[dict[str, str]] = []
+        with (
+            patch.object(gate, "now_utc", return_value=day),
+            patch.object(gate, "fetch_artifacts", side_effect=lambda _repo, _token, name, _api: payloads.get(name, {"artifacts": []})),
+            patch.object(sys, "argv", ["check_microcap_delivery.py", "--publication-mode", "close_confirmed", "--repository", "o/r", "--token", "t"]),
+            patch.object(gate, "write_outputs", outputs.append),
+        ):
+            self.assertEqual(gate.main(), 0)
+        self.assertEqual(outputs[0]["should_send"], "false")
+        self.assertEqual(outputs[0]["recover_marker"], "true")
+
 
 if __name__ == "__main__":
     unittest.main()
