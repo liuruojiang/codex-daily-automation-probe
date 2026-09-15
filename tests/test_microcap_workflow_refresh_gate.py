@@ -36,7 +36,10 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             text.index("name: Refresh Top100 realtime state") : text.index("name: Record refresh failure for digest")
         ]
         self.assertIn("--max-workers 4", refresh_step)
-        self.assertIn("--force-refresh-static-inputs", refresh_step)
+        self.assertIn("static_refresh_args+=(--force-refresh-static-inputs)", refresh_step)
+        self.assertIn("steps.refresh_mode.outputs.force_static_inputs", refresh_step)
+        self.assertIn("name: Resolve same-day static refresh mode", text)
+        self.assertIn("same_day_validated_state", text)
         self.assertIn("while true", refresh_step)
         self.assertIn("attempt=$((attempt + 1))", refresh_step)
         self.assertIn('attempt_log="realtime_state_refresh_attempt_${attempt}.log"', refresh_step)
