@@ -29,6 +29,7 @@ on:
 permissions:
   contents: read
   actions: write
+  checks: write
 
 concurrency:
   group: microcap-realtime-digest
@@ -235,6 +236,29 @@ jobs:
           # attempt preserves successfully refreshed cache legs for the next
           # attempt; source-level request timeouts and final integrity gates
           # remain in force. GitHub's job runtime limit is the outer guard.
+          progress_check_id=""
+          publish_progress_check() {
+            local summary="$1"
+            PROGRESS_SUMMARY="${summary}" python -c 'import json, os; print(json.dumps({"name": "Microcap refresh progress", "head_sha": os.environ["GITHUB_SHA"], "status": "in_progress", "output": {"title": "Microcap Top100 refresh", "summary": os.environ["PROGRESS_SUMMARY"]}}))' > progress_check_payload.json
+            if [[ -z "${progress_check_id}" ]]; then
+              progress_check_id=$(curl --silent --show-error --fail-with-body \
+                --request POST \
+                --header "Accept: application/vnd.github+json" \
+                --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+                --header "X-GitHub-Api-Version: 2022-11-28" \
+                --data @progress_check_payload.json \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/check-runs" \
+                | python -c "import json, sys; print(json.load(sys.stdin)['id'])") || true
+            elif [[ -n "${progress_check_id}" ]]; then
+              curl --silent --show-error --fail-with-body \
+                --request PATCH \
+                --header "Accept: application/vnd.github+json" \
+                --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+                --header "X-GitHub-Api-Version: 2022-11-28" \
+                --data @progress_check_payload.json \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/check-runs/${progress_check_id}" >/dev/null || true
+            fi
+          }
           attempt=0
           while true; do
             attempt=$((attempt + 1))
@@ -253,6 +277,8 @@ jobs:
                 elapsed_seconds=$(( $(date +%s) - started_epoch ))
                 echo "::notice title=Microcap refresh heartbeat::attempt=${attempt}; elapsed_seconds=${elapsed_seconds}; pid=${refresh_pid}"
                 tail -n 8 "${attempt_log}" || true
+                progress_line=$(grep -E 'price-cache refresh progress [0-9]+/[0-9]+ \([0-9.]+%\)' "${attempt_log}" | tail -n 1 || true)
+                publish_progress_check "attempt=${attempt}; elapsed_seconds=${elapsed_seconds}; ${progress_line:-initializing refresh}"
                 sleep 60
               done
             ) &
