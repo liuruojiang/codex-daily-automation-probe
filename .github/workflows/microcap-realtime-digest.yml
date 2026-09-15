@@ -230,11 +230,12 @@ jobs:
           # A prior full-cache refresh has already established the frozen state.
           # Four workers only parallelize independent public-price tail requests;
           # the workflow-level concurrency group still serializes publications.
-          # Keep one retry for transient provider failures, but do not let three
-          # whole-refresh attempts delay a close-confirmed digest for over an hour.
-          for attempt in 1 2; do
-            echo "refresh_attempt=${attempt}/2" | tee -a realtime_state_refresh_result.txt
-            timeout --foreground 18m python -u scripts/realtime_state_bundle.py refresh \
+          # A close-confirmed digest prioritizes a verified result over a short
+          # failure. Retain the established per-attempt budget and three
+          # attempts, while reusing the cache progress from prior attempts.
+          for attempt in 1 2 3; do
+            echo "refresh_attempt=${attempt}/3" | tee -a realtime_state_refresh_result.txt
+            timeout --foreground 22m python -u scripts/realtime_state_bundle.py refresh \
               --root . \
               --max-workers 4 \
               --force-refresh-static-inputs \
@@ -243,7 +244,7 @@ jobs:
             if [[ "${status}" -eq 0 ]]; then
               break
             fi
-            if [[ "${attempt}" -lt 2 ]]; then
+            if [[ "${attempt}" -lt 3 ]]; then
               sleep $((attempt * 20))
             fi
           done

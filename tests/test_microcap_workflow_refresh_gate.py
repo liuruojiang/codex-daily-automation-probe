@@ -37,8 +37,8 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         ]
         self.assertIn("--max-workers 4", refresh_step)
         self.assertIn("--force-refresh-static-inputs", refresh_step)
-        self.assertIn("for attempt in 1 2", refresh_step)
-        self.assertIn("timeout --foreground 18m", refresh_step)
+        self.assertIn("for attempt in 1 2 3", refresh_step)
+        self.assertIn("timeout --foreground 22m", refresh_step)
         self.assertNotIn("publication_mode.outputs.mode == 'realtime'", refresh_step)
         self.assertNotIn("--max-workers 2", refresh_step)
         self.assertNotIn("--max-workers 1", refresh_step)
