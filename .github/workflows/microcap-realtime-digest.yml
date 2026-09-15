@@ -241,9 +241,22 @@ jobs:
           restore-keys: |
             microcap-verified-state-v1-${{ runner.os }}-
 
+      # GitHub's cache is deliberately evictable.  A successful formal state
+      # pack is also retained as an artifact so a cache miss after a holiday
+      # resumes incrementally instead of triggering a historical rebuild.
+      - name: Restore durable verified production state bundle
+        id: durable_state_artifact
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && steps.verified_state_cache.outputs.cache-matched-key == ''
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/restore_microcap_verified_state.py \
+            --bundle microcap/.realtime_state_bundle/microcap-top100-state.zip
+
       - name: Restore verified production state
         id: verified_state_restore
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.verified_state_cache.outputs.cache-matched-key != ''
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.verified_state_cache.outputs.cache-matched-key != '' || steps.durable_state_artifact.outputs.restored == 'true')
         shell: bash
         run: |
           set +e
@@ -393,6 +406,15 @@ jobs:
         run: |
           mkdir -p microcap/.realtime_state_bundle
           cp "${RUNNER_TEMP}/microcap-top100-state.zip" microcap/.realtime_state_bundle/microcap-top100-state.zip
+
+      - name: Preserve validated state bundle for long-gap recovery
+        if: steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: microcap-verified-state-recovery
+          path: microcap/.realtime_state_bundle/microcap-top100-state.zip
+          if-no-files-found: error
+          retention-days: 90
 
       # Save immediately after the formal pack, before isolated signals and
       # Gmail.  A later interruption therefore never discards a completed
