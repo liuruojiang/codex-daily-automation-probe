@@ -41,12 +41,20 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("name: Resolve same-day static refresh mode", text)
         self.assertIn("same_day_validated_state", text)
         self.assertIn("name: Restore verified production state bundle", text)
+        self.assertIn("name: Restore durable verified production state bundle", text)
         self.assertIn("name: Restore verified production state", text)
+        self.assertIn("scripts/restore_microcap_verified_state.py", text)
+        self.assertIn("name: microcap-verified-state-recovery", text)
+        self.assertIn("retention-days: 90", text)
         self.assertIn("microcap-verified-state-v1-${{ runner.os }}-${{ steps.market_target.outputs.date }}", text)
         self.assertIn("microcap-verified-state-v1-${{ runner.os }}-", text)
         self.assertLess(
             text.index("name: Restore verified production state"),
             text.index("name: Resolve same-day static refresh mode"),
+        )
+        self.assertLess(
+            text.index("- name: Restore durable verified production state bundle"),
+            text.index("- name: Restore verified production state\n"),
         )
         self.assertIn("while true", refresh_step)
         self.assertIn("attempt=$((attempt + 1))", refresh_step)
@@ -111,12 +119,17 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("steps.state_bundle.outcome == 'success'", text)
         self.assertIn("name: Pack validated production state", text)
         self.assertIn("name: Persist validated state bundle for same-day recovery", text)
+        self.assertIn("name: Preserve validated state bundle for long-gap recovery", text)
         self.assertLess(
             text.index("name: Pack validated production state"),
             text.index("name: Persist validated state bundle for same-day recovery"),
         )
         self.assertLess(
             text.index("name: Persist validated state bundle for same-day recovery"),
+            text.index("name: Run v2.0 selected signal"),
+        )
+        self.assertLess(
+            text.index("name: Preserve validated state bundle for long-gap recovery"),
             text.index("name: Run v2.0 selected signal"),
         )
         self.assertIn("name: Restore state into isolated v2.3 workspace", text)
