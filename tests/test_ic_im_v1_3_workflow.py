@@ -42,7 +42,7 @@ class ICIMV13WorkflowTests(unittest.TestCase):
         self.assertLess(text.index("python -u strategy/ic_im_chinabond.py"), text.index("python -u strategy/run_ic_im_v1_3_github_digest.py"))
         self.assertNotIn("ref: main", text)
         self.assertIn("strategy-artifacts/strategy-sha.txt", text)
-        self.assertIn('strategy.BUILD_ID == "v1.3-20260914-r7-im-grid160-half-v1"', text)
+        self.assertIn('strategy.BUILD_ID == "v1.3-20260915-r7-mom120-abs20-debounce-v1"', text)
         self.assertIn('strategy.GRID_POLICY_REVISION == "ic_im_im_grid160_half_20260914_v1"', text)
         self.assertIn('strategy.IM_EXECUTION_FIX_REVISION == "im_put_execution_guards_20260908_v2"', text)
         self.assertIn('strategy.IM_PUT_EXECUTION_REVISION == "im_monthly_reset_20260907_v1"', text)
