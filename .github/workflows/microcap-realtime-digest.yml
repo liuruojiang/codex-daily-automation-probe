@@ -239,12 +239,29 @@ jobs:
           while true; do
             attempt=$((attempt + 1))
             echo "refresh_attempt=${attempt}" | tee -a realtime_state_refresh_result.txt
+            attempt_log="realtime_state_refresh_attempt_${attempt}.log"
+            : > "${attempt_log}"
+            started_epoch=$(date +%s)
             python -u scripts/realtime_state_bundle.py refresh \
               --root . \
               --max-workers 4 \
               --force-refresh-static-inputs \
-              --max-anchor-age-days 3 2>&1 | tee -a realtime_state_refresh_result.txt
-            status=${PIPESTATUS[0]}
+              --max-anchor-age-days 3 > "${attempt_log}" 2>&1 &
+            refresh_pid=$!
+            (
+              while kill -0 "${refresh_pid}" 2>/dev/null; do
+                elapsed_seconds=$(( $(date +%s) - started_epoch ))
+                echo "::notice title=Microcap refresh heartbeat::attempt=${attempt}; elapsed_seconds=${elapsed_seconds}; pid=${refresh_pid}"
+                tail -n 8 "${attempt_log}" || true
+                sleep 60
+              done
+            ) &
+            heartbeat_pid=$!
+            wait "${refresh_pid}"
+            status=$?
+            kill "${heartbeat_pid}" 2>/dev/null || true
+            wait "${heartbeat_pid}" 2>/dev/null || true
+            cat "${attempt_log}" | tee -a realtime_state_refresh_result.txt
             if [[ "${status}" -eq 0 ]]; then
               break
             fi
