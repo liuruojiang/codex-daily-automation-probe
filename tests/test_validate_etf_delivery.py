@@ -56,6 +56,33 @@ class DeliveryGateTests(unittest.TestCase):
         self.manifest["body_sha256"] = hashlib.sha256(self.metadata["body"].encode()).hexdigest()
         self.assertEqual(validate(self.metadata, self.manifest), [])
 
+    def test_disclosed_stale_candidate_is_advisory(self):
+        source_id = "fixed_feed|fixture|https://example.com/feed"
+        stale_url = "https://example.com/stale"
+        self.metadata["body"] += f"发送前缺漏检查：FAILED\n- 待核验：{stale_url}\n"
+        self.metadata["html_body"] = (
+            self.metadata["html_body"]
+            + f'<p>发送前缺漏检查：FAILED</p><a href="{stale_url}">待核验</a>'
+        )
+        self.manifest.update(
+            schema_version=2,
+            decision_policy="etf-candidates-v1",
+            head_sha="fixture",
+            cutoff_utc="2026-09-07T21:00:00Z",
+            configured_sources=[source_id],
+            source_audit=[{"source_id": source_id, "coverage": "complete", "evidence": {"captured_count": 1}}],
+            candidates=[{
+                "source_id": source_id,
+                "url": stale_url,
+                "title": "Old episode",
+                "published": "2026-08-01T12:00:00Z",
+                "pipeline_decision": {"reason": "research_backfill"},
+                "summary": "A sufficiently detailed allocation discussion for the audit fixture.",
+            }],
+        )
+        self.manifest["body_sha256"] = hashlib.sha256(self.metadata["body"].encode()).hexdigest()
+        self.assertEqual(validate(self.metadata, self.manifest, {"items": []}), [])
+
     def test_cli_failure_really_returns_nonzero_before_send(self):
         # The CLI requires the new independent ledger, not just rendered URLs.
         source_id = "research|fixture|https://example.com/feed"

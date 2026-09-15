@@ -65,15 +65,15 @@ def validate(metadata: dict, manifest: dict, history_before: dict | None = None,
             errors.append(f"html_body is missing clickable article links: {sorted(missing)}")
     if require_candidate_audit or history_before is not None:
         candidate_result = audit_candidates(manifest, history_before)
-        advisory = {"unexplained_priority_omission", "selected_evidence_requires_review", "history_record_date_unknown"}
-        errors.extend(f"candidate audit: {row['reason']} {row.get('url', '')}"
-                      for row in candidate_result["failures"] if row["reason"] not in advisory)
+        # Candidate-audit findings describe editorial/source-quality risks.  They
+        # must be disclosed in the email, but must not prevent a complete,
+        # internally consistent report from being delivered.
         if candidate_result["status"] != "PASS":
             marker = f"发送前缺漏检查：{candidate_result['status']}"
             if marker not in body or marker not in (html or ""):
                 errors.append("unresolved candidate/source coverage must be disclosed in both email bodies")
             for row in candidate_result["failures"]:
-                if row["reason"] in advisory and row.get("url"):
+                if row.get("url"):
                     url = canonical(row["url"])
                     if url not in {canonical(u) for u in re.findall(r"https?://[^\s<>]+", body)} or (isinstance(html, str) and url not in parser.links):
                         errors.append(f"candidate warning must include a clickable source: {url}")
