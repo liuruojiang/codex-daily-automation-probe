@@ -35,12 +35,13 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         refresh_step = text[
             text.index("name: Refresh Top100 realtime state") : text.index("name: Record refresh failure for digest")
         ]
-        self.assertIn("--max-workers 1", refresh_step)
+        self.assertIn("--max-workers 4", refresh_step)
         self.assertIn("--force-refresh-static-inputs", refresh_step)
-        self.assertIn("for attempt in 1 2 3", refresh_step)
-        self.assertIn("timeout --foreground 22m", refresh_step)
+        self.assertIn("for attempt in 1 2", refresh_step)
+        self.assertIn("timeout --foreground 18m", refresh_step)
         self.assertNotIn("publication_mode.outputs.mode == 'realtime'", refresh_step)
         self.assertNotIn("--max-workers 2", refresh_step)
+        self.assertNotIn("--max-workers 1", refresh_step)
         self.assertNotIn("microcap_top100_mom16_biweekly_live_v2_0.py", refresh_step)
         self.assertNotIn("&& python", refresh_step)
         self.assertIn("name: Run v2.0 selected signal", text)
