@@ -45,6 +45,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("name\": \"Microcap refresh progress\"", refresh_step)
         self.assertIn("publish_progress_check", refresh_step)
         self.assertIn("price-cache refresh progress", refresh_step)
+        self.assertIn("GITHUB_TOKEN: ${{ github.token }}", refresh_step)
         self.assertIn("sleep 60", refresh_step)
         self.assertNotIn("timeout --foreground", refresh_step)
         self.assertNotIn("publication_mode.outputs.mode == 'realtime'", refresh_step)

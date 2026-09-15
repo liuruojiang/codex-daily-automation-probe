@@ -224,6 +224,8 @@ jobs:
         id: refresh_state
         working-directory: microcap
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set +e
           status=1
