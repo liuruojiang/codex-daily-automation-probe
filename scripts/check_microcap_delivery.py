@@ -123,6 +123,7 @@ def main() -> int:
     delivery_date = beijing_delivery_date(now_utc())
     marker_name = delivery_marker_name(delivery_date, args.publication_mode)
     marker_already_exists = False
+    recover_marker = False
     if not args.correction:
         if not args.repository or not args.token:
             raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required for scheduled delivery checks")
@@ -139,6 +140,14 @@ def main() -> int:
                         marker_already_exists = True
                         break
         if not marker_already_exists:
+            receipt_name = marker_name + "-smtp-accepted"
+            receipts = fetch_artifacts(args.repository, args.token, receipt_name, args.api_url)
+            if marker_exists(receipts, receipt_name):
+                # This artifact is written only after send_report.py returns
+                # from SMTP acceptance, unlike a pre-SMTP send intent.
+                marker_already_exists = True
+                recover_marker = True
+        if not marker_already_exists:
             intent_name = marker_name + "-send-intent"
             pending = fetch_artifacts(args.repository, args.token, intent_name, args.api_url)
             if marker_exists(pending, intent_name):
@@ -154,6 +163,7 @@ def main() -> int:
             "delivery_date": delivery_date.isoformat(),
             "marker_name": marker_name,
             "subject_prefix": "纠正版" if args.correction else "",
+            "recover_marker": str(recover_marker).lower(),
         }
     )
     return 0

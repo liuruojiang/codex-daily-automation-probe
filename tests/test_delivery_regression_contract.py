@@ -67,9 +67,16 @@ def test_normal_smtp_requires_durable_intent_and_mode_specific_preflight(name):
     assert intent['with']['if-no-files-found'] == 'error'
     assert 'continue-on-error' not in intent
     assert "steps.send_intent.outcome == 'success'" in indexed['send_gmail'][1]['if']
+    if name.startswith('microcap'):
+        receipt = indexed['smtp_receipt'][1]
+        assert indexed['send_gmail'][0] < indexed['smtp_receipt'][0]
+        assert receipt['uses'] == 'actions/upload-artifact@v7'
+        assert receipt['with']['name'] == '${{ steps.delivery_gate.outputs.marker_name }}-smtp-accepted'
+        assert receipt['with']['if-no-files-found'] == 'error'
     completion = next(s for s in steps if s.get('name') == 'Mark digest delivered')
     assert completion['with']['if-no-files-found'] == 'error'
     if name.startswith('microcap'):
+        assert "steps.smtp_receipt.outcome == 'success'" in completion['if']
         for guarded in (intent, indexed['send_gmail'][1]):
             assert "steps.whole_delivery.outputs.exit_code == '0'" in guarded['if']
 

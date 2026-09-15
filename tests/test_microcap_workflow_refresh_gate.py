@@ -40,11 +40,12 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("steps.refresh_mode.outputs.force_static_inputs", refresh_step)
         self.assertIn("name: Resolve same-day static refresh mode", text)
         self.assertIn("same_day_validated_state", text)
-        self.assertIn("name: Restore same-day verified production state bundle", text)
-        self.assertIn("name: Restore same-day verified production state", text)
+        self.assertIn("name: Restore verified production state bundle", text)
+        self.assertIn("name: Restore verified production state", text)
         self.assertIn("microcap-verified-state-v1-${{ runner.os }}-${{ steps.market_target.outputs.date }}", text)
+        self.assertIn("microcap-verified-state-v1-${{ runner.os }}-", text)
         self.assertLess(
-            text.index("name: Restore same-day verified production state"),
+            text.index("name: Restore verified production state"),
             text.index("name: Resolve same-day static refresh mode"),
         )
         self.assertIn("while true", refresh_step)
@@ -142,6 +143,8 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("scripts/full_rebalance_cache_bundle.py validate", text)
         self.assertIn("name: Check delivery marker", text)
         self.assertIn("scripts/check_microcap_delivery.py", text)
+        self.assertIn("name: Recover delivery marker from accepted SMTP receipt", text)
+        self.assertIn("name: Preserve accepted SMTP receipt", text)
         self.assertIn("steps.delivery_gate.outputs.should_send == 'true'", text)
         self.assertIn("name: Mark digest delivered", text)
         self.assertIn("steps.delivery_gate.outputs.marker_name", text)
