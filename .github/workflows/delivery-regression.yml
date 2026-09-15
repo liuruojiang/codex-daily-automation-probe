@@ -94,7 +94,7 @@ jobs:
         working-directory: strategy
         run: >-
           python -X utf8 -m pytest -q
-          tests/test_realtime_preflight.py tests/test_top100_delivery.py
+          tests/test_realtime_preflight.py tests/test_realtime_state_guard_20260915.py tests/test_top100_delivery.py
           tests/test_top100_cloud_delivery.py tests/test_full_rebalance_cache_bundle.py
           tests/test_top100_data_guards.py tests/test_adversarial_microcap_delivery.py
           tests/test_realtime_exchange_calendar.py tests/test_exchange_calendar_provider.py
