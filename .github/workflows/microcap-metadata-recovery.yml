@@ -1,0 +1,50 @@
+name: Microcap metadata recovery
+on:
+  workflow_dispatch:
+    inputs:
+      expected_fingerprint:
+        description: Exact security metadata fingerprint from the verified proxy
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: microcap/.microcap_index_cache
+          key: microcap-metadata-readonly-${{ github.run_id }}
+          restore-keys: |
+            microcap-full-rebalance-v1-Linux-
+      - name: Export only exact matching metadata
+        env:
+          EXPECTED: ${{ inputs.expected_fingerprint }}
+          CACHE_KEY: ${{ steps.cache.outputs.cache-matched-key }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib, zipfile
+          root = pathlib.Path('microcap')
+          paths = sorted((root / '.microcap_index_cache/security_meta').glob('*.json'))
+          digest = hashlib.sha256()
+          for p in paths:
+              digest.update(p.stem.encode('ascii') + b'\0' + p.read_bytes() + b'\0')
+          actual = digest.hexdigest()
+          assert paths and actual == os.environ['EXPECTED'], (len(paths), actual)
+          manifest = {'fingerprint': actual, 'count': len(paths), 'cache_key': os.environ['CACHE_KEY'],
+                      'files': [{'path': p.relative_to(root).as_posix(),
+                                 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths]}
+          with zipfile.ZipFile('metadata-recovery.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+              for p in paths:
+                  z.write(p, p.relative_to(root).as_posix())
+              z.writestr('manifest.json', json.dumps(manifest, indent=2))
+          print(json.dumps({k:v for k,v in manifest.items() if k != 'files'}))
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: microcap-metadata-recovery
+          path: metadata-recovery.zip
+          retention-days: 7
