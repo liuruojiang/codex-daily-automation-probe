@@ -92,6 +92,8 @@ jobs:
       - name: Test Microcap state and cloud transport invariants
         if: matrix.family == 'microcap'
         working-directory: strategy
+        env:
+          MICROCAP_DIGEST_SOURCE: ${{ github.workspace }}/automation/scripts/build_microcap_realtime_digest.py
         run: >-
           python -X utf8 -m pytest -q
           tests/test_realtime_preflight.py tests/test_realtime_state_guard_20260915.py tests/test_top100_delivery.py
