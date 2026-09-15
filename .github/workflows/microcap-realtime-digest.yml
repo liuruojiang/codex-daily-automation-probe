@@ -230,11 +230,16 @@ jobs:
           # A prior full-cache refresh has already established the frozen state.
           # Four workers only parallelize independent public-price tail requests;
           # the workflow-level concurrency group still serializes publications.
-          # Keep one retry for transient provider failures, but do not let three
-          # whole-refresh attempts delay a close-confirmed digest for over an hour.
-          for attempt in 1 2; do
-            echo "refresh_attempt=${attempt}/2" | tee -a realtime_state_refresh_result.txt
-            timeout --foreground 18m python -u scripts/realtime_state_bundle.py refresh \
+          # A close-confirmed digest ends when a verified state is available,
+          # not after an arbitrary number of whole-refresh attempts. Each
+          # attempt preserves successfully refreshed cache legs for the next
+          # attempt; source-level request timeouts and final integrity gates
+          # remain in force. GitHub's job runtime limit is the outer guard.
+          attempt=0
+          while true; do
+            attempt=$((attempt + 1))
+            echo "refresh_attempt=${attempt}" | tee -a realtime_state_refresh_result.txt
+            python -u scripts/realtime_state_bundle.py refresh \
               --root . \
               --max-workers 4 \
               --force-refresh-static-inputs \
@@ -243,9 +248,7 @@ jobs:
             if [[ "${status}" -eq 0 ]]; then
               break
             fi
-            if [[ "${attempt}" -lt 2 ]]; then
-              sleep $((attempt * 20))
-            fi
+            sleep $(( attempt < 6 ? attempt * 20 : 120 ))
           done
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
           echo "REFRESH_STATE_EXIT_CODE=${status}" >> "${GITHUB_ENV}"
