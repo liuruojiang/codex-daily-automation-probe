@@ -2561,6 +2561,150 @@
       "source": "Capital Allocators（条件页面）",
       "title": "AI in the Investment Office - Capital Allocators with Ted Seides",
       "url": "https://www.capitalallocators.com/podcast/ai-in-the-investment-office/"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "HYG vs JNK: The Two Biggest Junk Bond ETFs Look Identical, but the Cheaper One Pays More",
+      "url": "https://247wallst.com/investing/etf/2026/09/15/hyg-vs-jnk-the-two-biggest-junk-bond-etfs-look-identical-but-the-cheaper-one-pays-more/?.tsrc=rss"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "Quantocracy",
+      "title": "Recent Quant Links from Quantocracy as of 09/14/2026",
+      "url": "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-09142026/"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.TR",
+      "title": "Gate Design and Stage-Dependent Incentives in Retail Proprietary-Trading Evaluations: Why Passing Is Not Standalone Evidence of Skill, and Why the Product Fails to Pay Under Measu...",
+      "url": "https://arxiv.org/abs/2609.14859"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.TR",
+      "title": "ViperQ: Order Flow Pattern Recognition via Auction Market Theory for Reinforcement Learning Trading",
+      "url": "https://arxiv.org/abs/2609.13825"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.TR",
+      "title": "Same Book, Different Fills: Partial Identification of FIFO Execution from Aggregate Order Books",
+      "url": "https://arxiv.org/abs/2609.13597"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.TR",
+      "title": "Public Opinion as an Option: Leveraging Prediction Markets to Hedge Exposure to Spot Crypto Volatility",
+      "url": "https://arxiv.org/abs/2609.14267"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.TR",
+      "title": "Event-Time Order-Flow Memory, Operational-Time Impact, and Subordinated Market Observables",
+      "url": "https://arxiv.org/abs/2609.13715"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.ST",
+      "title": "WaVeFuse: Regime-Adaptive Equity Index Forecasting via Channel-Wise Wavelet Denoising and Vertical Attention Fusion",
+      "url": "https://arxiv.org/abs/2609.14733"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.ST",
+      "title": "Does Crypto Sentiment Extremity Widen Estimated Spreads? Evidence Depends on the Specification",
+      "url": "https://arxiv.org/abs/2602.07018"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.ST",
+      "title": "Do Cryptocurrency Markets Differentiate Infrastructure from Regulatory Shocks? A Multi-Moment Event Study with Dependence-Robust Inference",
+      "url": "https://arxiv.org/abs/2602.07046"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.ST",
+      "title": "Multi-regime Markov-switching models with time-varying transition probabilities: An application to U.S. Treasury yields",
+      "url": "https://arxiv.org/abs/2605.14976"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.RM",
+      "title": "CAST: A Cross-Asset State-Space Trading System for Drawdown Control in Stock Markets",
+      "url": "https://arxiv.org/abs/2609.14205"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.RM",
+      "title": "AI Assisted Workflow Optimization and Automation",
+      "url": "https://arxiv.org/abs/2609.14323"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.RM",
+      "title": "Towards foundation models for insurance risk modelling",
+      "url": "https://arxiv.org/abs/2609.14576"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.RM",
+      "title": "Quantifying the 2027 Solvency II Risk Margin Reform",
+      "url": "https://arxiv.org/abs/2609.15741"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.PM",
+      "title": "PortBench: A Correlation-Aware, Full-Pipeline Benchmark for LLM-Driven Portfolio Management",
+      "url": "https://arxiv.org/abs/2605.27887"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.PM",
+      "title": "CLQT: A Closed-Loop, Cost-Aware, Strategy-Consistent Benchmark for Diagnostic Evaluation of LLM Portfolio-Management Agents",
+      "url": "https://arxiv.org/abs/2606.29771"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.PM",
+      "title": "Diffusion models for dynamic volatility surface generation and data-driven hedging",
+      "url": "https://arxiv.org/abs/2609.13402"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.TR",
+      "title": "Resolution Is Not Settlement, Part II: Protocol Finality and Observed Redemption on Polymarket",
+      "url": "https://arxiv.org/abs/2609.15373"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "arXiv q-fin.PM",
+      "title": "Special Markowitz: Thermodynamic Formalism for the Joint Regularisation of Returns and Covariance",
+      "url": "https://arxiv.org/abs/2609.14029"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "S&P 500, Nasdaq, Dow End Lower As Investors Price In Rate Hike Ahead Of Fed Meeting — AMZN, META, MU, TSLA, PLTR In Focus",
+      "url": "https://stocktwits.com/news-articles/markets/equity/s-and-p-500-nasdaq-dow-end-lower-as-investors-price-in-rate-hike-ahead-of-fed-meeting-amzn-meta-mu-tsla-pltr-in-focus/cZtn8vQRBcx?.tsrc=rss"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "Of Dollars And Data（博客）",
+      "title": "What Was the Best Portfolio Over the Last 50 Years?",
+      "url": "https://ofdollarsanddata.com/what-was-the-best-portfolio-over-the-last-50-years/"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "Morningstar The Long View（播客页面）",
+      "title": "Jeff Ptak: The Simple Secret to Becoming a Better Investor",
+      "url": "https://www.morningstar.com/podcasts/the-long-view/jeff-ptak-simple-secret-becoming-better-investor-2"
+    },
+    {
+      "sent_date": "2026-09-16",
+      "source": "Bogleheads.org Forum (comments/replies 30; views 1517)",
+      "title": "Personal Investments • Some votes on TIPS bonds vs. funds",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8857246#p8857246"
     }
   ]
 }
