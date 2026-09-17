@@ -1,4 +1,4 @@
-name: IC IM v1.3-r7 Post-Close Digest
+name: IC IM v1.4-r1 Post-Close Digest
 
 on:
   schedule:
@@ -31,7 +31,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: ic-im-v1-3-r7-post-close-digest
+  group: ic-im-v1-4-r1-post-close-digest
   cancel-in-progress: false
 
 jobs:
@@ -90,7 +90,7 @@ jobs:
           if [[ "${CORRECTION}" == "true" ]]; then
             args+=(--correction)
           fi
-          python automation/scripts/check_ic_im_v1_3_delivery.py \
+          python automation/scripts/check_ic_im_v1_4_delivery.py \
             --publication-mode "${{ steps.publication_mode.outputs.mode }}" \
             "${args[@]}"
 
@@ -99,7 +99,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: a03989e050396694795115c4d2e0cd5863d1199e
+          ref: 3c6384f5696c773d254415d18bf6c615f2a66b35
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -114,7 +114,7 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true'
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r strategy/requirements-poe-v1.3-server.txt
+          python -m pip install -r strategy/requirements-poe-v1.4-server.txt
 
       - name: Verify corrected IM Put build
         if: steps.delivery_gate.outputs.should_send == 'true'
@@ -123,8 +123,11 @@ jobs:
           python - <<'PY'
           import sys
           sys.path.insert(0, "strategy")
-          import poe_ic_im_mainline_v1_3_bot as strategy
-          assert strategy.BUILD_ID == "v1.3-20260915-r7-mom120-abs20-debounce-v1"
+          import poe_ic_im_mainline_v1_4_bot as strategy
+          assert strategy.BUILD_ID == "v1.4-20260917-r1-coreput3x-fixedshort95-fix2"
+          import ic_im_v1_4_policy as policy
+          assert policy.RULE_REVISION == "ic_im_v1_4_coreput3x_fixed_short95_20260917_v1"
+          assert policy.EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-18"
           assert strategy.GRID_POLICY_REVISION == "ic_im_im_grid160_half_20260914_v1"
           assert strategy.V13_GRID_RULES == {"IC": {"entry": 0.5, "exit": 1.0, "units": 0.5}, "IM": {"entry": 1.6, "exit": 2.0, "units": 0.5}}
           from datetime import date
@@ -148,7 +151,7 @@ jobs:
           from datetime import datetime
           from zoneinfo import ZoneInfo
           sys.path.insert(0, "strategy")
-          import poe_ic_im_mainline_v1_3_bot as strategy
+          import poe_ic_im_mainline_v1_4_bot as strategy
           clock = datetime.now(ZoneInfo("Asia/Shanghai"))
           today = clock.date()
           print(f"trade_day={str(strategy._is_exchange_trading_day(today)).lower()}")
@@ -157,27 +160,64 @@ jobs:
           PY
           cat calendar.env >> "${GITHUB_OUTPUT}"
 
-      - name: Restore latest v1.3-r7 hash-chained ledger
+      - name: Restore latest v1.4-r1 hash-chained ledger
         if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true')
         id: restore_ledger
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          python automation/scripts/restore_ic_im_v1_3_ledger.py \
+          python automation/scripts/restore_ic_im_v1_4_ledger.py \
             --state-dir state \
+            --artifact-name ic-im-v1-4-r1-ledger
+
+      - name: Restore latest verified v1.3-r7 seed for first migration
+        if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.restore_ledger.outputs.restored != 'true'
+        id: restore_v13_seed
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python automation/scripts/restore_ic_im_v1_3_ledger.py \
+            --state-dir legacy-state \
             --artifact-name ic-im-v1-3-r7-put-monthly-fix1-ledger
 
-      - name: Restore last pre-fix r7 ledger
-        if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.restore_ledger.outputs.restored != 'true'
+      - name: Restore last pre-fix r7 seed when current r7 artifact is absent
+        if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.restore_ledger.outputs.restored != 'true' && steps.restore_v13_seed.outputs.restored != 'true'
         id: restore_prefx_ledger
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           python automation/scripts/restore_ic_im_v1_3_ledger.py \
-            --state-dir state \
+            --state-dir legacy-state \
             --artifact-name ic-im-v1-3-r7-ledger \
             --before-created-at 2026-09-07T00:00:00Z \
             --required
+
+      - name: Migrate verified r7 seed to independent v1.4-r1 ledger
+        if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.restore_ledger.outputs.restored != 'true'
+        run: |
+          test "${{ steps.restore_v13_seed.outputs.restored }}" = "true" || test "${{ steps.restore_prefx_ledger.outputs.restored }}" = "true"
+          python strategy/migrate_ic_im_v1_3_r7_to_v1_4_r1_state.py \
+            --source legacy-state \
+            --target state
+
+      - name: Verify v1.4 ledger chain and migration proof before runner import
+        if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true')
+        env:
+          ICIM_REQUIRE_MIGRATION: "1"
+          ICIM_STATE_DIR: state
+        run: |
+          python - <<'PY'
+          import json, sys
+          from pathlib import Path
+          sys.path.insert(0, "strategy")
+          import poe_ic_im_v1_4_state as state
+          store = state.StateStore("state")
+          latest = store.load_latest()
+          state.anchors_from_record(latest)
+          migration = json.loads(Path("state/migration_record.json").read_text(encoding="utf-8"))
+          assert migration["new_ledger"]["strategy_revision"] == "r1"
+          assert migration["new_ledger"]["digest"] == store.load_sequence(0)["digest"]
+          PY
 
       - name: Run IC/IM signal
         if: steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true')
@@ -197,7 +237,7 @@ jobs:
             --expected-date "${{ steps.calendar.outputs.today }}" \
             --output strategy-artifacts/chinabond.json || echo "ChinaBond fetch unavailable; use disclosed frozen fallback"
           set +e
-          timeout --foreground 65m python -u strategy/run_ic_im_v1_3_github_digest.py \
+          timeout --foreground 65m python -u strategy/run_ic_im_v1_4_github_digest.py \
             --state-dir state \
             --out-dir strategy-artifacts \
             --mode "${{ steps.publication_mode.outputs.runner_mode }}" \
@@ -211,7 +251,7 @@ jobs:
         id: build_digest
         if: always() && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped'
         run: |
-          python automation/scripts/build_ic_im_v1_3_digest.py \
+          python automation/scripts/build_ic_im_v1_4_digest.py \
             --result strategy-artifacts/result.json \
             --out-dir mail-artifacts \
             --subject-prefix "${{ steps.delivery_gate.outputs.subject_prefix }}"
@@ -221,7 +261,7 @@ jobs:
         if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success'
         shell: bash
         run: |
-          python automation/scripts/prepare_ic_im_v1_3_marker.py \
+          python automation/scripts/prepare_ic_im_v1_4_marker.py \
             --result strategy-artifacts/result.json \
             --marker-dir delivery-marker
 
@@ -252,7 +292,7 @@ jobs:
         if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0'
         uses: actions/upload-artifact@v7
         with:
-          name: ic-im-v1-3-r7-put-monthly-fix1-ledger
+          name: ic-im-v1-4-r1-ledger
           path: |
             state/latest.json
             state/journal/
@@ -273,7 +313,7 @@ jobs:
         if: always() && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true')
         uses: actions/upload-artifact@v7
         with:
-          name: ic-im-v1-3-r7-post-close-digest
+          name: ic-im-v1-4-r1-post-close-digest
           path: |
             strategy-run.log
             strategy-artifacts/
@@ -286,7 +326,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## IC/IM v1.3-r7 post-close digest"
+            echo "## IC/IM v1.4-r1 post-close digest"
             echo
             echo "- Publication mode: ${{ steps.publication_mode.outputs.mode }}"
             echo "- Publication mode basis: ${{ steps.publication_mode.outputs.basis }}"
@@ -295,7 +335,8 @@ jobs:
             echo "- Trading day: ${{ steps.calendar.outputs.trade_day }}"
             echo "- Final attempt: ${{ steps.attempt.outputs.final_attempt }}"
             echo "- Ledger restored: ${{ steps.restore_ledger.outputs.restored }}"
-            echo "- Pre-fix r7 seed restored: ${{ steps.restore_prefx_ledger.outputs.restored }}"
+            echo "- Current r7 migration seed restored: ${{ steps.restore_v13_seed.outputs.restored }}"
+            echo "- Pre-fix r7 fallback seed restored: ${{ steps.restore_prefx_ledger.outputs.restored }}"
             echo "- Signal exit code: ${{ steps.run_signal.outputs.exit_code }}"
             echo "- Gmail outcome: ${{ steps.send_gmail.outcome }}"
           } >> "${GITHUB_STEP_SUMMARY}"

@@ -23,7 +23,7 @@ jobs:
           python - <<'PY'
           import os, re
           from pathlib import Path
-          text = Path('automation/.github/workflows/ic-im-v1-3-daily-digest.yml').read_text()
+          text = Path('automation/.github/workflows/ic-im-v1-4-daily-digest.yml').read_text()
           sha = re.search(r'repository: liuruojiang/ic-im-rolling-arbitrage\s+ref: ([0-9a-f]{40})', text).group(1)
           with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
               stream.write('sha=' + sha + '\n')

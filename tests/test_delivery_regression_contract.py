@@ -17,7 +17,7 @@ def read(name):
     return yaml.load((WORKFLOWS / name).read_text(encoding='utf-8'), Loader=yaml.BaseLoader)
 
 
-@pytest.mark.parametrize('name', ['microcap-realtime-digest.yml', 'ic-im-v1-3-daily-digest.yml'])
+@pytest.mark.parametrize('name', ['microcap-realtime-digest.yml', 'ic-im-v1-4-daily-digest.yml'])
 def test_production_depends_on_current_revision_regressions(name):
     jobs = read(name)['jobs']
     assert jobs['regression']['uses'] == './.github/workflows/delivery-regression.yml'
@@ -41,6 +41,9 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
                      'test_top100_delivery.py', 'test_ohlcv_provider_validation.py',
                      'test_delivery_transport_retry.py', 'test_poe_ic_im_v1_3_state.py',
                      'test_run_ic_im_v1_3_github_digest.py', 'test_adversarial_delivery.py',
+                     'test_ic_im_v1_4_policy.py', 'test_ic_im_v1_4_state_guards.py',
+                     'test_ic_im_v1_4_integration_guards.py', 'test_run_ic_im_v1_4_github_digest.py',
+                     'test_migrate_ic_im_v1_3_r7_to_v1_4_r1_state.py',
                      'test_adversarial_microcap_delivery.py', 'test_adversarial_icim_delivery.py',
                      'test_realtime_exchange_calendar.py', 'test_exchange_calendar_provider.py'):
         assert required in text
@@ -51,7 +54,7 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
     assert 'fromJSON(inputs.family' in workflow['jobs']['strategy-tests']['strategy']['matrix']['family']
 
 
-@pytest.mark.parametrize('name', ['microcap-realtime-digest.yml', 'ic-im-v1-3-daily-digest.yml'])
+@pytest.mark.parametrize('name', ['microcap-realtime-digest.yml', 'ic-im-v1-4-daily-digest.yml'])
 def test_normal_smtp_requires_durable_intent_and_mode_specific_preflight(name):
     steps = read(name)['jobs']['send']['steps']
     indexed = {s.get('id'): (i, s) for i, s in enumerate(steps) if s.get('id')}
@@ -84,7 +87,7 @@ def test_normal_smtp_requires_durable_intent_and_mode_specific_preflight(name):
 def test_stale_market_fixture_is_frozen_real_data_and_never_in_production_steps():
     data = (ROOT / 'tests/fixtures/icim/sina_000905_index.csv').read_bytes().replace(b'\r\n', b'\n')
     assert hashlib.sha256(data).hexdigest() == 'c5121b044133099e250fd5e5e803c447bf8811e5a4ae8cf8f19e2b8f5c2ddcfd'
-    for name in ('microcap-realtime-digest.yml', 'ic-im-v1-3-daily-digest.yml'):
+    for name in ('microcap-realtime-digest.yml', 'ic-im-v1-4-daily-digest.yml'):
         assert 'tests/fixtures/' not in (WORKFLOWS / name).read_text(encoding='utf-8')
 
 
