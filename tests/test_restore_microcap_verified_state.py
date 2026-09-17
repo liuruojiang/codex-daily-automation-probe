@@ -47,3 +47,27 @@ def test_restore_extracts_only_state_bundle(tmp_path):
     destination = tmp_path / restore.STATE_FILE
     restore.extract(data.getvalue(), destination)
     assert destination.read_bytes() == b"validated-state"
+
+
+@pytest.mark.parametrize('name', ['microcap-verified-state-validation', 'microcap-whole-delivery-validation-state', 'microcap-verified-state-recovery-v2-wrong'])
+def test_new_recovery_never_selects_diagnostic_or_unpinned_artifact(name):
+    with pytest.raises(ValueError, match='formal artifact'):
+        restore.fetch_latest('o/r', 'fake', 'https://api.invalid', artifact_name=name, require_success=True)
+
+
+def test_new_epoch_accepts_only_successful_exact_strategy_artifact(monkeypatch):
+    name = 'microcap-verified-state-recovery-v2-' + 'a' * 40
+    def get(req, **kwargs):
+        if '/artifacts?' in req.full_url:
+            payload = {'artifacts': [
+                {'id': n, 'name': name, 'expired': False, 'created_at': str(n),
+                 'archive_download_url': f'https://api.invalid/repos/o/r/actions/artifacts/{n}/zip',
+                 'workflow_run': {'id': n}} for n in (3, 2, 1)]}
+        else:
+            n = int(req.full_url.rsplit('/', 1)[1])
+            payload = {'id': n, 'status': 'completed', 'conclusion': {3:'failure',2:'cancelled',1:'success'}[n], 'head_branch': 'main', 'path': restore.WORKFLOW_PATH}
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps(payload).encode()
+        return response
+    monkeypatch.setattr(restore.urllib.request, 'urlopen', get)
+    assert restore.fetch_latest('o/r', 'fake', 'https://api.invalid', artifact_name=name, require_success=True)['id'] == 1

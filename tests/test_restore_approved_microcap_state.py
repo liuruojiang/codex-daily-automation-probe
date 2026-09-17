@@ -1,5 +1,7 @@
 import hashlib
 import io
+import json
+import re
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -67,3 +69,42 @@ def test_explicit_seed_precedes_and_excludes_old_state_restore():
     on = workflow.get('on', workflow.get(True))
     assert on['workflow_dispatch']['inputs']['approved_state_url']['default'] == ''
 
+
+
+@pytest.mark.parametrize('changed', ['', 'strategy_sha', 'state_sha256', 'schema_version'])
+def test_default_release_config_is_exact_and_strategy_bound(tmp_path, changed):
+    config = {'schema_version': 1, 'strategy_sha': 'a' * 40,
+              'state_url': URL, 'state_sha256': 'b' * 64, 'state_date': '2026-09-17'}
+    if changed:
+        config[changed] = 'invalid'
+    path = tmp_path / 'approved.json'
+    path.write_text(json.dumps(config), encoding='utf-8')
+    if changed:
+        with pytest.raises(ValueError):
+            seed.load_release_config(path, 'a' * 40)
+    else:
+        assert seed.load_release_config(path, 'a' * 40)['state_date'] == '2026-09-17'
+
+
+@pytest.mark.parametrize('cache,formal,explicit,expected', [
+    ('0', '', '', False), ('0', '1', '', False), ('1', '0', '', False),
+    ('', '', '', True), ('1', '1', '', True), ('1', '1', URL, False),
+])
+def test_default_release_only_runs_when_no_qualified_state(cache, formal, explicit, expected):
+    workflow = yaml.safe_load((ROOT / '.github/workflows/microcap-realtime-digest.yml').read_text(encoding='utf-8'))
+    steps = workflow['jobs']['send']['steps']
+    lookup = {step.get('name'): step for step in steps}
+    condition = lookup['Restore approved release fallback']['if']
+    values = {'steps.delivery_gate.outputs.should_send': 'true',
+              'steps.full_cache.outputs.exit_code': '0',
+              'inputs.approved_state_url': explicit,
+              'steps.cached_state_restore.outputs.exit_code': cache,
+              'steps.verified_state_restore.outputs.exit_code': formal}
+    expression = re.sub(r'(?:steps|inputs)\.[a-zA-Z0-9_.-]+', lambda m: repr(values[m[0]]), condition)
+    expression = expression.replace('always()', 'True').replace('&&', ' and ').replace('||', ' or ')
+    assert eval(expression, {'__builtins__': {}}, {}) is expected
+    assert steps.index(lookup['Validate and restore cached production state']) < steps.index(lookup['Restore durable verified production state bundle'])
+    assert steps.index(lookup['Restore verified production state']) < steps.index(lookup['Restore approved release fallback'])
+    assert "steps.cached_state_restore.outputs.exit_code != '0'" in lookup['Restore durable verified production state bundle']['if']
+    assert '--require-success' in lookup['Restore durable verified production state bundle']['run']
+    assert 'microcap-verified-state-recovery-v2-${{ steps.microcap_sha.outputs.sha }}' in lookup['Restore durable verified production state bundle']['run']

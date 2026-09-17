@@ -274,29 +274,45 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: microcap/.realtime_state_bundle
-          key: microcap-verified-state-v1-${{ runner.os }}-${{ steps.market_target.outputs.date }}
+          key: microcap-verified-state-v2-${{ steps.microcap_sha.outputs.sha }}-${{ runner.os }}-${{ steps.market_target.outputs.date }}
           # Reuse the most recent formally validated state across adjacent
           # trading days. restore_state revalidates anchors, while refresh
           # still establishes today's independent close before publication.
           restore-keys: |
-            microcap-verified-state-v1-${{ runner.os }}-
+            microcap-verified-state-v2-${{ steps.microcap_sha.outputs.sha }}-${{ runner.os }}-
+
+      - name: Validate and restore cached production state
+        id: cached_state_restore
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.verified_state_cache.outputs.cache-matched-key != '' && inputs.approved_state_url == ''
+        shell: bash
+        run: |
+          set +e
+          python microcap/scripts/realtime_state_bundle.py restore \
+            --root microcap \
+            --bundle microcap/.realtime_state_bundle/microcap-top100-state.zip \
+            --max-anchor-age-days 3 2>&1 | tee microcap/cached_state_restore_result.txt
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          exit 0
 
       # GitHub's cache is deliberately evictable.  A successful formal state
       # pack is also retained as an artifact so a cache miss after a holiday
       # resumes incrementally instead of triggering a historical rebuild.
       - name: Restore durable verified production state bundle
         id: durable_state_artifact
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && steps.verified_state_cache.outputs.cache-matched-key == '' && inputs.approved_state_url == ''
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && steps.cached_state_restore.outputs.exit_code != '0' && inputs.approved_state_url == ''
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           python automation/scripts/restore_microcap_verified_state.py \
-            --bundle microcap/.realtime_state_bundle/microcap-top100-state.zip
+            --bundle microcap/.realtime_state_bundle/microcap-top100-state.zip \
+            --artifact-name "microcap-verified-state-recovery-v2-${{ steps.microcap_sha.outputs.sha }}" \
+            --require-success
 
       - name: Restore verified production state
         id: verified_state_restore
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.verified_state_cache.outputs.cache-matched-key != '' || steps.durable_state_artifact.outputs.restored == 'true') && inputs.approved_state_url == ''
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.durable_state_artifact.outputs.restored == 'true' && inputs.approved_state_url == ''
         shell: bash
         run: |
           set +e
@@ -308,9 +324,19 @@ jobs:
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
           exit 0
 
+      - name: Restore approved release fallback
+        id: approved_release_fallback
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && inputs.approved_state_url == '' && steps.cached_state_restore.outputs.exit_code != '0' && steps.verified_state_restore.outputs.exit_code != '0'
+        shell: bash
+        run: |
+          python automation/scripts/restore_approved_microcap_state.py \
+            --root microcap \
+            --bundle "${RUNNER_TEMP}/microcap-approved-release-state.zip" \
+            --config automation/config/microcap_approved_state.json
+
       - name: Resolve same-day static refresh mode
         id: refresh_mode
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && (inputs.approved_state_url == '' || steps.approved_state.outputs.restored == 'true')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
         shell: bash
         env:
           EXPECTED_DATE: ${{ steps.market_target.outputs.date }}
@@ -328,7 +354,7 @@ jobs:
           done
 
       - name: Refresh Top100 realtime state
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && (inputs.approved_state_url == '' || steps.approved_state.outputs.restored == 'true')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
         id: refresh_state
         working-directory: microcap
         shell: bash
@@ -451,7 +477,7 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.validation_only == true && 'microcap-verified-state-validation' || 'microcap-verified-state-recovery' }}
+          name: ${{ inputs.validation_only == true && 'microcap-verified-state-validation' || format('microcap-verified-state-recovery-v2-{0}', steps.microcap_sha.outputs.sha) }}
           path: microcap/.realtime_state_bundle/microcap-top100-state.zip
           if-no-files-found: error
           retention-days: 90
@@ -465,7 +491,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: microcap/.realtime_state_bundle
-          key: microcap-verified-state-v1-${{ runner.os }}-${{ steps.market_target.outputs.date }}
+          key: microcap-verified-state-v2-${{ steps.microcap_sha.outputs.sha }}-${{ runner.os }}-${{ steps.market_target.outputs.date }}
 
       - name: Restore state into isolated v2.3 workspace
         id: restore_v23

@@ -44,10 +44,10 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("name: Restore durable verified production state bundle", text)
         self.assertIn("name: Restore verified production state", text)
         self.assertIn("scripts/restore_microcap_verified_state.py", text)
-        self.assertIn("'microcap-verified-state-recovery'", text)
+        self.assertIn("'microcap-verified-state-recovery-v2-{0}'", text)
         self.assertIn("retention-days: 90", text)
-        self.assertIn("microcap-verified-state-v1-${{ runner.os }}-${{ steps.market_target.outputs.date }}", text)
-        self.assertIn("microcap-verified-state-v1-${{ runner.os }}-", text)
+        self.assertIn("microcap-verified-state-v2-${{ steps.microcap_sha.outputs.sha }}-${{ runner.os }}-${{ steps.market_target.outputs.date }}", text)
+        self.assertIn("microcap-verified-state-v2-${{ steps.microcap_sha.outputs.sha }}-${{ runner.os }}-", text)
         self.assertLess(
             text.index("name: Restore verified production state"),
             text.index("name: Resolve same-day static refresh mode"),

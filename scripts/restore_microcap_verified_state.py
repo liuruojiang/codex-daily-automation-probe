@@ -4,6 +4,7 @@ import argparse
 import io
 import json
 import os
+import re
 import urllib.parse
 import urllib.request
 import zipfile
@@ -54,9 +55,12 @@ def eligible_run(run: object, run_id: int) -> bool:
     )
 
 
-def fetch_latest(repository: str, token: str, api_url: str) -> dict[str, object] | None:
+def fetch_latest(repository: str, token: str, api_url: str, *,
+                 artifact_name: str = ARTIFACT_NAME, require_success: bool = False) -> dict[str, object] | None:
+    if artifact_name != ARTIFACT_NAME and not re.fullmatch(r"microcap-verified-state-recovery-v2-[0-9a-f]{40}", artifact_name):
+        raise ValueError("Recovery requires a formal artifact name bound to the exact strategy SHA")
     base = f"{api_url.rstrip('/')}/repos/{repository}/actions"
-    name = urllib.parse.quote(ARTIFACT_NAME, safe="")
+    name = urllib.parse.quote(artifact_name, safe="")
     artifacts: list[dict[str, object]] = []
     for page in range(1, 101):
         with urllib.request.urlopen(api_request(f"{base}/artifacts?name={name}&per_page=100&page={page}", token), timeout=30) as response:
@@ -73,7 +77,7 @@ def fetch_latest(repository: str, token: str, api_url: str) -> dict[str, object]
     candidates = sorted(
         (
             item for item in artifacts
-            if item.get("name") == ARTIFACT_NAME and item.get("expired") is not True and item.get("archive_download_url")
+            if item.get("name") == artifact_name and item.get("expired") is not True and item.get("archive_download_url")
         ),
         key=lambda item: (str(item.get("created_at", "")), int(item.get("id", 0))),
         reverse=True,
@@ -84,7 +88,7 @@ def fetch_latest(repository: str, token: str, api_url: str) -> dict[str, object]
             continue
         with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}", token), timeout=30) as response:
             run = json.loads(response.read().decode("utf-8"))
-        if not eligible_run(run, run_id):
+        if not eligible_run(run, run_id) or (require_success and run.get("conclusion") != "success"):
             continue
         if artifact["archive_download_url"] != f"{base}/artifacts/{artifact['id']}/zip":
             raise RuntimeError("state archive download URL does not match trusted repository")
@@ -130,13 +134,15 @@ def write_output(restored: bool, artifact_id: str = "") -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bundle", required=True)
+    parser.add_argument("--artifact-name", default=ARTIFACT_NAME)
+    parser.add_argument("--require-success", action="store_true")
     parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY", ""))
     parser.add_argument("--token", default=os.environ.get("GITHUB_TOKEN", ""))
     parser.add_argument("--api-url", default=os.environ.get("GITHUB_API_URL", "https://api.github.com"))
     args = parser.parse_args()
     if not args.repository or not args.token:
         raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required")
-    artifact = fetch_latest(args.repository, args.token, args.api_url)
+    artifact = fetch_latest(args.repository, args.token, args.api_url, artifact_name=args.artifact_name, require_success=args.require_success)
     if artifact is None:
         write_output(False)
         return 0
