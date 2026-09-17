@@ -120,6 +120,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
             "status": "ok",
             "strategy_revision": "r1",
             "build": "v1.4-20260917-r1-coreput3x-fixedshort95-fix2",
+            "delivery_revision": "20260917-v14-coreput3x-fixedshort95-fix2",
             "publication_mode": "realtime",
             "market_date": "2026-09-03",
             "completed_day": "2026-09-02",
@@ -158,6 +159,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
             "status": "ok",
             "strategy_revision": "r1",
             "build": "v1.4-20260917-r1-coreput3x-fixedshort95-fix2",
+            "delivery_revision": "20260917-v14-coreput3x-fixedshort95-fix2",
             "publication_mode": "close_confirmed",
             "market_date": "2026-09-18",
             "completed_day": "2026-09-18",
@@ -179,6 +181,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
             "status": "ok",
             "strategy_revision": "r1",
             "build": "v1.4-20260917-r1-coreput3x-fixedshort95-fix2",
+            "delivery_revision": "20260917-v14-coreput3x-fixedshort95-fix2",
             "publication_mode": "realtime",
             "market_date": "2026-09-03",
             "digest": "b" * 64,
@@ -194,6 +197,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
             "status": "ok",
             "strategy_revision": "r1",
             "build": "v1.4-20260917-r1-coreput3x-fixedshort95-fix2",
+            "delivery_revision": "20260917-v14-coreput3x-fixedshort95-fix2",
             "publication_mode": "close_confirmed",
             "market_date": "2026-09-18",
             "completed_day": "2026-09-18",
@@ -209,6 +213,10 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         self.assertIn("实际账户操作由用户自行处理", body)
         payload["build"] = "v1.4-wrong"
         with self.assertRaisesRegex(ValueError, "fix2 build"):
+            digest.validate_success_payload(payload)
+        payload["build"] = "v1.4-20260917-r1-coreput3x-fixedshort95-fix2"
+        payload["delivery_revision"] = "stale"
+        with self.assertRaisesRegex(ValueError, "delivery revision"):
             digest.validate_success_payload(payload)
 
     def test_v14_ledger_requires_migration_record(self) -> None:

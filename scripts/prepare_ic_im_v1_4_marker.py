@@ -10,6 +10,7 @@ from pathlib import Path
 
 EXPECTED_REVISION = "r1"
 EXPECTED_BUILD = "v1.4-20260917-r1-coreput3x-fixedshort95-fix2"
+EXPECTED_DELIVERY_REVISION = "20260917-v14-coreput3x-fixedshort95-fix2"
 
 
 def marker_name(payload: dict[str, object]) -> str:
@@ -19,6 +20,8 @@ def marker_name(payload: dict[str, object]) -> str:
         raise ValueError("delivery marker requires strategy_revision=r1")
     if str(payload.get("build")) != EXPECTED_BUILD:
         raise ValueError("delivery marker requires the published v1.4 fix2 build")
+    if str(payload.get("delivery_revision", "")) != EXPECTED_DELIVERY_REVISION:
+        raise ValueError("delivery marker requires the published v1.4 fix2 delivery revision")
     publication_mode = str(payload.get("publication_mode", ""))
     if publication_mode not in {"realtime", "close_confirmed"}:
         raise ValueError("delivery marker has unsupported publication_mode")
@@ -48,6 +51,7 @@ def main() -> int:
             {
                 "strategy_revision": payload["strategy_revision"],
                 "build": payload["build"],
+                "delivery_revision": payload["delivery_revision"],
                 "publication_mode": payload["publication_mode"],
                 "market_date": payload["market_date"],
                 "digest": payload["digest"],

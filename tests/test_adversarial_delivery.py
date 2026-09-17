@@ -56,13 +56,13 @@ def test_ic_gate_searches_past_first_hundred_artifacts(monkeypatch):
 @pytest.mark.parametrize('day,digest', [('2026-99-99','a'*64), ('2026-09-04junk','a'*64), ('2026-09-04','z'*64), ('2026-09-04','\n'*64)])
 def test_marker_rejects_invalid_calendar_dates_and_non_sha(day, digest):
     with pytest.raises(ValueError):
-        marker.marker_name({'status':'ok', 'strategy_revision':'r1', 'build':'v1.4-20260917-r1-coreput3x-fixedshort95-fix2', 'publication_mode':'close_confirmed', 'market_date':day, 'digest':digest})
+        marker.marker_name({'status':'ok', 'strategy_revision':'r1', 'build':'v1.4-20260917-r1-coreput3x-fixedshort95-fix2', 'delivery_revision':'20260917-v14-coreput3x-fixedshort95-fix2', 'publication_mode':'close_confirmed', 'market_date':day, 'digest':digest})
 
 
 @settings(max_examples=40)
 @given(st.sampled_from(['realtime', 'close_confirmed']), st.dates(min_value=date(2020,1,1), max_value=date(2030,12,31)), st.binary(min_size=32,max_size=32))
 def test_marker_and_gate_roundtrip(mode, day, digest):
-    name = marker.marker_name({'status':'ok', 'strategy_revision':'r1', 'build':'v1.4-20260917-r1-coreput3x-fixedshort95-fix2', 'publication_mode':mode, 'market_date':day.isoformat(), 'digest':digest.hex()})
+    name = marker.marker_name({'status':'ok', 'strategy_revision':'r1', 'build':'v1.4-20260917-r1-coreput3x-fixedshort95-fix2', 'delivery_revision':'20260917-v14-coreput3x-fixedshort95-fix2', 'publication_mode':mode, 'market_date':day.isoformat(), 'digest':digest.hex()})
     assert ic_gate.marker_exists({'artifacts':[{'name':name, 'expired':False}]}, ic_gate.marker_prefix(day, mode))
     assert not ic_gate.marker_exists({'artifacts':[{'name':name, 'expired':True}]}, ic_gate.marker_prefix(day, mode))
 

@@ -211,6 +211,8 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, "strategy")
           import poe_ic_im_v1_4_state as state
+          import run_ic_im_v1_4_github_digest as runner
+          assert runner.DELIVERY_REVISION == "20260917-v14-coreput3x-fixedshort95-fix2"
           store = state.StateStore("state")
           latest = store.load_latest()
           state.anchors_from_record(latest)
