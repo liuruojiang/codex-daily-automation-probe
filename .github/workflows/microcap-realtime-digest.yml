@@ -171,7 +171,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: aaeb5608acfbfd53ba6e55294a59fe6d55688763
+          ref: e10e6fc1a3ec0105f2282fb3c1290914c879a09e
           path: microcap
 
       - name: Check out isolated v2.3 close-confirmed workspace
@@ -179,7 +179,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: aaeb5608acfbfd53ba6e55294a59fe6d55688763
+          ref: e10e6fc1a3ec0105f2282fb3c1290914c879a09e
           path: microcap-v23
 
       - name: Check out isolated v2.5 close-confirmed workspace
@@ -187,7 +187,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: aaeb5608acfbfd53ba6e55294a59fe6d55688763
+          ref: e10e6fc1a3ec0105f2282fb3c1290914c879a09e
           path: microcap-v25
 
       - name: Record microcap strategy SHA
@@ -224,6 +224,7 @@ jobs:
 
       - name: Bootstrap full rebalance cache on cold start
         continue-on-error: true
+        timeout-minutes: 3
         if: steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache_restore.outputs.cache-matched-key == ''
         shell: bash
         env:
@@ -231,7 +232,7 @@ jobs:
           CACHE_SHA256: ecee736f9bb35ac4b43a63e4fd7c83b0a4e9d8c94903f2631b5763a4e1d46686
         run: |
           cache_bundle="${RUNNER_TEMP}/microcap-full-rebalance-cache-v1.zip"
-          curl --fail --location --retry 4 --retry-all-errors --output "${cache_bundle}" "${CACHE_URL}"
+          curl --fail --location --connect-timeout 10 --max-time 90 --retry 1 --retry-max-time 120 --retry-all-errors --output "${cache_bundle}" "${CACHE_URL}"
           echo "${CACHE_SHA256}  ${cache_bundle}" | sha256sum --check --strict
           python microcap/scripts/full_rebalance_cache_bundle.py restore \
             --root microcap \

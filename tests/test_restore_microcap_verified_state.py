@@ -71,3 +71,40 @@ def test_new_epoch_accepts_only_successful_exact_strategy_artifact(monkeypatch):
         return response
     monkeypatch.setattr(restore.urllib.request, 'urlopen', get)
     assert restore.fetch_latest('o/r', 'fake', 'https://api.invalid', artifact_name=name, require_success=True)['id'] == 1
+
+
+def test_formal_artifact_limit_accommodates_full_universe():
+    assert restore.MAX_ARCHIVE_BYTES == 150 * 1024 * 1024
+    assert 70_837_440 < restore.MAX_ARCHIVE_BYTES
+
+
+@pytest.mark.parametrize('size,accepted', [(16, True), (17, False)])
+def test_download_size_boundary(monkeypatch, size, accepted):
+    monkeypatch.setattr(restore, 'MAX_ARCHIVE_BYTES', 16)
+    opener = MagicMock()
+    response = opener.open.return_value.__enter__.return_value
+    response.read.return_value = b'x' * size
+    monkeypatch.setattr(restore.urllib.request, 'build_opener', lambda *args: opener)
+    artifact = {'archive_download_url': 'https://api.invalid/artifact'}
+    if accepted:
+        assert restore.download(artifact, 'fake') == b'x' * size
+    else:
+        with pytest.raises(RuntimeError, match='exceeds safety limit'):
+            restore.download(artifact, 'fake')
+    response.read.assert_called_once_with(17)
+
+
+@pytest.mark.parametrize('size,accepted', [(16, True), (17, False)])
+def test_inner_bundle_size_boundary(tmp_path, monkeypatch, size, accepted):
+    monkeypatch.setattr(restore, 'MAX_ARCHIVE_BYTES', 16)
+    data = io.BytesIO()
+    with zipfile.ZipFile(data, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr(restore.STATE_FILE, b'x' * size)
+    destination = tmp_path / restore.STATE_FILE
+    if accepted:
+        restore.extract(data.getvalue(), destination)
+        assert destination.read_bytes() == b'x' * size
+    else:
+        with pytest.raises(RuntimeError, match='exceeds safety limit'):
+            restore.extract(data.getvalue(), destination)
+        assert not destination.exists()

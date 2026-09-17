@@ -14,7 +14,7 @@ from pathlib import Path, PurePosixPath
 ARTIFACT_NAME = "microcap-verified-state-recovery"
 WORKFLOW_PATH = ".github/workflows/microcap-realtime-digest.yml"
 STATE_FILE = "microcap-top100-state.zip"
-MAX_ARCHIVE_BYTES = 50 * 1024 * 1024
+MAX_ARCHIVE_BYTES = 150 * 1024 * 1024
 
 
 class StripCrossOriginAuthRedirectHandler(urllib.request.HTTPRedirectHandler):

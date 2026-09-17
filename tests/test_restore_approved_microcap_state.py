@@ -141,3 +141,25 @@ def test_failed_legacy_bootstrap_requires_real_recovered_full_cache_validation(r
     explicit = lookup['Restore explicitly approved whole state']['if']
     assert 'steps.full_cache' not in explicit
     assert 'always()' in explicit
+
+
+def test_legacy_bootstrap_is_bounded_and_allows_validated_recovery():
+    workflow = yaml.safe_load((ROOT / '.github/workflows/microcap-realtime-digest.yml').read_text(encoding='utf-8'))
+    steps = {step.get('name'): step for step in workflow['jobs']['send']['steps']}
+    bootstrap = steps['Bootstrap full rebalance cache on cold start']
+    assert bootstrap['timeout-minutes'] == 3
+    assert bootstrap['continue-on-error'] is True
+    for option in ['--connect-timeout 10', '--max-time 90', '--retry 1', '--retry-max-time 120']:
+        assert option in bootstrap['run']
+    assert steps['Restore approved release fallback']['if'].startswith('always()')
+
+
+def test_production_seed_config_matches_all_strategy_checkouts():
+    config = json.loads((ROOT / 'config/microcap_approved_state.json').read_text(encoding='utf-8'))
+    workflow = yaml.safe_load((ROOT / '.github/workflows/microcap-realtime-digest.yml').read_text(encoding='utf-8'))
+    refs = [step['with']['ref'] for step in workflow['jobs']['send']['steps']
+            if step.get('with', {}).get('repository') == 'liuruojiang/microcap']
+    assert len(refs) == 3
+    assert set(refs) == {config['strategy_sha']}
+    assert seed.load_release_config(ROOT / 'config/microcap_approved_state.json', refs[0]) == {
+        key: config[key] for key in ('state_url', 'state_sha256', 'state_date')}
