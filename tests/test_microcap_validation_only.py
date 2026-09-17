@@ -81,7 +81,7 @@ def test_validation_keeps_actual_refresh_consumers_and_final_artifacts():
     assert 'args+=(--validation-only)' in gate_step["run"]
     archive = steps["Preserve verified whole delivery for the next trading day"]
     assert "inputs.validation_only == true || steps.send_gmail.outcome == 'success'" in archive["if"]
-    assert "steps.whole_delivery.outputs.exit_code == '0'" in archive["if"]
+    assert "steps.whole_delivery.outputs.validated == 'true'" in archive["if"]
     assert "steps.digest.outputs.status == 'OK'" in archive["if"]
 
 

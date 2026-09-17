@@ -98,14 +98,12 @@ def test_default_release_only_runs_when_no_qualified_state(cache, formal, explic
     values = {'steps.delivery_gate.outputs.should_send': 'true',
               'steps.full_cache.outputs.exit_code': '0',
               'inputs.approved_state_url': explicit,
-              'steps.cached_state_restore.outputs.exit_code': cache,
-              'steps.verified_state_restore.outputs.exit_code': formal}
-    expression = re.sub(r'(?:steps|inputs)\.[a-zA-Z0-9_.-]+', lambda m: repr(values[m[0]]), condition)
-    expression = expression.replace('always()', 'True').replace('&&', ' and ').replace('||', ' or ')
-    assert eval(expression, {'__builtins__': {}}, {}) is expected
+              'steps.cached_state_restore.outputs.validated': 'true' if cache == '0' else '',
+              'steps.verified_state_restore.outputs.validated': 'true' if formal == '0' else ''}
+    assert _github_condition(condition, values) is expected
     assert steps.index(lookup['Validate and restore cached production state']) < steps.index(lookup['Restore durable verified production state bundle'])
     assert steps.index(lookup['Restore verified production state']) < steps.index(lookup['Restore approved release fallback'])
-    assert "steps.cached_state_restore.outputs.exit_code != '0'" in lookup['Restore durable verified production state bundle']['if']
+    assert "steps.cached_state_restore.outputs.validated != 'true'" in lookup['Restore durable verified production state bundle']['if']
     assert '--require-success' in lookup['Restore durable verified production state bundle']['run']
     assert 'microcap-verified-state-recovery-v2-${{ steps.microcap_sha.outputs.sha }}' in lookup['Restore durable verified production state bundle']['run']
 
@@ -121,20 +119,19 @@ def test_failed_legacy_bootstrap_requires_real_recovered_full_cache_validation(r
     assert steps.index(lookup['Restore approved release fallback']) < steps.index(validate) < steps.index(lookup['Refresh Top100 realtime state'])
     values = {'steps.delivery_gate.outputs.should_send': 'true',
               'steps.full_cache.outputs.exit_code': '1',
-              'steps.recovered_full_cache.outputs.exit_code': recovered,
+              'steps.recovered_full_cache.outputs.validated': 'true' if recovered == '0' else '',
               'steps.approved_state.outputs.restored': '',
               'inputs.approved_state_url': '',
-              'steps.cached_state_restore.outputs.exit_code': '',
-              'steps.verified_state_restore.outputs.exit_code': '',
+              'steps.cached_state_restore.outputs.validated': '',
+              'steps.verified_state_restore.outputs.validated': '',
               'steps.approved_release_fallback.outputs.restored': 'true'}
     def evaluate(condition):
-        expression = re.sub(r'(?:steps|inputs)\.[a-zA-Z0-9_.-]+', lambda m: repr(values[m[0]]), condition)
-        return eval(expression.replace('always()', 'True').replace('&&', ' and ').replace('||', ' or '), {'__builtins__': {}}, {})
+        return _github_condition(condition, values)
     assert evaluate(lookup['Restore approved release fallback']['if']) is True
     assert evaluate(validate['if']) is True
     assert evaluate(lookup['Refresh Top100 realtime state']['if']) is expected
     assert evaluate(lookup['Resolve same-day static refresh mode']['if']) is expected
-    assert 'steps.recovered_full_cache.outputs.exit_code' in lookup['Record refresh failure for digest']['if']
+    assert 'steps.recovered_full_cache.outputs.validated' in lookup['Record refresh failure for digest']['if']
     for name in ['Restore persistent full rebalance cache', 'Bootstrap full rebalance cache on cold start', 'Restore verified production state bundle', 'Restore durable verified production state bundle']:
         assert lookup[name]['continue-on-error'] is True
         assert 'steps.full_cache.outputs.exit_code' not in lookup[name]['if']
@@ -163,3 +160,68 @@ def test_production_seed_config_matches_all_strategy_checkouts():
     assert set(refs) == {config['strategy_sha']}
     assert seed.load_release_config(ROOT / 'config/microcap_approved_state.json', refs[0]) == {
         key: config[key] for key in ('state_url', 'state_sha256', 'state_date')}
+
+
+def _github_equal(left, right):
+    # GitHub compares same-type strings case-insensitively; different types
+    # coerce to numbers (notably missing/null -> 0, and '0' -> 0).
+    if type(left) is type(right):
+        return left.casefold() == right.casefold() if isinstance(left, str) else left == right
+    def number(value):
+        if value is None:
+            return 0
+        if isinstance(value, bool):
+            return int(value)
+        if isinstance(value, str):
+            if value == '':
+                return 0
+            try:
+                return float(value)
+            except ValueError:
+                return float('nan')
+        return value
+    return number(left) == number(right)
+
+
+def _github_condition(condition, outputs):
+    def comparison(match):
+        left, op, right = match.groups()
+        result = _github_equal(outputs.get(left), right)
+        return str(result if op == '==' else not result)
+    expression = re.sub(r"((?:steps|inputs)\.[a-zA-Z0-9_.-]+)\s*(==|!=)\s*'([^']*)'", comparison, condition)
+    expression = expression.replace('always()', 'True').replace('&&', ' and ').replace('||', ' or ')
+    return eval(expression, {'__builtins__': {}}, {})
+
+
+@pytest.mark.parametrize('status', ['missing', None, '', 'false', 'true'])
+def test_cloud_skipped_restore_outputs_do_not_authorize_refresh(status):
+    workflow = yaml.safe_load((ROOT / '.github/workflows/microcap-realtime-digest.yml').read_text(encoding='utf-8'))
+    steps = {step.get('name'): step for step in workflow['jobs']['send']['steps']}
+    outputs = {'steps.delivery_gate.outputs.should_send': 'true', 'inputs.approved_state_url': ''}
+    if status != 'missing':
+        outputs['steps.cached_state_restore.outputs.validated'] = status
+        outputs['steps.verified_state_restore.outputs.validated'] = status
+    succeeded = status == 'true'
+    assert _github_condition(steps['Restore durable verified production state bundle']['if'], outputs) is not succeeded
+    assert _github_condition(steps['Restore approved release fallback']['if'], outputs) is not succeeded
+    assert _github_condition(steps['Validate recovered full rebalance cache']['if'], outputs) is succeeded
+    # Even successful state restore requires a separately completed full-cache gate.
+    assert _github_condition(steps['Refresh Top100 realtime state']['if'], outputs) is False
+    outputs['steps.recovered_full_cache.outputs.validated'] = 'true'
+    assert _github_condition(steps['Refresh Top100 realtime state']['if'], outputs) is succeeded
+    outputs['steps.approved_release_fallback.outputs.restored'] = 'true'
+    assert _github_condition(steps['Refresh Top100 realtime state']['if'], outputs) is True
+
+
+def test_missing_output_numeric_coercion_regression_and_all_exit_gates():
+    assert _github_equal(None, '0') is True
+    assert _github_equal('', '0') is False
+    assert _github_equal(None, 'true') is False
+    workflow = yaml.safe_load((ROOT / '.github/workflows/microcap-realtime-digest.yml').read_text(encoding='utf-8'))
+    steps = workflow['jobs']['send']['steps']
+    by_id = {step.get('id'): step for step in steps}
+    for step in steps:
+        condition = step.get('if', '')
+        assert not re.search(r"outputs\.exit_code\s*(==|!=)", condition)
+        for producer in re.findall(r'steps\.(\w+)\.outputs\.validated', condition):
+            assert 'if [[ "${status}" -eq 0 ]]; then echo "validated=true"' in by_id[producer]['run']

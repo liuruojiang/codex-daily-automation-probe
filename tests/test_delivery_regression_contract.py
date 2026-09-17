@@ -81,7 +81,7 @@ def test_normal_smtp_requires_durable_intent_and_mode_specific_preflight(name):
     if name.startswith('microcap'):
         assert "steps.smtp_receipt.outcome == 'success'" in completion['if']
         for guarded in (intent, indexed['send_gmail'][1]):
-            assert "steps.whole_delivery.outputs.exit_code == '0'" in guarded['if']
+            assert "steps.whole_delivery.outputs.validated == 'true'" in guarded['if']
 
 
 def test_stale_market_fixture_is_frozen_real_data_and_never_in_production_steps():
