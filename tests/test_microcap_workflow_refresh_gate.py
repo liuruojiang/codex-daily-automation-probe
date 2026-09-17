@@ -195,10 +195,10 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         for step in (prepare_step, mark_step):
             self.assertIn("steps.send_gmail.outcome == 'success'", step)
             self.assertIn("steps.digest.outputs.status == 'OK'", step)
-            self.assertIn("steps.signals_v20.outputs.exit_code == '0'", step)
-            self.assertIn("steps.signals_v23.outputs.exit_code == '0'", step)
-            self.assertIn("steps.signals_v25.outputs.exit_code == '0'", step)
-            self.assertIn("steps.whole_delivery.outputs.exit_code == '0'", step)
+            self.assertIn("steps.signals_v20.outputs.validated == 'true'", step)
+            self.assertIn("steps.signals_v23.outputs.validated == 'true'", step)
+            self.assertIn("steps.signals_v25.outputs.validated == 'true'", step)
+            self.assertIn("steps.whole_delivery.outputs.validated == 'true'", step)
 
     def test_whole_delivery_is_verified_before_email_and_retained(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")

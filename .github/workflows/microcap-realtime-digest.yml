@@ -250,6 +250,7 @@ jobs:
             --min-symbols 4500 2>&1 | tee microcap/full_rebalance_cache_result.txt
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          if [[ "${status}" -eq 0 ]]; then echo "validated=true" >> "${GITHUB_OUTPUT}"; fi
           exit 0
 
       - name: Restore explicitly approved whole state
@@ -297,6 +298,7 @@ jobs:
             --max-anchor-age-days 3 2>&1 | tee microcap/cached_state_restore_result.txt
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          if [[ "${status}" -eq 0 ]]; then echo "validated=true" >> "${GITHUB_OUTPUT}"; fi
           exit 0
 
       # GitHub's cache is deliberately evictable.  A successful formal state
@@ -305,7 +307,7 @@ jobs:
       - name: Restore durable verified production state bundle
         continue-on-error: true
         id: durable_state_artifact
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.cached_state_restore.outputs.exit_code != '0' && inputs.approved_state_url == ''
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.cached_state_restore.outputs.validated != 'true' && inputs.approved_state_url == ''
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -327,11 +329,12 @@ jobs:
             --max-anchor-age-days 3 2>&1 | tee microcap/realtime_state_restore_result.txt
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          if [[ "${status}" -eq 0 ]]; then echo "validated=true" >> "${GITHUB_OUTPUT}"; fi
           exit 0
 
       - name: Restore approved release fallback
         id: approved_release_fallback
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && inputs.approved_state_url == '' && steps.cached_state_restore.outputs.exit_code != '0' && steps.verified_state_restore.outputs.exit_code != '0'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && inputs.approved_state_url == '' && steps.cached_state_restore.outputs.validated != 'true' && steps.verified_state_restore.outputs.validated != 'true'
         shell: bash
         run: |
           python automation/scripts/restore_approved_microcap_state.py \
@@ -343,7 +346,7 @@ jobs:
       # Revalidate the restored files before permitting refresh or publication.
       - name: Validate recovered full rebalance cache
         id: recovered_full_cache
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.validated == 'true' || steps.verified_state_restore.outputs.validated == 'true' || steps.approved_release_fallback.outputs.restored == 'true')))
         shell: bash
         run: |
           set +e
@@ -352,11 +355,12 @@ jobs:
             --min-symbols 4500 2>&1 | tee microcap/recovered_full_rebalance_cache_result.txt
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          if [[ "${status}" -eq 0 ]]; then echo "validated=true" >> "${GITHUB_OUTPUT}"; fi
           exit 0
 
       - name: Resolve same-day static refresh mode
         id: refresh_mode
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.recovered_full_cache.outputs.exit_code == '0' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.recovered_full_cache.outputs.validated == 'true' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.validated == 'true' || steps.verified_state_restore.outputs.validated == 'true' || steps.approved_release_fallback.outputs.restored == 'true')))
         shell: bash
         env:
           EXPECTED_DATE: ${{ steps.market_target.outputs.date }}
@@ -374,7 +378,7 @@ jobs:
           done
 
       - name: Refresh Top100 realtime state
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.recovered_full_cache.outputs.exit_code == '0' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.recovered_full_cache.outputs.validated == 'true' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.validated == 'true' || steps.verified_state_restore.outputs.validated == 'true' || steps.approved_release_fallback.outputs.restored == 'true')))
         id: refresh_state
         working-directory: microcap
         shell: bash
@@ -454,11 +458,12 @@ jobs:
             sleep $(( attempt < 6 ? attempt * 20 : 120 ))
           done
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          if [[ "${status}" -eq 0 ]]; then echo "validated=true" >> "${GITHUB_OUTPUT}"; fi
           echo "REFRESH_STATE_EXIT_CODE=${status}" >> "${GITHUB_ENV}"
           exit 0
 
       - name: Record refresh failure for digest
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.recovered_full_cache.outcome != 'success' || steps.recovered_full_cache.outputs.exit_code != '0' || steps.refresh_state.outcome != 'success' || steps.refresh_state.outputs.exit_code != '0')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.recovered_full_cache.outcome != 'success' || steps.recovered_full_cache.outputs.validated != 'true' || steps.refresh_state.outcome != 'success' || steps.refresh_state.outputs.validated != 'true')
         shell: bash
         run: |
           cache_exit="${{ steps.recovered_full_cache.outputs.exit_code }}"
@@ -478,7 +483,7 @@ jobs:
 
       - name: Pack validated production state
         id: state_bundle
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.refresh_state.outcome == 'success' && steps.refresh_state.outputs.exit_code == '0'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.refresh_state.outcome == 'success' && steps.refresh_state.outputs.validated == 'true'
         shell: bash
         run: |
           python microcap/scripts/realtime_state_bundle.py pack \
@@ -560,6 +565,7 @@ jobs:
             status=${PIPESTATUS[0]}
           fi
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          if [[ "${status}" -eq 0 ]]; then echo "validated=true" >> "${GITHUB_OUTPUT}"; fi
           echo "SIGNAL_V2_0_EXIT_CODE=${status}" >> "${GITHUB_ENV}"
           exit 0
 
@@ -582,6 +588,7 @@ jobs:
             status=${PIPESTATUS[0]}
           fi
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          if [[ "${status}" -eq 0 ]]; then echo "validated=true" >> "${GITHUB_OUTPUT}"; fi
           echo "SIGNAL_V2_3_EXIT_CODE=${status}" >> "${GITHUB_ENV}"
           exit 0
 
@@ -604,12 +611,13 @@ jobs:
             status=${PIPESTATUS[0]}
           fi
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          if [[ "${status}" -eq 0 ]]; then echo "validated=true" >> "${GITHUB_OUTPUT}"; fi
           echo "SIGNAL_V2_5_EXIT_CODE=${status}" >> "${GITHUB_ENV}"
           exit 0
 
       - name: Verify and pack all three final deliveries
         id: whole_delivery
-        if: always() && steps.publication_mode.outputs.mode == 'close_confirmed' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0'
+        if: always() && steps.publication_mode.outputs.mode == 'close_confirmed' && steps.signals_v20.outputs.validated == 'true' && steps.signals_v23.outputs.validated == 'true' && steps.signals_v25.outputs.validated == 'true'
         shell: bash
         run: |
           set +e
@@ -619,6 +627,7 @@ jobs:
             --bundle "${RUNNER_TEMP}/microcap-whole-delivery-state.zip" 2>&1 | tee microcap/whole_delivery_result.txt
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          if [[ "${status}" -eq 0 ]]; then echo "validated=true" >> "${GITHUB_OUTPUT}"; fi
           if [[ "${status}" != "0" ]]; then
             for version in 0 3 5; do
               echo "SIGNAL_V2_${version}_EXIT_CODE=whole_delivery_failed" >> "${GITHUB_ENV}"
@@ -661,7 +670,7 @@ jobs:
 
       - name: Persist normal-send intent before SMTP
         id: send_intent
-        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outputs.status == 'OK' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outputs.status == 'OK' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.validated == 'true')
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}-send-intent
@@ -671,7 +680,7 @@ jobs:
 
       - name: Send Gmail
         id: send_gmail
-        if: inputs.validation_only != true && always() && steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outcome == 'success' && (steps.digest.outputs.status != 'OK' || (steps.send_intent.outcome == 'success' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')))
+        if: inputs.validation_only != true && always() && steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outcome == 'success' && (steps.digest.outputs.status != 'OK' || (steps.send_intent.outcome == 'success' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.validated == 'true')))
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -687,7 +696,7 @@ jobs:
       # a duplicate digest or rebuilding the production state.
       - name: Preserve accepted SMTP receipt
         id: smtp_receipt
-        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.validated == 'true' && steps.signals_v23.outputs.validated == 'true' && steps.signals_v25.outputs.validated == 'true' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.validated == 'true')
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}-smtp-accepted
@@ -696,14 +705,14 @@ jobs:
           retention-days: 30
 
       - name: Prepare delivery marker
-        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.smtp_receipt.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.smtp_receipt.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.validated == 'true' && steps.signals_v23.outputs.validated == 'true' && steps.signals_v25.outputs.validated == 'true' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.validated == 'true')
         shell: bash
         run: |
           mkdir -p delivery-marker
           printf '%s\n' "${GITHUB_RUN_URL}" > delivery-marker/run-url.txt
 
       - name: Preserve verified whole delivery for the next trading day
-        if: steps.whole_delivery.outputs.exit_code == '0' && steps.digest.outputs.status == 'OK' && (inputs.validation_only == true || steps.send_gmail.outcome == 'success')
+        if: steps.whole_delivery.outputs.validated == 'true' && steps.digest.outputs.status == 'OK' && (inputs.validation_only == true || steps.send_gmail.outcome == 'success')
         uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.validation_only == true && 'microcap-whole-delivery-validation-state' || 'microcap-whole-delivery-state' }}
@@ -712,7 +721,7 @@ jobs:
           retention-days: 90
 
       - name: Mark digest delivered
-        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.smtp_receipt.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.smtp_receipt.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.validated == 'true' && steps.signals_v23.outputs.validated == 'true' && steps.signals_v25.outputs.validated == 'true' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.validated == 'true')
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}
@@ -795,5 +804,5 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Fail job when signal publication failed
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.digest.outputs.status != 'OK' || steps.signals_v20.outputs.exit_code != '0' || steps.signals_v23.outputs.exit_code != '0' || steps.signals_v25.outputs.exit_code != '0' || (steps.publication_mode.outputs.mode == 'close_confirmed' && steps.whole_delivery.outputs.exit_code != '0'))
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.digest.outputs.status != 'OK' || steps.signals_v20.outputs.validated != 'true' || steps.signals_v23.outputs.validated != 'true' || steps.signals_v25.outputs.validated != 'true' || (steps.publication_mode.outputs.mode == 'close_confirmed' && steps.whole_delivery.outputs.validated != 'true'))
         run: exit 1
