@@ -108,3 +108,36 @@ def test_default_release_only_runs_when_no_qualified_state(cache, formal, explic
     assert "steps.cached_state_restore.outputs.exit_code != '0'" in lookup['Restore durable verified production state bundle']['if']
     assert '--require-success' in lookup['Restore durable verified production state bundle']['run']
     assert 'microcap-verified-state-recovery-v2-${{ steps.microcap_sha.outputs.sha }}' in lookup['Restore durable verified production state bundle']['run']
+
+@pytest.mark.parametrize('recovered,expected', [('0', True), ('1', False), ('', False)])
+def test_failed_legacy_bootstrap_requires_real_recovered_full_cache_validation(recovered, expected):
+    workflow = yaml.safe_load((ROOT / '.github/workflows/microcap-realtime-digest.yml').read_text(encoding='utf-8'))
+    steps = workflow['jobs']['send']['steps']
+    lookup = {step.get('name'): step for step in steps}
+    validate = lookup['Validate recovered full rebalance cache']
+    assert 'full_rebalance_cache_bundle.py validate' in validate['run']
+    assert '--min-symbols 4500' in validate['run']
+    assert 'status=${PIPESTATUS[0]}' in validate['run']
+    assert steps.index(lookup['Restore approved release fallback']) < steps.index(validate) < steps.index(lookup['Refresh Top100 realtime state'])
+    values = {'steps.delivery_gate.outputs.should_send': 'true',
+              'steps.full_cache.outputs.exit_code': '1',
+              'steps.recovered_full_cache.outputs.exit_code': recovered,
+              'steps.approved_state.outputs.restored': '',
+              'inputs.approved_state_url': '',
+              'steps.cached_state_restore.outputs.exit_code': '',
+              'steps.verified_state_restore.outputs.exit_code': '',
+              'steps.approved_release_fallback.outputs.restored': 'true'}
+    def evaluate(condition):
+        expression = re.sub(r'(?:steps|inputs)\.[a-zA-Z0-9_.-]+', lambda m: repr(values[m[0]]), condition)
+        return eval(expression.replace('always()', 'True').replace('&&', ' and ').replace('||', ' or '), {'__builtins__': {}}, {})
+    assert evaluate(lookup['Restore approved release fallback']['if']) is True
+    assert evaluate(validate['if']) is True
+    assert evaluate(lookup['Refresh Top100 realtime state']['if']) is expected
+    assert evaluate(lookup['Resolve same-day static refresh mode']['if']) is expected
+    assert 'steps.recovered_full_cache.outputs.exit_code' in lookup['Record refresh failure for digest']['if']
+    for name in ['Restore persistent full rebalance cache', 'Bootstrap full rebalance cache on cold start', 'Restore verified production state bundle', 'Restore durable verified production state bundle']:
+        assert lookup[name]['continue-on-error'] is True
+        assert 'steps.full_cache.outputs.exit_code' not in lookup[name]['if']
+    explicit = lookup['Restore explicitly approved whole state']['if']
+    assert 'steps.full_cache' not in explicit
+    assert 'always()' in explicit

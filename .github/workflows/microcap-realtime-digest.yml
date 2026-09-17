@@ -171,7 +171,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: d1ac74a3fc3ce6a4f879a87ef5dab20bc1a718b4
+          ref: aaeb5608acfbfd53ba6e55294a59fe6d55688763
           path: microcap
 
       - name: Check out isolated v2.3 close-confirmed workspace
@@ -179,7 +179,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: d1ac74a3fc3ce6a4f879a87ef5dab20bc1a718b4
+          ref: aaeb5608acfbfd53ba6e55294a59fe6d55688763
           path: microcap-v23
 
       - name: Check out isolated v2.5 close-confirmed workspace
@@ -187,7 +187,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: d1ac74a3fc3ce6a4f879a87ef5dab20bc1a718b4
+          ref: aaeb5608acfbfd53ba6e55294a59fe6d55688763
           path: microcap-v25
 
       - name: Record microcap strategy SHA
@@ -212,6 +212,7 @@ jobs:
           python -c 'from scripts.exchange_calendar import latest_completed_session; print("date=" + latest_completed_session().isoformat())' >> "${GITHUB_OUTPUT}"
 
       - name: Restore persistent full rebalance cache
+        continue-on-error: true
         id: full_cache_restore
         if: steps.delivery_gate.outputs.should_send == 'true'
         uses: actions/cache/restore@v4
@@ -222,6 +223,7 @@ jobs:
             microcap-full-rebalance-v1-${{ runner.os }}-
 
       - name: Bootstrap full rebalance cache on cold start
+        continue-on-error: true
         if: steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache_restore.outputs.cache-matched-key == ''
         shell: bash
         env:
@@ -251,7 +253,7 @@ jobs:
 
       - name: Restore explicitly approved whole state
         id: approved_state
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && inputs.approved_state_url != ''
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && inputs.approved_state_url != ''
         shell: bash
         env:
           APPROVED_STATE_URL: ${{ inputs.approved_state_url }}
@@ -269,8 +271,9 @@ jobs:
       # audited raw-cache anchors.  Keep it separately from the raw cache so
       # a cancellation after refresh can resume the same trade-day delivery.
       - name: Restore verified production state bundle
+        continue-on-error: true
         id: verified_state_cache
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && inputs.approved_state_url == ''
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && inputs.approved_state_url == ''
         uses: actions/cache/restore@v4
         with:
           path: microcap/.realtime_state_bundle
@@ -299,8 +302,9 @@ jobs:
       # pack is also retained as an artifact so a cache miss after a holiday
       # resumes incrementally instead of triggering a historical rebuild.
       - name: Restore durable verified production state bundle
+        continue-on-error: true
         id: durable_state_artifact
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && steps.cached_state_restore.outputs.exit_code != '0' && inputs.approved_state_url == ''
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.cached_state_restore.outputs.exit_code != '0' && inputs.approved_state_url == ''
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -326,7 +330,7 @@ jobs:
 
       - name: Restore approved release fallback
         id: approved_release_fallback
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && inputs.approved_state_url == '' && steps.cached_state_restore.outputs.exit_code != '0' && steps.verified_state_restore.outputs.exit_code != '0'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && inputs.approved_state_url == '' && steps.cached_state_restore.outputs.exit_code != '0' && steps.verified_state_restore.outputs.exit_code != '0'
         shell: bash
         run: |
           python automation/scripts/restore_approved_microcap_state.py \
@@ -334,9 +338,24 @@ jobs:
             --bundle "${RUNNER_TEMP}/microcap-approved-release-state.zip" \
             --config automation/config/microcap_approved_state.json
 
+      # A complete approved release can repair a failed legacy raw-cache bootstrap.
+      # Revalidate the restored files before permitting refresh or publication.
+      - name: Validate recovered full rebalance cache
+        id: recovered_full_cache
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
+        shell: bash
+        run: |
+          set +e
+          python microcap/scripts/full_rebalance_cache_bundle.py validate \
+            --root microcap \
+            --min-symbols 4500 2>&1 | tee microcap/recovered_full_rebalance_cache_result.txt
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          exit 0
+
       - name: Resolve same-day static refresh mode
         id: refresh_mode
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.recovered_full_cache.outputs.exit_code == '0' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
         shell: bash
         env:
           EXPECTED_DATE: ${{ steps.market_target.outputs.date }}
@@ -354,7 +373,7 @@ jobs:
           done
 
       - name: Refresh Top100 realtime state
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.recovered_full_cache.outputs.exit_code == '0' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
         id: refresh_state
         working-directory: microcap
         shell: bash
@@ -438,10 +457,10 @@ jobs:
           exit 0
 
       - name: Record refresh failure for digest
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.full_cache.outcome != 'success' || steps.full_cache.outputs.exit_code != '0' || steps.refresh_state.outcome != 'success' || steps.refresh_state.outputs.exit_code != '0')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.recovered_full_cache.outcome != 'success' || steps.recovered_full_cache.outputs.exit_code != '0' || steps.refresh_state.outcome != 'success' || steps.refresh_state.outputs.exit_code != '0')
         shell: bash
         run: |
-          cache_exit="${{ steps.full_cache.outputs.exit_code }}"
+          cache_exit="${{ steps.recovered_full_cache.outputs.exit_code }}"
           refresh_exit="${{ steps.refresh_state.outputs.exit_code }}"
           for item in "microcap:v2_0" "microcap-v23:v2_3" "microcap-v25:v2_5"; do
             root="${item%%:*}"
@@ -708,6 +727,7 @@ jobs:
           path: |
             artifacts/
             microcap/full_rebalance_cache_result.txt
+            microcap/recovered_full_rebalance_cache_result.txt
             microcap/realtime_state_refresh_result.txt
             microcap/whole_delivery_result.txt
             microcap/realtime_signal_v2_0_result.txt
