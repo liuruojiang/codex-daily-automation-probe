@@ -260,7 +260,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          python scripts/restore_microcap_verified_state.py \
+          python automation/scripts/restore_microcap_verified_state.py \
             --bundle microcap/.realtime_state_bundle/microcap-top100-state.zip
 
       - name: Restore verified production state

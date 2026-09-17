@@ -98,3 +98,10 @@ def test_validation_cannot_persist_production_cache_or_recovery_artifacts():
             assert step["if"].startswith("inputs.validation_only != true && ")
         if step.get("name") == "Preserve validated state bundle for long-gap recovery":
             assert "inputs.validation_only == true && 'microcap-verified-state-validation'" in step["with"]["name"]
+
+
+def test_durable_recovery_uses_actual_automation_checkout_path():
+    steps = {step.get("name"): step for step in workflow()["jobs"]["send"]["steps"]}
+    assert steps["Check out automation repository"]["with"]["path"] == "automation"
+    command = steps["Restore durable verified production state bundle"]["run"]
+    assert "python automation/scripts/restore_microcap_verified_state.py" in command
