@@ -44,10 +44,10 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("name: Restore durable verified production state bundle", text)
         self.assertIn("name: Restore verified production state", text)
         self.assertIn("scripts/restore_microcap_verified_state.py", text)
-        self.assertIn("name: microcap-verified-state-recovery", text)
+        self.assertIn("'microcap-verified-state-recovery-v2-{0}'", text)
         self.assertIn("retention-days: 90", text)
-        self.assertIn("microcap-verified-state-v1-${{ runner.os }}-${{ steps.market_target.outputs.date }}", text)
-        self.assertIn("microcap-verified-state-v1-${{ runner.os }}-", text)
+        self.assertIn("microcap-verified-state-v2-${{ steps.microcap_sha.outputs.sha }}-${{ runner.os }}-${{ steps.market_target.outputs.date }}", text)
+        self.assertIn("microcap-verified-state-v2-${{ steps.microcap_sha.outputs.sha }}-${{ runner.os }}-", text)
         self.assertLess(
             text.index("name: Restore verified production state"),
             text.index("name: Resolve same-day static refresh mode"),
@@ -95,7 +95,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('git rev-parse HEAD', text)
         self.assertIn('--strategy-sha "${{ steps.microcap_sha.outputs.sha }}"', text)
         self.assertIn('repository: liuruojiang/microcap', text)
-        self.assertEqual(text.count('ref: d1ac74a3fc3ce6a4f879a87ef5dab20bc1a718b4'), 3)
+        self.assertEqual(text.count('ref: e10e6fc1a3ec0105f2282fb3c1290914c879a09e'), 3)
         self.assertNotIn('ref: main', text)
         self.assertIn("name: Check out isolated v2.3 close-confirmed workspace", text)
         self.assertIn("name: Check out isolated v2.5 close-confirmed workspace", text)
@@ -211,7 +211,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         # verifies the actual last completed session instead of inventing weekend bars.
         self.assertIn('--expected-signal-date "${{ (github.event_name == \'schedule\' || inputs.external_schedule == true) && steps.delivery_gate.outputs.delivery_date || \'\' }}"', text)
         self.assertIn("SIGNAL_V2_${version}_EXIT_CODE=whole_delivery_failed", text)
-        self.assertIn("name: microcap-whole-delivery-state", text)
+        self.assertIn("'microcap-whole-delivery-state'", text)
         self.assertIn("microcap/whole_delivery_result.txt", text)
 
     def test_close_confirmed_cold_outputs_require_a_second_audited_generation(self) -> None:

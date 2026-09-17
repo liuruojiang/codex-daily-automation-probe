@@ -7,6 +7,26 @@ on:
     - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
+      validation_only:
+        description: "Validate refresh, all signals and artifacts without sending email or writing delivery markers"
+        required: false
+        type: boolean
+        default: false
+      approved_state_url:
+        description: "Optional explicitly approved whole-state release asset; used only for this manual run"
+        required: false
+        type: string
+        default: ""
+      approved_state_sha256:
+        description: "Exact approved whole-state ZIP SHA-256 (required with approved_state_url)"
+        required: false
+        type: string
+        default: ""
+      approved_state_date:
+        description: "Approved seed session date YYYY-MM-DD (required with approved_state_url)"
+        required: false
+        type: string
+        default: ""
       correction:
         description: "Bypass the daily delivery marker and label this email as a corrected edition"
         required: false
@@ -118,23 +138,27 @@ jobs:
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          VALIDATION_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.validation_only && 'true' || 'false' }}
           CORRECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.correction && 'true' || 'false' }}
         run: |
           args=()
+          if [[ "${VALIDATION_ONLY}" == "true" ]]; then
+            args+=(--validation-only)
+          fi
           if [[ "${CORRECTION}" == "true" ]]; then
             args+=(--correction)
           fi
           python automation/scripts/check_microcap_delivery.py --publication-mode "${{ steps.publication_mode.outputs.mode }}" "${args[@]}"
 
       - name: Recover delivery marker from accepted SMTP receipt
-        if: steps.delivery_gate.outputs.recover_marker == 'true'
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.recover_marker == 'true'
         shell: bash
         run: |
           mkdir -p delivery-marker
           printf '%s\n' "${GITHUB_RUN_URL}" > delivery-marker/run-url.txt
 
       - name: Mark recovered digest delivered
-        if: steps.delivery_gate.outputs.recover_marker == 'true'
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.recover_marker == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}
@@ -147,7 +171,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: d1ac74a3fc3ce6a4f879a87ef5dab20bc1a718b4
+          ref: e10e6fc1a3ec0105f2282fb3c1290914c879a09e
           path: microcap
 
       - name: Check out isolated v2.3 close-confirmed workspace
@@ -155,7 +179,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: d1ac74a3fc3ce6a4f879a87ef5dab20bc1a718b4
+          ref: e10e6fc1a3ec0105f2282fb3c1290914c879a09e
           path: microcap-v23
 
       - name: Check out isolated v2.5 close-confirmed workspace
@@ -163,7 +187,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: d1ac74a3fc3ce6a4f879a87ef5dab20bc1a718b4
+          ref: e10e6fc1a3ec0105f2282fb3c1290914c879a09e
           path: microcap-v25
 
       - name: Record microcap strategy SHA
@@ -188,6 +212,7 @@ jobs:
           python -c 'from scripts.exchange_calendar import latest_completed_session; print("date=" + latest_completed_session().isoformat())' >> "${GITHUB_OUTPUT}"
 
       - name: Restore persistent full rebalance cache
+        continue-on-error: true
         id: full_cache_restore
         if: steps.delivery_gate.outputs.should_send == 'true'
         uses: actions/cache/restore@v4
@@ -198,6 +223,8 @@ jobs:
             microcap-full-rebalance-v1-${{ runner.os }}-
 
       - name: Bootstrap full rebalance cache on cold start
+        continue-on-error: true
+        timeout-minutes: 3
         if: steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache_restore.outputs.cache-matched-key == ''
         shell: bash
         env:
@@ -205,7 +232,7 @@ jobs:
           CACHE_SHA256: ecee736f9bb35ac4b43a63e4fd7c83b0a4e9d8c94903f2631b5763a4e1d46686
         run: |
           cache_bundle="${RUNNER_TEMP}/microcap-full-rebalance-cache-v1.zip"
-          curl --fail --location --retry 4 --retry-all-errors --output "${cache_bundle}" "${CACHE_URL}"
+          curl --fail --location --connect-timeout 10 --max-time 90 --retry 1 --retry-max-time 120 --retry-all-errors --output "${cache_bundle}" "${CACHE_URL}"
           echo "${CACHE_SHA256}  ${cache_bundle}" | sha256sum --check --strict
           python microcap/scripts/full_rebalance_cache_bundle.py restore \
             --root microcap \
@@ -225,38 +252,72 @@ jobs:
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
           exit 0
 
+      - name: Restore explicitly approved whole state
+        id: approved_state
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && inputs.approved_state_url != ''
+        shell: bash
+        env:
+          APPROVED_STATE_URL: ${{ inputs.approved_state_url }}
+          APPROVED_STATE_SHA256: ${{ inputs.approved_state_sha256 }}
+          APPROVED_STATE_DATE: ${{ inputs.approved_state_date }}
+        run: |
+          python automation/scripts/restore_approved_microcap_state.py \
+            --root microcap \
+            --bundle "${RUNNER_TEMP}/microcap-approved-whole-state.zip" \
+            --url "${APPROVED_STATE_URL}" \
+            --sha256 "${APPROVED_STATE_SHA256}" \
+            --seed-date "${APPROVED_STATE_DATE}"
+
       # A verified bundle contains the refreshed proxy state as well as its
       # audited raw-cache anchors.  Keep it separately from the raw cache so
       # a cancellation after refresh can resume the same trade-day delivery.
       - name: Restore verified production state bundle
+        continue-on-error: true
         id: verified_state_cache
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && inputs.approved_state_url == ''
         uses: actions/cache/restore@v4
         with:
           path: microcap/.realtime_state_bundle
-          key: microcap-verified-state-v1-${{ runner.os }}-${{ steps.market_target.outputs.date }}
+          key: microcap-verified-state-v2-${{ steps.microcap_sha.outputs.sha }}-${{ runner.os }}-${{ steps.market_target.outputs.date }}
           # Reuse the most recent formally validated state across adjacent
           # trading days. restore_state revalidates anchors, while refresh
           # still establishes today's independent close before publication.
           restore-keys: |
-            microcap-verified-state-v1-${{ runner.os }}-
+            microcap-verified-state-v2-${{ steps.microcap_sha.outputs.sha }}-${{ runner.os }}-
+
+      - name: Validate and restore cached production state
+        id: cached_state_restore
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.verified_state_cache.outputs.cache-matched-key != '' && inputs.approved_state_url == ''
+        shell: bash
+        run: |
+          set +e
+          python microcap/scripts/realtime_state_bundle.py restore \
+            --root microcap \
+            --bundle microcap/.realtime_state_bundle/microcap-top100-state.zip \
+            --max-anchor-age-days 3 2>&1 | tee microcap/cached_state_restore_result.txt
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          exit 0
 
       # GitHub's cache is deliberately evictable.  A successful formal state
       # pack is also retained as an artifact so a cache miss after a holiday
       # resumes incrementally instead of triggering a historical rebuild.
       - name: Restore durable verified production state bundle
+        continue-on-error: true
         id: durable_state_artifact
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0' && steps.verified_state_cache.outputs.cache-matched-key == ''
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.cached_state_restore.outputs.exit_code != '0' && inputs.approved_state_url == ''
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          python scripts/restore_microcap_verified_state.py \
-            --bundle microcap/.realtime_state_bundle/microcap-top100-state.zip
+          python automation/scripts/restore_microcap_verified_state.py \
+            --bundle microcap/.realtime_state_bundle/microcap-top100-state.zip \
+            --artifact-name "microcap-verified-state-recovery-v2-${{ steps.microcap_sha.outputs.sha }}" \
+            --require-success
 
       - name: Restore verified production state
         id: verified_state_restore
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.verified_state_cache.outputs.cache-matched-key != '' || steps.durable_state_artifact.outputs.restored == 'true')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.durable_state_artifact.outputs.restored == 'true' && inputs.approved_state_url == ''
         shell: bash
         run: |
           set +e
@@ -268,9 +329,34 @@ jobs:
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
           exit 0
 
+      - name: Restore approved release fallback
+        id: approved_release_fallback
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && inputs.approved_state_url == '' && steps.cached_state_restore.outputs.exit_code != '0' && steps.verified_state_restore.outputs.exit_code != '0'
+        shell: bash
+        run: |
+          python automation/scripts/restore_approved_microcap_state.py \
+            --root microcap \
+            --bundle "${RUNNER_TEMP}/microcap-approved-release-state.zip" \
+            --config automation/config/microcap_approved_state.json
+
+      # A complete approved release can repair a failed legacy raw-cache bootstrap.
+      # Revalidate the restored files before permitting refresh or publication.
+      - name: Validate recovered full rebalance cache
+        id: recovered_full_cache
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
+        shell: bash
+        run: |
+          set +e
+          python microcap/scripts/full_rebalance_cache_bundle.py validate \
+            --root microcap \
+            --min-symbols 4500 2>&1 | tee microcap/recovered_full_rebalance_cache_result.txt
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
+          exit 0
+
       - name: Resolve same-day static refresh mode
         id: refresh_mode
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.recovered_full_cache.outputs.exit_code == '0' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
         shell: bash
         env:
           EXPECTED_DATE: ${{ steps.market_target.outputs.date }}
@@ -288,7 +374,7 @@ jobs:
           done
 
       - name: Refresh Top100 realtime state
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.full_cache.outputs.exit_code == '0'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.recovered_full_cache.outputs.exit_code == '0' && (steps.approved_state.outputs.restored == 'true' || (inputs.approved_state_url == '' && (steps.cached_state_restore.outputs.exit_code == '0' || steps.verified_state_restore.outputs.exit_code == '0' || steps.approved_release_fallback.outputs.restored == 'true')))
         id: refresh_state
         working-directory: microcap
         shell: bash
@@ -372,10 +458,10 @@ jobs:
           exit 0
 
       - name: Record refresh failure for digest
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.full_cache.outcome != 'success' || steps.full_cache.outputs.exit_code != '0' || steps.refresh_state.outcome != 'success' || steps.refresh_state.outputs.exit_code != '0')
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && (steps.recovered_full_cache.outcome != 'success' || steps.recovered_full_cache.outputs.exit_code != '0' || steps.refresh_state.outcome != 'success' || steps.refresh_state.outputs.exit_code != '0')
         shell: bash
         run: |
-          cache_exit="${{ steps.full_cache.outputs.exit_code }}"
+          cache_exit="${{ steps.recovered_full_cache.outputs.exit_code }}"
           refresh_exit="${{ steps.refresh_state.outputs.exit_code }}"
           for item in "microcap:v2_0" "microcap-v23:v2_3" "microcap-v25:v2_5"; do
             root="${item%%:*}"
@@ -411,7 +497,7 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: microcap-verified-state-recovery
+          name: ${{ inputs.validation_only == true && 'microcap-verified-state-validation' || format('microcap-verified-state-recovery-v2-{0}', steps.microcap_sha.outputs.sha) }}
           path: microcap/.realtime_state_bundle/microcap-top100-state.zip
           if-no-files-found: error
           retention-days: 90
@@ -420,12 +506,12 @@ jobs:
       # Gmail.  A later interruption therefore never discards a completed
       # refresh and the next run can continue instead of rebuilding globally.
       - name: Persist validated state bundle for same-day recovery
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
         continue-on-error: true
         uses: actions/cache/save@v4
         with:
           path: microcap/.realtime_state_bundle
-          key: microcap-verified-state-v1-${{ runner.os }}-${{ steps.market_target.outputs.date }}
+          key: microcap-verified-state-v2-${{ steps.microcap_sha.outputs.sha }}-${{ runner.os }}-${{ steps.market_target.outputs.date }}
 
       - name: Restore state into isolated v2.3 workspace
         id: restore_v23
@@ -448,7 +534,7 @@ jobs:
             --max-anchor-age-days 3
 
       - name: Save refreshed full rebalance cache
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
         continue-on-error: true
         uses: actions/cache/save@v4
         with:
@@ -575,7 +661,7 @@ jobs:
 
       - name: Persist normal-send intent before SMTP
         id: send_intent
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outputs.status == 'OK' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outputs.status == 'OK' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}-send-intent
@@ -585,7 +671,7 @@ jobs:
 
       - name: Send Gmail
         id: send_gmail
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outcome == 'success' && (steps.digest.outputs.status != 'OK' || (steps.send_intent.outcome == 'success' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')))
+        if: inputs.validation_only != true && always() && steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outcome == 'success' && (steps.digest.outputs.status != 'OK' || (steps.send_intent.outcome == 'success' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')))
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -601,7 +687,7 @@ jobs:
       # a duplicate digest or rebuilding the production state.
       - name: Preserve accepted SMTP receipt
         id: smtp_receipt
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}-smtp-accepted
@@ -610,23 +696,23 @@ jobs:
           retention-days: 30
 
       - name: Prepare delivery marker
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.smtp_receipt.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.smtp_receipt.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
         shell: bash
         run: |
           mkdir -p delivery-marker
           printf '%s\n' "${GITHUB_RUN_URL}" > delivery-marker/run-url.txt
 
       - name: Preserve verified whole delivery for the next trading day
-        if: steps.whole_delivery.outputs.exit_code == '0' && steps.digest.outputs.status == 'OK' && steps.send_gmail.outcome == 'success'
+        if: steps.whole_delivery.outputs.exit_code == '0' && steps.digest.outputs.status == 'OK' && (inputs.validation_only == true || steps.send_gmail.outcome == 'success')
         uses: actions/upload-artifact@v7
         with:
-          name: microcap-whole-delivery-state
+          name: ${{ inputs.validation_only == true && 'microcap-whole-delivery-validation-state' || 'microcap-whole-delivery-state' }}
           path: ${{ runner.temp }}/microcap-whole-delivery-state.zip
           if-no-files-found: error
           retention-days: 90
 
       - name: Mark digest delivered
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.smtp_receipt.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
+        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.send_gmail.outcome == 'success' && steps.smtp_receipt.outcome == 'success' && steps.digest.outputs.status == 'OK' && steps.signals_v20.outputs.exit_code == '0' && steps.signals_v23.outputs.exit_code == '0' && steps.signals_v25.outputs.exit_code == '0' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.exit_code == '0')
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}
@@ -642,6 +728,7 @@ jobs:
           path: |
             artifacts/
             microcap/full_rebalance_cache_result.txt
+            microcap/recovered_full_rebalance_cache_result.txt
             microcap/realtime_state_refresh_result.txt
             microcap/whole_delivery_result.txt
             microcap/realtime_signal_v2_0_result.txt
@@ -669,6 +756,7 @@ jobs:
           {
             echo "## Microcap signal digest"
             echo
+            echo "- Validation only (no email or delivery markers): ${{ inputs.validation_only == true }}"
             echo "- Publication mode: ${{ steps.publication_mode.outputs.mode }}"
             echo "- Publication mode basis: ${{ steps.publication_mode.outputs.basis }}"
             echo "- Resolved at: ${{ steps.publication_mode.outputs.beijing_time }}"
