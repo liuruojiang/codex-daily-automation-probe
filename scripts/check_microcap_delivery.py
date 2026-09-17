@@ -114,6 +114,7 @@ def write_outputs(values: dict[str, str]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--correction", action="store_true")
+    parser.add_argument("--validation-only", action="store_true")
     parser.add_argument("--publication-mode", choices=("realtime", "close_confirmed"), default="realtime")
     parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY", ""))
     parser.add_argument("--token", default=os.environ.get("GITHUB_TOKEN", ""))
@@ -124,7 +125,9 @@ def main() -> int:
     marker_name = delivery_marker_name(delivery_date, args.publication_mode)
     marker_already_exists = False
     recover_marker = False
-    if not args.correction:
+    # Validation exercises the same downstream build route, but the workflow
+    # independently disables every mail/receipt/intent/marker write step.
+    if not args.correction and not args.validation_only:
         if not args.repository or not args.token:
             raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required for scheduled delivery checks")
         payload = fetch_artifacts(args.repository, args.token, marker_name, args.api_url)
@@ -162,7 +165,8 @@ def main() -> int:
             "should_send": str(send).lower(),
             "delivery_date": delivery_date.isoformat(),
             "marker_name": marker_name,
-            "subject_prefix": "纠正版" if args.correction else "",
+            "subject_prefix": "验收不发送" if args.validation_only else ("纠正版" if args.correction else ""),
+            "validation_only": str(args.validation_only).lower(),
             "recover_marker": str(recover_marker).lower(),
         }
     )
