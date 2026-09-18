@@ -9,8 +9,8 @@ from pathlib import Path
 
 
 EXPECTED_REVISION = "r1"
-EXPECTED_BUILD = "v1.4-20260917-r1-coreput3x-fixedshort95-fix2"
-EXPECTED_DELIVERY_REVISION = "20260917-v14-coreput3x-fixedshort95-fix2"
+EXPECTED_BUILD = "v1.4-20260918-r1-coreput3x-fixedshort95-fix3-iciv30-qdelta05"
+EXPECTED_DELIVERY_REVISION = "20260918-v14-coreput3x-fixedshort95-fix3-iciv30-qdelta05"
 
 
 def marker_name(payload: dict[str, object]) -> str:

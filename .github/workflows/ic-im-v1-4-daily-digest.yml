@@ -99,7 +99,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 8729d799b89b9c14db1666f97e40f98c76e82625
+          ref: 0cce672f9e05613e72d867abe70026fde9d3dd8f
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -124,9 +124,9 @@ jobs:
           import sys
           sys.path.insert(0, "strategy")
           import poe_ic_im_mainline_v1_4_bot as strategy
-          assert strategy.BUILD_ID == "v1.4-20260917-r1-coreput3x-fixedshort95-fix2"
+          assert strategy.BUILD_ID == "v1.4-20260918-r1-coreput3x-fixedshort95-fix3-iciv30-qdelta05"
           import ic_im_v1_4_policy as policy
-          assert policy.RULE_REVISION == "ic_im_v1_4_coreput3x_fixed_short95_20260917_v1"
+          assert policy.RULE_REVISION == "ic_im_v1_4_iciv30_qdelta05_20260918_v1"
           assert policy.EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-18"
           assert strategy.GRID_POLICY_REVISION == "ic_im_im_grid160_half_20260914_v1"
           assert strategy.V13_GRID_RULES == {"IC": {"entry": 0.5, "exit": 1.0, "units": 0.5}, "IM": {"entry": 1.6, "exit": 2.0, "units": 0.5}}
@@ -212,7 +212,7 @@ jobs:
           sys.path.insert(0, "strategy")
           import poe_ic_im_v1_4_state as state
           import run_ic_im_v1_4_github_digest as runner
-          assert runner.DELIVERY_REVISION == "20260917-v14-coreput3x-fixedshort95-fix2"
+          assert runner.DELIVERY_REVISION == "20260918-v14-coreput3x-fixedshort95-fix3-iciv30-qdelta05"
           store = state.StateStore("state")
           latest = store.load_latest()
           state.anchors_from_record(latest)
