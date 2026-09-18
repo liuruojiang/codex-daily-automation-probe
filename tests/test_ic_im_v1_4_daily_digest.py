@@ -119,8 +119,8 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         payload = {
             "status": "ok",
             "strategy_revision": "r1",
-            "build": "v1.4-20260917-r1-coreput3x-fixedshort95-fix2",
-            "delivery_revision": "20260917-v14-coreput3x-fixedshort95-fix2",
+            "build": digest.EXPECTED_BUILD,
+            "delivery_revision": digest.EXPECTED_DELIVERY_REVISION,
             "publication_mode": "realtime",
             "market_date": "2026-09-03",
             "completed_day": "2026-09-02",
@@ -158,8 +158,8 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         payload = {
             "status": "ok",
             "strategy_revision": "r1",
-            "build": "v1.4-20260917-r1-coreput3x-fixedshort95-fix2",
-            "delivery_revision": "20260917-v14-coreput3x-fixedshort95-fix2",
+            "build": digest.EXPECTED_BUILD,
+            "delivery_revision": digest.EXPECTED_DELIVERY_REVISION,
             "publication_mode": "close_confirmed",
             "market_date": "2026-09-18",
             "completed_day": "2026-09-18",
@@ -180,8 +180,8 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         payload = {
             "status": "ok",
             "strategy_revision": "r1",
-            "build": "v1.4-20260917-r1-coreput3x-fixedshort95-fix2",
-            "delivery_revision": "20260917-v14-coreput3x-fixedshort95-fix2",
+            "build": marker.EXPECTED_BUILD,
+            "delivery_revision": marker.EXPECTED_DELIVERY_REVISION,
             "publication_mode": "realtime",
             "market_date": "2026-09-03",
             "digest": "b" * 64,
@@ -196,8 +196,8 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         payload = {
             "status": "ok",
             "strategy_revision": "r1",
-            "build": "v1.4-20260917-r1-coreput3x-fixedshort95-fix2",
-            "delivery_revision": "20260917-v14-coreput3x-fixedshort95-fix2",
+            "build": digest.EXPECTED_BUILD,
+            "delivery_revision": digest.EXPECTED_DELIVERY_REVISION,
             "publication_mode": "close_confirmed",
             "market_date": "2026-09-18",
             "completed_day": "2026-09-18",
@@ -212,9 +212,9 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         self.assertIn("到期条件信号", body)
         self.assertIn("实际账户操作由用户自行处理", body)
         payload["build"] = "v1.4-wrong"
-        with self.assertRaisesRegex(ValueError, "fix2 build"):
+        with self.assertRaisesRegex(ValueError, "fix3 build"):
             digest.validate_success_payload(payload)
-        payload["build"] = "v1.4-20260917-r1-coreput3x-fixedshort95-fix2"
+        payload["build"] = digest.EXPECTED_BUILD
         payload["delivery_revision"] = "stale"
         with self.assertRaisesRegex(ValueError, "delivery revision"):
             digest.validate_success_payload(payload)

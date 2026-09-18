@@ -20,6 +20,15 @@ import restore_ic_im_v1_3_ledger as legacy_restore
 import build_ic_im_v1_4_digest as ic_digest
 
 
+def current_ic_identity() -> dict[str, str]:
+    """Use the production marker contract so shared tests cannot pin a retired build."""
+    return {
+        'strategy_revision': marker.EXPECTED_REVISION,
+        'build': marker.EXPECTED_BUILD,
+        'delivery_revision': marker.EXPECTED_DELIVERY_REVISION,
+    }
+
+
 @pytest.mark.parametrize('ssl', ['true', 'false'])
 def test_partial_smtp_rejection_must_fail_delivery(monkeypatch, ssl):
     for key, value in {'MAIL_SERVER':'smtp.invalid', 'MAIL_PORT':'465' if ssl == 'true' else '587',
@@ -56,13 +65,13 @@ def test_ic_gate_searches_past_first_hundred_artifacts(monkeypatch):
 @pytest.mark.parametrize('day,digest', [('2026-99-99','a'*64), ('2026-09-04junk','a'*64), ('2026-09-04','z'*64), ('2026-09-04','\n'*64)])
 def test_marker_rejects_invalid_calendar_dates_and_non_sha(day, digest):
     with pytest.raises(ValueError):
-        marker.marker_name({'status':'ok', 'strategy_revision':'r1', 'build':'v1.4-20260917-r1-coreput3x-fixedshort95-fix2', 'delivery_revision':'20260917-v14-coreput3x-fixedshort95-fix2', 'publication_mode':'close_confirmed', 'market_date':day, 'digest':digest})
+        marker.marker_name({'status':'ok', **current_ic_identity(), 'publication_mode':'close_confirmed', 'market_date':day, 'digest':digest})
 
 
 @settings(max_examples=40)
 @given(st.sampled_from(['realtime', 'close_confirmed']), st.dates(min_value=date(2020,1,1), max_value=date(2030,12,31)), st.binary(min_size=32,max_size=32))
 def test_marker_and_gate_roundtrip(mode, day, digest):
-    name = marker.marker_name({'status':'ok', 'strategy_revision':'r1', 'build':'v1.4-20260917-r1-coreput3x-fixedshort95-fix2', 'delivery_revision':'20260917-v14-coreput3x-fixedshort95-fix2', 'publication_mode':mode, 'market_date':day.isoformat(), 'digest':digest.hex()})
+    name = marker.marker_name({'status':'ok', **current_ic_identity(), 'publication_mode':mode, 'market_date':day.isoformat(), 'digest':digest.hex()})
     assert ic_gate.marker_exists({'artifacts':[{'name':name, 'expired':False}]}, ic_gate.marker_prefix(day, mode))
     assert not ic_gate.marker_exists({'artifacts':[{'name':name, 'expired':True}]}, ic_gate.marker_prefix(day, mode))
 
@@ -114,7 +123,7 @@ def test_ledger_restore_skips_failed_and_non_main_runs(monkeypatch):
 ])
 def test_success_digest_rejects_inconsistent_close_payload(mutate):
     from test_ic_im_v1_4_daily_digest import signal
-    payload = {'status':'ok','strategy_revision':'r1','build':'v1.4-20260917-r1-coreput3x-fixedshort95-fix2',
+    payload = {'status':'ok', **current_ic_identity(),
                'publication_mode':'close_confirmed', 'market_date':'2026-09-04','completed_day':'2026-09-04',
                'verified_day':'2026-09-04','next_trade_day':'2026-09-07','digest':'a'*64,
                'signals':{'IC':signal('IC'),'IM':signal('IM')}}
