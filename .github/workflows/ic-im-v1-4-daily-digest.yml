@@ -2,11 +2,9 @@ name: IC IM v1.4-r1 Post-Close Digest
 
 on:
   schedule:
-    # 12:00 UTC = 20:00 Asia/Shanghai.  12:10 is a delivery-safe fallback
-    # for a dropped top-of-hour GitHub schedule; marker and concurrency gates
-    # make it a no-op whenever the primary run already delivered.
+    # 12:00 UTC = 20:00 Asia/Shanghai.  Cloudflare is the normal external
+    # trigger; this remains a secondary GitHub fallback.
     - cron: "0 12 * * *"
-    - cron: "10 12 * * *"
   workflow_dispatch:
     inputs:
       correction:
