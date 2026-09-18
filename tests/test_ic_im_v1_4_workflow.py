@@ -37,7 +37,7 @@ class ICIMV14WorkflowTests(unittest.TestCase):
         self.assertIn("--source legacy-state", text)
         self.assertIn("--target state", text)
         self.assertIn("run_ic_im_v1_4_github_digest.py", text)
-        self.assertIn("ref: 641aaa3f453ed84af1eedad47c731353be5f4e66", text)
+        self.assertIn("ref: 3324e0c50d9d1a9047d0e63f390e63da9eb6f597", text)
         self.assertIn("ICIM_LEGULEGU_DAILY_SNAPSHOT: ${{ secrets.ICIM_LEGULEGU_DAILY_SNAPSHOT }}", text)
         self.assertIn("ICIM_CHINABOND_SNAPSHOT_FILE: strategy-artifacts/chinabond.json", text)
         self.assertIn("timeout --foreground 90s python -u strategy/ic_im_chinabond.py", text)
