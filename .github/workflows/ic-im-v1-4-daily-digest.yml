@@ -99,7 +99,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 0cce672f9e05613e72d867abe70026fde9d3dd8f
+          ref: 45246f5ec5a1e14beac8921d54477deea3c7579d
           path: strategy
 
       - name: Record exact ICIM strategy revision
