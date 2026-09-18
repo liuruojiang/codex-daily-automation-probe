@@ -54,6 +54,14 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
     assert 'fromJSON(inputs.family' in workflow['jobs']['strategy-tests']['strategy']['matrix']['family']
 
 
+def test_microcap_automation_suite_is_not_coupled_to_icim_release_fixtures():
+    text = (WORKFLOWS / 'delivery-regression.yml').read_text(encoding='utf-8')
+    microcap_case = text.split('microcap) suites=(', 1)[1].split(') ;;', 1)[0]
+    assert 'tests/test_microcap_*.py' in microcap_case
+    assert 'test_adversarial_delivery.py' not in microcap_case
+    assert (ROOT / 'tests/test_microcap_adversarial_delivery.py').is_file()
+
+
 @pytest.mark.parametrize('name', ['microcap-realtime-digest.yml', 'ic-im-v1-4-daily-digest.yml'])
 def test_normal_smtp_requires_durable_intent_and_mode_specific_preflight(name):
     steps = read(name)['jobs']['send']['steps']
