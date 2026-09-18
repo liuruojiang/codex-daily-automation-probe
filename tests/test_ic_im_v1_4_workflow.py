@@ -13,6 +13,7 @@ class ICIMV14WorkflowTests(unittest.TestCase):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("name: IC IM v1.4-r1 Post-Close Digest", text)
         self.assertIn('- cron: "0 12 * * *"', text)
+        self.assertIn('- cron: "10 12 * * *"', text)
         self.assertIn('"$(date +%H)" -lt 20', text)
         self.assertIn('SCHEDULED_ATTEMPT: ${{ github.event_name == \'schedule\' || inputs.external_schedule == true }}', text)
         self.assertLess(text.index('Scheduled ICIM delivery is not due'), text.index('python automation/scripts/check_ic_im_v1_4_delivery.py'))
