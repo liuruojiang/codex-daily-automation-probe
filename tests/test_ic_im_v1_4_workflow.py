@@ -49,6 +49,8 @@ class ICIMV14WorkflowTests(unittest.TestCase):
         self.assertIn('strategy.BUILD_ID == "v1.4-20260918-r1-coreput3x-fixedshort95-fix3-iciv30-qdelta05"', text)
         self.assertIn('policy.RULE_REVISION == "ic_im_v1_4_iciv30_qdelta05_20260918_v1"', text)
         self.assertIn('runner.DELIVERY_REVISION == "20260918-v14-coreput3x-fixedshort95-fix3-iciv30-qdelta05"', text)
+        self.assertNotIn("published v1.4 fix2", (ROOT / "scripts" / "build_ic_im_v1_4_digest.py").read_text(encoding="utf-8"))
+        self.assertNotIn("published v1.4 fix2", (ROOT / "scripts" / "prepare_ic_im_v1_4_marker.py").read_text(encoding="utf-8"))
         self.assertIn('strategy.GRID_POLICY_REVISION == "ic_im_im_grid160_half_20260914_v1"', text)
         self.assertIn('strategy.IM_EXECUTION_FIX_REVISION == "im_put_execution_guards_20260908_v2"', text)
         self.assertIn('strategy.IM_PUT_EXECUTION_REVISION == "im_monthly_reset_20260907_v1"', text)
