@@ -189,6 +189,8 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         name = marker.marker_name(payload)
         self.assertTrue(name.startswith(prefix))
         self.assertTrue(gate.marker_exists({"artifacts": [{"name": name}]}, prefix))
+        old_fix3_name = "ic-im-v1-4-r1-realtime-digest-delivered-2026-09-03-" + "a" * 12
+        self.assertFalse(gate.marker_exists({"artifacts": [{"name": old_fix3_name}]}, prefix))
 
     def test_expiry_condition_is_visible_and_wrong_build_is_rejected(self) -> None:
         ic = signal("IC")
@@ -212,7 +214,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         self.assertIn("到期条件信号", body)
         self.assertIn("实际账户操作由用户自行处理", body)
         payload["build"] = "v1.4-wrong"
-        with self.assertRaisesRegex(ValueError, "fix3 build"):
+        with self.assertRaisesRegex(ValueError, "fix4 build"):
             digest.validate_success_payload(payload)
         payload["build"] = digest.EXPECTED_BUILD
         payload["delivery_revision"] = "stale"

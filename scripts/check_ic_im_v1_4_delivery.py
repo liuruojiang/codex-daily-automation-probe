@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import urllib.parse
@@ -24,13 +25,21 @@ def delivery_date(value: datetime) -> date:
 
 
 REVISION = "r1"
+EXPECTED_BUILD = "v1.4-20260924-r1-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
+EXPECTED_DELIVERY_REVISION = "20260924-v14-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
+IDENTITY_TAG = hashlib.sha256(
+    f"{EXPECTED_BUILD}\n{EXPECTED_DELIVERY_REVISION}".encode("utf-8")
+).hexdigest()[:12]
 
 
 def marker_prefix(value: date, publication_mode: str) -> str:
     mode = publication_mode.strip().lower()
     if mode not in {"realtime", "close_confirmed"}:
         raise ValueError(f"unsupported publication mode: {publication_mode}")
-    return f"ic-im-v1-4-{REVISION}-{mode}-digest-delivered-{value.isoformat()}-"
+    return (
+        f"ic-im-v1-4-{REVISION}-{IDENTITY_TAG}-{mode}-digest-delivered-"
+        f"{value.isoformat()}-"
+    )
 
 
 def marker_exists(payload: dict[str, object], prefix: str) -> bool:

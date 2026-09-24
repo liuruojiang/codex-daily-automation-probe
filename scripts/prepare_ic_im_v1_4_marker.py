@@ -7,10 +7,12 @@ import re
 from datetime import date
 from pathlib import Path
 
-
-EXPECTED_REVISION = "r1"
-EXPECTED_BUILD = "v1.4-20260924-r1-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
-EXPECTED_DELIVERY_REVISION = "20260924-v14-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
+from check_ic_im_v1_4_delivery import (
+    EXPECTED_BUILD,
+    EXPECTED_DELIVERY_REVISION,
+    REVISION as EXPECTED_REVISION,
+    marker_prefix,
+)
 
 
 def marker_name(payload: dict[str, object]) -> str:
@@ -19,9 +21,9 @@ def marker_name(payload: dict[str, object]) -> str:
     if str(payload.get("strategy_revision")) != EXPECTED_REVISION:
         raise ValueError("delivery marker requires strategy_revision=r1")
     if str(payload.get("build")) != EXPECTED_BUILD:
-        raise ValueError("delivery marker requires the published v1.4 fix3 build")
+        raise ValueError("delivery marker requires the published v1.4 fix4 build")
     if str(payload.get("delivery_revision", "")) != EXPECTED_DELIVERY_REVISION:
-        raise ValueError("delivery marker requires the published v1.4 fix3 delivery revision")
+        raise ValueError("delivery marker requires the published v1.4 fix4 delivery revision")
     publication_mode = str(payload.get("publication_mode", ""))
     if publication_mode not in {"realtime", "close_confirmed"}:
         raise ValueError("delivery marker has unsupported publication_mode")
@@ -29,11 +31,8 @@ def marker_name(payload: dict[str, object]) -> str:
     digest = str(payload.get("digest", ""))
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", market_date) or not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise ValueError("delivery marker requires market_date and full SHA-256 digest")
-    date.fromisoformat(market_date)
-    return (
-        f"ic-im-v1-4-{EXPECTED_REVISION}-{publication_mode}-digest-delivered-"
-        f"{market_date}-{digest[:12]}"
-    )
+    parsed_market_date = date.fromisoformat(market_date)
+    return f"{marker_prefix(parsed_market_date, publication_mode)}{digest[:12]}"
 
 
 def main() -> int:
