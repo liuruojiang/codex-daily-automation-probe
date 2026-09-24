@@ -66,6 +66,10 @@ def audit_candidates(manifest: dict, history_before: dict | None = None) -> dict
         failures.append({"reason": "candidate_ledger_missing"})
         return result()
     selected = {canonical(row["url"]) for row in manifest.get("selected_items", [])}
+    verified_carryovers = {
+        canonical(row.get("url", "")) for row in candidates
+        if row.get("confirmed_omission") and prose_evidence(row.get("summary", ""))
+    }
     def article_identity(row: dict) -> tuple:
         # A URL alone does not establish that two source captures describe the
         # same selected publication. Keep conflicting dates/evidence visible.
@@ -137,12 +141,19 @@ def audit_candidates(manifest: dict, history_before: dict | None = None) -> dict
             decisions.append({"decision": "same_run_research_capture_duplicate",
                               "represented_by": research_representatives[article_identity(row)], **detail})
             continue
+        if (shown and url in verified_carryovers and not row.get("confirmed_omission")
+                and not prose_evidence((row.get("enrichment") or {}).get("summary")
+                                       or row.get("summary", ""))):
+            decisions.append({"decision": "same_run_verified_carryover_capture", **detail})
+            continue
         primary = published >= cutoff - timedelta(hours=36)
         forum = str(row.get("source_id", "")).startswith(("forum|", "reddit|"))
         if not primary:
             # Preserve separate research and community backfill, not the fixed
             # blogs/podcasts' strict 36-hour publication window.
-            allowed_backfill = (str(row.get("source_id", "")).startswith("research|") or forum) and published >= cutoff - timedelta(days=14)
+            allowed_backfill = row.get("confirmed_omission") is True or (
+                (str(row.get("source_id", "")).startswith("research|") or forum)
+                and published >= cutoff - timedelta(days=14))
             if shown and not allowed_backfill:
                 failures.append({"reason": "stale_item_rendered", **detail})
             decisions.append({"decision": ("forum_backfill" if forum else "research_backfill") if shown else "outside_primary_window", **detail})

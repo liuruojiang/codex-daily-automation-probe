@@ -53,8 +53,30 @@ When a research feed and a fixed monitor capture the same selected publication
 the fixed capture points to the independently audited research representative.
 This preserves the research backfill window without treating its duplicate
 capture as a new fixed-section update. Fixed-only articles still require 36-hour
-freshness; conflicting identities and articles older than the research backfill
-limit still block delivery. Missing research evidence is disclosed for review.
+freshness; conflicting identities and ordinary articles older than the research
+backfill limit remain audit failures or gaps, not silent selections. Missing research evidence is disclosed for
+review. Independently confirmed carryover follows the separate rule below.
+
+## Confirmed omission carryover
+
+The user authorized carrying confirmed omissions into a later scheduled email,
+without resending the earlier whole email. A curator adds only independently
+verified omissions to `digest_history/etf_confirmed_omissions.json`, including
+the original run/date, publisher URL, publication time, evidence level, a
+source-faithful Chinese note, and what remains to verify. The build renders
+these in `前期确认漏项补送`, clearly apart from today's new research and the
+unconfirmed audit list. Public publisher summaries are labelled as summaries;
+they do not imply access to a paywalled full article.
+
+The queue is a separately audited configured source. It uses the frozen
+pre-build 365-day sent history to suppress already delivered URLs/titles. Only
+visible carryover item blocks enter the selection manifest and sent history;
+the workflow persists that history after Send Gmail succeeds. If a regular
+feed still captures the same URL with a thin excerpt, the verified carryover
+evidence represents that URL and the duplicate capture is retained for audit.
+The confirmed carryover is allowed beyond the normal research backfill window,
+but unverified old articles are not. The queue file remains as provenance;
+successfully sent entries are suppressed by history instead of deleted.
 
 The 08:00 preflight recomputes schema-2 audits from immutable artifacts. A cutoff
 not verified against the real Build interval cannot establish an omission.
@@ -66,5 +88,7 @@ Focused tests include real public arXiv abstracts, negative evidence fixtures,
 independent omission counterexamples, and CLI failure exit codes. Real collection
 acceptance uses the normal workflow with `send_email=false`: build, gate, artifact
 upload; Send Gmail and history persistence must both be skipped. No actual email
-delivery claim is made from this replay. The user's no-resend decision remains
-in force. Historical catch-up registers live outside sent-article history.
+delivery claim is made from this replay. Earlier whole emails are not resent;
+confirmed omissions may appear once in a later normal email. Historical
+catch-up registers live outside sent-article history until a carryover item is
+actually rendered and sent.
