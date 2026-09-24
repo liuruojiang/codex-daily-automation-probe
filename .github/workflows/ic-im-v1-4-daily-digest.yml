@@ -99,7 +99,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 394d1de398d91b88cf9ff026920ee4747812e12a
+          ref: 1bbe268e3e85aa957cdc8c73bcb4d54455a50974
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -244,6 +244,7 @@ jobs:
             --out-dir strategy-artifacts \
             --mode "${{ steps.publication_mode.outputs.runner_mode }}" \
             --max-sessions 20 \
+            --network-budget-per-product 180 \
             --expected-market-date "${{ steps.publication_mode.outputs.mode == 'realtime' && steps.calendar.outputs.today || steps.calendar.outputs.completed_day }}" 2>&1 | tee strategy-run.log
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
