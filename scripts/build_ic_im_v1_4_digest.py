@@ -484,7 +484,7 @@ def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
 
 def validate_success_payload(payload: dict[str, Any]) -> None:
     if str(payload.get("delivery_revision", "")) != EXPECTED_DELIVERY_REVISION:
-        raise ValueError("digest requires the published v1.4 fix3 delivery revision")
+        raise ValueError("digest requires the published v1.4 fix4 delivery revision")
     from datetime import date
     import math
     from prepare_ic_im_v1_4_marker import marker_name
@@ -640,9 +640,9 @@ def main() -> int:
     if str(payload.get("strategy_revision")) != "r1":
         raise ValueError("digest requires strategy_revision=r1")
     if str(payload.get("build", "")) != EXPECTED_BUILD:
-        raise ValueError("digest requires the published v1.4 fix3 build")
+        raise ValueError("digest requires the published v1.4 fix4 build")
     if str(payload.get("delivery_revision", "")) != EXPECTED_DELIVERY_REVISION:
-        raise ValueError("digest requires the published v1.4 fix3 delivery revision")
+        raise ValueError("digest requires the published v1.4 fix4 delivery revision")
     run_url = os.environ.get("GITHUB_RUN_URL", "")
     if payload.get("status") == "ok":
         subject, body, _ = build_success(payload, run_url, args.subject_prefix)
