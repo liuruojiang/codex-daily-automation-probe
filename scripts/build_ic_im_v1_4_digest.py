@@ -26,8 +26,8 @@ ACTION_CN = {
     "RESCUE": "救援换仓",
     "WAIT_IV": "等待IV条件（无需操作）",
 }
-EXPECTED_BUILD = "v1.4-20260918-r1-coreput3x-fixedshort95-fix3-iciv30-qdelta05"
-EXPECTED_DELIVERY_REVISION = "20260918-v14-coreput3x-fixedshort95-fix3-iciv30-qdelta05"
+EXPECTED_BUILD = "v1.4-20260924-r1-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
+EXPECTED_DELIVERY_REVISION = "20260924-v14-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
 
 
 def number(value: Any) -> str:
