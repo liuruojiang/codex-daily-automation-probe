@@ -16,7 +16,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from contextvars import ContextVar
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -5618,6 +5618,7 @@ def etf_configured_source_ids() -> list[str]:
         *[f"fixed_page|{feed.source}|{feed.url}" for feed in ETF_FIXED_PAGE_MONITORS],
         *[f"forum|{source}|{url}" for source, url, _limit in ETF_EXTERNAL_FORUM_FEEDS],
         *[f"reddit|{subreddit}" for subreddit in ETF_FORUM_SUBREDDITS],
+        "research|Confirmed prior-mail omissions|digest_history/etf_confirmed_omissions.json",
     ]
 
 
@@ -5641,6 +5642,77 @@ def record_etf_source(kind: str, source: str, url: str, items: list[Item]) -> No
             "is_aggregator": "quantocracy.com" in item.url,
             "children_checked": False,
         })
+
+
+def load_etf_confirmed_omissions(history_before: dict) -> list[tuple[Item, dict]]:
+    """Select manually verified missed articles for one later sent email."""
+    path = Path("digest_history/etf_confirmed_omissions.json")
+    source_id = f"research|Confirmed prior-mail omissions|{path.as_posix()}"
+    file_present = path.exists()
+    payload = json.loads(path.read_text(encoding="utf-8")) if file_present else {"schema_version": 1, "items": []}
+    if payload.get("schema_version") != 1 or not isinstance(payload.get("items"), list):
+        raise ValueError("invalid confirmed ETF omission queue")
+    cutoff = (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(timezone.utc)
+    today = cutoff.astimezone(BJ).date()
+    earliest = (today - timedelta(days=365)).isoformat()
+    prior = [row for row in history_before.get("items", [])
+             if isinstance(row, dict) and earliest <= str(row.get("sent_date", "")) <= today.isoformat()]
+    seen_urls = {canonical_url(str(row["url"])) for row in prior if row.get("url")}
+    seen_titles = {norm_title(str(row["title"])) for row in prior if row.get("title")}
+    selected: list[tuple[Item, dict]] = []
+    queued_urls: set[str] = set()
+    for row in payload["items"]:
+        if not isinstance(row, dict) or any(not row.get(k) for k in (
+                "origin_run_id", "origin_report_date", "source", "title", "zh_title", "url",
+                "published", "summary", "zh_summary", "evidence_level", "verify_next")):
+            raise ValueError("incomplete confirmed ETF omission record")
+        stamp = parse_date(str(row["published"]))
+        if stamp is None or stamp > cutoff or date.fromisoformat(row["origin_report_date"]) >= today:
+            continue
+        url = canonical_url(str(row["url"]))
+        if url in seen_urls or norm_title(str(row["title"])) in seen_titles or url in queued_urls:
+            continue
+        item = Item(str(row["source"]), str(row["title"]), str(row["url"]),
+                    str(row["published"]), str(row["summary"]))
+        selected.append((item, row))
+        queued_urls.add(url)
+    snapshot = ETF_COLLECTION_SNAPSHOT.get()
+    if snapshot is not None:
+        snapshot["source_audit"].append({
+            "source_id": source_id, "coverage": "complete" if file_present else "partial",
+            "status": "curated_queue_read" if file_present else "curated_queue_missing",
+            "evidence": {"path": path.as_posix(), "queued_count": len(payload["items"]),
+                         "captured_count": len(selected)},
+        })
+        for item, row in selected:
+            snapshot["candidates"].append({
+                **asdict(item), "source_id": source_id, "independent_eligible": True,
+                "exclusion_reason": "confirmed_prior_mail_omission", "is_aggregator": False,
+                "children_checked": True, "confirmed_omission": True,
+                "origin_run_id": row["origin_run_id"],
+                "origin_report_date": row["origin_report_date"],
+                "evidence_level": row["evidence_level"],
+            })
+    return selected
+
+
+def append_etf_confirmed_omissions(lines: list[str], entries: list[tuple[Item, dict]]) -> None:
+    if not entries:
+        return
+    lines += ["", "---", "", "## 前期确认漏项补送", "",
+              "以下为前期已发送邮件的确认漏项，原邮件并未正式收录；仅按已核实的原文可见范围补送，不作为今日新发表文章或买卖建议。", ""]
+    for index, (item, row) in enumerate(entries, 1):
+        lines += [
+            f"### {index}. {row['zh_title']}",
+            f"- 原邮件：{row['origin_report_date']}（GitHub run {row['origin_run_id']}）",
+            f"- 原文标题：{item.title}",
+            f"- 来源及发布时间：{item.source}｜{item.published}",
+            f"- 链接：{item.url}",
+            f"- 证据范围：{row['evidence_level']}",
+            f"- 原文事实：{row['zh_summary']}",
+            f"- 后续验证：{row['verify_next']}",
+            "",
+        ]
 
 
 def finalize_etf_candidate_decisions(snapshot: dict, rendered_items: list[Item], history_before: dict) -> dict:
@@ -5748,11 +5820,15 @@ def _build_etf(out_dir: Path) -> None:
         recent_count = len(filter_recent_published(parsed, ETF_ARTICLE_MAX_AGE_HOURS))
         status = "已读取" if parsed else "无可读条目或解析不足"
         research_feed_audit.append((feed.source, status, recent_count))
+    history_before = json.loads((out_dir / "history_before.json").read_text(encoding="utf-8"))
+    confirmed_omissions = load_etf_confirmed_omissions(history_before)
+    confirmed_urls = {canonical_url(item.url) for item, _row in confirmed_omissions}
     # Rank for presentation, not silent truncation of qualifying research.
-    scored_picked = select_etf_research_items(items, limit=max(len(items), 9))
+    regular_items = [item for item in items if canonical_url(item.url) not in confirmed_urls]
+    scored_picked = select_etf_research_items(regular_items, limit=max(len(regular_items), 9))
     picked = [x.item for x in scored_picked]
     fixed_monitor_updates, fixed_monitor_audit = collect_etf_fixed_monitor_updates_with_audit(
-        exclude_urls={canonical_url(item.url) for item in picked}
+        exclude_urls={canonical_url(item.url) for item in picked} | confirmed_urls
     )
 
     forum_items = collect_etf_forum_items()
@@ -5794,6 +5870,7 @@ def _build_etf(out_dir: Path) -> None:
         "- [A 股 / 港股专项](#a-股--港股专项)",
         "- [固定关注博客/播客更新](#固定关注博客播客更新)",
         "- [待验证假设](#待验证假设)",
+        "- [前期确认漏项补送](#前期确认漏项补送)",
         "",
         "---",
         "",
@@ -5860,6 +5937,7 @@ def _build_etf(out_dir: Path) -> None:
         data_date_s,
         include_market_summary=include_market_summary,
     )
+    append_etf_confirmed_omissions(lines, confirmed_omissions)
     append_etf_research_feed_audit(lines, research_feed_audit)
     fixed_monitor_rendered_count = append_etf_fixed_monitor_section(lines, fixed_monitor_updates, fixed_monitor_audit)
     market_audit_line = (
@@ -5883,10 +5961,12 @@ def _build_etf(out_dir: Path) -> None:
     report_text = "\n".join(lines)
     displayed_urls = {canonical_url(url) for url in re.findall(r"(?m)^- 链接：\s*(https?://\S+)\s*$", report_text)}
     rendered_items = dedupe_items([
-        item for item in [*picked, *fixed_monitor_updates, *forum_picked]
+        item for item in [*picked, *fixed_monitor_updates, *forum_picked,
+                          *(item for item, _row in confirmed_omissions)]
         if canonical_url(item.url) in displayed_urls
     ])
-    required_urls = {canonical_url(item.url) for item in [*picked, *fixed_monitor_updates]}
+    required_urls = {canonical_url(item.url) for item in [*picked, *fixed_monitor_updates,
+                                                          *(item for item, _row in confirmed_omissions)]}
     if not required_urls <= displayed_urls:
         raise ValueError("ETF selected research/fixed item missing from rendered email")
     snapshot = ETF_COLLECTION_SNAPSHOT.get()

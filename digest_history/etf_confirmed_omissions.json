@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "items": [
+    {
+      "origin_run_id": "35669560056",
+      "origin_report_date": "2026-09-22",
+      "source": "Seeking Alpha ETFs",
+      "title": "JEPI Vs. GPIQ: The 5% Treasury Test For Retirees",
+      "zh_title": "JEPI 与 GPIQ：面对约 5% 国债收益率的收益权衡",
+      "url": "https://seekingalpha.com/article/4948433-jepi-vs-gpiq-the-5-percent-treasury-test-for-retirees",
+      "published": "2026-09-21T20:50:38+00:00",
+      "summary": "The author's public summary compares JEPI with GPIQ and a Treasury yield around five percent. It says GPIQ had a higher trailing distribution and greater technology concentration, while JEPI had a steadier profile and a narrower income advantage over Treasuries.",
+      "zh_summary": "作者公开摘要比较 JEPI、GPIQ 与约 5% 的国债收益率：GPIQ 的历史分配率和科技股集中度较高；JEPI 波动较低，但相对国债的收益优势收窄。这是作者观点，分配率不是保证收益。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验同日分配率、税后总回报、期权覆盖规则和科技股集中度。"
+    },
+    {
+      "origin_run_id": "35797796820",
+      "origin_report_date": "2026-09-23",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "VGT Holders Bought ‘Tech’ and Own No Google, Meta, or Amazon: The Sector Rule That Decides What’s Inside",
+      "zh_title": "VGT 的科技行业口径为何不包含 Alphabet、Meta 和 Amazon",
+      "url": "https://247wallst.com/investing/etf/2026/09/22/vgt-holders-bought-tech-and-own-no-google-meta-or-amazon-the-sector-rule-that-decides-whats-inside/?.tsrc=rss",
+      "published": "2026-09-22T22:15:04+00:00",
+      "summary": "The article explains that VGT tracks a GICS Information Technology benchmark. Alphabet and Meta belong to Communication Services and Amazon belongs to Consumer Discretionary, so an investor adding VGT to an S&P 500 fund increases exposure to other large technology holdings rather than to those three companies.",
+      "zh_summary": "原文指出，VGT 跟踪 GICS 信息技术口径：Alphabet、Meta 被归入通信服务，Amazon 属于可选消费，因此不在 VGT 内。与宽基 ETF 叠加时，应核对实际持股重合与行业集中。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "以基金及指数提供商当期持仓、分类和权重文件复核，不把文章中的持仓权重当作永久值。"
+    },
+    {
+      "origin_run_id": "35797796820",
+      "origin_report_date": "2026-09-23",
+      "source": "Seeking Alpha ETFs",
+      "title": "MOO: Tailwinds Are Priced In, AI Is A Threat And Boon (Downgrade)",
+      "zh_title": "MOO 农业企业 ETF：利好是否已反映在价格中",
+      "url": "https://seekingalpha.com/article/4948793-moo-downgrade-tailwinds-are-priced-in-ai-is-a-threat-and-boon",
+      "published": "2026-09-22T21:33:40+00:00",
+      "summary": "The author's public summary says MOO gained about twenty percent since the previous review and downgrades the fund to Hold. It cites potentially priced-in policy and geopolitical tailwinds, rising input costs, and AI as both a threat and an opportunity for agribusiness.",
+      "zh_summary": "作者公开摘要称，MOO 自其上次评论后上涨约 20%，并将个人评级下调至 Hold；理由包括利好可能已反映、投入成本压力，以及 AI 对农业企业兼有利弊。并非独立验证的未来收益预测。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验该期间实际总回报、成分企业盈利与估值、农业投入成本和 AI 应用证据。"
+    },
+    {
+      "origin_run_id": "35933643793",
+      "origin_report_date": "2026-09-24",
+      "source": "Seeking Alpha ETFs",
+      "title": "FLRN: Zero Duration Bond ETF To Protect Against Rate Hikes",
+      "zh_title": "FLRN 浮息债 ETF：低久期与信用风险要分开看",
+      "url": "https://seekingalpha.com/article/4949162-flrn-zero-duration-bond-etf-to-protect-against-rate-hikes",
+      "published": "2026-09-23T20:10:34+00:00",
+      "summary": "The author's public summary describes FLRN as an investment-grade floating-rate bond fund with near-zero interest-rate duration. It also notes significant financial-sector exposure and a risk-and-return profile close to FLOT, while arguing that rising rates could support the floating coupons.",
+      "zh_summary": "作者公开摘要称，FLRN 持有投资级浮息票据，利率久期接近零，利率上升时票息可调整；同时存在金融业集中和信用风险，不能把低久期理解成无风险。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验基金事实表中的久期、信用评级、金融业权重、息差及与 FLOT 的同口径成本。"
+    },
+    {
+      "origin_run_id": "35933643793",
+      "origin_report_date": "2026-09-24",
+      "source": "Seeking Alpha ETFs",
+      "title": "4 High-Yield ETFs Offering Hedges Against Rising Inflation And Higher Interest Rates",
+      "zh_title": "四只高收益 ETF 的利率与通胀对冲主张",
+      "url": "https://seekingalpha.com/article/4949136-4-high-yield-etf-offering-hedges-against-rising-inflation-and-higher-interest-rates",
+      "published": "2026-09-23T18:59:04+00:00",
+      "summary": "The author's public summary names PFIX, RISR, SRLN, and CLOZ as funds with different responses to higher rates and inflation. It presents PFIX as a volatile tactical rate hedge and the other funds as income-oriented exposures, without establishing that their distributions or hedges are guaranteed.",
+      "zh_summary": "作者公开摘要列出 PFIX、RISR、SRLN、CLOZ，认为其在高利率和通胀环境中具有不同用途；其中 PFIX 被描述为波动较高的战术利率对冲，其他产品偏向收益敞口。四者风险结构不同，不能仅凭分配率并列比较。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "分别核验利率敏感度、信用和 CLO 风险、分配来源、杠杆与费用，再比较压力情景总回报。"
+    },
+    {
+      "origin_run_id": "35933643793",
+      "origin_report_date": "2026-09-24",
+      "source": "Seeking Alpha ETFs",
+      "title": "ROE: High-Quality Portfolio Positioned To Outperform IVV, Buy Rating Maintained",
+      "zh_title": "ROE 等权质量 ETF：作者维持优于 IVV 的观点",
+      "url": "https://seekingalpha.com/article/4949120-roe-high-quality-portfolio-positioned-to-outperform-ivv-buy-rating-maintained",
+      "published": "2026-09-23T18:19:10+00:00",
+      "summary": "The author's public summary describes ROE as an actively managed, technology-heavy equal-weight quality fund. It says four holdings changed, claims a year-to-date lead over IVV, and warns that a relatively high downside capture ratio could hurt in a bearish market.",
+      "zh_summary": "作者公开摘要称，ROE 是偏科技的主动管理等权质量基金，近期更换四只持股；作者预计它可能继续优于 IVV，同时承认较高的下行捕获率可能使其在熊市落后。预测与评级只代表作者观点。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验持仓日期、质量因子定义、费用、与 IVV 的同区间总回报及下行捕获率。"
+    }
+  ]
+}
