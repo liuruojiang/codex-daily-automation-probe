@@ -120,6 +120,8 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         for changes in (
             {"call_target_qty_normalized": -1.0},
             {"call_target_contract": "MO2610-C-9500"},
+            {"call_target_expiry": "2026-10-16"},
+            {"call_target_strike": 9500.0},
             {"call_action": "OPEN_CALL"},
             {"call_action": "RESCUE_NEXT_LISTED"},
             {"call_action": "HOLD"},

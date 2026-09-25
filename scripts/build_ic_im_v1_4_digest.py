@@ -526,7 +526,7 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
                 qty = signal.get("call_target_qty_normalized")
                 if isinstance(qty, bool) or not isinstance(qty, (int, float)) or not math.isfinite(qty) or abs(qty) > 1e-12:
                     raise ValueError("fix6 IM Call target quantity must be zero")
-                if signal.get("call_target_contract") or str(signal.get("call_action")) not in {"HOLD", "CLOSE_CALL"}:
+                if any(signal.get(field) is not None for field in ("call_target_contract", "call_target_expiry", "call_target_strike")) or str(signal.get("call_action")) not in {"HOLD", "CLOSE_CALL"}:
                     raise ValueError("fix6 IM Call must not open or rescue")
                 has_old_call = bool(signal.get("call_has_position")) and bool(signal.get("call_current_contract"))
                 if has_old_call and signal.get("call_action") != "CLOSE_CALL":
