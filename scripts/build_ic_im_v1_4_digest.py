@@ -26,8 +26,8 @@ ACTION_CN = {
     "RESCUE": "救援换仓",
     "WAIT_IV": "等待IV条件（无需操作）",
 }
-EXPECTED_BUILD = "v1.4-20260926-r1-coreput3x-fixedshort95-fix6-nocall-repeatroll-iciv30-qdelta05"
-EXPECTED_DELIVERY_REVISION = "20260926-v14-coreput3x-fixedshort95-fix6-nocall-repeatroll-iciv30-qdelta05"
+EXPECTED_BUILD = "v1.4-20260928-r1-coreput3x-open-fix7-nocall-repeatroll-iciv30-qdelta05"
+EXPECTED_DELIVERY_REVISION = "20260928-v14-coreput3x-open-fix7-nocall-repeatroll-iciv30-qdelta05"
 
 
 def number(value: Any) -> str:
@@ -65,6 +65,8 @@ def action_parts(signal: dict[str, Any]) -> list[str]:
         value = str(signal.get(key, "")).strip().upper()
         if value not in HOLD_ACTIONS:
             parts.append(f"{label} {value}")
+    if signal.get("v14_profit_reentry_status") == "scheduled_t_plus_1_open":
+        parts.append("核心买Put三倍兑现次日开盘计划")
     return parts
 
 
@@ -117,6 +119,8 @@ def product_action_text(signal: dict[str, Any]) -> str:
         value = str(signal.get(key, "")).strip().upper()
         if value not in HOLD_ACTIONS:
             parts.append(f"{label}：{action_cn(value)}")
+    if signal.get("v14_profit_reentry_status") == "scheduled_t_plus_1_open":
+        parts.append("核心买Put：下一交易日开盘兑现计划")
     return "；".join(parts) or "维持现状"
 
 
@@ -280,6 +284,19 @@ def v14_route_reason(signal: dict[str, Any]) -> str:
     action = signal.get("v14_action", "HOLD")
     reason = signal.get("v14_action_reason", "N/A")
     text = f"1.4固定核心路由：{route}；动作{action}；原因{reason}；范围{scope}。"
+    profit_status = signal.get("v14_profit_reentry_status")
+    if profit_status == "scheduled_t_plus_1_open":
+        text += (f"核心买Put三倍兑现：{signal.get('market_date')}收盘确认，"
+                 f"{signal.get('v14_profit_execution_day')}开盘计划卖旧"
+                 f"{signal.get('v14_profit_old_contract')}、买预选"
+                 f"{signal.get('v14_profit_reentry_contract')}，数量"
+                 f"{signal.get('v14_profit_reentry_qty')}；尚未成交。")
+    elif profit_status == "confirmed_open_research_price":
+        text += (f"核心买Put三倍兑现纸面确认：{signal.get('v14_profit_open_price_day')}开盘"
+                 f"卖旧{signal.get('v14_profit_open_old_contract')} @ {signal.get('v14_profit_exit_open_price')}，"
+                 f"买新{signal.get('v14_profit_open_executed_contract')} @ "
+                 f"{signal.get('v14_profit_reentry_entry_premium')}，数量"
+                 f"{signal.get('v14_profit_open_executed_qty')}；并非账户成交。")
     if isinstance(signal.get("v14_expiry_conditional_signal"), dict):
         text += (
             "到期条件信号：模型结算依据尚待核验；价外失效则结束卖Put周期并返回普通期货路线；"
@@ -488,7 +505,7 @@ def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
 
 def validate_success_payload(payload: dict[str, Any]) -> None:
     if str(payload.get("delivery_revision", "")) != EXPECTED_DELIVERY_REVISION:
-        raise ValueError("digest requires the published v1.4 fix6 delivery revision")
+        raise ValueError("digest requires the published v1.4 fix7 delivery revision")
     from datetime import date
     import math
     from prepare_ic_im_v1_4_marker import marker_name
@@ -521,7 +538,7 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
                 raise ValueError(f"{product} requires finite numeric {field}")
         if days["market_date"] >= date(2026, 9, 26):
             if str(signal.get("market_date") or "")[:10] != str(days["market_date"]):
-                raise ValueError(f"{product} signal day must match fix6 digest day")
+                raise ValueError(f"{product} signal day must match digest day")
             if product == "IM":
                 qty = signal.get("call_target_qty_normalized")
                 if isinstance(qty, bool) or not isinstance(qty, (int, float)) or not math.isfinite(qty) or abs(qty) > 1e-12:
@@ -656,9 +673,9 @@ def main() -> int:
     if str(payload.get("strategy_revision")) != "r1":
         raise ValueError("digest requires strategy_revision=r1")
     if str(payload.get("build", "")) != EXPECTED_BUILD:
-        raise ValueError("digest requires the published v1.4 fix6 build")
+        raise ValueError("digest requires the published v1.4 fix7 build")
     if str(payload.get("delivery_revision", "")) != EXPECTED_DELIVERY_REVISION:
-        raise ValueError("digest requires the published v1.4 fix6 delivery revision")
+        raise ValueError("digest requires the published v1.4 fix7 delivery revision")
     run_url = os.environ.get("GITHUB_RUN_URL", "")
     if payload.get("status") == "ok":
         subject, body, _ = build_success(payload, run_url, args.subject_prefix)

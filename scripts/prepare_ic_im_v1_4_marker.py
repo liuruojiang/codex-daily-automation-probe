@@ -21,9 +21,9 @@ def marker_name(payload: dict[str, object]) -> str:
     if str(payload.get("strategy_revision")) != EXPECTED_REVISION:
         raise ValueError("delivery marker requires strategy_revision=r1")
     if str(payload.get("build")) != EXPECTED_BUILD:
-        raise ValueError("delivery marker requires the published v1.4 fix6 build")
+        raise ValueError("delivery marker requires the published v1.4 fix7 build")
     if str(payload.get("delivery_revision", "")) != EXPECTED_DELIVERY_REVISION:
-        raise ValueError("delivery marker requires the published v1.4 fix6 delivery revision")
+        raise ValueError("delivery marker requires the published v1.4 fix7 delivery revision")
     publication_mode = str(payload.get("publication_mode", ""))
     if publication_mode not in {"realtime", "close_confirmed"}:
         raise ValueError("delivery marker has unsupported publication_mode")

@@ -89,6 +89,27 @@ def signal(product: str) -> dict[str, object]:
 
 
 class ICIMV14DailyDigestTests(unittest.TestCase):
+    def test_fix7_profit3x_open_plan_and_paper_fill_are_visible(self) -> None:
+        ic = signal("IC")
+        ic.update(market_date="2026-09-28", v14_action="CORE_PUT_PROFIT3X_REENTER",
+                  v14_profit_reentry_status="scheduled_t_plus_1_open",
+                  v14_profit_execution_day="2026-09-29",
+                  v14_profit_old_contract="P-OLD-CORE",
+                  v14_profit_reentry_contract="P-NEW-CORE", v14_profit_reentry_qty=5)
+        self.assertIn("次日开盘计划", digest.action_parts(ic)[-1])
+        self.assertIn("2026-09-29开盘计划卖旧P-OLD-CORE", digest.v14_route_reason(ic))
+        ic.update(v14_action="EXECUTE_CORE_PUT_PROFIT3X_REENTER",
+                  v14_profit_reentry_status="confirmed_open_research_price",
+                  v14_profit_open_price_day="2026-09-29",
+                  v14_profit_open_old_contract="P-OLD-CORE",
+                  v14_profit_exit_open_price=0.3,
+                  v14_profit_open_executed_contract="P-NEW-CORE",
+                  v14_profit_reentry_entry_premium=0.12,
+                  v14_profit_open_executed_qty=5)
+        explanation = digest.v14_route_reason(ic)
+        self.assertIn("开盘卖旧P-OLD-CORE @ 0.3", explanation)
+        self.assertIn("并非账户成交", explanation)
+
     def test_fix6_digest_has_no_new_call_or_rescue_language(self) -> None:
         ic, im = signal("IC"), signal("IM")
         ic["market_date"] = im["market_date"] = "2026-09-28"
@@ -235,10 +256,12 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         old_fix3_name = "ic-im-v1-4-r1-realtime-digest-delivered-2026-09-03-" + "a" * 12
         self.assertFalse(gate.marker_exists({"artifacts": [{"name": old_fix3_name}]}, prefix))
 
-    def test_fix6_preserves_prior_day_delivery_dedupe_marker(self) -> None:
+    def test_fix7_preserves_prior_release_delivery_dedupe_markers(self) -> None:
         old_day = gate.marker_prefix(date(2026, 9, 25), "close_confirmed")
-        new_day = gate.marker_prefix(date(2026, 9, 26), "close_confirmed")
+        fix6_day = gate.marker_prefix(date(2026, 9, 26), "close_confirmed")
+        new_day = gate.marker_prefix(date(2026, 9, 28), "close_confirmed")
         self.assertIn(gate.LEGACY_IDENTITY_TAG, old_day)
+        self.assertIn(gate.FIX6_IDENTITY_TAG, fix6_day)
         self.assertIn(gate.IDENTITY_TAG, new_day)
         self.assertNotEqual(gate.LEGACY_IDENTITY_TAG, gate.IDENTITY_TAG)
         self.assertTrue(gate.marker_exists({"artifacts": [{"name": old_day + "a" * 12}]}, old_day))
@@ -266,7 +289,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         self.assertIn("到期条件信号", body)
         self.assertIn("实际账户操作由用户自行处理", body)
         payload["build"] = "v1.4-wrong"
-        with self.assertRaisesRegex(ValueError, "fix6 build"):
+        with self.assertRaisesRegex(ValueError, "fix7 build"):
             digest.validate_success_payload(payload)
         payload["build"] = digest.EXPECTED_BUILD
         payload["delivery_revision"] = "stale"
