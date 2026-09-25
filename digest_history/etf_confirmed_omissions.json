@@ -78,6 +78,71 @@
       "zh_summary": "作者公开摘要称，ROE 是偏科技的主动管理等权质量基金，近期更换四只持股；作者预计它可能继续优于 IVV，同时承认较高的下行捕获率可能使其在熊市落后。预测与评级只代表作者观点。",
       "evidence_level": "publisher_public_summary_only",
       "verify_next": "核验持仓日期、质量因子定义、费用、与 IVV 的同区间总回报及下行捕获率。"
+    },
+    {
+      "origin_run_id": "36074461026",
+      "origin_report_date": "2026-09-25",
+      "source": "FRED Blog",
+      "title": "Estimating the risk of recession in the US",
+      "zh_title": "FRED 美国衰退概率模型及其误报",
+      "url": "https://fredblog.stlouisfed.org/2026/09/estimating-the-risk-of-recession-in-the-us/",
+      "published": "2026-09-24T13:00:00+00:00",
+      "summary": "The FRED Blog says the August 2026 monthly recession probability was 0.08%, using manufacturing PMI and ECB CISS; prior spikes in October 1998 and March 2023 were false positives.",
+      "zh_summary": "FRED Blog 介绍以制造业 PMI 与欧洲央行 CISS 衡量的美国月度衰退概率，2026 年 8 月为 0.08%；它也提醒 1998 年 10 月及 2023 年 3 月曾出现未演变为衰退的尖峰。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核验历史发布时点、样本外校准、修订和对跨资产组合的增量预测能力。"
+    },
+    {
+      "origin_run_id": "36074461026",
+      "origin_report_date": "2026-09-25",
+      "source": "Seeking Alpha ETFs",
+      "title": "HYS: High-Risk Credit Remains Unsupportive",
+      "zh_title": "HYS 短久期高收益债的信用利差风险",
+      "url": "https://seekingalpha.com/article/4949588-hys-high-risk-credit-remains-unsupportive",
+      "published": "2026-09-24T21:22:13+00:00",
+      "summary": "The public author summary says HYS has an approximately 6.75% 30-day SEC yield and 0.56% expenses, but claims its roughly 2.75% credit spread is near 20-year lows; the author sees unfavorable compensation for credit risk.",
+      "zh_summary": "作者公开摘要称 HYS 的 30 日 SEC 收益率约 6.75%、费率约 0.56%，但认为约 2.75% 的信用利差接近 20 年低位，短久期并不能消除违约风险。数值与判断均待同日基金及指数资料复核。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验同日 SEC 收益率、有效久期、OAS、评级结构、费用和压力期损失。"
+    },
+    {
+      "origin_run_id": "36074461026",
+      "origin_report_date": "2026-09-25",
+      "source": "Seeking Alpha ETFs",
+      "title": "PFM: Unappealing Dividend Growth ETF, Likely To Trail IVV, A Hold",
+      "zh_title": "PFM 股息增长 ETF 与 IVV 的质量和估值比较",
+      "url": "https://seekingalpha.com/article/4949584-pfm-unappealing-dividend-growth-etf-likely-to-trail-ivv-a-hold",
+      "published": "2026-09-24T21:04:46+00:00",
+      "summary": "The author public summary maintains Hold on PFM and expects underperformance versus IVV into 2027, citing a value tilt but weaker quality and GARP characteristics; the author explicitly does not claim a bearish thesis.",
+      "zh_summary": "作者公开摘要维持 PFM 的 Hold 评级，称其虽偏价值，但质量和合理价格成长特征弱于 IVV，并预测至 2027 年表现可能落后；作者明确未提出看空论证。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "复核两基金当期持仓、因子定义、费用、税后总回报及样本外表现。"
+    },
+    {
+      "origin_run_id": "36074461026",
+      "origin_report_date": "2026-09-25",
+      "source": "Seeking Alpha ETFs",
+      "title": "Four Reasons Why FLCH Is Back To Being A 'BUY Rating' For Me",
+      "zh_title": "FLCH 中国股票 ETF 的估值与事件假设",
+      "url": "https://seekingalpha.com/article/4949565-four-reasons-why-flch-is-back-to-being-a-buy-rating-for-me",
+      "published": "2026-09-24T19:53:52+00:00",
+      "summary": "The author public summary upgrades FLCH and estimates a 10.8-11.2x forward P/E, about 7% below its ten-year average, with a diplomatic catalyst and asymmetric one-year return scenario; these are author calculations and forecasts.",
+      "zh_summary": "作者公开摘要将 FLCH 上调至 Buy，估算远期市盈率 10.8–11.2 倍、较十年均值低约 7%，并提出外交事件催化和一年情景收益；均为作者估算与预测。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验估值口径、指数成分、汇率风险、事件日期和情景概率，不把评级当信号。"
+    },
+    {
+      "origin_run_id": "36074461026",
+      "origin_report_date": "2026-09-25",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "SPY’s 9.45 Basis Points Hides $6,450 a Decade on $100,000 Versus Cheaper Peers",
+      "zh_title": "SPY 与 VOO、IVV 的费用及结构比较",
+      "url": "https://247wallst.com/investing/etf/2026/09/24/spys-9-45-basis-points-hides-6450-a-decade-on-100000-versus-cheaper-peers/?.tsrc=rss",
+      "published": "2026-09-24T21:51:06+00:00",
+      "summary": "The article compares SPY 0.0945% expenses with VOO/IVV 0.03%, and discusses SPY unit-investment-trust dividend cash drag and securities lending; its $6,450-per-decade headline is not supported by the simple 6.45-basis-point annual fee difference on $100,000.",
+      "zh_summary": "原文比较 SPY 0.0945% 与 VOO/IVV 0.03% 的费率，并讨论 UIT 结构的分红现金拖累。标题所称 10 年 6,450 美元差额不能由 10 万美元每年 6.45 基点费差直接推出，需另验。",
+      "evidence_level": "publisher_full_article_with_arithmetic_caveat",
+      "verify_next": "核验当期招募说明书、跟踪差、税后总回报、交易价差及标题计算假设。"
     }
   ]
 }
