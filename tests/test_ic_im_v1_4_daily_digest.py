@@ -89,6 +89,47 @@ def signal(product: str) -> dict[str, object]:
 
 
 class ICIMV14DailyDigestTests(unittest.TestCase):
+    def test_fix6_digest_has_no_new_call_or_rescue_language(self) -> None:
+        ic, im = signal("IC"), signal("IM")
+        ic["market_date"] = im["market_date"] = "2026-09-28"
+        im.update(call_target="目标空仓（fix6停止卖Call）", call_current_contract=None,
+                  call_target_contract=None, call_target_qty_normalized=0.0, call_action="HOLD")
+        payload = {
+            "status": "ok", "strategy_revision": "r1", "build": digest.EXPECTED_BUILD,
+            "delivery_revision": digest.EXPECTED_DELIVERY_REVISION,
+            "publication_mode": "close_confirmed", "market_date": "2026-09-28",
+            "completed_day": "2026-09-28", "verified_day": "2026-09-28",
+            "next_trade_day": "2026-09-29", "sequence": 1, "digest": "a" * 64,
+            "signals": {"IC": ic, "IM": im},
+        }
+        _subject, body, _actionable = digest.build_success(payload, "", "")
+        html = digest.build_success_html(payload, "")
+        for rendered in (body, html):
+            self.assertIn("fix6不再卖Call", rendered)
+            self.assertNotIn("只评估D10候选", rendered)
+            self.assertNotIn("5%救援线", rendered)
+
+        im.update(call_has_position=True, call_current_contract="MO2609-C-9000",
+                  call_action="CLOSE_CALL", call_target="买回旧Call，此后不再卖Call", call_otm=0.02)
+        _subject, body, _actionable = digest.build_success(payload, "", "")
+        html = digest.build_success_html(payload, "")
+        for rendered in (body, html):
+            self.assertIn("仅给出买回目标，不再救援或新开", rendered)
+            self.assertNotIn("5%救援线", rendered)
+
+        for changes in (
+            {"call_target_qty_normalized": -1.0},
+            {"call_target_contract": "MO2610-C-9500"},
+            {"call_action": "OPEN_CALL"},
+            {"call_action": "RESCUE_NEXT_LISTED"},
+            {"call_action": "HOLD"},
+            {"market_date": "2026-09-25"},
+        ):
+            bad_im = dict(im, **changes)
+            bad = dict(payload, signals={"IC": ic, "IM": bad_im})
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                digest.build_success(bad, "", "")
+
     def test_required_restore_fails_when_no_seed_artifact_exists(self) -> None:
         argv = [
             "restore_ic_im_v1_4_ledger.py",
