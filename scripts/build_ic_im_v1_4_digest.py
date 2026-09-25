@@ -234,6 +234,10 @@ def call_reason(product: str, signal: dict[str, Any]) -> str:
     if product == "IC":
         return "Call：IC 1.4规则明确禁止卖Call，所以当前和目标都为无。"
     target = str(signal.get("call_target") or "未输出Call目标说明")
+    if str(signal.get("market_date") or "")[:10] >= "2026-09-26":
+        if bool(signal.get("call_has_position")):
+            return f"Call：当前模型账本有旧Call，仅给出买回目标，不再救援或新开；{target}。"
+        return f"Call：当前没有旧Call，目标保持空仓；fix6不再卖Call；{target}。"
     if not bool(signal.get("call_has_position")):
         return f"Call：当前没有旧Call，只评估D10候选；{target}。"
     otm = signal.get("call_otm")
@@ -515,6 +519,18 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
             value = signal.get(field)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
                 raise ValueError(f"{product} requires finite numeric {field}")
+        if days["market_date"] >= date(2026, 9, 26):
+            if str(signal.get("market_date") or "")[:10] != str(days["market_date"]):
+                raise ValueError(f"{product} signal day must match fix6 digest day")
+            if product == "IM":
+                qty = signal.get("call_target_qty_normalized")
+                if isinstance(qty, bool) or not isinstance(qty, (int, float)) or not math.isfinite(qty) or abs(qty) > 1e-12:
+                    raise ValueError("fix6 IM Call target quantity must be zero")
+                if any(signal.get(field) is not None for field in ("call_target_contract", "call_target_expiry", "call_target_strike")) or str(signal.get("call_action")) not in {"HOLD", "CLOSE_CALL"}:
+                    raise ValueError("fix6 IM Call must not open or rescue")
+                has_old_call = bool(signal.get("call_has_position")) and bool(signal.get("call_current_contract"))
+                if has_old_call and signal.get("call_action") != "CLOSE_CALL":
+                    raise ValueError("fix6 IM old Call must have close-only target")
 
 
 def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) -> tuple[str, str, bool]:
