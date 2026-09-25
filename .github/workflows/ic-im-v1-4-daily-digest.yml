@@ -270,9 +270,25 @@ jobs:
             --result strategy-artifacts/result.json \
             --marker-dir delivery-marker
 
+      - name: Recheck delivery against actual signal day
+        id: result_day_gate
+        if: steps.prepare_marker.outcome == 'success'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CORRECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.correction && 'true' || 'false' }}
+        run: |
+          args=()
+          if [[ "${CORRECTION}" == "true" ]]; then
+            args+=(--correction)
+          fi
+          python automation/scripts/check_ic_im_v1_4_result_day_delivery.py \
+            --result strategy-artifacts/result.json \
+            "${args[@]}"
+
       - name: Persist normal-send intent before SMTP
         id: send_intent
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success'
+        if: steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success' && steps.result_day_gate.outputs.should_send_result_day == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.prepare_marker.outputs.marker_name }}-send-intent
@@ -343,6 +359,7 @@ jobs:
             echo "- Current r7 migration seed restored: ${{ steps.restore_v13_seed.outputs.restored }}"
             echo "- Pre-fix r7 fallback seed restored: ${{ steps.restore_prefx_ledger.outputs.restored }}"
             echo "- Signal exit code: ${{ steps.run_signal.outputs.exit_code }}"
+            echo "- Actual signal-day delivery gate: ${{ steps.result_day_gate.outputs.should_send_result_day }}"
             echo "- Gmail outcome: ${{ steps.send_gmail.outcome }}"
           } >> "${GITHUB_STEP_SUMMARY}"
 
