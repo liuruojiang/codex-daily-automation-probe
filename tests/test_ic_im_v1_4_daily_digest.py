@@ -192,7 +192,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         old_fix3_name = "ic-im-v1-4-r1-realtime-digest-delivered-2026-09-03-" + "a" * 12
         self.assertFalse(gate.marker_exists({"artifacts": [{"name": old_fix3_name}]}, prefix))
 
-    def test_fix5_preserves_prior_day_delivery_dedupe_marker(self) -> None:
+    def test_fix6_preserves_prior_day_delivery_dedupe_marker(self) -> None:
         old_day = gate.marker_prefix(date(2026, 9, 25), "close_confirmed")
         new_day = gate.marker_prefix(date(2026, 9, 26), "close_confirmed")
         self.assertIn(gate.LEGACY_IDENTITY_TAG, old_day)
@@ -223,7 +223,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         self.assertIn("到期条件信号", body)
         self.assertIn("实际账户操作由用户自行处理", body)
         payload["build"] = "v1.4-wrong"
-        with self.assertRaisesRegex(ValueError, "fix5 build"):
+        with self.assertRaisesRegex(ValueError, "fix6 build"):
             digest.validate_success_payload(payload)
         payload["build"] = digest.EXPECTED_BUILD
         payload["delivery_revision"] = "stale"
