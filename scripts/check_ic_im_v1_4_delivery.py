@@ -25,10 +25,16 @@ def delivery_date(value: datetime) -> date:
 
 
 REVISION = "r1"
-EXPECTED_BUILD = "v1.4-20260924-r1-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
-EXPECTED_DELIVERY_REVISION = "20260924-v14-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
+EXPECTED_BUILD = "v1.4-20260926-r1-coreput3x-fixedshort95-fix5-repeatroll-iciv30-qdelta05"
+EXPECTED_DELIVERY_REVISION = "20260926-v14-coreput3x-fixedshort95-fix5-repeatroll-iciv30-qdelta05"
+LEGACY_BUILD = "v1.4-20260924-r1-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
+LEGACY_DELIVERY_REVISION = "20260924-v14-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
+REPEAT_ROLL_EFFECTIVE_DATE = date(2026, 9, 26)
 IDENTITY_TAG = hashlib.sha256(
     f"{EXPECTED_BUILD}\n{EXPECTED_DELIVERY_REVISION}".encode("utf-8")
+).hexdigest()[:12]
+LEGACY_IDENTITY_TAG = hashlib.sha256(
+    f"{LEGACY_BUILD}\n{LEGACY_DELIVERY_REVISION}".encode("utf-8")
 ).hexdigest()[:12]
 
 
@@ -36,8 +42,9 @@ def marker_prefix(value: date, publication_mode: str) -> str:
     mode = publication_mode.strip().lower()
     if mode not in {"realtime", "close_confirmed"}:
         raise ValueError(f"unsupported publication mode: {publication_mode}")
+    tag = LEGACY_IDENTITY_TAG if value < REPEAT_ROLL_EFFECTIVE_DATE else IDENTITY_TAG
     return (
-        f"ic-im-v1-4-{REVISION}-{IDENTITY_TAG}-{mode}-digest-delivered-"
+        f"ic-im-v1-4-{REVISION}-{tag}-{mode}-digest-delivered-"
         f"{value.isoformat()}-"
     )
 
