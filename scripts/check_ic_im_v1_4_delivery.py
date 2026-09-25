@@ -25,8 +25,8 @@ def delivery_date(value: datetime) -> date:
 
 
 REVISION = "r1"
-EXPECTED_BUILD = "v1.4-20260926-r1-coreput3x-fixedshort95-fix5-repeatroll-iciv30-qdelta05"
-EXPECTED_DELIVERY_REVISION = "20260926-v14-coreput3x-fixedshort95-fix5-repeatroll-iciv30-qdelta05"
+EXPECTED_BUILD = "v1.4-20260926-r1-coreput3x-fixedshort95-fix6-nocall-repeatroll-iciv30-qdelta05"
+EXPECTED_DELIVERY_REVISION = "20260926-v14-coreput3x-fixedshort95-fix6-nocall-repeatroll-iciv30-qdelta05"
 LEGACY_BUILD = "v1.4-20260924-r1-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
 LEGACY_DELIVERY_REVISION = "20260924-v14-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
 REPEAT_ROLL_EFFECTIVE_DATE = date(2026, 9, 26)
