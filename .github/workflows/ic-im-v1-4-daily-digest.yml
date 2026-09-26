@@ -99,7 +99,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 308a3d904a66eeb819fff9b076ee3e641f6b82d6
+          ref: 3aaea9b3ab53f226b4dda3ba1cadd602f1c21f6e
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -124,9 +124,10 @@ jobs:
           import sys
           sys.path.insert(0, "strategy")
           import poe_ic_im_mainline_v1_4_bot as strategy
-          assert strategy.BUILD_ID == "v1.4-20260929-r1-ordinaryput-open-fix8"
+          assert strategy.BUILD_ID == "v1.4-20260929-r1-ordinaryput-open-ic-seller-mom120-fix9"
           import ic_im_v1_4_policy as policy
-          assert policy.RULE_REVISION == "ic_im_v1_4_ordinary_put_t1_open_20260929_v1"
+          assert policy.RULE_REVISION == "ic_im_v1_4_ordinaryput_open_ic_seller_mom120_20260929_v1"
+          assert policy.IC_SELLER_MOM120_EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-29"
           assert policy.EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-18"
           assert policy.REPEAT_ROLL_EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-26"
           assert policy.NO_CALL_EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-26"
@@ -221,7 +222,7 @@ jobs:
           sys.path.insert(0, "strategy")
           import poe_ic_im_v1_4_state as state
           import run_ic_im_v1_4_github_digest as runner
-          assert runner.DELIVERY_REVISION == "20260929-v14-ordinary-put-open-fix8"
+          assert runner.DELIVERY_REVISION == "20260929-v14-ordinary-put-open-ic-seller-mom120-fix9"
           store = state.StateStore("state")
           latest = store.load_latest()
           state.anchors_from_record(latest)
