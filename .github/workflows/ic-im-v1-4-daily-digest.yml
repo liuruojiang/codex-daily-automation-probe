@@ -99,7 +99,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 42d1dd160a9dc7595f00aaf7c6a6afc96cb38e41
+          ref: 308a3d904a66eeb819fff9b076ee3e641f6b82d6
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -124,17 +124,19 @@ jobs:
           import sys
           sys.path.insert(0, "strategy")
           import poe_ic_im_mainline_v1_4_bot as strategy
-          assert strategy.BUILD_ID == "v1.4-20260928-r1-coreput3x-open-fix7-nocall-repeatroll-iciv30-qdelta05"
+          assert strategy.BUILD_ID == "v1.4-20260929-r1-ordinaryput-open-fix8"
           import ic_im_v1_4_policy as policy
-          assert policy.RULE_REVISION == "ic_im_v1_4_coreput3x_t1_open_20260928_v1"
+          assert policy.RULE_REVISION == "ic_im_v1_4_ordinary_put_t1_open_20260929_v1"
           assert policy.EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-18"
           assert policy.REPEAT_ROLL_EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-26"
           assert policy.NO_CALL_EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-26"
           assert policy.PROFIT_OPEN_EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-28"
+          assert policy.ORDINARY_PUT_OPEN_EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-09-29"
           assert policy.PROFIT_MULTIPLE == 3.0
           assert policy.identity_for_signal_day("2026-09-25") == (policy.FIX4_BUILD_ID, policy.FIX4_RULE_REVISION)
           assert policy.identity_for_signal_day("2026-09-26") == (policy.FIX6_BUILD_ID, policy.FIX6_RULE_REVISION)
-          assert policy.identity_for_signal_day("2026-09-28") == (policy.BUILD_ID, policy.RULE_REVISION)
+          assert policy.identity_for_signal_day("2026-09-28") == (policy.FIX7_BUILD_ID, policy.FIX7_RULE_REVISION)
+          assert policy.identity_for_signal_day("2026-09-29") == (policy.BUILD_ID, policy.RULE_REVISION)
           assert strategy.GRID_POLICY_REVISION == "ic_im_im_grid160_half_20260914_v1"
           assert strategy.V13_GRID_RULES == {"IC": {"entry": 0.5, "exit": 1.0, "units": 0.5}, "IM": {"entry": 1.6, "exit": 2.0, "units": 0.5}}
           from datetime import date
@@ -219,7 +221,7 @@ jobs:
           sys.path.insert(0, "strategy")
           import poe_ic_im_v1_4_state as state
           import run_ic_im_v1_4_github_digest as runner
-          assert runner.DELIVERY_REVISION == "20260928-v14-coreput3x-open-fix7-nocall-repeatroll-iciv30-qdelta05"
+          assert runner.DELIVERY_REVISION == "20260929-v14-ordinary-put-open-fix8"
           store = state.StateStore("state")
           latest = store.load_latest()
           state.anchors_from_record(latest)

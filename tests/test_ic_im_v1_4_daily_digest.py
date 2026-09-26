@@ -89,6 +89,24 @@ def signal(product: str) -> dict[str, object]:
 
 
 class ICIMV14DailyDigestTests(unittest.TestCase):
+    def test_fix8_ordinary_put_open_plan_and_paper_confirmation_are_visible(self) -> None:
+        ic = signal("IC")
+        ic.update(
+            market_date="2026-09-29",
+            v14_ordinary_put_plan_status="scheduled_t_plus_1_open",
+            v14_ordinary_put_pending={
+                "signal_day": "2026-09-29", "execution_day": "2026-09-30",
+                "legs": {"core": {"changed": True, "old_contract": "P-OLD",
+                                  "new_contract": "P-NEW", "old_qty": 3, "new_qty": 4}},
+            },
+        )
+        self.assertIn("普通核心/动量买Put次日开盘计划", digest.action_parts(ic))
+        self.assertIn("2026-09-30开盘待核验", digest.v14_route_reason(ic))
+        ic.update(v14_ordinary_put_open_status="confirmed_open_research_price",
+                  v14_ordinary_put_open_prices=[{"contract": "P-NEW", "openprice": 0.12}])
+        self.assertIn("P-NEW @ 0.12", digest.v14_route_reason(ic))
+        self.assertIn("并非账户成交", digest.v14_route_reason(ic))
+
     def test_fix7_profit3x_open_plan_and_paper_fill_are_visible(self) -> None:
         ic = signal("IC")
         ic.update(market_date="2026-09-28", v14_action="CORE_PUT_PROFIT3X_REENTER",
@@ -183,8 +201,8 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         payload = {
             "status": "ok",
             "strategy_revision": "r1",
-            "build": digest.EXPECTED_BUILD,
-            "delivery_revision": digest.EXPECTED_DELIVERY_REVISION,
+            "build": gate.LEGACY_BUILD,
+            "delivery_revision": gate.LEGACY_DELIVERY_REVISION,
             "publication_mode": "realtime",
             "market_date": "2026-09-03",
             "completed_day": "2026-09-02",
@@ -222,8 +240,8 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         payload = {
             "status": "ok",
             "strategy_revision": "r1",
-            "build": digest.EXPECTED_BUILD,
-            "delivery_revision": digest.EXPECTED_DELIVERY_REVISION,
+            "build": gate.LEGACY_BUILD,
+            "delivery_revision": gate.LEGACY_DELIVERY_REVISION,
             "publication_mode": "close_confirmed",
             "market_date": "2026-09-18",
             "completed_day": "2026-09-18",
@@ -244,8 +262,8 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         payload = {
             "status": "ok",
             "strategy_revision": "r1",
-            "build": marker.EXPECTED_BUILD,
-            "delivery_revision": marker.EXPECTED_DELIVERY_REVISION,
+            "build": gate.LEGACY_BUILD,
+            "delivery_revision": gate.LEGACY_DELIVERY_REVISION,
             "publication_mode": "realtime",
             "market_date": "2026-09-03",
             "digest": "b" * 64,
@@ -267,14 +285,47 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         self.assertTrue(gate.marker_exists({"artifacts": [{"name": old_day + "a" * 12}]}, old_day))
         self.assertFalse(gate.marker_exists({"artifacts": [{"name": old_day + "a" * 12}]}, new_day))
 
+    def test_fix8_marker_and_identity_start_only_on_september_29(self) -> None:
+        old_day = gate.marker_prefix(date(2026, 9, 28), "close_confirmed")
+        new_day = gate.marker_prefix(date(2026, 9, 29), "close_confirmed")
+        self.assertIn(gate.IDENTITY_TAG, old_day)
+        self.assertIn(gate.FIX8_IDENTITY_TAG, new_day)
+        self.assertNotEqual(old_day, new_day)
+        payload = {
+            "status": "ok", "strategy_revision": "r1",
+            "build": gate.FIX8_BUILD, "delivery_revision": gate.FIX8_DELIVERY_REVISION,
+            "publication_mode": "close_confirmed", "market_date": "2026-09-29",
+            "digest": "e" * 64,
+        }
+        self.assertTrue(marker.marker_name(payload).startswith(new_day))
+        payload["build"] = gate.EXPECTED_BUILD
+        with self.assertRaisesRegex(ValueError, "signal-day identity"):
+            marker.marker_name(payload)
+
+    def test_fix8_digest_accepts_only_its_signal_day_identity(self) -> None:
+        ic, im = signal("IC"), signal("IM")
+        ic["market_date"] = im["market_date"] = "2026-09-29"
+        payload = {
+            "status": "ok", "strategy_revision": "r1",
+            "build": gate.FIX8_BUILD, "delivery_revision": gate.FIX8_DELIVERY_REVISION,
+            "publication_mode": "close_confirmed", "market_date": "2026-09-29",
+            "completed_day": "2026-09-29", "verified_day": "2026-09-29",
+            "next_trade_day": "2026-09-30", "sequence": 2,
+            "digest": "f" * 64, "signals": {"IC": ic, "IM": im},
+        }
+        digest.validate_success_payload(payload)
+        payload["build"] = gate.EXPECTED_BUILD
+        with self.assertRaisesRegex(ValueError, "signal-day identity"):
+            digest.validate_success_payload(payload)
+
     def test_expiry_condition_is_visible_and_wrong_build_is_rejected(self) -> None:
         ic = signal("IC")
         ic["v14_expiry_conditional_signal"] = {"expired_worthless": "future"}
         payload = {
             "status": "ok",
             "strategy_revision": "r1",
-            "build": digest.EXPECTED_BUILD,
-            "delivery_revision": digest.EXPECTED_DELIVERY_REVISION,
+            "build": gate.LEGACY_BUILD,
+            "delivery_revision": gate.LEGACY_DELIVERY_REVISION,
             "publication_mode": "close_confirmed",
             "market_date": "2026-09-18",
             "completed_day": "2026-09-18",
@@ -289,11 +340,11 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         self.assertIn("到期条件信号", body)
         self.assertIn("实际账户操作由用户自行处理", body)
         payload["build"] = "v1.4-wrong"
-        with self.assertRaisesRegex(ValueError, "fix7 build"):
+        with self.assertRaisesRegex(ValueError, "signal-day identity"):
             digest.validate_success_payload(payload)
-        payload["build"] = digest.EXPECTED_BUILD
+        payload["build"] = gate.LEGACY_BUILD
         payload["delivery_revision"] = "stale"
-        with self.assertRaisesRegex(ValueError, "delivery revision"):
+        with self.assertRaisesRegex(ValueError, "signal-day identity"):
             digest.validate_success_payload(payload)
 
     def test_v14_ledger_requires_migration_record(self) -> None:

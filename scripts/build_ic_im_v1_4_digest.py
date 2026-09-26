@@ -67,6 +67,8 @@ def action_parts(signal: dict[str, Any]) -> list[str]:
             parts.append(f"{label} {value}")
     if signal.get("v14_profit_reentry_status") == "scheduled_t_plus_1_open":
         parts.append("核心买Put三倍兑现次日开盘计划")
+    if signal.get("v14_ordinary_put_plan_status") == "scheduled_t_plus_1_open":
+        parts.append("普通核心/动量买Put次日开盘计划")
     return parts
 
 
@@ -297,6 +299,23 @@ def v14_route_reason(signal: dict[str, Any]) -> str:
                  f"买新{signal.get('v14_profit_open_executed_contract')} @ "
                  f"{signal.get('v14_profit_reentry_entry_premium')}，数量"
                  f"{signal.get('v14_profit_open_executed_qty')}；并非账户成交。")
+    ordinary_status = signal.get("v14_ordinary_put_open_status")
+    if ordinary_status == "confirmed_open_research_price":
+        prices = signal.get("v14_ordinary_put_open_prices") or []
+        rendered = "、".join(f"{item.get('contract')} @ {item.get('openprice')}" for item in prices)
+        text += f"普通核心/动量买Put前次计划已按指定日开盘价纸面核验：{rendered}；并非账户成交。"
+    elif ordinary_status and ordinary_status != "awaiting_execution_day":
+        text += (f"普通核心/动量买Put前次开盘计划关闭：{ordinary_status}；"
+                 f"{signal.get('v14_ordinary_put_open_reason', '未形成可核验开盘成交')}。")
+    if signal.get("v14_ordinary_put_plan_status") == "scheduled_t_plus_1_open":
+        plan = signal.get("v14_ordinary_put_pending") or {}
+        changes = "、".join(
+            f"{name} {leg.get('old_contract') or '空仓'}→{leg.get('new_contract') or '空仓'} "
+            f"{leg.get('old_qty')}→{leg.get('new_qty')}"
+            for name, leg in (plan.get("legs") or {}).items() if leg.get("changed")
+        )
+        text += (f"普通核心/动量买Put：{plan.get('signal_day')}收盘预选，"
+                 f"{plan.get('execution_day')}开盘待核验；{changes}；尚非成交。")
     if isinstance(signal.get("v14_expiry_conditional_signal"), dict):
         text += (
             "到期条件信号：模型结算依据尚待核验；价外失效则结束卖Put周期并返回普通期货路线；"
@@ -504,11 +523,14 @@ def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
 
 
 def validate_success_payload(payload: dict[str, Any]) -> None:
-    if str(payload.get("delivery_revision", "")) != EXPECTED_DELIVERY_REVISION:
-        raise ValueError("digest requires the published v1.4 fix7 delivery revision")
     from datetime import date
     import math
+    from check_ic_im_v1_4_delivery import expected_identity_for_day
     from prepare_ic_im_v1_4_marker import marker_name
+
+    expected_build, expected_delivery = expected_identity_for_day(date.fromisoformat(str(payload.get("market_date", ""))))
+    if str(payload.get("build", "")) != expected_build or str(payload.get("delivery_revision", "")) != expected_delivery:
+        raise ValueError("digest build/revision does not match signal-day identity")
 
     marker_name(payload)
     days = {}
@@ -672,10 +694,11 @@ def main() -> int:
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
     if str(payload.get("strategy_revision")) != "r1":
         raise ValueError("digest requires strategy_revision=r1")
-    if str(payload.get("build", "")) != EXPECTED_BUILD:
-        raise ValueError("digest requires the published v1.4 fix7 build")
-    if str(payload.get("delivery_revision", "")) != EXPECTED_DELIVERY_REVISION:
-        raise ValueError("digest requires the published v1.4 fix7 delivery revision")
+    from datetime import date
+    from check_ic_im_v1_4_delivery import expected_identity_for_day
+    expected_build, expected_delivery = expected_identity_for_day(date.fromisoformat(str(payload.get("market_date", ""))))
+    if str(payload.get("build", "")) != expected_build or str(payload.get("delivery_revision", "")) != expected_delivery:
+        raise ValueError("digest build/revision does not match signal-day identity")
     run_url = os.environ.get("GITHUB_RUN_URL", "")
     if payload.get("status") == "ok":
         subject, body, _ = build_success(payload, run_url, args.subject_prefix)

@@ -15,11 +15,12 @@ import check_ic_im_v1_4_result_day_delivery as result_gate  # noqa: E402
 
 
 def result(market_date: str = "2026-09-24") -> dict[str, object]:
+    build, delivery_revision = gate.expected_identity_for_day(date.fromisoformat(market_date))
     return {
         "status": "ok",
         "strategy_revision": "r1",
-        "build": gate.EXPECTED_BUILD,
-        "delivery_revision": gate.EXPECTED_DELIVERY_REVISION,
+        "build": build,
+        "delivery_revision": delivery_revision,
         "publication_mode": "close_confirmed",
         "market_date": market_date,
         "digest": "a" * 64,

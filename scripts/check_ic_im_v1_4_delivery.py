@@ -27,12 +27,15 @@ def delivery_date(value: datetime) -> date:
 REVISION = "r1"
 EXPECTED_BUILD = "v1.4-20260928-r1-coreput3x-open-fix7-nocall-repeatroll-iciv30-qdelta05"
 EXPECTED_DELIVERY_REVISION = "20260928-v14-coreput3x-open-fix7-nocall-repeatroll-iciv30-qdelta05"
+FIX8_BUILD = "v1.4-20260929-r1-ordinaryput-open-fix8"
+FIX8_DELIVERY_REVISION = "20260929-v14-ordinary-put-open-fix8"
 FIX6_BUILD = "v1.4-20260926-r1-coreput3x-fixedshort95-fix6-nocall-repeatroll-iciv30-qdelta05"
 FIX6_DELIVERY_REVISION = "20260926-v14-coreput3x-fixedshort95-fix6-nocall-repeatroll-iciv30-qdelta05"
 LEGACY_BUILD = "v1.4-20260924-r1-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
 LEGACY_DELIVERY_REVISION = "20260924-v14-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
 REPEAT_ROLL_EFFECTIVE_DATE = date(2026, 9, 26)
 PROFIT_OPEN_EFFECTIVE_DATE = date(2026, 9, 28)
+ORDINARY_PUT_OPEN_EFFECTIVE_DATE = date(2026, 9, 29)
 IDENTITY_TAG = hashlib.sha256(
     f"{EXPECTED_BUILD}\n{EXPECTED_DELIVERY_REVISION}".encode("utf-8")
 ).hexdigest()[:12]
@@ -42,6 +45,19 @@ LEGACY_IDENTITY_TAG = hashlib.sha256(
 FIX6_IDENTITY_TAG = hashlib.sha256(
     f"{FIX6_BUILD}\n{FIX6_DELIVERY_REVISION}".encode("utf-8")
 ).hexdigest()[:12]
+FIX8_IDENTITY_TAG = hashlib.sha256(
+    f"{FIX8_BUILD}\n{FIX8_DELIVERY_REVISION}".encode("utf-8")
+).hexdigest()[:12]
+
+
+def expected_identity_for_day(value: date) -> tuple[str, str]:
+    if value >= ORDINARY_PUT_OPEN_EFFECTIVE_DATE:
+        return FIX8_BUILD, FIX8_DELIVERY_REVISION
+    if value >= PROFIT_OPEN_EFFECTIVE_DATE:
+        return EXPECTED_BUILD, EXPECTED_DELIVERY_REVISION
+    if value >= REPEAT_ROLL_EFFECTIVE_DATE:
+        return FIX6_BUILD, FIX6_DELIVERY_REVISION
+    return LEGACY_BUILD, LEGACY_DELIVERY_REVISION
 
 
 def marker_prefix(value: date, publication_mode: str) -> str:
@@ -49,7 +65,8 @@ def marker_prefix(value: date, publication_mode: str) -> str:
     if mode not in {"realtime", "close_confirmed"}:
         raise ValueError(f"unsupported publication mode: {publication_mode}")
     tag = (LEGACY_IDENTITY_TAG if value < REPEAT_ROLL_EFFECTIVE_DATE else
-           FIX6_IDENTITY_TAG if value < PROFIT_OPEN_EFFECTIVE_DATE else IDENTITY_TAG)
+           FIX6_IDENTITY_TAG if value < PROFIT_OPEN_EFFECTIVE_DATE else
+           IDENTITY_TAG if value < ORDINARY_PUT_OPEN_EFFECTIVE_DATE else FIX8_IDENTITY_TAG)
     return (
         f"ic-im-v1-4-{REVISION}-{tag}-{mode}-digest-delivered-"
         f"{value.isoformat()}-"
