@@ -143,6 +143,84 @@
       "zh_summary": "原文比较 SPY 0.0945% 与 VOO/IVV 0.03% 的费率，并讨论 UIT 结构的分红现金拖累。标题所称 10 年 6,450 美元差额不能由 10 万美元每年 6.45 基点费差直接推出，需另验。",
       "evidence_level": "publisher_full_article_with_arithmetic_caveat",
       "verify_next": "核验当期招募说明书、跟踪差、税后总回报、交易价差及标题计算假设。"
+    },
+    {
+      "origin_run_id": "36202700902",
+      "origin_report_date": "2026-09-26",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "The Case For and Against Fidelity’s Fundamental Large Cap Growth ETF",
+      "zh_title": "FFLG 主动成长 ETF 的 AI 持仓集中风险",
+      "url": "https://247wallst.com/investing/etf/2026/09/25/the-case-for-and-against-fidelitys-fundamental-large-cap-growth-etf/?.tsrc=rss",
+      "published": "2026-09-25T19:45:26+00:00",
+      "summary": "The publisher article compares FFLG with VUG and QQQ and reports NVIDIA at 16.24% and Alphabet share classes at 13.59% combined. It says recent one-year performance beat VUG while the five-year result lagged.",
+      "zh_summary": "原文称 FFLG 近一年胜过 VUG、五年落后；NVIDIA 占 16.24%，Alphabet 两类股份合计约 13.59%。其成败高度取决于 AI 资本开支与主动持仓调整，文中收益和权重均需按当期文件核对。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核验同日持仓、费用、基金与基准同口径总回报及云厂商资本开支。"
+    },
+    {
+      "origin_run_id": "36202700902",
+      "origin_report_date": "2026-09-26",
+      "source": "A Wealth of Common Sense",
+      "title": "Most Stocks Are Losers",
+      "zh_title": "宽基上涨时多数个股仍可能跑输",
+      "url": "https://awealthofcommonsense.com/2026/09/most-stocks-are-losers/",
+      "published": "2026-09-25T20:30:47+00:00",
+      "summary": "Ben Carlson says only 35% of S&P 500 stocks beat the index year to date and cites a separate report claiming 23% beat it over the last decade; he argues winner concentration challenges stock selection.",
+      "zh_summary": "Ben Carlson 称截至周四标普 500 年内涨逾 13%，但仅 35% 成分股跑赢指数、四成下跌；他引述另一研究称过去十年仅 23% 跑赢。说明市值加权指数的少数赢家集中效应，原始统计口径待复核。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "重建逐期成分股和退市股，核验价格与总回报口径、等权对照及不同市场阶段。"
+    },
+    {
+      "origin_run_id": "36202700902",
+      "origin_report_date": "2026-09-26",
+      "source": "Seeking Alpha ETFs",
+      "title": "VBR: Small-Cap Value Feeling The Brunt Of Soaring Treasury Rates",
+      "zh_title": "VBR 小盘价值股的利率与区域银行敞口",
+      "url": "https://seekingalpha.com/article/4949873-vbr-small-cap-value-feeling-the-brunt-of-soaring-treasury-rates?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-09-25T21:32:47+00:00",
+      "summary": "The public author summary rates VBR Buy, cites 13.6x P/E and 1.28x PEG, and says rising Treasury yields and regional bank exposure weigh on small-cap value.",
+      "zh_summary": "作者公开摘要称 VBR 估值约 13.6 倍市盈率、PEG 约 1.28，认为国债收益率上升与区域银行敞口构成压力，但维持个人 Buy 评级。估值与评级均属作者口径。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验持仓、估值日期、区域银行权重、利率敏感度与同区间基准总回报。"
+    },
+    {
+      "origin_run_id": "36202700902",
+      "origin_report_date": "2026-09-26",
+      "source": "Seeking Alpha ETFs",
+      "title": "EWP: Spanish Equities Appear To Be Fairly Valued",
+      "zh_title": "EWP 西班牙股票 ETF 的估值与行业集中",
+      "url": "https://seekingalpha.com/article/4949872-ewp-spanish-equities-appear-to-be-fairly-valued?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-09-25T21:27:56+00:00",
+      "summary": "The public author summary cites about 16x P/E and 2.7% yield for EWP and says Santander, BBVA and Iberdrola approach half of assets, limiting diversification.",
+      "zh_summary": "作者公开摘要称 EWP 约 16 倍市盈率、股息率 2.7%，桑坦德、BBVA 与 Iberdrola 合计接近资产一半；行业和欧元汇率集中使其并非广泛欧洲分散配置。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验基金当期持仓、估值与股息口径、欧元汇率暴露及对宽基欧洲 ETF 的增量分散。"
+    },
+    {
+      "origin_run_id": "36202700902",
+      "origin_report_date": "2026-09-26",
+      "source": "Seeking Alpha ETFs",
+      "title": "IEZ: Strong 2026 Gains Meet A Constrained CapEx Outlook",
+      "zh_title": "IEZ 油服 ETF 的涨幅与资本开支约束",
+      "url": "https://seekingalpha.com/article/4949869-iez-strong-2026-gains-meet-a-constrained-capex-outlook?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-09-25T21:19:01+00:00",
+      "summary": "The public author summary attributes IEZ strength to geopolitical oil-price shocks while arguing its oil-service holdings face slower customer capital spending and stretched valuation.",
+      "zh_summary": "作者公开摘要认为 IEZ 年内强势部分来自地缘供给冲击；SLB、Baker Hughes 和 TechnipFMC 等油服企业仍受客户资本开支放缓影响，并担忧估值偏高。这是作者判断。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验持仓、油企资本开支指引、估值基准、油价与油服收益的历史敏感度。"
+    },
+    {
+      "origin_run_id": "36202700902",
+      "origin_report_date": "2026-09-26",
+      "source": "Seeking Alpha ETFs",
+      "title": "TNGY: Energy ETF Positioned To Profit From Market Realities",
+      "zh_title": "TNGY 主动能源 ETF 的炼油与 LNG 集中敞口",
+      "url": "https://seekingalpha.com/article/4949867-tngy-energy-etf-positioned-to-profit-from-market-realities?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-09-25T21:13:22+00:00",
+      "summary": "The public author summary says TNGY allocates across natural gas, NGLs, refining and LNG export infrastructure, with top holdings over half of assets and a stated 0.85% expense ratio.",
+      "zh_summary": "作者公开摘要称 TNGY 主动配置天然气、NGL、炼油与 LNG 出口基础设施，主要持仓合计过半，费率 0.85%；所称年内总回报 24% 与能源前景是作者陈述。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验基金持仓、费率与年内总回报，分解油气价格、裂解价差和 LNG 项目风险。"
     }
   ]
 }
