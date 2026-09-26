@@ -8,9 +8,8 @@ from datetime import date
 from pathlib import Path
 
 from check_ic_im_v1_4_delivery import (
-    EXPECTED_BUILD,
-    EXPECTED_DELIVERY_REVISION,
     REVISION as EXPECTED_REVISION,
+    expected_identity_for_day,
     marker_prefix,
 )
 
@@ -20,18 +19,21 @@ def marker_name(payload: dict[str, object]) -> str:
         raise ValueError("delivery marker requires a successful signal result")
     if str(payload.get("strategy_revision")) != EXPECTED_REVISION:
         raise ValueError("delivery marker requires strategy_revision=r1")
-    if str(payload.get("build")) != EXPECTED_BUILD:
-        raise ValueError("delivery marker requires the published v1.4 fix7 build")
-    if str(payload.get("delivery_revision", "")) != EXPECTED_DELIVERY_REVISION:
-        raise ValueError("delivery marker requires the published v1.4 fix7 delivery revision")
+    market_date = str(payload.get("market_date", ""))
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", market_date):
+        raise ValueError("delivery marker requires ISO market_date")
+    parsed_market_date = date.fromisoformat(market_date)
+    expected_build, expected_delivery = expected_identity_for_day(parsed_market_date)
+    if str(payload.get("build")) != expected_build:
+        raise ValueError("delivery marker build does not match signal-day identity")
+    if str(payload.get("delivery_revision", "")) != expected_delivery:
+        raise ValueError("delivery marker revision does not match signal-day identity")
     publication_mode = str(payload.get("publication_mode", ""))
     if publication_mode not in {"realtime", "close_confirmed"}:
         raise ValueError("delivery marker has unsupported publication_mode")
-    market_date = str(payload.get("market_date", ""))
     digest = str(payload.get("digest", ""))
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", market_date) or not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise ValueError("delivery marker requires market_date and full SHA-256 digest")
-    parsed_market_date = date.fromisoformat(market_date)
     return f"{marker_prefix(parsed_market_date, publication_mode)}{digest[:12]}"
 
 

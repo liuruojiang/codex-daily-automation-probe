@@ -20,12 +20,13 @@ import restore_ic_im_v1_3_ledger as legacy_restore
 import build_ic_im_v1_4_digest as ic_digest
 
 
-def current_ic_identity() -> dict[str, str]:
+def current_ic_identity(day: date) -> dict[str, str]:
     """Use the production marker contract so shared tests cannot pin a retired build."""
+    build, delivery_revision = ic_gate.expected_identity_for_day(day)
     return {
         'strategy_revision': marker.EXPECTED_REVISION,
-        'build': marker.EXPECTED_BUILD,
-        'delivery_revision': marker.EXPECTED_DELIVERY_REVISION,
+        'build': build,
+        'delivery_revision': delivery_revision,
     }
 
 
@@ -65,13 +66,13 @@ def test_ic_gate_searches_past_first_hundred_artifacts(monkeypatch):
 @pytest.mark.parametrize('day,digest', [('2026-99-99','a'*64), ('2026-09-04junk','a'*64), ('2026-09-04','z'*64), ('2026-09-04','\n'*64)])
 def test_marker_rejects_invalid_calendar_dates_and_non_sha(day, digest):
     with pytest.raises(ValueError):
-        marker.marker_name({'status':'ok', **current_ic_identity(), 'publication_mode':'close_confirmed', 'market_date':day, 'digest':digest})
+        marker.marker_name({'status':'ok', **current_ic_identity(date(2026, 9, 4)), 'publication_mode':'close_confirmed', 'market_date':day, 'digest':digest})
 
 
 @settings(max_examples=40)
 @given(st.sampled_from(['realtime', 'close_confirmed']), st.dates(min_value=date(2020,1,1), max_value=date(2030,12,31)), st.binary(min_size=32,max_size=32))
 def test_marker_and_gate_roundtrip(mode, day, digest):
-    name = marker.marker_name({'status':'ok', **current_ic_identity(), 'publication_mode':mode, 'market_date':day.isoformat(), 'digest':digest.hex()})
+    name = marker.marker_name({'status':'ok', **current_ic_identity(day), 'publication_mode':mode, 'market_date':day.isoformat(), 'digest':digest.hex()})
     assert ic_gate.marker_exists({'artifacts':[{'name':name, 'expired':False}]}, ic_gate.marker_prefix(day, mode))
     assert not ic_gate.marker_exists({'artifacts':[{'name':name, 'expired':True}]}, ic_gate.marker_prefix(day, mode))
 
@@ -123,7 +124,7 @@ def test_ledger_restore_skips_failed_and_non_main_runs(monkeypatch):
 ])
 def test_success_digest_rejects_inconsistent_close_payload(mutate):
     from test_ic_im_v1_4_daily_digest import signal
-    payload = {'status':'ok', **current_ic_identity(),
+    payload = {'status':'ok', **current_ic_identity(date(2026, 9, 4)),
                'publication_mode':'close_confirmed', 'market_date':'2026-09-04','completed_day':'2026-09-04',
                'verified_day':'2026-09-04','next_trade_day':'2026-09-07','digest':'a'*64,
                'signals':{'IC':signal('IC'),'IM':signal('IM')}}
