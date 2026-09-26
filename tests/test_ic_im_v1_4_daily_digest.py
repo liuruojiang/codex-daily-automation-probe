@@ -285,36 +285,37 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         self.assertTrue(gate.marker_exists({"artifacts": [{"name": old_day + "a" * 12}]}, old_day))
         self.assertFalse(gate.marker_exists({"artifacts": [{"name": old_day + "a" * 12}]}, new_day))
 
-    def test_fix8_marker_and_identity_start_only_on_september_29(self) -> None:
+    def test_fix9_marker_and_identity_start_only_on_september_29(self) -> None:
         old_day = gate.marker_prefix(date(2026, 9, 28), "close_confirmed")
         new_day = gate.marker_prefix(date(2026, 9, 29), "close_confirmed")
         self.assertIn(gate.IDENTITY_TAG, old_day)
-        self.assertIn(gate.FIX8_IDENTITY_TAG, new_day)
+        self.assertIn(gate.FIX9_IDENTITY_TAG, new_day)
+        self.assertNotIn(gate.FIX8_IDENTITY_TAG, new_day)
         self.assertNotEqual(old_day, new_day)
         payload = {
             "status": "ok", "strategy_revision": "r1",
-            "build": gate.FIX8_BUILD, "delivery_revision": gate.FIX8_DELIVERY_REVISION,
+            "build": gate.FIX9_BUILD, "delivery_revision": gate.FIX9_DELIVERY_REVISION,
             "publication_mode": "close_confirmed", "market_date": "2026-09-29",
             "digest": "e" * 64,
         }
         self.assertTrue(marker.marker_name(payload).startswith(new_day))
-        payload["build"] = gate.EXPECTED_BUILD
+        payload["build"] = gate.FIX8_BUILD
         with self.assertRaisesRegex(ValueError, "signal-day identity"):
             marker.marker_name(payload)
 
-    def test_fix8_digest_accepts_only_its_signal_day_identity(self) -> None:
+    def test_fix9_digest_accepts_only_its_signal_day_identity(self) -> None:
         ic, im = signal("IC"), signal("IM")
         ic["market_date"] = im["market_date"] = "2026-09-29"
         payload = {
             "status": "ok", "strategy_revision": "r1",
-            "build": gate.FIX8_BUILD, "delivery_revision": gate.FIX8_DELIVERY_REVISION,
+            "build": gate.FIX9_BUILD, "delivery_revision": gate.FIX9_DELIVERY_REVISION,
             "publication_mode": "close_confirmed", "market_date": "2026-09-29",
             "completed_day": "2026-09-29", "verified_day": "2026-09-29",
             "next_trade_day": "2026-09-30", "sequence": 2,
             "digest": "f" * 64, "signals": {"IC": ic, "IM": im},
         }
         digest.validate_success_payload(payload)
-        payload["build"] = gate.EXPECTED_BUILD
+        payload["build"] = gate.FIX8_BUILD
         with self.assertRaisesRegex(ValueError, "signal-day identity"):
             digest.validate_success_payload(payload)
 
