@@ -221,6 +221,58 @@
       "zh_summary": "作者公开摘要称 TNGY 主动配置天然气、NGL、炼油与 LNG 出口基础设施，主要持仓合计过半，费率 0.85%；所称年内总回报 24% 与能源前景是作者陈述。",
       "evidence_level": "publisher_public_summary_only",
       "verify_next": "核验基金持仓、费率与年内总回报，分解油气价格、裂解价差和 LNG 项目风险。"
+    },
+    {
+      "origin_run_id": "36279325723",
+      "origin_report_date": "2026-09-27",
+      "source": "Seeking Alpha ETFs",
+      "title": "Diversifying A Momentum-Driven Market",
+      "zh_title": "动量主导的市场如何改变股票组合分散性",
+      "url": "https://seekingalpha.com/article/4949988-diversifying-momentum-driven-market",
+      "published": "2026-09-26T15:50:00+00:00",
+      "summary": "The public author summary says momentum has recently outperformed and the capitalization-weighted S&P 500 has become more correlated with momentum as AI and semiconductor winners gained index weight.",
+      "zh_summary": "作者公开摘要认为，近年动量表现较强，AI 与半导体赢家权重上升，使市值加权的标普 500 对动量因子的相关性提高；这属于作者对集中风险的解释，非已验证的因果结果。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "用逐期成分股和因子收益核验相关性、集中度及非动量配置的真实分散收益。"
+    },
+    {
+      "origin_run_id": "36279325723",
+      "origin_report_date": "2026-09-27",
+      "source": "Seeking Alpha ETFs",
+      "title": "THQ: A 5.6% Cut Leaves An 11% Yield, But Payouts Now Follow NAV",
+      "zh_title": "THQ 医疗封闭基金：分配率与净值挂钩的风险",
+      "url": "https://seekingalpha.com/article/4949977-thq-a-5-6-percent-cut-leaves-an-11-percent-yield-but-payouts-now-follow-nav",
+      "published": "2026-09-26T15:01:35+00:00",
+      "summary": "The public author summary says THQ moved to a variable distribution targeting 10% of average NAV after cutting its monthly payout from $0.18 to $0.17; it cites 21.8% leverage, a 3.55% discount and a 4.91% annualized five-year NAV return.",
+      "zh_summary": "作者公开摘要称，THQ 月分配由 0.18 美元降至 0.17 美元，改为目标约为平均净值 10% 的浮动分配；并称杠杆率 21.8%、折价 3.55%、五年净值年化回报 4.91%。高分配率不等于可持续总回报。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验基金公告、净值总回报、分配构成、杠杆成本与折价历史。"
+    },
+    {
+      "origin_run_id": "36279325723",
+      "origin_report_date": "2026-09-27",
+      "source": "Seeking Alpha ETFs",
+      "title": "KBWD: A 14% Yield That, If Not Managed, Could Be Worth Less Than A Treasury",
+      "zh_title": "KBWD 高分配率背后的 BDC 与抵押 REIT 风险",
+      "url": "https://seekingalpha.com/article/4949963-kbwd-a-14-percent-yield-that-if-not-managed-could-be-worth-less-than-a-treasury",
+      "published": "2026-09-26T14:12:52+00:00",
+      "summary": "The public author summary cites a 14.37% yield and says net income covers only 80-90% of distributions; it identifies BDC and mortgage-REIT exposures with distinct credit and rate sensitivities.",
+      "zh_summary": "作者公开摘要称 KBWD 分配率约 14.37%，净收入仅覆盖分配的 80%—90%；BDC 与抵押 REIT 对利率和信用风险的反应不同，高分配可能伴随本金侵蚀。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验基金分配口径、净值总回报、BDC 信用损失、抵押 REIT 杠杆和利率敏感度。"
+    },
+    {
+      "origin_run_id": "36279325723",
+      "origin_report_date": "2026-09-27",
+      "source": "Seeking Alpha ETFs",
+      "title": "PID: Chasing Dividend Growers Without A Quality Screen",
+      "zh_title": "PID 国际股息 ETF 的质量筛选与加拿大集中问题",
+      "url": "https://seekingalpha.com/article/4949958-pid-chasing-dividend-growers-without-quality-screen",
+      "published": "2026-09-26T12:52:41+00:00",
+      "summary": "The public author summary argues PID selects dividend growers without a quality screen, cites a 0.53% fee and high Canadian concentration, and says its total return has lagged ACWX.",
+      "zh_summary": "作者公开摘要认为 PID 的股息增长筛选缺少质量约束，指出费率 0.53%、加拿大持仓较集中，并称相对 ACWX 的总回报偏弱；这些是作者比较，尚未按同窗重算。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验指数规则、逐期国家权重、股息增长和同币种同窗净费后总回报。"
     }
   ]
 }
