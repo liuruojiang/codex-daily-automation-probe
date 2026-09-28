@@ -102,4 +102,4 @@ def test_conflicting_csv_action_alias_cannot_invent_trade(tmp_path, alias):
     result = run(tmp_path, "v2.3", {**complete_row("v2.3"), alias: "enter"})
     assert result["status"] == "OK"
     assert "需要开仓" not in result["body"]
-    assert "所有版本均无需调仓" in result["body"]
+    assert "本次收盘信号未提出下个交易日的新调仓" in result["body"]

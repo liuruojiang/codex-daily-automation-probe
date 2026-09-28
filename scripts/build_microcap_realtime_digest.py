@@ -642,18 +642,25 @@ def risk_warnings(item: dict[str, object]) -> list[str]:
     return warnings
 
 
-def subject_tag(results: list[dict[str, object]]) -> str:
+def subject_tag(results: list[dict[str, object]], publication_mode: str = "realtime") -> str:
     if any(item["status"] != "OK" for item in results):
         return "异常"
+    prefix = "下个交易日" if publication_mode == "close_confirmed" else ""
     if any(action_label(item) != "无操作" for item in results):
-        return "需操作"
-    return "无需操作"
+        return prefix + "需操作"
+    return prefix + "无需操作"
 
 
-def conclusion_text(results: list[dict[str, object]]) -> str:
+def conclusion_text(results: list[dict[str, object]], publication_mode: str = "realtime") -> str:
     if any(item["status"] != "OK" for item in results):
         return "存在异常版本，请勿执行异常版本信号。"
     actionable = [(str(item["version"]), action_label(item)) for item in results if action_label(item) != "无操作"]
+    if publication_mode == "close_confirmed":
+        if not actionable:
+            return "本次收盘信号未提出下个交易日的新调仓。"
+        phrases = [f"{escape_markdown_inline(version)} 需要{escape_markdown_inline(action)}" for version, action in actionable]
+        suffix = "；其他版本无需新增调仓。" if len(actionable) < len(results) else "。"
+        return "下个交易日计划：" + "；".join(phrases) + suffix
     if not actionable:
         return "所有版本均无需调仓。"
     phrases = [f"{escape_markdown_inline(version)} 需要{escape_markdown_inline(action)}" for version, action in actionable]
@@ -729,7 +736,8 @@ def build_compact_digest(
     publication_mode: str = "realtime",
 ) -> tuple[str, str]:
     versions = "/".join(str(item["version"]) for item in results)
-    tag = subject_tag(results)
+    tag = subject_tag(results, publication_mode)
+    action_heading = "下个交易日操作" if publication_mode == "close_confirmed" else "今日操作"
     lines = [
         "## 今日结论",
         "",
@@ -737,9 +745,13 @@ def build_compact_digest(
         "",
         f"**{holdings_summary_text(results)}**",
         "",
-        f"**{conclusion_text(results)}**",
+        f"**{conclusion_text(results, publication_mode)}**",
         "",
-        "| 版本 | 当前 → 下一持仓 | 今日操作 | 下一交易日仓位 | 核心动量 |",
+    ]
+    if publication_mode == "close_confirmed":
+        lines += ["当前持仓是模型在本交易日的状态，可能承接前次收盘信号；实际账户成交以交易记录为准。", ""]
+    lines += [
+        f"| 版本 | 当前 → 下一持仓 | {action_heading} | 下一交易日仓位 | 核心动量 |",
         "|---|---|---|---:|---|",
     ]
     for item in results:
