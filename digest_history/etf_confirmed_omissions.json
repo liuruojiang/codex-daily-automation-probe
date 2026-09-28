@@ -273,6 +273,84 @@
       "zh_summary": "作者公开摘要认为 PID 的股息增长筛选缺少质量约束，指出费率 0.53%、加拿大持仓较集中，并称相对 ACWX 的总回报偏弱；这些是作者比较，尚未按同窗重算。",
       "evidence_level": "publisher_public_summary_only",
       "verify_next": "核验指数规则、逐期国家权重、股息增长和同币种同窗净费后总回报。"
+    },
+    {
+      "origin_run_id": "36359544963",
+      "origin_report_date": "2026-09-28",
+      "source": "A Wealth of Common Sense",
+      "title": "Strange Times",
+      "zh_title": "宏观数据与资产价格为何同时显得反常",
+      "url": "https://awealthofcommonsense.com/2026/09/strange-times",
+      "published": "2026-09-27T19:09:54+00:00",
+      "summary": "Ben Carlson contrasts high bond and cash yields, strong equity returns, low unemployment and weak consumer sentiment, arguing that rising rates alone have not explained stock returns since 2020.",
+      "zh_summary": "Ben Carlson 对比高债券与现金收益率、低失业率、强股票回报和低消费者信心；他指出自 2020 年以来利率上升并未单独解释股票表现。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核验文中各数据的发布日期及口径，并测试利率、盈利和估值变化对股债组合的分解。"
+    },
+    {
+      "origin_run_id": "36359544963",
+      "origin_report_date": "2026-09-28",
+      "source": "Seeking Alpha ETFs",
+      "title": "VRP Vs. PFFV: Now Is The Time To Buy Variable Rate Preferred Stocks",
+      "zh_title": "浮息优先股 ETF：较高分配率伴随抵押 REIT 风险",
+      "url": "https://seekingalpha.com/article/4950077-vrp-vs-pffv-now-is-the-time-to-buy-variable-rate-preferred-stocks",
+      "published": "2026-09-27T20:09:41+00:00",
+      "summary": "The public author summary says PFFV has a 7.2% SEC yield, 8.5% trailing yield and 0.25% fee; VRP has 365 holdings and 84% investment-grade issuers. Nearly 20% of PFFV is mortgage-REIT preferreds, adding risk behind the higher yield.",
+      "zh_summary": "作者公开摘要称 PFFV 的 SEC 收益率 7.2%、历史分配率 8.5%、费率 0.25%；VRP 有 365 只持仓、84% 投资级发行人。PFFV 近 20% 投向抵押 REIT 优先股，较高分配率伴随更高风险。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验基金事实表、分配口径、信用质量和同窗净值总回报。"
+    },
+    {
+      "origin_run_id": "36359544963",
+      "origin_report_date": "2026-09-28",
+      "source": "Seeking Alpha ETFs",
+      "title": "AVUV's Profitability Screen Has Holes",
+      "zh_title": "AVUV 小盘价值筛选中的亏损企业敞口",
+      "url": "https://seekingalpha.com/article/4950076-avuvs-profitability-screen-has-holes",
+      "published": "2026-09-27T20:05:39+00:00",
+      "summary": "The public author summary says about a third of AVUV trades below 10 times earnings and about 12% of holdings are loss-making; it compares that share with broader small-cap indexes and adds short-term technical opinions.",
+      "zh_summary": "作者公开摘要称 AVUV 约三分之一持仓市盈率低于 10 倍、约 12% 持仓为亏损企业，并与其他小盘指数比较；短期价位判断仅是作者观点。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验逐期持仓、盈利能力定义、因子暴露、费用及同窗基准总回报。"
+    },
+    {
+      "origin_run_id": "36359544963",
+      "origin_report_date": "2026-09-28",
+      "source": "Seeking Alpha ETFs",
+      "title": "FELC: Active Management, Same Mega-Cap Problem",
+      "zh_title": "FELC 主动量化管理仍有巨头集中风险",
+      "url": "https://seekingalpha.com/article/4950075-felc-active-management-same-mega-cap-problem",
+      "published": "2026-09-27T19:54:10+00:00",
+      "summary": "The public author summary describes FELC as an active large-cap quantitative ETF with a 0.18% fee and says NVDA, AAPL and MSFT together make up 21% of assets, limiting diversification from the S&P 500.",
+      "zh_summary": "作者公开摘要称 FELC 是费率 0.18% 的主动大盘量化 ETF，NVDA、AAPL、MSFT 合计约占 21%，因此相对标普 500 的分散效果有限。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验同日持仓、主动权重、因子暴露和扣费后超额收益。"
+    },
+    {
+      "origin_run_id": "36359544963",
+      "origin_report_date": "2026-09-28",
+      "source": "Seeking Alpha ETFs",
+      "title": "A Three-Fund Portfolio With 6% Yield And Possible Growth",
+      "zh_title": "VOO、SCHD、TSPY 三基金收益组合的分配率口径",
+      "url": "https://seekingalpha.com/article/4950074-a-three-fund-portfolio-with-6-percent-yield-and-possible-growth",
+      "published": "2026-09-27T19:51:45+00:00",
+      "summary": "The public author summary proposes equal allocations to VOO, SCHD and TSPY, claiming over 6% annual portfolio yield and about $30,583 on $500,000; it notes TSPY has a short history and higher fee.",
+      "zh_summary": "作者公开摘要提出 VOO、SCHD、TSPY 等权组合，声称年分配率超过 6%、50 万美元本金年现金分配约 30,583 美元；同时承认 TSPY 历史短、费率高。分配率不等于总回报。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验分配率定义、TSPY 期权与返还资本、税后现金流和完整周期净值总回报。"
+    },
+    {
+      "origin_run_id": "36359544963",
+      "origin_report_date": "2026-09-28",
+      "source": "Seeking Alpha ETFs",
+      "title": "TOPT: Plenty Of AI, Just The Wrong Layers",
+      "zh_title": "TOPT 前十大及 AI 敞口的集中问题",
+      "url": "https://seekingalpha.com/article/4950071-topt-plenty-of-ai-just-the-wrong-layers",
+      "published": "2026-09-27T19:24:19+00:00",
+      "summary": "The public author summary says TOPT holds about 71.5% in its top ten positions and estimates roughly 58% AI exposure, while arguing that its market-cap approach misses some equipment and infrastructure beneficiaries.",
+      "zh_summary": "作者公开摘要称 TOPT 前十大权重约 71.5%、AI 敞口约 58%，并认为市值加权口径漏掉部分设备及基础设施受益者；这是作者对主题覆盖的主观划分。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验基金当期持仓、AI 分类方法和与宽基 ETF 的持仓重叠及总回报。"
     }
   ]
 }
