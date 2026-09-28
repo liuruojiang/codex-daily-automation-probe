@@ -14,12 +14,18 @@ class MicrocapRefreshTargetTests(unittest.TestCase):
     def report(self, anchor: str, proof: str | None = None) -> dict[str, object]:
         return {
             "ok": True,
+            "errors": [],
             "anchor_dates": {
                 "proxy_index": anchor,
                 "costed_nav": anchor,
                 "panel_shadow": anchor,
             },
-            "refresh_proof": {"target_end_date": proof or anchor},
+            "refresh_proof": {
+                "version": 1,
+                "source": "independent_close_history_refresh",
+                "target_end_date": proof or anchor,
+                "verified_on": anchor,
+            },
         }
 
     def test_long_holiday_gaps_pass_when_latest_completed_close_is_present(self) -> None:
@@ -29,7 +35,7 @@ class MicrocapRefreshTargetTests(unittest.TestCase):
         ):
             with self.subTest(previous=previous, completed=completed):
                 self.assertGreater((date.fromisoformat(completed) - date.fromisoformat(previous)).days, 3)
-                check_report(self.report(completed), completed)
+                check_report(self.report(completed), completed, completed)
 
     def test_previous_close_cannot_be_published_after_a_long_holiday(self) -> None:
         for name in ("proxy_index", "costed_nav", "panel_shadow"):
@@ -37,14 +43,39 @@ class MicrocapRefreshTargetTests(unittest.TestCase):
                 report = self.report("2026-10-08")
                 report["anchor_dates"][name] = "2026-09-30"
                 with self.assertRaisesRegex(ValueError, f"{name} anchor"):
-                    check_report(report, "2026-10-08")
+                    check_report(report, "2026-10-08", "2026-10-08")
 
     def test_current_csvs_cannot_borrow_an_old_refresh_proof(self) -> None:
         with self.assertRaisesRegex(ValueError, "refresh proof"):
-            check_report(self.report("2026-10-08", proof="2026-09-30"), "2026-10-08")
+            check_report(self.report("2026-10-08", proof="2026-09-30"), "2026-10-08", "2026-10-08")
 
     def test_failed_state_validation_cannot_pass_date_check(self) -> None:
         report = self.report("2026-10-08")
         report["ok"] = False
         with self.assertRaisesRegex(ValueError, "did not pass"):
-            check_report(report, "2026-10-08")
+            check_report(report, "2026-10-08", "2026-10-08")
+
+    def test_non_boolean_success_marker_cannot_pass_date_check(self) -> None:
+        report = self.report("2026-10-08")
+        report["ok"] = "false"
+        with self.assertRaisesRegex(ValueError, "did not pass"):
+            check_report(report, "2026-10-08", "2026-10-08")
+
+    def test_nonempty_validation_errors_cannot_pass(self) -> None:
+        report = self.report("2026-10-08")
+        report["errors"] = ["stale proof"]
+        with self.assertRaisesRegex(ValueError, "validation errors"):
+            check_report(report, "2026-10-08", "2026-10-08")
+
+    def test_refresh_proof_source_version_and_verification_date_are_required(self) -> None:
+        mutations = (
+            ("source", "cache_copy"),
+            ("version", 2),
+            ("verified_on", "2026-09-30"),
+        )
+        for key, value in mutations:
+            with self.subTest(key=key):
+                report = self.report("2026-10-08")
+                report["refresh_proof"][key] = value
+                with self.assertRaises(ValueError):
+                    check_report(report, "2026-10-08", "2026-10-08")
