@@ -9,6 +9,26 @@ WORKFLOW = ROOT / ".github" / "workflows" / "microcap-realtime-digest.yml"
 
 
 class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
+    def test_recovery_accepts_verified_state_across_closed_days_but_refresh_is_current(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        cached_restore = text[
+            text.index("name: Validate and restore cached production state") :
+            text.index("name: Restore durable verified production state bundle")
+        ]
+        durable_restore = text[
+            text.index("name: Restore verified production state\n") :
+            text.index("name: Restore approved release fallback")
+        ]
+        refresh = text[
+            text.index("name: Refresh Top100 realtime state") :
+            text.index("name: Record refresh failure for digest")
+        ]
+        for step in (cached_restore, durable_restore):
+            self.assertIn("scripts/realtime_state_bundle.py restore", step)
+            self.assertNotIn("--max-anchor-age-days", step)
+        self.assertIn("--max-anchor-age-days 3", refresh)
+        self.assertIn("steps.recovered_full_cache.outputs.validated == 'true'", refresh)
+
     def test_microcap_workflow_refreshes_state_before_signals(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
 
