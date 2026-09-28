@@ -435,8 +435,7 @@ jobs:
             python -u scripts/realtime_state_bundle.py refresh \
               --root . \
               --max-workers 4 \
-              "${static_refresh_args[@]}" \
-              --max-anchor-age-days 3 > "${attempt_log}" 2>&1 &
+              "${static_refresh_args[@]}" > "${attempt_log}" 2>&1 &
             refresh_pid=$!
             (
               while kill -0 "${refresh_pid}" 2>/dev/null; do
@@ -487,11 +486,20 @@ jobs:
         id: state_bundle
         if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.refresh_state.outcome == 'success' && steps.refresh_state.outputs.validated == 'true'
         shell: bash
+        env:
+          EXPECTED_DATE: ${{ steps.market_target.outputs.date }}
         run: |
+          # Calendar days since the previous close are irrelevant across a
+          # holiday. The refreshed daily anchors must instead equal the
+          # independently resolved latest completed exchange session.
+          python microcap/scripts/realtime_state_bundle.py validate \
+            --root microcap > "${RUNNER_TEMP}/microcap-refreshed-state-validation.json"
+          python automation/scripts/check_microcap_refresh_target.py \
+            --report "${RUNNER_TEMP}/microcap-refreshed-state-validation.json" \
+            --expected-date "${EXPECTED_DATE}"
           python microcap/scripts/realtime_state_bundle.py pack \
             --root microcap \
-            --bundle "${RUNNER_TEMP}/microcap-top100-state.zip" \
-            --max-anchor-age-days 3
+            --bundle "${RUNNER_TEMP}/microcap-top100-state.zip"
 
       - name: Stage validated state bundle for same-day recovery
         if: steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
@@ -527,8 +535,7 @@ jobs:
         run: |
           python microcap/scripts/realtime_state_bundle.py restore \
             --root microcap-v23 \
-            --bundle "${RUNNER_TEMP}/microcap-top100-state.zip" \
-            --max-anchor-age-days 3
+            --bundle "${RUNNER_TEMP}/microcap-top100-state.zip"
 
       - name: Restore state into isolated v2.5 workspace
         id: restore_v25
@@ -537,8 +544,7 @@ jobs:
         run: |
           python microcap/scripts/realtime_state_bundle.py restore \
             --root microcap-v25 \
-            --bundle "${RUNNER_TEMP}/microcap-top100-state.zip" \
-            --max-anchor-age-days 3
+            --bundle "${RUNNER_TEMP}/microcap-top100-state.zip"
 
       - name: Save refreshed full rebalance cache
         if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'

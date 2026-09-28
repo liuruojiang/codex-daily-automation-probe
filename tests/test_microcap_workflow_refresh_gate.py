@@ -9,7 +9,7 @@ WORKFLOW = ROOT / ".github" / "workflows" / "microcap-realtime-digest.yml"
 
 
 class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
-    def test_recovery_accepts_verified_state_across_closed_days_but_refresh_is_current(self) -> None:
+    def test_every_state_transition_uses_completed_session_not_calendar_age(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         cached_restore = text[
             text.index("name: Validate and restore cached production state") :
@@ -23,11 +23,24 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             text.index("name: Refresh Top100 realtime state") :
             text.index("name: Record refresh failure for digest")
         ]
+        pack = text[
+            text.index("name: Pack validated production state") :
+            text.index("name: Stage validated state bundle for same-day recovery")
+        ]
+        isolated_restores = text[
+            text.index("name: Restore state into isolated v2.3 workspace") :
+            text.index("name: Save refreshed full rebalance cache")
+        ]
         for step in (cached_restore, durable_restore):
             self.assertIn("scripts/realtime_state_bundle.py restore", step)
             self.assertNotIn("--max-anchor-age-days", step)
-        self.assertIn("--max-anchor-age-days 3", refresh)
+        for step in (refresh, pack, isolated_restores):
+            self.assertNotIn("--max-anchor-age-days", step)
         self.assertIn("steps.recovered_full_cache.outputs.validated == 'true'", refresh)
+        self.assertIn("scripts/realtime_state_bundle.py validate", pack)
+        self.assertIn("scripts/check_microcap_refresh_target.py", pack)
+        self.assertIn('steps.market_target.outputs.date', pack)
+        self.assertLess(pack.index("check_microcap_refresh_target.py"), pack.index("realtime_state_bundle.py pack"))
 
     def test_microcap_workflow_refreshes_state_before_signals(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
