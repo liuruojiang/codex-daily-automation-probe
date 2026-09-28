@@ -283,10 +283,32 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertEqual(meta["status"], "OK")
         self.assertEqual(meta["publication_mode"], "close_confirmed")
         self.assertEqual(meta["signal_date"], "2026-08-12")
-        self.assertIn("[收盘确认]", str(meta["subject"]))
-        self.assertIn("信号类型：收盘确认", str(meta["body"]))
-        self.assertIn("收盘确认日期：2026-08-12", str(meta["body"]))
-        self.assertNotIn("不可用", str(meta["body"]))
+        self.assertIn("[收盘确认][下个交易日无需操作]", str(meta["subject"]))
+        body = str(meta["body"])
+        self.assertIn("信号类型：收盘确认", body)
+        self.assertIn("本次收盘信号未提出下个交易日的新调仓", body)
+        self.assertIn("当前持仓是模型在本交易日的状态，可能承接前次收盘信号", body)
+        self.assertIn("| 下个交易日操作 |", body)
+        self.assertNotIn("| 今日操作 |", body)
+        self.assertIn("收盘确认日期：2026-08-12", body)
+        self.assertNotIn("不可用", body)
+
+    def test_close_confirmed_open_is_labeled_for_next_trading_day(self) -> None:
+        item = {"version": "v2.0", "status": "OK", "status_note": "", "fields": {
+            **self.identity_fields("v2.0"),
+            "date": "2026-09-24",
+            "current_holding": "cash",
+            "next_holding": "long_microcap_short_zz1000",
+            "current_execution_scale": "0",
+            "next_session_actionable_scale": "1",
+        }}
+        subject, body = digest.build_compact_digest(
+            [item], date_s="2026-09-24", run_url="", strategy_sha=self.STRATEGY_SHA,
+            publication_mode="close_confirmed",
+        )
+        self.assertIn("[收盘确认][下个交易日需操作]", subject)
+        self.assertIn("下个交易日计划：v2.0 需要开仓", body)
+        self.assertIn("| 下个交易日操作 |", body)
 
     def test_scheduled_close_digest_rejects_prior_session_csv(self) -> None:
         output = "\n".join(
