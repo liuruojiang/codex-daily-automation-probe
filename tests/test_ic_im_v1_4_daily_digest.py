@@ -107,6 +107,41 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         self.assertIn("P-NEW @ 0.12", digest.v14_route_reason(ic))
         self.assertIn("并非账户成交", digest.v14_route_reason(ic))
 
+    def test_fix8_first_day_identity_migration_does_not_claim_user_adjustment(self) -> None:
+        ic, im = signal("IC"), signal("IM")
+        for product, item in (("IC", ic), ("IM", im)):
+            item.update(product=product, market_date="2026-09-29",
+                        core_action="HOLD", momentum_action="HOLD", grid_action="HOLD",
+                        put_action="HOLD", call_action="HOLD")
+        ic.update(
+            put_current_contract="510500P2612M07500", put_current_core_qty=10,
+            put_target_contract="510500P2612M07500", put_target_security_id="10012099",
+            put_target_core_qty=10, put_target_momentum_qty=0,
+            v14_ordinary_put_plan_status="scheduled_t_plus_1_open",
+            v14_ordinary_put_pending={
+                "signal_day": "2026-09-29", "execution_day": "2026-09-30",
+                "legs": {
+                    "core": {"changed": True, "old_contract": None, "old_security_id": None,
+                             "old_qty": 0, "new_contract": "510500P2612M07500",
+                             "new_security_id": "10012099", "new_qty": 10},
+                    "momentum": {"changed": False, "old_contract": None, "old_security_id": None,
+                                 "old_qty": 0, "new_contract": None,
+                                 "new_security_id": None, "new_qty": 0},
+                },
+            },
+        )
+        self.assertEqual(digest.action_parts(ic, "IC"), [])
+        self.assertIn("不构成调整", digest.v14_route_reason(ic))
+        payload = {
+            "publication_mode": "close_confirmed", "completed_day": "2026-09-29",
+            "market_date": "2026-09-29", "next_trade_day": "2026-09-30",
+            "verified_day": "2026-09-29", "sequence": 8, "digest": "a" * 64,
+            "signals": {"IC": ic, "IM": im},
+        }
+        html = digest.build_success_html(payload, "")
+        self.assertIn("无需调整", html)
+        self.assertNotIn("存在下一交易日调整", html)
+
     def test_fix7_profit3x_open_plan_and_paper_fill_are_visible(self) -> None:
         ic = signal("IC")
         ic.update(market_date="2026-09-28", v14_action="CORE_PUT_PROFIT3X_REENTER",
