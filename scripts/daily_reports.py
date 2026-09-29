@@ -5830,13 +5830,15 @@ def _build_etf(out_dir: Path) -> None:
     if include_market_summary:
         strategy_assets = A_STRATEGY_ASSETS + ADK_STRATEGY_ASSETS + B_STRATEGY_ASSETS + D_STRATEGY_ASSETS
         broad_universe = broad_etf_movers.fetch_universe()
-        us_reference_rows = yahoo_daily_rows("SPY", "1mo")
+        us_reference_rows = yahoo_daily_rows("SPY", "1mo") if broad_universe else []
         us_session_date = latest_complete_yahoo_session(us_reference_rows, started)
         daily_movers = broad_etf_movers.daily_rankings(
             broad_universe,
             as_of=started,
             expected_session_date=us_session_date,
         )
+        market_session_date = getattr(daily_movers, "session_date", us_session_date)
+        stale_quote_count = getattr(daily_movers, "stale_quote_count", 0)
         strategy_rows = fetch_asset_changes(
             strategy_assets,
             expected_dates={"yahoo": us_session_date},
@@ -5943,7 +5945,7 @@ def _build_etf(out_dir: Path) -> None:
             lines += [
                 "",
                 f"> 数据缺口：{', '.join(missing_yahoo_codes)} 未取得与美股涨跌榜交易日 "
-                f"{daily_movers.session_date or '未知'} 对齐的收盘数据，已略去，未用旧日数据代替。",
+                f"{market_session_date or '未知'} 对齐的收盘数据，已略去，未用旧日数据代替。",
             ]
         lines += [
             "",
@@ -5953,10 +5955,10 @@ def _build_etf(out_dir: Path) -> None:
             "",
             "排行范围：美国上市 ETF 全市场，不使用精选 ETF 池。流动性门槛为近 3 个月平均成交额至少 500 万美元/日且平均成交量至少 5 万份/日。",
             "",
-            f"涨跌榜交易日：{daily_movers.session_date or '数据不足'}。",
+            f"涨跌榜交易日：{market_session_date or '数据不足'}。",
             *(
-                [f"> 数据缺口：{daily_movers.stale_quote_count} 只候选 ETF 的报价日期落后、缺失或尚未收盘，已从榜单剔除。", ""]
-                if daily_movers.stale_quote_count
+                [f"> 数据缺口：{stale_quote_count} 只候选 ETF 的报价日期落后、缺失或尚未收盘，已从榜单剔除。", ""]
+                if stale_quote_count
                 else []
             ),
             "过滤口径：已排除杠杆、反向/做空、单股日内目标、期权收益增强/定义结果、ETN、单一加密资产和实物/现货信托；正常的商品、外汇、波动率和管理期货 ETF 可以纳入。每个榜单按共同经济驱动强去重；同一经济敞口优先保留近 3 个月平均成交额更高的 ETF，成交额缺失或相同时再比较基金资产规模，涨跌幅不参与同类代表选择。涨幅榜只展示正收益，跌幅榜只展示负收益。",
@@ -6008,7 +6010,7 @@ def _build_etf(out_dir: Path) -> None:
     fixed_monitor_rendered_count = append_etf_fixed_monitor_section(lines, fixed_monitor_updates, fixed_monitor_audit)
     market_audit_line = (
         f"- ETF 排行宇宙：扫描 {daily_movers.universe_count} 只美国上市 ETF，流动性及产品结构过滤后合格 {daily_movers.eligible_count} 只；"
-        f"共同交易日 {daily_movers.session_date or '数据不足'}，剔除日期不一致或缺少时间戳的报价 {daily_movers.stale_quote_count} 只；每个涨跌榜按共同经济驱动强去重。"
+        f"共同交易日 {market_session_date or '数据不足'}，剔除日期不一致或缺少时间戳的报价 {stale_quote_count} 只；每个涨跌榜按共同经济驱动强去重。"
         if daily_movers is not None
         else "- 市场行情：北京时间周日和周一按规则主动跳过，未调用行情快照、ETF 涨跌榜或周期涨跌榜；资讯源与来源审计正常运行。"
     )
