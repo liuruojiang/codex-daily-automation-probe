@@ -258,16 +258,38 @@ class EtfMoverRulesTests(unittest.TestCase):
         self.assertEqual(result.gainers, [])
         self.assertEqual(result.losers, [])
 
+    def test_daily_rankings_rejects_same_day_quotes_far_from_reference_close(self) -> None:
+        stale = row(
+            "SMH", "VanEck Semiconductor ETF", change=10.0,
+            market_time=market_timestamp("2026-09-29", 14),
+        )
+        near_close = row(
+            "XBI", "SPDR S&P Biotech ETF", change=-2.0,
+            market_time=int(datetime(2026, 9, 29, 19, 58, tzinfo=timezone.utc).timestamp()),
+        )
+        spy_close = int(datetime(2026, 9, 29, 20, 0, tzinfo=timezone.utc).timestamp())
+
+        result = movers.daily_rankings(
+            [stale, near_close],
+            as_of=datetime(2026, 9, 29, 21, 0, tzinfo=timezone.utc),
+            expected_session_date="2026-09-29",
+            expected_quote_timestamp=spy_close,
+        )
+
+        self.assertEqual(result.stale_quote_count, 1)
+        self.assertEqual([item["symbol"] for item in result.gainers], [])
+        self.assertEqual([item["symbol"] for item in result.losers], ["XBI"])
+
 
 class MarketSessionAlignmentTests(unittest.TestCase):
     def test_latest_complete_session_ignores_incomplete_current_day(self) -> None:
         rows = [("2026-09-25", 100.0), ("2026-09-28", 101.0), ("2026-09-29", 102.0)]
 
         before_close = reports.latest_complete_yahoo_session(
-            rows, datetime(2026, 9, 29, 19, 59, tzinfo=timezone.utc)
+            rows, datetime(2026, 9, 29, 20, 29, tzinfo=timezone.utc)
         )
         at_close = reports.latest_complete_yahoo_session(
-            rows, datetime(2026, 9, 29, 20, 0, tzinfo=timezone.utc)
+            rows, datetime(2026, 9, 29, 20, 30, tzinfo=timezone.utc)
         )
         before_session = reports.latest_complete_yahoo_session(
             rows, datetime(2026, 9, 27, 15, 0, tzinfo=timezone.utc)
@@ -276,6 +298,27 @@ class MarketSessionAlignmentTests(unittest.TestCase):
         self.assertEqual(before_close, "2026-09-28")
         self.assertEqual(at_close, "2026-09-29")
         self.assertEqual(before_session, "2026-09-25")
+
+    def test_china_session_has_its_own_close_buffer(self) -> None:
+        rows = [("2026-09-28", 100.0), ("2026-09-29", 101.0)]
+        before_buffer = reports.latest_complete_market_sessions(
+            rows,
+            datetime(2026, 9, 29, 7, 14, tzinfo=timezone.utc),
+            "Asia/Shanghai",
+            reports.CN_MARKET_CLOSE,
+            reports.CN_MARKET_CLOSE_BUFFER,
+            limit=1,
+        )
+        after_buffer = reports.latest_complete_market_sessions(
+            rows,
+            datetime(2026, 9, 29, 7, 15, tzinfo=timezone.utc),
+            "Asia/Shanghai",
+            reports.CN_MARKET_CLOSE,
+            reports.CN_MARKET_CLOSE_BUFFER,
+            limit=1,
+        )
+        self.assertEqual(before_buffer, ["2026-09-28"])
+        self.assertEqual(after_buffer, ["2026-09-29"])
 
     def test_yahoo_chart_bar_uses_exchange_timezone_for_its_session_date(self) -> None:
         import json
@@ -311,6 +354,53 @@ class MarketSessionAlignmentTests(unittest.TestCase):
         assert aligned is not None
         self.assertEqual(aligned[0], "2026-09-28")
         self.assertAlmostEqual(aligned[1], 1.0)
+
+    def test_change_from_rows_requires_the_expected_previous_session(self) -> None:
+        rows = [("2026-09-24", 100.0), ("2026-09-28", 110.0)]
+
+        self.assertIsNone(
+            reports.change_from_rows(
+                rows,
+                expected_date="2026-09-28",
+                expected_previous_date="2026-09-25",
+            )
+        )
+
+    def test_change_from_rows_trims_partial_rows_after_expected_session(self) -> None:
+        rows = [
+            ("2026-09-24", 100.0),
+            ("2026-09-25", 101.0),
+            ("2026-09-28", 150.0),  # later session must not displace the complete expected row
+        ]
+
+        result = reports.change_from_rows(
+            rows,
+            expected_date="2026-09-25",
+            expected_previous_date="2026-09-24",
+        )
+
+        self.assertIsNotNone(result)
+        assert result is not None
+        self.assertEqual(result[0], "2026-09-25")
+        self.assertAlmostEqual(result[1], 1.0)
+
+    def test_period_rankings_drops_partial_session_and_uses_common_window(self) -> None:
+        sessions_with_partial = [
+            "2026-09-17", "2026-09-18", "2026-09-21", "2026-09-22",
+            "2026-09-23", "2026-09-24", "2026-09-25",
+        ]
+        chart = [(date_s, 100.0 + idx) for idx, date_s in enumerate(sessions_with_partial)]
+        with patch.object(movers, "_chart_rows", return_value=chart):
+            result = movers.period_rankings(
+                [row("SMH", "VanEck Semiconductor ETF")],
+                as_of=datetime(2026, 9, 25, 18, 0, tzinfo=timezone.utc),  # Friday 14:00 ET
+                expected_session_dates=sessions_with_partial,
+            )
+
+        self.assertEqual(result["market_date"], "2026-09-24")
+        self.assertEqual(result["one_week"]["gainers"][0]["date"], "2026-09-24")
+        self.assertAlmostEqual(result["one_week"]["gainers"][0]["change"], 5.0)
+        self.assertEqual(result["one_month"]["gainers"], [])
 
 
 if __name__ == "__main__":

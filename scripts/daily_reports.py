@@ -16,7 +16,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from contextvars import ContextVar
 from dataclasses import asdict, dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time as datetime_time, timedelta, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -28,6 +28,10 @@ BJ = ZoneInfo("Asia/Shanghai")
 UA = "Mozilla/5.0 (Codex daily digest; +https://github.com/liuruojiang/codex-daily-automation-probe)"
 ETF_BUILD_CUTOFF: ContextVar[datetime | None] = ContextVar("etf_build_cutoff", default=None)
 ETF_COLLECTION_SNAPSHOT: ContextVar[dict | None] = ContextVar("etf_collection_snapshot", default=None)
+US_MARKET_CLOSE = datetime_time(16, 0)
+US_MARKET_CLOSE_BUFFER = timedelta(minutes=30)
+CN_MARKET_CLOSE = datetime_time(15, 0)
+CN_MARKET_CLOSE_BUFFER = timedelta(minutes=15)
 
 
 @dataclass
@@ -5319,17 +5323,39 @@ def yahoo_daily_rows(symbol: str, range_s: str = "3mo") -> list[tuple[str, float
     return rows
 
 
-def latest_complete_yahoo_session(rows: list[tuple[str, float]], as_of: datetime) -> str:
-    if not rows:
-        return ""
-    cutoff_ny = as_of.astimezone(ZoneInfo("America/New_York"))
-    cutoff_date = cutoff_ny.date().isoformat()
-    before_close = cutoff_ny.weekday() < 5 and cutoff_ny.hour < 16
-    eligible_dates = [
+def latest_complete_market_sessions(
+    rows: list[tuple[str, float]],
+    as_of: datetime,
+    timezone_name: str,
+    close_time: datetime_time,
+    close_buffer: timedelta,
+    limit: int = 2,
+) -> list[str]:
+    if not rows or limit <= 0:
+        return []
+    market_tz = ZoneInfo(timezone_name)
+    if as_of.tzinfo is None:
+        as_of = as_of.replace(tzinfo=market_tz)
+    local_as_of = as_of.astimezone(market_tz)
+    cutoff_date = local_as_of.date().isoformat()
+    close_boundary = datetime.combine(local_as_of.date(), close_time, tzinfo=market_tz) + close_buffer
+    current_date_complete = local_as_of.weekday() >= 5 or local_as_of >= close_boundary
+    eligible_dates = sorted({
         date_s for date_s, _close in rows
-        if date_s <= cutoff_date and not (before_close and date_s == cutoff_date)
-    ]
-    return max(eligible_dates, default="")
+        if date_s <= cutoff_date and (date_s != cutoff_date or current_date_complete)
+    })
+    return eligible_dates[-limit:]
+
+
+def latest_complete_yahoo_sessions(rows: list[tuple[str, float]], as_of: datetime, limit: int = 22) -> list[str]:
+    return latest_complete_market_sessions(
+        rows, as_of, "America/New_York", US_MARKET_CLOSE, US_MARKET_CLOSE_BUFFER, limit
+    )
+
+
+def latest_complete_yahoo_session(rows: list[tuple[str, float]], as_of: datetime) -> str:
+    sessions = latest_complete_yahoo_sessions(rows, as_of, limit=1)
+    return sessions[-1] if sessions else ""
 
 
 def secid_to_sina_symbol(secid: str) -> str:
@@ -5368,7 +5394,8 @@ def eastmoney_daily_rows(secid: str, lmt: int = 80) -> list[tuple[str, float]]:
     sina_rows = sina_daily_rows(secid, lmt)
     if sina_rows:
         return sina_rows
-    end_date = (now_bj() + timedelta(days=30)).strftime("%Y%m%d")
+    cutoff_bj = ETF_BUILD_CUTOFF.get() or now_bj()
+    end_date = (cutoff_bj.astimezone(BJ) + timedelta(days=30)).strftime("%Y%m%d")
     url = (
         "https://push2his.eastmoney.com/api/qt/stock/kline/get"
         f"?secid={urllib.parse.quote(secid, safe='.')}"
@@ -5393,7 +5420,8 @@ def eastmoney_daily_rows(secid: str, lmt: int = 80) -> list[tuple[str, float]]:
 
 
 def csindex_daily_rows(index_code: str, lmt: int = 80) -> list[tuple[str, float]]:
-    end_dt = now_bj().date() + timedelta(days=3)
+    cutoff_bj = (ETF_BUILD_CUTOFF.get() or now_bj()).astimezone(BJ)
+    end_dt = cutoff_bj.date() + timedelta(days=3)
     start_dt = end_dt - timedelta(days=max(lmt * 3, 30))
     url = (
         "https://www.csindex.com.cn/csindex-home/perf/index-perf"
@@ -5428,13 +5456,19 @@ def change_from_rows(
     rows: list[tuple[str, float]],
     sessions: int = 1,
     expected_date: str | None = None,
+    expected_previous_date: str | None = None,
 ) -> tuple[str, float] | None:
+    if expected_date is not None:
+        rows = [row for row in rows if row[0] <= expected_date]
+    rows = sorted(rows, key=lambda row: row[0])
     if len(rows) <= sessions:
         return None
     last_date, last_close = rows[-1]
     if expected_date is not None and last_date != expected_date:
         return None
-    _prev_date, prev_close = rows[-1 - sessions]
+    prev_date, prev_close = rows[-1 - sessions]
+    if expected_previous_date is not None and prev_date != expected_previous_date:
+        return None
     if prev_close == 0:
         return None
     return last_date, (last_close / prev_close - 1.0) * 100.0
@@ -5444,6 +5478,7 @@ def asset_change(
     asset: MarketAsset,
     sessions: int = 1,
     expected_date: str | None = None,
+    expected_previous_date: str | None = None,
 ) -> tuple[str, float] | None:
     if asset.source == "yahoo":
         rows = yahoo_daily_rows(asset.symbol, "6mo" if sessions > 5 else "1mo")
@@ -5453,18 +5488,32 @@ def asset_change(
         rows = csindex_daily_rows(asset.symbol, max(80, sessions + 10))
     else:
         return None
-    return change_from_rows(rows, sessions=sessions, expected_date=expected_date)
+    return change_from_rows(
+        rows,
+        sessions=sessions,
+        expected_date=expected_date,
+        expected_previous_date=expected_previous_date,
+    )
 
 
 def fetch_asset_changes(
     assets: list[MarketAsset],
     sessions: int = 1,
     expected_dates: dict[str, str] | None = None,
+    expected_previous_dates: dict[str, str] | None = None,
 ) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for asset in assets:
         expected_date = expected_dates.get(asset.source) if expected_dates is not None else None
-        val = asset_change(asset, sessions=sessions, expected_date=expected_date)
+        expected_previous_date = (
+            expected_previous_dates.get(asset.source) if expected_previous_dates is not None else None
+        )
+        val = asset_change(
+            asset,
+            sessions=sessions,
+            expected_date=expected_date,
+            expected_previous_date=expected_previous_date,
+        )
         if val:
             rows.append({"asset": asset, "date": val[0], "change": val[1]})
         time.sleep(0.05)
@@ -5827,21 +5876,71 @@ def _build_etf(out_dir: Path) -> None:
     top_rows: list[dict[str, object]] = []
     bottom_rows: list[dict[str, object]] = []
     strategy_assets: list[MarketAsset] = []
+    expected_dates: dict[str, str] = {}
+    expected_previous_dates: dict[str, str] = {}
+    us_session_dates: list[str] = []
     if include_market_summary:
         strategy_assets = A_STRATEGY_ASSETS + ADK_STRATEGY_ASSETS + B_STRATEGY_ASSETS + D_STRATEGY_ASSETS
         broad_universe = broad_etf_movers.fetch_universe()
         us_reference_rows = yahoo_daily_rows("SPY", "1mo") if broad_universe else []
-        us_session_date = latest_complete_yahoo_session(us_reference_rows, started)
+        us_session_dates = latest_complete_yahoo_sessions(us_reference_rows, started, limit=22)
+        us_session_date = us_session_dates[-1] if us_session_dates else ""
+        expected_dates["yahoo"] = us_session_date
+        expected_previous_dates["yahoo"] = us_session_dates[-2] if len(us_session_dates) > 1 else ""
+
+        if any(asset.source == "eastmoney" for asset in strategy_assets):
+            eastmoney_reference_rows = eastmoney_daily_rows("1.000300", 80)
+            eastmoney_sessions = latest_complete_market_sessions(
+                eastmoney_reference_rows,
+                started,
+                "Asia/Shanghai",
+                CN_MARKET_CLOSE,
+                CN_MARKET_CLOSE_BUFFER,
+                limit=2,
+            )
+            expected_dates["eastmoney"] = eastmoney_sessions[-1] if eastmoney_sessions else ""
+            expected_previous_dates["eastmoney"] = eastmoney_sessions[-2] if len(eastmoney_sessions) > 1 else ""
+
+        if any(asset.source == "csindex" for asset in strategy_assets):
+            csindex_reference_rows = csindex_daily_rows("000300", 80)
+            csindex_sessions = latest_complete_market_sessions(
+                csindex_reference_rows,
+                started,
+                "Asia/Shanghai",
+                CN_MARKET_CLOSE,
+                CN_MARKET_CLOSE_BUFFER,
+                limit=2,
+            )
+            expected_dates["csindex"] = csindex_sessions[-1] if csindex_sessions else ""
+            expected_previous_dates["csindex"] = csindex_sessions[-2] if len(csindex_sessions) > 1 else ""
+
+        spy_quote = next(
+            (row for row in broad_universe if str(row.get("symbol") or "").upper() == "SPY"),
+            None,
+        )
+        spy_quote_timestamp = int(spy_quote.get("regularMarketTime") or 0) if spy_quote else 0
+        spy_quote_date = (
+            datetime.fromtimestamp(spy_quote_timestamp, timezone.utc)
+            .astimezone(ZoneInfo("America/New_York"))
+            .date()
+            .isoformat()
+            if spy_quote_timestamp
+            else ""
+        )
+        if spy_quote_date != us_session_date:
+            spy_quote_timestamp = 0
         daily_movers = broad_etf_movers.daily_rankings(
             broad_universe,
             as_of=started,
             expected_session_date=us_session_date,
+            expected_quote_timestamp=spy_quote_timestamp,
         )
         market_session_date = getattr(daily_movers, "session_date", us_session_date)
         stale_quote_count = getattr(daily_movers, "stale_quote_count", 0)
         strategy_rows = fetch_asset_changes(
             strategy_assets,
-            expected_dates={"yahoo": us_session_date},
+            expected_dates=expected_dates,
+            expected_previous_dates=expected_previous_dates,
         )
         top_rows = broad_mover_rows(daily_movers.gainers)
         bottom_rows = broad_mover_rows(daily_movers.losers)
@@ -5935,17 +6034,19 @@ def _build_etf(out_dir: Path) -> None:
             "",
         ]
         append_strategy_price_table(lines, strategy_rows)
-        yahoo_strategy_assets = [asset for asset in strategy_assets if asset.source == "yahoo"]
         reported_codes = {
             row["asset"].code for row in strategy_rows
-            if isinstance(row.get("asset"), MarketAsset) and row["asset"].source == "yahoo"
+            if isinstance(row.get("asset"), MarketAsset)
         }
-        missing_yahoo_codes = [asset.code for asset in yahoo_strategy_assets if asset.code not in reported_codes]
-        if missing_yahoo_codes:
+        missing_strategy_assets = [asset for asset in strategy_assets if asset.code not in reported_codes]
+        if missing_strategy_assets:
+            missing_codes = [
+                f"{asset.code}（{expected_dates.get(asset.source) or '未知'}）"
+                for asset in missing_strategy_assets
+            ]
             lines += [
                 "",
-                f"> 数据缺口：{', '.join(missing_yahoo_codes)} 未取得与美股涨跌榜交易日 "
-                f"{market_session_date or '未知'} 对齐的收盘数据，已略去，未用旧日数据代替。",
+                f"> 数据缺口：{', '.join(missing_codes)} 未取得与各自市场最近完整交易日对齐的收盘数据，已略去，未用旧日数据代替。",
             ]
         lines += [
             "",
@@ -5984,8 +6085,12 @@ def _build_etf(out_dir: Path) -> None:
         ]
 
     period_movers: dict[str, object] | None = None
-    if now_bj().weekday() == 5:
-        period_movers = broad_etf_movers.period_rankings(broad_universe, as_of=started)
+    if started.weekday() == 5:
+        period_movers = broad_etf_movers.period_rankings(
+            broad_universe,
+            as_of=started,
+            expected_session_dates=us_session_dates,
+        )
         for label, key in [("最近一周", "one_week"), ("最近一个月", "one_month")]:
             period_block = period_movers[key]
             assert isinstance(period_block, dict)
@@ -6026,7 +6131,7 @@ def _build_etf(out_dir: Path) -> None:
         "",
     ]
     lines.append(f"- 回填去重：文章与论坛回填均排除最近 {ETF_BACKFILL_DEDUPE_DAYS} 天已推送内容，并只统计真正进入正文的条目。")
-    lines += audit_lines("05:00 Asia/Shanghai", started)
+    lines += audit_lines("05:30 Asia/Shanghai", started)
     report_text = "\n".join(lines)
     displayed_urls = {canonical_url(url) for url in re.findall(r"(?m)^- 链接：\s*(https?://\S+)\s*$", report_text)}
     rendered_items = dedupe_items([
