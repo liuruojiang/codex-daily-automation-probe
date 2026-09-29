@@ -45,7 +45,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
     def test_microcap_workflow_refreshes_state_before_signals(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
 
-        self.assertIn('- cron: "0 8 * * *"', text)
+        self.assertNotIn("\n  schedule:\n", text)
         self.assertNotIn('- cron: "3 5 * * *"', text)
         self.assertNotIn('- cron: "18 5 * * *"', text)
         self.assertNotIn('- cron: "33 5 * * *"', text)
