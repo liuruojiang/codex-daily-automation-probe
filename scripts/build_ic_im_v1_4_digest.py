@@ -3,7 +3,9 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import math
 import os
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -52,34 +54,191 @@ def percent(value: Any, places: int = 2) -> str:
         return "N/A"
 
 
-def ordinary_put_transition_identity_only(product: str, signal: dict[str, Any]) -> bool:
-    """A one-time IC field migration is not a user-visible position change."""
-    if product != "IC" or signal.get("v14_ordinary_put_plan_status") != "scheduled_t_plus_1_open":
-        return False
+def _finite_qty(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
     try:
-        plan = signal.get("v14_ordinary_put_pending")
-        legs = plan.get("legs") if isinstance(plan, dict) else None
-        core = legs.get("core") if isinstance(legs, dict) else None
-        if not isinstance(core, dict):
-            return False
-        if any(bool(leg.get("changed")) for name, leg in legs.items() if name != "core"):
-            return False
-        current_qty = float(signal.get("put_current_core_qty"))
-        target_qty = float(signal.get("put_target_core_qty"))
-        return bool(
-            str(signal.get("market_date"))[:10] == "2026-09-29"
-            and core.get("changed")
-            and core.get("old_contract") is None
-            and abs(float(core.get("old_qty")) - 0.0) <= 1e-12
-            and current_qty > 0
-            and abs(current_qty - target_qty) <= 1e-12
-            and str(signal.get("put_current_contract")) == str(signal.get("put_target_contract"))
-            and str(core.get("new_contract")) == str(signal.get("put_target_contract"))
-            and str(core.get("new_security_id")) == str(signal.get("put_target_security_id"))
-            and abs(float(core.get("new_qty")) - target_qty) <= 1e-12
-        )
-    except (AttributeError, TypeError, ValueError):
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    return result if math.isfinite(result) else None
+
+
+def _iso_day(value: Any) -> str | None:
+    if not isinstance(value, str) or len(value) != 10:
+        return None
+    try:
+        return date.fromisoformat(value).isoformat()
+    except ValueError:
+        return None
+
+
+def ordinary_put_transition_identity_only(product: str, signal: dict[str, Any]) -> bool:
+    """Recognize only the exact, one-time IC identity migration record."""
+    if (
+        product != "IC"
+        or signal.get("product") != "IC"
+        or signal.get("v14_ordinary_put_plan_status") != "scheduled_t_plus_1_open"
+    ):
         return False
+    plan = signal.get("v14_ordinary_put_pending")
+    if not isinstance(plan, dict):
+        return False
+    legs = plan.get("legs")
+    if not isinstance(legs, dict) or set(legs) != {"core", "momentum"}:
+        return False
+    core, momentum = legs["core"], legs["momentum"]
+    if not isinstance(core, dict) or not isinstance(momentum, dict):
+        return False
+
+    current_qty = _finite_qty(signal.get("put_current_core_qty"))
+    target_qty = _finite_qty(signal.get("put_target_core_qty"))
+    current_momentum_qty = _finite_qty(signal.get("put_current_momentum_qty"))
+    target_momentum_qty = _finite_qty(signal.get("put_target_momentum_qty"))
+    core_old_qty = _finite_qty(core.get("old_qty"))
+    core_new_qty = _finite_qty(core.get("new_qty"))
+    momentum_old_qty = _finite_qty(momentum.get("old_qty"))
+    momentum_new_qty = _finite_qty(momentum.get("new_qty"))
+    target_contract = signal.get("put_target_contract")
+    current_contract = signal.get("put_current_contract")
+    target_security_id = signal.get("put_target_security_id")
+    current_security_id = signal.get("put_current_security_id")
+    return bool(
+        _iso_day(signal.get("market_date")) == "2026-09-29"
+        and _iso_day(signal.get("next_trade_date")) == "2026-09-30"
+        and plan.get("product") == "IC"
+        and _iso_day(plan.get("signal_day")) == "2026-09-29"
+        and _iso_day(plan.get("execution_day")) == "2026-09-30"
+        and core.get("changed") is True
+        and core.get("old_contract") is None
+        and core.get("old_security_id") is None
+        and core_old_qty is not None and math.isclose(core_old_qty, 0.0, abs_tol=1e-12)
+        and current_qty is not None and target_qty is not None
+        and current_qty > 0 and math.isclose(current_qty, target_qty, abs_tol=1e-12)
+        and isinstance(current_contract, str) and bool(current_contract)
+        and current_contract == target_contract
+        and isinstance(target_contract, str) and bool(target_contract)
+        and isinstance(target_security_id, str) and bool(target_security_id)
+        and (current_security_id is None or current_security_id == target_security_id)
+        and core.get("new_contract") == target_contract
+        and core.get("new_security_id") == target_security_id
+        and core_new_qty is not None and math.isclose(core_new_qty, target_qty, abs_tol=1e-12)
+        and momentum.get("changed") is False
+        and momentum.get("old_contract") is None
+        and momentum.get("new_contract") is None
+        and momentum.get("old_security_id") is None
+        and momentum.get("new_security_id") is None
+        and momentum_old_qty is not None and math.isclose(momentum_old_qty, 0.0, abs_tol=1e-12)
+        and momentum_new_qty is not None and math.isclose(momentum_new_qty, 0.0, abs_tol=1e-12)
+        and current_momentum_qty == target_momentum_qty == 0.0
+    )
+
+
+def validate_ordinary_put_plan(product: str, signal: dict[str, Any], next_trade_day: str) -> None:
+    """Fail closed on a scheduled plan whose identity differs from its signal."""
+    if signal.get("v14_ordinary_put_plan_status") != "scheduled_t_plus_1_open":
+        return
+    plan = signal.get("v14_ordinary_put_pending")
+    if not isinstance(plan, dict) or not isinstance(plan.get("legs"), dict):
+        raise ValueError(f"{product} scheduled ordinary Put plan is incomplete")
+    signal_day = _iso_day(signal.get("market_date"))
+    signal_next_day = _iso_day(signal.get("next_trade_date"))
+    if (
+        signal.get("product") != product
+        or plan.get("product") != product
+        or signal_day is None
+        or _iso_day(plan.get("signal_day")) != signal_day
+        or _iso_day(plan.get("execution_day")) != next_trade_day
+        or signal_next_day != next_trade_day
+        or set(plan["legs"]) != {"core", "momentum"}
+    ):
+        raise ValueError(f"{product} ordinary Put plan product/date/legs do not match the signal")
+
+    # This valid special case deliberately has an old-core quantity of zero in
+    # the v1.4 plan, while the parent ledger already holds the same IC contract.
+    # It is not an executable plan; verify it strictly before generic matching.
+    if ordinary_put_transition_identity_only(product, signal):
+        return
+
+    if product == "IC":
+        current_contracts = {
+            "core": signal.get("v14_core_put_current_contract"),
+            "momentum": signal.get("put_current_contract"),
+        }
+        target_contracts = {
+            "core": signal.get("v14_core_put_contract") or signal.get("put_target_contract"),
+            "momentum": signal.get("put_target_contract"),
+        }
+        current_security_id = signal.get("put_current_security_id")
+        target_security_ids = {
+            "core": signal.get("v14_core_put_security_id") or signal.get("put_target_security_id"),
+            "momentum": signal.get("put_target_security_id"),
+        }
+        current_quantities = {
+            "core": signal.get("put_current_core_qty"),
+            "momentum": signal.get("put_current_momentum_qty"),
+        }
+        target_quantities = {
+            "core": signal.get("put_target_core_qty"),
+            "momentum": signal.get("put_target_momentum_qty"),
+        }
+    else:
+        current_contracts = {
+            "core": signal.get("core_put_current_contract"),
+            "momentum": signal.get("momentum_put_current_contract"),
+        }
+        target_contracts = {
+            "core": signal.get("core_put_target_contract"),
+            "momentum": signal.get("momentum_put_target_contract"),
+        }
+        current_quantities = {
+            "core": signal.get("core_put_current_qty_normalized"),
+            "momentum": signal.get("momentum_put_current_qty_normalized"),
+        }
+        target_quantities = {
+            "core": signal.get("core_put_target_qty_normalized"),
+            "momentum": signal.get("momentum_put_target_qty_normalized"),
+        }
+
+    for name in ("core", "momentum"):
+        leg = plan["legs"][name]
+        if not isinstance(leg, dict):
+            raise ValueError(f"{product} ordinary Put {name} leg is invalid")
+        old_qty = _finite_qty(current_quantities[name])
+        new_qty = _finite_qty(target_quantities[name])
+        plan_old_qty = _finite_qty(leg.get("old_qty"))
+        plan_new_qty = _finite_qty(leg.get("new_qty"))
+        if None in (old_qty, new_qty, plan_old_qty, plan_new_qty):
+            raise ValueError(f"{product} ordinary Put {name} quantities must be finite")
+        expected_old_contract = current_contracts[name]
+        expected_new_contract = target_contracts[name]
+        if old_qty == 0:
+            expected_old_contract = None
+        if new_qty == 0:
+            expected_new_contract = None
+        expected_new_security = (
+            target_security_ids[name] if product == "IC" and new_qty > 0 else None
+        )
+        old_security_matches = (
+            product != "IC"
+            or old_qty == 0
+            or current_security_id is None
+            or leg.get("old_security_id") == current_security_id
+        )
+        changed = expected_old_contract != expected_new_contract or not math.isclose(
+            old_qty, new_qty, abs_tol=1e-12
+        )
+        if (
+            leg.get("old_contract") != expected_old_contract
+            or leg.get("new_contract") != expected_new_contract
+            or not math.isclose(plan_old_qty, old_qty, abs_tol=1e-12)
+            or not math.isclose(plan_new_qty, new_qty, abs_tol=1e-12)
+            or not old_security_matches
+            or leg.get("new_security_id") != expected_new_security
+            or type(leg.get("changed")) is not bool
+            or leg.get("changed") != changed
+        ):
+            raise ValueError(f"{product} ordinary Put {name} leg differs from signal identity/quantity")
 
 
 def action_parts(signal: dict[str, Any], product: str = "") -> list[str]:
@@ -311,7 +470,7 @@ def quarter_spread_reason(signal: dict[str, Any]) -> str:
     )
 
 
-def v14_route_reason(signal: dict[str, Any]) -> str:
+def v14_route_reason(signal: dict[str, Any], product: str = "") -> str:
     scope = signal.get("v14_signal_scope", "research_model_signal_only")
     route = signal.get("v14_route_state", "future")
     action = signal.get("v14_action", "HOLD")
@@ -338,7 +497,7 @@ def v14_route_reason(signal: dict[str, Any]) -> str:
     elif ordinary_status and ordinary_status != "awaiting_execution_day":
         text += (f"普通核心/动量买Put前次开盘计划关闭：{ordinary_status}；"
                  f"{signal.get('v14_ordinary_put_open_reason', '未形成可核验开盘成交')}。")
-    if ordinary_put_transition_identity_only(str(signal.get("product", "")), signal):
+    if ordinary_put_transition_identity_only(product or str(signal.get("product", "")), signal):
         text += "普通核心买Put内部迁移身份已与正式持仓对齐；合约和数量均未变化，不构成调整。"
     elif signal.get("v14_ordinary_put_plan_status") == "scheduled_t_plus_1_open":
         plan = signal.get("v14_ordinary_put_pending") or {}
@@ -367,7 +526,7 @@ def product_reasons(product: str, signal: dict[str, Any]) -> list[str]:
         call_reason(product, signal),
         roll_reason(signal),
         quarter_spread_reason(signal),
-        v14_route_reason(signal),
+        v14_route_reason(signal, product),
     ]
 
 
@@ -556,7 +715,6 @@ def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
 
 
 def validate_success_payload(payload: dict[str, Any]) -> None:
-    from datetime import date
     import math
     from check_ic_im_v1_4_delivery import expected_identity_for_day
     from prepare_ic_im_v1_4_marker import marker_name
@@ -594,6 +752,8 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
         if days["market_date"] >= date(2026, 9, 26):
             if str(signal.get("market_date") or "")[:10] != str(days["market_date"]):
                 raise ValueError(f"{product} signal day must match digest day")
+            if signal.get("v14_ordinary_put_plan_status") == "scheduled_t_plus_1_open":
+                validate_ordinary_put_plan(product, signal, days["next_trade_day"].isoformat())
             if product == "IM":
                 qty = signal.get("call_target_qty_normalized")
                 if isinstance(qty, bool) or not isinstance(qty, (int, float)) or not math.isfinite(qty) or abs(qty) > 1e-12:

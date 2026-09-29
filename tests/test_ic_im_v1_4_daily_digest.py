@@ -10,6 +10,8 @@ from datetime import date
 from pathlib import Path
 from unittest import mock
 
+from hypothesis import example, given, settings, strategies as st
+
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -22,6 +24,7 @@ import restore_ic_im_v1_4_ledger as restore  # noqa: E402
 
 def signal(product: str) -> dict[str, object]:
     value: dict[str, object] = {
+        "product": product,
         "core_action": "HOLD",
         "momentum_action": "DECREASE",
         "grid_action": "HOLD",
@@ -88,6 +91,128 @@ def signal(product: str) -> dict[str, object]:
     return value
 
 
+def fix9_identity_signal() -> dict[str, object]:
+    ic = signal("IC")
+    ic.update(
+        market_date="2026-09-29", next_trade_date="2026-09-30",
+        put_current_contract="510500P2612M07500", put_current_security_id=None,
+        put_current_core_qty=10, put_current_momentum_qty=0,
+        put_target_contract="510500P2612M07500", put_target_security_id="10012099",
+        put_target_core_qty=10, put_target_momentum_qty=0,
+        v14_ordinary_put_plan_status="scheduled_t_plus_1_open",
+        v14_ordinary_put_pending={
+            "product": "IC", "signal_day": "2026-09-29", "execution_day": "2026-09-30",
+            "legs": {
+                "core": {"changed": True, "old_contract": None, "old_security_id": None,
+                         "old_qty": 0, "new_contract": "510500P2612M07500",
+                         "new_security_id": "10012099", "new_qty": 10},
+                "momentum": {"changed": False, "old_contract": None, "old_security_id": None,
+                             "old_qty": 0, "new_contract": None,
+                             "new_security_id": None, "new_qty": 0},
+            },
+        },
+    )
+    return ic
+
+
+def fix9_success_payload(ic: dict[str, object]) -> dict[str, object]:
+    im = signal("IM")
+    im.update(market_date="2026-09-29", next_trade_date="2026-09-30")
+    return {
+        "status": "ok", "strategy_revision": "r1",
+        "build": gate.FIX9_BUILD, "delivery_revision": gate.FIX9_DELIVERY_REVISION,
+        "publication_mode": "close_confirmed", "market_date": "2026-09-29",
+        "completed_day": "2026-09-29", "verified_day": "2026-09-29",
+        "next_trade_day": "2026-09-30", "sequence": 8, "digest": "a" * 64,
+        "signals": {"IC": ic, "IM": im},
+    }
+
+
+IDENTITY_MUTATIONS = (
+    "signal_product", "plan_product", "plan_signal_day", "plan_execution_day",
+    "next_trade_day", "core_changed", "core_old_security", "core_contract_missing",
+    "core_security_missing", "core_qty", "current_contract", "current_security",
+    "momentum_changed", "momentum_qty", "extra_leg",
+)
+
+
+def corrupt_identity_signal(signal_value: dict[str, object], mutations: set[str]) -> None:
+    plan = signal_value["v14_ordinary_put_pending"]
+    assert isinstance(plan, dict)
+    legs = plan["legs"]
+    assert isinstance(legs, dict)
+    core, momentum = legs["core"], legs["momentum"]
+    assert isinstance(core, dict) and isinstance(momentum, dict)
+    if "signal_product" in mutations:
+        signal_value["product"] = "IM"
+    if "plan_product" in mutations:
+        plan["product"] = "IM"
+    if "plan_signal_day" in mutations:
+        plan["signal_day"] = "2026-09-28"
+    if "plan_execution_day" in mutations:
+        plan["execution_day"] = "2026-10-01"
+    if "next_trade_day" in mutations:
+        signal_value["next_trade_date"] = "2026-10-01"
+    if "core_changed" in mutations:
+        core["changed"] = False
+    if "core_old_security" in mutations:
+        core["old_security_id"] = "stale-id"
+    if "core_contract_missing" in mutations:
+        core["new_contract"] = None
+    if "core_security_missing" in mutations:
+        core["new_security_id"] = None
+    if "core_qty" in mutations:
+        core["new_qty"] = 11
+    if "current_contract" in mutations:
+        signal_value["put_current_contract"] = "510500P2612M07400"
+    if "current_security" in mutations:
+        signal_value["put_current_security_id"] = "stale-id"
+    if "momentum_changed" in mutations:
+        momentum["changed"] = True
+    if "momentum_qty" in mutations:
+        momentum.update(new_contract="510500P2612M07400", new_qty=1)
+    if "extra_leg" in mutations:
+        legs["unexpected"] = {"changed": False}
+
+
+@settings(max_examples=80, derandomize=True, deadline=None)
+@given(st.sets(st.sampled_from(IDENTITY_MUTATIONS), min_size=1, max_size=len(IDENTITY_MUTATIONS)))
+@example({"signal_product"})
+@example({"plan_product"})
+@example({"plan_signal_day"})
+@example({"momentum_qty"})
+@example({"plan_execution_day"})
+@example({"next_trade_day"})
+@example({"core_changed"})
+@example({"core_old_security"})
+@example({"core_contract_missing"})
+@example({"core_security_missing"})
+@example({"core_qty"})
+@example({"current_contract"})
+@example({"current_security"})
+@example({"momentum_changed"})
+@example({"extra_leg"})
+def test_fix9_identity_classifier_never_suppresses_mutated_plan(mutations: set[str]) -> None:
+    attacked = fix9_identity_signal()
+    corrupt_identity_signal(attacked, mutations)
+    assert digest.ordinary_put_transition_identity_only("IC", attacked) is False
+
+
+@settings(max_examples=80, derandomize=True, deadline=None)
+@given(st.sets(st.sampled_from(IDENTITY_MUTATIONS), min_size=1, max_size=len(IDENTITY_MUTATIONS)))
+@example({"signal_product"})
+@example({"momentum_qty"})
+@example({"plan_execution_day"})
+def test_fix9_malformed_identity_payload_is_rejected_before_email_build(mutations: set[str]) -> None:
+    attacked = fix9_identity_signal()
+    corrupt_identity_signal(attacked, mutations)
+    try:
+        digest.validate_success_payload(fix9_success_payload(attacked))
+    except ValueError:
+        return
+    raise AssertionError(f"malformed migration passed payload validation: {sorted(mutations)}")
+
+
 class ICIMV14DailyDigestTests(unittest.TestCase):
     def test_fix8_ordinary_put_open_plan_and_paper_confirmation_are_visible(self) -> None:
         ic = signal("IC")
@@ -108,31 +233,17 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         self.assertIn("并非账户成交", digest.v14_route_reason(ic))
 
     def test_fix8_first_day_identity_migration_does_not_claim_user_adjustment(self) -> None:
-        ic, im = signal("IC"), signal("IM")
+        ic, im = fix9_identity_signal(), signal("IM")
         for product, item in (("IC", ic), ("IM", im)):
             item.update(product=product, market_date="2026-09-29",
                         core_action="HOLD", momentum_action="HOLD", grid_action="HOLD",
                         put_action="HOLD", call_action="HOLD")
-        ic.update(
-            put_current_contract="510500P2612M07500", put_current_core_qty=10,
-            put_target_contract="510500P2612M07500", put_target_security_id="10012099",
-            put_target_core_qty=10, put_target_momentum_qty=0,
-            v14_ordinary_put_plan_status="scheduled_t_plus_1_open",
-            v14_ordinary_put_pending={
-                "signal_day": "2026-09-29", "execution_day": "2026-09-30",
-                "legs": {
-                    "core": {"changed": True, "old_contract": None, "old_security_id": None,
-                             "old_qty": 0, "new_contract": "510500P2612M07500",
-                             "new_security_id": "10012099", "new_qty": 10},
-                    "momentum": {"changed": False, "old_contract": None, "old_security_id": None,
-                                 "old_qty": 0, "new_contract": None,
-                                 "new_security_id": None, "new_qty": 0},
-                },
-            },
-        )
+        im["next_trade_date"] = "2026-09-30"
         self.assertEqual(digest.action_parts(ic, "IC"), [])
         self.assertIn("不构成调整", digest.v14_route_reason(ic))
         payload = {
+            "status": "ok", "strategy_revision": "r1",
+            "build": gate.FIX9_BUILD, "delivery_revision": gate.FIX9_DELIVERY_REVISION,
             "publication_mode": "close_confirmed", "completed_day": "2026-09-29",
             "market_date": "2026-09-29", "next_trade_day": "2026-09-30",
             "verified_day": "2026-09-29", "sequence": 8, "digest": "a" * 64,
@@ -141,6 +252,51 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         html = digest.build_success_html(payload, "")
         self.assertIn("无需调整", html)
         self.assertNotIn("存在下一交易日调整", html)
+        subject, body, actionable = digest.build_success(payload, "", "纠正版")
+        self.assertFalse(actionable)
+        self.assertIn("[无需调整]", subject)
+        self.assertIn("IC、IM均无需调整", body)
+        self.assertIn("不构成调整", body)
+        self.assertIn("无需调整", html)
+
+    def test_fix9_scheduled_plan_with_wrong_product_is_rejected_before_render(self) -> None:
+        ic, im = fix9_identity_signal(), signal("IM")
+        im["market_date"] = "2026-09-29"
+        payload = {
+            "status": "ok", "strategy_revision": "r1",
+            "build": gate.FIX9_BUILD, "delivery_revision": gate.FIX9_DELIVERY_REVISION,
+            "publication_mode": "close_confirmed", "market_date": "2026-09-29",
+            "completed_day": "2026-09-29", "verified_day": "2026-09-29",
+            "next_trade_day": "2026-09-30", "sequence": 8, "digest": "b" * 64,
+            "signals": {"IC": ic, "IM": im},
+        }
+        corrupt_identity_signal(ic, {"signal_product"})
+        with self.assertRaisesRegex(ValueError, "product/date/legs"):
+            digest.build_success(payload, "", "")
+
+    def test_fix9_real_scheduled_adjustment_is_kept_and_each_leg_is_checked(self) -> None:
+        im = signal("IM")
+        im.update(product="IM", market_date="2026-09-29", next_trade_date="2026-09-30",
+                  v14_ordinary_put_plan_status="scheduled_t_plus_1_open",
+                  v14_ordinary_put_pending={
+                      "product": "IM", "signal_day": "2026-09-29",
+                      "execution_day": "2026-09-30",
+                      "legs": {
+                          "core": {"old_contract": "P-CORE-OLD", "old_security_id": None,
+                                   "old_qty": 1.5, "new_contract": "P-CORE-NEXT",
+                                   "new_security_id": None, "new_qty": 1.5, "changed": True},
+                          "momentum": {"old_contract": None, "old_security_id": None,
+                                       "old_qty": 0, "new_contract": "P-MOM-NEXT",
+                                       "new_security_id": None, "new_qty": .75, "changed": True},
+                      },
+                  })
+        digest.validate_ordinary_put_plan("IM", im, "2026-09-30")
+        self.assertTrue(any("次日开盘计划" in item for item in digest.action_parts(im, "IM")))
+        im["v14_ordinary_put_pending"]["legs"]["momentum"].update(
+            new_contract="P-MOM-OTHER", new_qty=1.0, changed=False,
+        )
+        with self.assertRaisesRegex(ValueError, "leg differs"):
+            digest.validate_ordinary_put_plan("IM", im, "2026-09-30")
 
     def test_fix7_profit3x_open_plan_and_paper_fill_are_visible(self) -> None:
         ic = signal("IC")
