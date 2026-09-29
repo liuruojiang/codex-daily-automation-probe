@@ -1,10 +1,6 @@
 name: Microcap Post-Close Digest
 
 on:
-  schedule:
-    # 08:00 UTC is 16:00 Asia/Shanghai. The trading-day gate below suppresses
-    # weekends and exchange holidays.
-    - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
       validation_only:
