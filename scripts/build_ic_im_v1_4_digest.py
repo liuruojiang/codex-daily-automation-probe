@@ -52,7 +52,37 @@ def percent(value: Any, places: int = 2) -> str:
         return "N/A"
 
 
-def action_parts(signal: dict[str, Any]) -> list[str]:
+def ordinary_put_transition_identity_only(product: str, signal: dict[str, Any]) -> bool:
+    """A one-time IC field migration is not a user-visible position change."""
+    if product != "IC" or signal.get("v14_ordinary_put_plan_status") != "scheduled_t_plus_1_open":
+        return False
+    try:
+        plan = signal.get("v14_ordinary_put_pending")
+        legs = plan.get("legs") if isinstance(plan, dict) else None
+        core = legs.get("core") if isinstance(legs, dict) else None
+        if not isinstance(core, dict):
+            return False
+        if any(bool(leg.get("changed")) for name, leg in legs.items() if name != "core"):
+            return False
+        current_qty = float(signal.get("put_current_core_qty"))
+        target_qty = float(signal.get("put_target_core_qty"))
+        return bool(
+            str(signal.get("market_date"))[:10] == "2026-09-29"
+            and core.get("changed")
+            and core.get("old_contract") is None
+            and abs(float(core.get("old_qty")) - 0.0) <= 1e-12
+            and current_qty > 0
+            and abs(current_qty - target_qty) <= 1e-12
+            and str(signal.get("put_current_contract")) == str(signal.get("put_target_contract"))
+            and str(core.get("new_contract")) == str(signal.get("put_target_contract"))
+            and str(core.get("new_security_id")) == str(signal.get("put_target_security_id"))
+            and abs(float(core.get("new_qty")) - target_qty) <= 1e-12
+        )
+    except (AttributeError, TypeError, ValueError):
+        return False
+
+
+def action_parts(signal: dict[str, Any], product: str = "") -> list[str]:
     labels = {
         "core_action": "核心合约",
         "momentum_action": "动量袖",
@@ -67,7 +97,8 @@ def action_parts(signal: dict[str, Any]) -> list[str]:
             parts.append(f"{label} {value}")
     if signal.get("v14_profit_reentry_status") == "scheduled_t_plus_1_open":
         parts.append("核心买Put三倍兑现次日开盘计划")
-    if signal.get("v14_ordinary_put_plan_status") == "scheduled_t_plus_1_open":
+    if (signal.get("v14_ordinary_put_plan_status") == "scheduled_t_plus_1_open"
+            and not ordinary_put_transition_identity_only(product or str(signal.get("product", "")), signal)):
         parts.append("普通核心/动量买Put次日开盘计划")
     return parts
 
@@ -307,7 +338,9 @@ def v14_route_reason(signal: dict[str, Any]) -> str:
     elif ordinary_status and ordinary_status != "awaiting_execution_day":
         text += (f"普通核心/动量买Put前次开盘计划关闭：{ordinary_status}；"
                  f"{signal.get('v14_ordinary_put_open_reason', '未形成可核验开盘成交')}。")
-    if signal.get("v14_ordinary_put_plan_status") == "scheduled_t_plus_1_open":
+    if ordinary_put_transition_identity_only(str(signal.get("product", "")), signal):
+        text += "普通核心买Put内部迁移身份已与正式持仓对齐；合约和数量均未变化，不构成调整。"
+    elif signal.get("v14_ordinary_put_plan_status") == "scheduled_t_plus_1_open":
         plan = signal.get("v14_ordinary_put_pending") or {}
         changes = "、".join(
             f"{name} {leg.get('old_contract') or '空仓'}→{leg.get('new_contract') or '空仓'} "
@@ -450,7 +483,7 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
     signals = payload.get("signals", {})
     if set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
-    actions = {product: action_parts(signals[product]) for product in ("IC", "IM")}
+    actions = {product: action_parts(signals[product], product) for product in ("IC", "IM")}
     actionable = any(actions.values())
     realtime = str(payload.get("publication_mode", "close_confirmed")) == "realtime"
     day = str(payload.get("market_date" if realtime else "completed_day", "未知日期"))
@@ -577,7 +610,7 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
     signals = payload.get("signals", {})
     if set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
-    actions = {product: action_parts(signals[product]) for product in ("IC", "IM")}
+    actions = {product: action_parts(signals[product], product) for product in ("IC", "IM")}
     actionable = any(actions.values())
     mode = str(payload.get("publication_mode", "close_confirmed"))
     realtime = mode == "realtime"
