@@ -1564,6 +1564,34 @@ def append_mover_table(lines: list[str], rows: list[dict[str, object]]) -> None:
         )
 
 
+def append_etf_period_quality_notes(
+    lines: list[str], period_movers: dict[str, object], period_block: dict[str, object]
+) -> None:
+    stale_symbol_count = int(period_movers.get("stale_symbol_count") or 0)
+    if stale_symbol_count:
+        lines.append(f"> {stale_symbol_count} 只 ETF 的日线数据未能与共同交易日对齐，已略去。")
+    chart_errors = int(period_movers.get("chart_errors") or 0)
+    if chart_errors:
+        lines.append(f"> {chart_errors} 只 ETF 的周期行情读取失败，已略去。")
+    incomplete_window_count = int(period_block.get("incomplete_window_count") or 0)
+    if incomplete_window_count:
+        lines.append(f"> {incomplete_window_count} 只 ETF 缺少该周期所需的日线交易日，已略去。")
+    available_session_count = period_block.get("available_session_count")
+    required_session_count = period_block.get("required_session_count")
+    reference_window_short = (
+        available_session_count is not None
+        and required_session_count is not None
+        and int(available_session_count) < int(required_session_count)
+    )
+    if reference_window_short:
+        lines.append(
+            f"> 共同交易日只有 {int(available_session_count)} 个，少于计算该周期所需的 "
+            f"{int(required_session_count)} 个，未生成该周期涨跌榜。"
+        )
+    if stale_symbol_count or chart_errors or incomplete_window_count or reference_window_short:
+        lines.append("")
+
+
 def etf_forum_relevant(item: Item) -> bool:
     text = f"{item.title} {item.summary}".lower()
     if any(k in text for k in ["conference", "register now", "meetup", "moderator"]):
@@ -5348,9 +5376,22 @@ def latest_complete_market_sessions(
 
 
 def latest_complete_yahoo_sessions(rows: list[tuple[str, float]], as_of: datetime, limit: int = 22) -> list[str]:
-    return latest_complete_market_sessions(
-        rows, as_of, "America/New_York", US_MARKET_CLOSE, US_MARKET_CLOSE_BUFFER, limit
-    )
+    if not rows or limit <= 0:
+        return []
+    market_tz = ZoneInfo("America/New_York")
+    if as_of.tzinfo is None:
+        as_of = as_of.replace(tzinfo=market_tz)
+    local_as_of = as_of.astimezone(market_tz)
+    cutoff_date = local_as_of.date()
+    eligible_dates = sorted({date_s for date_s, _close in rows if date_s <= cutoff_date.isoformat()})
+    complete_dates = []
+    for date_s in eligible_dates:
+        session_day = date.fromisoformat(date_s)
+        close_time = broad_etf_movers.us_market_close_for_date(session_day)
+        close_boundary = datetime.combine(session_day, close_time, tzinfo=market_tz) + US_MARKET_CLOSE_BUFFER
+        if session_day < cutoff_date or local_as_of >= close_boundary:
+            complete_dates.append(date_s)
+    return complete_dates[-limit:]
 
 
 def latest_complete_yahoo_session(rows: list[tuple[str, float]], as_of: datetime) -> str:
@@ -6002,6 +6043,7 @@ def _build_etf(out_dir: Path) -> None:
             "## 目录",
             "- [策略相关 ETF / 指数涨跌](#策略相关-etf--指数涨跌)",
             "- [ETF 涨跌幅榜](#etf-涨跌幅榜)",
+            *(["- [ETF 周期涨跌幅榜](#etf-周期涨跌幅榜)"] if started.weekday() == 5 else []),
             "- [市场 regime 是否变化](#市场-regime-是否变化)",
         ]
     else:
@@ -6091,12 +6133,13 @@ def _build_etf(out_dir: Path) -> None:
             as_of=started,
             expected_session_dates=us_session_dates,
         )
+        lines += ["", "## ETF 周期涨跌幅榜", ""]
+        append_etf_period_quality_notes(lines, period_movers, {})
         for label, key in [("最近一周", "one_week"), ("最近一个月", "one_month")]:
             period_block = period_movers[key]
             assert isinstance(period_block, dict)
             lines += ["", f"### {label}涨幅前 10", "", f"共同交易日：{period_movers['market_date'] or '数据不足'}。"]
-            if period_movers["stale_symbol_count"]:
-                lines += [f"> {period_movers['stale_symbol_count']} 只 ETF 的最新日线交易日不一致，已略去。", ""]
+            append_etf_period_quality_notes(lines, {}, period_block)
             append_mover_table(lines, broad_mover_rows(period_block["gainers"]))
             lines += ["", f"### {label}跌幅前 10", "", f"共同交易日：{period_movers['market_date'] or '数据不足'}。"]
             append_mover_table(lines, broad_mover_rows(period_block["losers"]))

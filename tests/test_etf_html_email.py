@@ -18,6 +18,27 @@ import daily_reports as dr  # noqa: E402
 
 
 class EtfHtmlEmailTests(unittest.TestCase):
+    def test_period_rank_quality_notes_disclose_symbols_omitted_for_missing_bars(self) -> None:
+        lines: list[str] = []
+        dr.append_etf_period_quality_notes(
+            lines,
+            {"stale_symbol_count": 0},
+            {"incomplete_window_count": 1},
+        )
+
+        self.assertIn("> 1 只 ETF 缺少该周期所需的日线交易日，已略去。", lines)
+
+    def test_period_rank_quality_notes_distinguish_source_errors_and_short_reference_windows(self) -> None:
+        lines: list[str] = []
+        dr.append_etf_period_quality_notes(
+            lines,
+            {"chart_errors": 2, "stale_symbol_count": 0},
+            {"available_session_count": 5, "required_session_count": 6},
+        )
+
+        self.assertIn("> 2 只 ETF 的周期行情读取失败，已略去。", lines)
+        self.assertIn("> 共同交易日只有 5 个，少于计算该周期所需的 6 个，未生成该周期涨跌榜。", lines)
+
     def test_markdown_renderer_builds_email_safe_headings_tables_and_links(self) -> None:
         markdown = """# 美股 ETF 与资产配置日报 - 2026-08-22
 

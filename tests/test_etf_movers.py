@@ -42,6 +42,12 @@ def market_timestamp(day: str, hour_utc: int) -> int:
 
 
 class EtfMoverRulesTests(unittest.TestCase):
+    def test_us_market_close_calendar_covers_recurring_early_close_days(self) -> None:
+        self.assertEqual(movers.us_market_close_for_date("2026-11-27"), movers.US_EARLY_MARKET_CLOSE)
+        self.assertEqual(movers.us_market_close_for_date("2026-12-24"), movers.US_EARLY_MARKET_CLOSE)
+        self.assertEqual(movers.us_market_close_for_date("2028-07-03"), movers.US_EARLY_MARKET_CLOSE)
+        self.assertEqual(movers.us_market_close_for_date("2026-09-29"), movers.US_MARKET_CLOSE)
+
     def test_liquidity_requires_both_share_and_dollar_volume(self) -> None:
         self.assertTrue(movers.is_liquid(row("GOOD", "Liquid ETF")))
         self.assertFalse(movers.is_liquid(row("LOWD", "Low Dollar ETF", price=10.0, volume=100_000)))
@@ -280,8 +286,68 @@ class EtfMoverRulesTests(unittest.TestCase):
         self.assertEqual([item["symbol"] for item in result.gainers], [])
         self.assertEqual([item["symbol"] for item in result.losers], ["XBI"])
 
+    def test_daily_rankings_fails_closed_when_spy_reference_is_far_before_close(self) -> None:
+        smh_close = int(datetime(2026, 9, 29, 19, 28, tzinfo=timezone.utc).timestamp())
+        spy_stale_reference = int(datetime(2026, 9, 29, 19, 30, tzinfo=timezone.utc).timestamp())
+        result = movers.daily_rankings(
+            [row("SMH", "VanEck Semiconductor ETF", change=10.0, market_time=smh_close)],
+            as_of=datetime(2026, 9, 29, 21, 0, tzinfo=timezone.utc),
+            expected_session_date="2026-09-29",
+            expected_quote_timestamp=spy_stale_reference,
+        )
+
+        self.assertEqual(result.stale_quote_count, 1)
+        self.assertEqual(result.gainers, [])
+        self.assertEqual(result.losers, [])
+
+    def test_daily_rankings_accepts_early_close_quotes_and_rejects_after_close_quotes(self) -> None:
+        spy_early_close = int(datetime(2026, 11, 27, 18, 0, tzinfo=timezone.utc).timestamp())
+        smh_early_close = int(datetime(2026, 11, 27, 17, 59, tzinfo=timezone.utc).timestamp())
+        early_close_result = movers.daily_rankings(
+            [row("SMH", "VanEck Semiconductor ETF", change=2.0, market_time=smh_early_close)],
+            as_of=datetime(2026, 11, 27, 22, 0, tzinfo=timezone.utc),  # 17:00 ET
+            expected_session_date="2026-11-27",
+            expected_quote_timestamp=spy_early_close,
+        )
+        after_close_reference = int(datetime(2026, 9, 29, 20, 20, tzinfo=timezone.utc).timestamp())
+        after_close_result = movers.daily_rankings(
+            [row("SMH", "VanEck Semiconductor ETF", change=10.0, market_time=after_close_reference)],
+            as_of=datetime(2026, 9, 29, 21, 0, tzinfo=timezone.utc),
+            expected_session_date="2026-09-29",
+            expected_quote_timestamp=after_close_reference,
+        )
+
+        self.assertEqual([item["symbol"] for item in early_close_result.gainers], ["SMH"])
+        self.assertEqual(after_close_result.stale_quote_count, 1)
+        self.assertEqual(after_close_result.gainers, [])
+
+    def test_daily_rankings_rejects_etf_quote_outside_close_window_even_if_spy_is_at_lower_bound(self) -> None:
+        spy_timestamp = int(datetime(2026, 9, 29, 19, 55, tzinfo=timezone.utc).timestamp())
+        smh_timestamp = int(datetime(2026, 9, 29, 19, 50, tzinfo=timezone.utc).timestamp())
+        result = movers.daily_rankings(
+            [row("SMH", "VanEck Semiconductor ETF", change=10.0, market_time=smh_timestamp)],
+            as_of=datetime(2026, 9, 29, 21, 0, tzinfo=timezone.utc),
+            expected_session_date="2026-09-29",
+            expected_quote_timestamp=spy_timestamp,
+        )
+
+        self.assertEqual(result.stale_quote_count, 1)
+        self.assertEqual(result.gainers, [])
+
 
 class MarketSessionAlignmentTests(unittest.TestCase):
+    def test_yahoo_market_session_uses_early_close_boundary(self) -> None:
+        rows = [("2026-11-25", 100.0), ("2026-11-27", 101.0)]
+        before_buffer = reports.latest_complete_yahoo_sessions(
+            rows, datetime(2026, 11, 27, 18, 29, tzinfo=timezone.utc), limit=2
+        )
+        after_buffer = reports.latest_complete_yahoo_sessions(
+            rows, datetime(2026, 11, 27, 18, 30, tzinfo=timezone.utc), limit=2
+        )
+
+        self.assertEqual(before_buffer, ["2026-11-25"])
+        self.assertEqual(after_buffer, ["2026-11-25", "2026-11-27"])
+
     def test_latest_complete_session_ignores_incomplete_current_day(self) -> None:
         rows = [("2026-09-25", 100.0), ("2026-09-28", 101.0), ("2026-09-29", 102.0)]
 
@@ -401,6 +467,57 @@ class MarketSessionAlignmentTests(unittest.TestCase):
         self.assertEqual(result["one_week"]["gainers"][0]["date"], "2026-09-24")
         self.assertAlmostEqual(result["one_week"]["gainers"][0]["change"], 5.0)
         self.assertEqual(result["one_month"]["gainers"], [])
+
+    def test_period_rankings_counts_internal_missing_session_as_incomplete_window(self) -> None:
+        expected_dates = [
+            "2026-09-18", "2026-09-21", "2026-09-22",
+            "2026-09-23", "2026-09-24", "2026-09-25",
+        ]
+        chart = [
+            (date_s, 100.0 + idx)
+            for idx, date_s in enumerate(expected_dates)
+            if date_s != "2026-09-22"
+        ]
+        with patch.object(movers, "_chart_rows", return_value=chart):
+            result = movers.period_rankings(
+                [row("SMH", "VanEck Semiconductor ETF")],
+                as_of=datetime(2026, 9, 25, 21, 0, tzinfo=timezone.utc),
+                expected_session_dates=expected_dates,
+            )
+
+        self.assertEqual(result["market_date"], "2026-09-25")
+        self.assertEqual(result["stale_symbol_count"], 0)
+        self.assertEqual(result["one_week"]["incomplete_window_count"], 1)
+        self.assertEqual(result["one_week"]["gainers"], [])
+
+    def test_period_rankings_discloses_insufficient_reference_sessions(self) -> None:
+        expected_dates = ["2026-09-21", "2026-09-22", "2026-09-23", "2026-09-24", "2026-09-25"]
+        chart = [(date_s, 100.0 + idx) for idx, date_s in enumerate(expected_dates)]
+        with patch.object(movers, "_chart_rows", return_value=chart):
+            result = movers.period_rankings(
+                [row("SMH", "VanEck Semiconductor ETF")],
+                as_of=datetime(2026, 9, 25, 21, 0, tzinfo=timezone.utc),
+                expected_session_dates=expected_dates,
+            )
+
+        self.assertEqual(result["one_week"]["available_session_count"], 5)
+        self.assertEqual(result["one_week"]["required_session_count"], 6)
+        self.assertEqual(result["one_month"]["available_session_count"], 5)
+        self.assertEqual(result["one_month"]["required_session_count"], 22)
+
+    def test_period_rankings_does_not_mislabel_read_errors_as_stale_data(self) -> None:
+        with patch.object(movers, "_chart_rows", side_effect=OSError("source unavailable")):
+            result = movers.period_rankings(
+                [row("SMH", "VanEck Semiconductor ETF")],
+                as_of=datetime(2026, 9, 25, 21, 0, tzinfo=timezone.utc),
+                expected_session_dates=[
+                    "2026-09-18", "2026-09-21", "2026-09-22",
+                    "2026-09-23", "2026-09-24", "2026-09-25",
+                ],
+            )
+
+        self.assertEqual(result["chart_errors"], 1)
+        self.assertEqual(result["stale_symbol_count"], 0)
 
 
 if __name__ == "__main__":
