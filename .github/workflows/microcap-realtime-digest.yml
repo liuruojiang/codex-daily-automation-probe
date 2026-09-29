@@ -428,6 +428,10 @@ jobs:
             if [[ "${{ steps.refresh_mode.outputs.force_static_inputs }}" == "true" ]]; then
               static_refresh_args+=(--force-refresh-static-inputs)
             fi
+            # Create the check in this shell so its ID remains available to the
+            # completion update below; IDs assigned in the heartbeat subshell
+            # do not propagate back to this process.
+            publish_progress_check "attempt=${attempt}; elapsed_seconds=0; initializing refresh"
             python -u scripts/realtime_state_bundle.py refresh \
               --root . \
               --max-workers 4 \
