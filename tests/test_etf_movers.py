@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import sys
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -10,6 +12,7 @@ SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import etf_movers as movers  # noqa: E402
+import daily_reports as reports  # noqa: E402
 
 
 def row(
@@ -20,6 +23,7 @@ def row(
     volume: int = 500_000,
     change: float = 1.0,
     assets: float = 100_000_000.0,
+    market_time: int | None = None,
 ) -> dict[str, object]:
     return {
         "symbol": symbol,
@@ -28,9 +32,13 @@ def row(
         "averageDailyVolume3Month": volume,
         "regularMarketVolume": volume,
         "regularMarketChangePercent": change,
-        "regularMarketTime": 1_787_266_800,
+        "regularMarketTime": market_time if market_time is not None else 1_787_266_800,
         "netAssets": assets,
     }
+
+
+def market_timestamp(day: str, hour_utc: int) -> int:
+    return int(datetime.fromisoformat(f"{day}T{hour_utc:02d}:00:00+00:00").timestamp())
 
 
 class EtfMoverRulesTests(unittest.TestCase):
@@ -206,6 +214,103 @@ class EtfMoverRulesTests(unittest.TestCase):
     def test_unknown_theme_is_dropped_instead_of_using_placeholder_copy(self) -> None:
         unknown = movers._record(row("ZZZZ", "Example Distinctive Opportunities ETF"), "2026-08-25", 1.0)
         self.assertIsNone(unknown)
+
+    def test_daily_rankings_uses_only_quotes_on_the_reference_session(self) -> None:
+        as_of = datetime(2026, 9, 29, 15, 0, tzinfo=timezone.utc)
+        stale = row(
+            "SMH", "VanEck Semiconductor ETF", change=10.0,
+            market_time=market_timestamp("2026-09-25", 20),
+        )
+        aligned = row(
+            "XBI", "SPDR S&P Biotech ETF", change=-2.0,
+            market_time=market_timestamp("2026-09-28", 20),
+        )
+        intraday = row(
+            "IJR", "iShares Core S&P Small-Cap ETF", change=50.0,
+            market_time=market_timestamp("2026-09-29", 14),
+        )
+
+        result = movers.daily_rankings(
+            [stale, aligned, intraday],
+            as_of=as_of,
+            expected_session_date="2026-09-28",
+        )
+
+        self.assertEqual(result.session_date, "2026-09-28")
+        self.assertEqual(result.stale_quote_count, 2)
+        self.assertEqual([item["symbol"] for item in result.gainers], [])
+        self.assertEqual([item["symbol"] for item in result.losers], ["XBI"])
+
+    def test_daily_rankings_fails_closed_when_reference_session_is_missing(self) -> None:
+        current = row(
+            "XBI", "SPDR S&P Biotech ETF", change=-2.0,
+            market_time=market_timestamp("2026-09-28", 20),
+        )
+
+        result = movers.daily_rankings(
+            [current],
+            as_of=datetime(2026, 9, 29, 0, 51, tzinfo=timezone.utc),
+            expected_session_date="",
+        )
+
+        self.assertEqual(result.session_date, "")
+        self.assertEqual(result.stale_quote_count, 1)
+        self.assertEqual(result.gainers, [])
+        self.assertEqual(result.losers, [])
+
+
+class MarketSessionAlignmentTests(unittest.TestCase):
+    def test_latest_complete_session_ignores_incomplete_current_day(self) -> None:
+        rows = [("2026-09-25", 100.0), ("2026-09-28", 101.0), ("2026-09-29", 102.0)]
+
+        before_close = reports.latest_complete_yahoo_session(
+            rows, datetime(2026, 9, 29, 19, 59, tzinfo=timezone.utc)
+        )
+        at_close = reports.latest_complete_yahoo_session(
+            rows, datetime(2026, 9, 29, 20, 0, tzinfo=timezone.utc)
+        )
+        before_session = reports.latest_complete_yahoo_session(
+            rows, datetime(2026, 9, 27, 15, 0, tzinfo=timezone.utc)
+        )
+
+        self.assertEqual(before_close, "2026-09-28")
+        self.assertEqual(at_close, "2026-09-29")
+        self.assertEqual(before_session, "2026-09-25")
+
+    def test_yahoo_chart_bar_uses_exchange_timezone_for_its_session_date(self) -> None:
+        import json
+
+        timestamp = int(datetime(2026, 9, 29, 0, 0, tzinfo=timezone.utc).timestamp())
+        payload = {
+            "chart": {
+                "result": [
+                    {
+                        "timestamp": [timestamp],
+                        "indicators": {"quote": [{"close": [100.0]}]},
+                        "meta": {"exchangeTimezoneName": "America/New_York"},
+                    }
+                ]
+            }
+        }
+        cutoff = datetime(2026, 9, 29, 1, 0, tzinfo=timezone.utc)
+        token = reports.ETF_BUILD_CUTOFF.set(cutoff)
+        try:
+            with patch.object(reports, "fetch_bytes", return_value=json.dumps(payload).encode("utf-8")):
+                rows = reports.yahoo_daily_rows("SPY", "1mo")
+        finally:
+            reports.ETF_BUILD_CUTOFF.reset(token)
+
+        self.assertEqual(rows, [("2026-09-28", 100.0)])
+
+    def test_change_from_rows_rejects_a_stale_last_bar(self) -> None:
+        rows = [("2026-09-25", 100.0), ("2026-09-28", 101.0)]
+
+        self.assertIsNone(reports.change_from_rows(rows, expected_date="2026-09-29"))
+        aligned = reports.change_from_rows(rows, expected_date="2026-09-28")
+        self.assertIsNotNone(aligned)
+        assert aligned is not None
+        self.assertEqual(aligned[0], "2026-09-28")
+        self.assertAlmostEqual(aligned[1], 1.0)
 
 
 if __name__ == "__main__":
