@@ -45,7 +45,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
     def test_microcap_workflow_refreshes_state_before_signals(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
 
-        self.assertIn('- cron: "0 8 * * *"', text)
+        self.assertNotIn("\n  schedule:\n", text)
         self.assertNotIn('- cron: "3 5 * * *"', text)
         self.assertNotIn('- cron: "18 5 * * *"', text)
         self.assertNotIn('- cron: "33 5 * * *"', text)
@@ -65,9 +65,16 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('"akshare==1.18.46"', text)
         self.assertIn("scripts/realtime_state_bundle.py refresh", text)
         self.assertIn("--root .", text)
-        refresh_step = text[
-            text.index("name: Refresh Top100 realtime state") : text.index("name: Record refresh failure for digest")
+        refresh_start = text.index("- name: Refresh Top100 realtime state")
+        refresh_end = text.index("- name: Record refresh failure for digest", refresh_start)
+        refresh_step = text[refresh_start:refresh_end]
+        completion = refresh_step[
+            refresh_step.index("# Close the progress check once the refreshed state has passed validation.") :
         ]
+        self.assertIn('if [[ -n "${progress_check_id}" ]]', completion)
+        self.assertIn('"status": "completed"', completion)
+        self.assertIn('"conclusion": "success"', completion)
+        self.assertIn('check-runs/${progress_check_id}', completion)
         self.assertIn("--max-workers 4", refresh_step)
         self.assertIn("static_refresh_args+=(--force-refresh-static-inputs)", refresh_step)
         self.assertIn("steps.refresh_mode.outputs.force_static_inputs", refresh_step)
