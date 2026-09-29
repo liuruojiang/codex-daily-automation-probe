@@ -8,7 +8,7 @@ import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -340,6 +340,8 @@ class RankingResult:
     excluded_counts: dict[str, int]
     gainers: list[dict[str, Any]]
     losers: list[dict[str, Any]]
+    session_date: str = ""
+    stale_quote_count: int = 0
 
 
 def _name(row: dict[str, Any]) -> str:
@@ -562,27 +564,65 @@ def _record(row: dict[str, Any], date_s: str, change: float) -> dict[str, Any] |
     }
 
 
-def daily_rankings(rows: list[dict[str, Any]], limit: int = 10) -> RankingResult:
+def daily_rankings(
+    rows: list[dict[str, Any]],
+    limit: int = 10,
+    as_of: datetime | None = None,
+    expected_session_date: str | None = None,
+) -> RankingResult:
     eligible, excluded = eligible_universe(rows)
     ny = ZoneInfo("America/New_York")
-    records: list[dict[str, Any]] = []
+    cutoff_ny = (as_of or datetime.now(timezone.utc)).astimezone(ny)
+    cutoff_date = cutoff_ny.date().isoformat()
+    before_close = cutoff_ny.weekday() < 5 and cutoff_ny.hour < 16
+    dated_rows: list[tuple[dict[str, Any], str]] = []
     for row in eligible:
+        timestamp = int(row.get("regularMarketTime") or 0)
+        if not timestamp:
+            continue
+        date_s = datetime.fromtimestamp(timestamp, tz=timezone.utc).astimezone(ny).date().isoformat()
+        if date_s > cutoff_date or (before_close and date_s == cutoff_date):
+            continue
+        dated_rows.append((row, date_s))
+
+    latest_quote_date = max((date_s for _row, date_s in dated_rows), default="")
+    session_date = expected_session_date if expected_session_date is not None else latest_quote_date
+    aligned_quote_count = sum(
+        date_s == session_date and row.get("regularMarketChangePercent") is not None
+        for row, date_s in dated_rows
+    )
+    stale_quote_count = len(eligible) - aligned_quote_count
+    records: list[dict[str, Any]] = []
+    for row, date_s in dated_rows:
+        if date_s != session_date:
+            continue
         value = row.get("regularMarketChangePercent")
         if value is None:
             continue
-        timestamp = int(row.get("regularMarketTime") or 0)
-        date_s = datetime.fromtimestamp(timestamp, tz=timezone.utc).astimezone(ny).date().isoformat() if timestamp else ""
         record = _record(row, date_s, float(value))
         if record is None:
             excluded["unresolved_theme_detail"] = excluded.get("unresolved_theme_detail", 0) + 1
             continue
         records.append(record)
-    return RankingResult(len(rows), len(eligible), excluded, _rank(records, True, limit), _rank(records, False, limit))
+    return RankingResult(
+        len(rows), len(eligible), excluded,
+        _rank(records, True, limit), _rank(records, False, limit),
+        session_date, stale_quote_count,
+    )
 
 
-def _chart_rows(symbol: str) -> list[tuple[str, float]]:
+def _chart_rows(symbol: str, as_of: datetime | None = None) -> list[tuple[str, float]]:
     encoded = urllib.parse.quote(symbol)
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}?range=3mo&interval=1d&events=div%2Csplits"
+    cutoff = as_of or datetime.now(timezone.utc)
+    if cutoff.tzinfo is None:
+        cutoff = cutoff.replace(tzinfo=timezone.utc)
+    cutoff = cutoff.astimezone(timezone.utc)
+    period2 = int(cutoff.timestamp()) + 1
+    period1 = int((cutoff - timedelta(days=120)).timestamp())
+    url = (
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}"
+        f"?period1={period1}&period2={period2}&interval=1d&events=div%2Csplits"
+    )
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     last_error: Exception | None = None
     for attempt in range(2):
@@ -595,11 +635,13 @@ def _chart_rows(symbol: str) -> list[tuple[str, float]]:
             data = result[0]
             timestamps = data.get("timestamp") or []
             closes = ((data.get("indicators", {}).get("quote") or [{}])[0]).get("close") or []
+            exchange_tz = ZoneInfo(str(data.get("meta", {}).get("exchangeTimezoneName") or "America/New_York"))
             values: list[tuple[str, float]] = []
             for ts, close in zip(timestamps, closes):
                 if close is None or not math.isfinite(float(close)):
                     continue
-                values.append((datetime.fromtimestamp(int(ts), tz=timezone.utc).date().isoformat(), float(close)))
+                date_s = datetime.fromtimestamp(int(ts), tz=timezone.utc).astimezone(exchange_tz).date().isoformat()
+                values.append((date_s, float(close)))
             return values
         except Exception as exc:
             last_error = exc
@@ -610,12 +652,19 @@ def _chart_rows(symbol: str) -> list[tuple[str, float]]:
     return []
 
 
-def period_rankings(rows: list[dict[str, Any]], limit: int = 10) -> dict[str, Any]:
+def period_rankings(
+    rows: list[dict[str, Any]],
+    limit: int = 10,
+    as_of: datetime | None = None,
+) -> dict[str, Any]:
     eligible, excluded = eligible_universe(rows)
     chart_by_symbol: dict[str, list[tuple[str, float]]] = {}
     chart_errors = 0
     with ThreadPoolExecutor(max_workers=MAX_CHART_WORKERS) as pool:
-        futures = {pool.submit(_chart_rows, str(row.get("symbol") or "")): str(row.get("symbol") or "") for row in eligible}
+        futures = {
+            pool.submit(_chart_rows, str(row.get("symbol") or ""), as_of): str(row.get("symbol") or "")
+            for row in eligible
+        }
         for future in as_completed(futures):
             symbol = futures[future]
             try:
@@ -623,17 +672,26 @@ def period_rankings(rows: list[dict[str, Any]], limit: int = 10) -> dict[str, An
             except Exception:
                 chart_errors += 1
 
+    latest_dates = [chart[-1][0] for chart in chart_by_symbol.values() if chart]
+    session_date = max(latest_dates, default="")
+    aligned_symbol_count = sum(
+        bool(chart) and chart[-1][0] == session_date
+        for chart in chart_by_symbol.values()
+    )
+    stale_symbol_count = len(eligible) - aligned_symbol_count
     result: dict[str, Any] = {
         "universe_count": len(rows),
         "eligible_count": len(eligible),
         "excluded_counts": excluded,
         "chart_errors": chart_errors,
+        "market_date": session_date,
+        "stale_symbol_count": stale_symbol_count,
     }
     for label, bars_back in (("one_week", 5), ("one_month", 21)):
         records: list[dict[str, Any]] = []
         for row in eligible:
             chart = chart_by_symbol.get(str(row.get("symbol") or ""), [])
-            if len(chart) <= bars_back:
+            if len(chart) <= bars_back or not session_date or chart[-1][0] != session_date:
                 continue
             start_date, start_close = chart[-1 - bars_back]
             end_date, end_close = chart[-1]
