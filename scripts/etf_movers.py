@@ -8,7 +8,7 @@ import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, time as datetime_time, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -18,6 +18,25 @@ MIN_AVG_DAILY_VOLUME = 50_000
 MIN_AVG_DAILY_DOLLAR_VOLUME = 5_000_000.0
 MAX_UNIVERSE_SCAN = 6_000
 MAX_CHART_WORKERS = 16
+US_MARKET_CLOSE = datetime_time(16, 0)
+US_MARKET_CLOSE_BUFFER = timedelta(minutes=30)
+QUOTE_CLOSE_WINDOW = timedelta(minutes=5)
+US_EARLY_MARKET_CLOSE = datetime_time(13, 0)
+
+
+def us_market_close_for_date(session_date: str | date) -> datetime_time:
+    day = date.fromisoformat(session_date) if isinstance(session_date, str) else session_date
+    november_first = date(day.year, 11, 1)
+    first_thursday = november_first + timedelta(days=(3 - november_first.weekday()) % 7)
+    thanksgiving = first_thursday + timedelta(weeks=3)
+    is_day_after_thanksgiving = day == thanksgiving + timedelta(days=1)
+    is_christmas_eve_session = day.month == 12 and day.day == 24 and day.weekday() < 5
+    is_independence_eve_session = (
+        day.month == 7 and day.day == 3 and day.weekday() < 5 and date(day.year, 7, 4).weekday() != 5
+    )
+    if is_day_after_thanksgiving or is_christmas_eve_session or is_independence_eve_session:
+        return US_EARLY_MARKET_CLOSE
+    return US_MARKET_CLOSE
 
 QUERY_URL = "https://query1.finance.yahoo.com/v1/finance/screener"
 QUERY_PARAMS = {
@@ -340,6 +359,8 @@ class RankingResult:
     excluded_counts: dict[str, int]
     gainers: list[dict[str, Any]]
     losers: list[dict[str, Any]]
+    session_date: str = ""
+    stale_quote_count: int = 0
 
 
 def _name(row: dict[str, Any]) -> str:
@@ -562,27 +583,93 @@ def _record(row: dict[str, Any], date_s: str, change: float) -> dict[str, Any] |
     }
 
 
-def daily_rankings(rows: list[dict[str, Any]], limit: int = 10) -> RankingResult:
+def daily_rankings(
+    rows: list[dict[str, Any]],
+    limit: int = 10,
+    as_of: datetime | None = None,
+    expected_session_date: str | None = None,
+    expected_quote_timestamp: int | None = None,
+) -> RankingResult:
     eligible, excluded = eligible_universe(rows)
     ny = ZoneInfo("America/New_York")
-    records: list[dict[str, Any]] = []
+    cutoff_ny = (as_of or datetime.now(timezone.utc)).astimezone(ny)
+    cutoff_date = cutoff_ny.date().isoformat()
+    close_boundary = datetime.combine(
+        cutoff_ny.date(), us_market_close_for_date(cutoff_ny.date()), tzinfo=ny
+    ) + US_MARKET_CLOSE_BUFFER
+    current_date_complete = cutoff_ny.weekday() >= 5 or cutoff_ny >= close_boundary
+    dated_rows: list[tuple[dict[str, Any], str]] = []
     for row in eligible:
-        value = row.get("regularMarketChangePercent")
-        if value is None:
+        timestamp = int(row.get("regularMarketTime") or 0)
+        if not timestamp:
+            continue
+        date_s = datetime.fromtimestamp(timestamp, tz=timezone.utc).astimezone(ny).date().isoformat()
+        if date_s > cutoff_date or (date_s == cutoff_date and not current_date_complete):
+            continue
+        dated_rows.append((row, date_s))
+
+    latest_quote_date = max((date_s for _row, date_s in dated_rows), default="")
+    session_date = expected_session_date if expected_session_date is not None else latest_quote_date
+    reference_quote_is_valid = True
+    if expected_quote_timestamp is not None:
+        reference_quote_is_valid = False
+        if expected_quote_timestamp > 0 and session_date:
+            reference_dt = datetime.fromtimestamp(expected_quote_timestamp, tz=timezone.utc).astimezone(ny)
+            close_dt = datetime.combine(
+                datetime.fromisoformat(session_date).date(), us_market_close_for_date(session_date), tzinfo=ny
+            )
+            reference_quote_is_valid = (
+                reference_dt.date().isoformat() == session_date
+                and reference_dt >= close_dt - QUOTE_CLOSE_WINDOW
+                and reference_dt <= close_dt + QUOTE_CLOSE_WINDOW
+                and expected_quote_timestamp <= int(cutoff_ny.timestamp())
+            )
+    aligned_rows: list[tuple[dict[str, Any], str]] = []
+    for row, date_s in dated_rows:
+        if date_s != session_date or row.get("regularMarketChangePercent") is None:
             continue
         timestamp = int(row.get("regularMarketTime") or 0)
-        date_s = datetime.fromtimestamp(timestamp, tz=timezone.utc).astimezone(ny).date().isoformat() if timestamp else ""
+        if expected_quote_timestamp is not None:
+            if not reference_quote_is_valid:
+                continue
+            earliest_close_aligned_quote = max(
+                expected_quote_timestamp - int(QUOTE_CLOSE_WINDOW.total_seconds()),
+                int((close_dt - QUOTE_CLOSE_WINDOW).timestamp()),
+            )
+            if (
+                timestamp < earliest_close_aligned_quote
+                or timestamp > int((close_dt + QUOTE_CLOSE_WINDOW).timestamp())
+            ):
+                continue
+        aligned_rows.append((row, date_s))
+    stale_quote_count = len(eligible) - len(aligned_rows)
+    records: list[dict[str, Any]] = []
+    for row, date_s in aligned_rows:
+        value = row.get("regularMarketChangePercent")
         record = _record(row, date_s, float(value))
         if record is None:
             excluded["unresolved_theme_detail"] = excluded.get("unresolved_theme_detail", 0) + 1
             continue
         records.append(record)
-    return RankingResult(len(rows), len(eligible), excluded, _rank(records, True, limit), _rank(records, False, limit))
+    return RankingResult(
+        len(rows), len(eligible), excluded,
+        _rank(records, True, limit), _rank(records, False, limit),
+        session_date, stale_quote_count,
+    )
 
 
-def _chart_rows(symbol: str) -> list[tuple[str, float]]:
+def _chart_rows(symbol: str, as_of: datetime | None = None) -> list[tuple[str, float]]:
     encoded = urllib.parse.quote(symbol)
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}?range=3mo&interval=1d&events=div%2Csplits"
+    cutoff = as_of or datetime.now(timezone.utc)
+    if cutoff.tzinfo is None:
+        cutoff = cutoff.replace(tzinfo=timezone.utc)
+    cutoff = cutoff.astimezone(timezone.utc)
+    period2 = int(cutoff.timestamp()) + 1
+    period1 = int((cutoff - timedelta(days=120)).timestamp())
+    url = (
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}"
+        f"?period1={period1}&period2={period2}&interval=1d&events=div%2Csplits"
+    )
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     last_error: Exception | None = None
     for attempt in range(2):
@@ -595,11 +682,13 @@ def _chart_rows(symbol: str) -> list[tuple[str, float]]:
             data = result[0]
             timestamps = data.get("timestamp") or []
             closes = ((data.get("indicators", {}).get("quote") or [{}])[0]).get("close") or []
+            exchange_tz = ZoneInfo(str(data.get("meta", {}).get("exchangeTimezoneName") or "America/New_York"))
             values: list[tuple[str, float]] = []
             for ts, close in zip(timestamps, closes):
                 if close is None or not math.isfinite(float(close)):
                     continue
-                values.append((datetime.fromtimestamp(int(ts), tz=timezone.utc).date().isoformat(), float(close)))
+                date_s = datetime.fromtimestamp(int(ts), tz=timezone.utc).astimezone(exchange_tz).date().isoformat()
+                values.append((date_s, float(close)))
             return values
         except Exception as exc:
             last_error = exc
@@ -610,33 +699,104 @@ def _chart_rows(symbol: str) -> list[tuple[str, float]]:
     return []
 
 
-def period_rankings(rows: list[dict[str, Any]], limit: int = 10) -> dict[str, Any]:
+def period_rankings(
+    rows: list[dict[str, Any]],
+    limit: int = 10,
+    as_of: datetime | None = None,
+    expected_session_dates: list[str] | None = None,
+) -> dict[str, Any]:
     eligible, excluded = eligible_universe(rows)
     chart_by_symbol: dict[str, list[tuple[str, float]]] = {}
-    chart_errors = 0
+    chart_error_symbols: set[str] = set()
     with ThreadPoolExecutor(max_workers=MAX_CHART_WORKERS) as pool:
-        futures = {pool.submit(_chart_rows, str(row.get("symbol") or "")): str(row.get("symbol") or "") for row in eligible}
+        futures = {
+            pool.submit(_chart_rows, str(row.get("symbol") or ""), as_of): str(row.get("symbol") or "")
+            for row in eligible
+        }
         for future in as_completed(futures):
             symbol = futures[future]
             try:
                 chart_by_symbol[symbol] = future.result()
             except Exception:
-                chart_errors += 1
+                chart_error_symbols.add(symbol)
+    chart_errors = len(chart_error_symbols)
 
+    cutoff = as_of or datetime.now(timezone.utc)
+    if cutoff.tzinfo is None:
+        cutoff = cutoff.replace(tzinfo=timezone.utc)
+    cutoff_ny = cutoff.astimezone(ZoneInfo("America/New_York"))
+    cutoff_date = cutoff_ny.date().isoformat()
+    close_boundary = datetime.combine(
+        cutoff_ny.date(), us_market_close_for_date(cutoff_ny.date()), tzinfo=cutoff_ny.tzinfo
+    ) + US_MARKET_CLOSE_BUFFER
+    current_date_complete = cutoff_ny.weekday() >= 5 or cutoff_ny >= close_boundary
+    if expected_session_dates is not None:
+        completed_dates = sorted({
+            date_s for date_s in expected_session_dates
+            if date_s <= cutoff_date and (date_s != cutoff_date or current_date_complete)
+        })
+        session_date = completed_dates[-1] if completed_dates else ""
+    else:
+        completed_dates = []
+        observed_dates = [
+            date_s
+            for chart in chart_by_symbol.values()
+            for date_s, _close in chart
+            if date_s <= cutoff_date and (date_s != cutoff_date or current_date_complete)
+        ]
+        session_date = max(observed_dates, default="")
+    chart_by_symbol = {
+        symbol: sorted(
+            [(date_s, close) for date_s, close in chart if date_s <= session_date],
+            key=lambda point: point[0],
+        )
+        for symbol, chart in chart_by_symbol.items()
+    }
+    aligned_symbol_count = sum(
+        bool(chart) and chart[-1][0] == session_date
+        for chart in chart_by_symbol.values()
+    )
+    stale_symbol_count = max(0, len(eligible) - aligned_symbol_count - chart_errors)
     result: dict[str, Any] = {
         "universe_count": len(rows),
         "eligible_count": len(eligible),
         "excluded_counts": excluded,
         "chart_errors": chart_errors,
+        "market_date": session_date,
+        "stale_symbol_count": stale_symbol_count,
     }
     for label, bars_back in (("one_week", 5), ("one_month", 21)):
         records: list[dict[str, Any]] = []
+        incomplete_window_count = 0
+        required_dates = completed_dates[-(bars_back + 1):] if expected_session_dates is not None else []
+        required_session_count = bars_back + 1
+        available_session_count = len(required_dates) if expected_session_dates is not None else None
+        if expected_session_dates is not None and len(required_dates) < bars_back + 1:
+            result[label] = {
+                "gainers": [],
+                "losers": [],
+                "incomplete_window_count": incomplete_window_count,
+                "available_session_count": available_session_count,
+                "required_session_count": required_session_count,
+            }
+            continue
         for row in eligible:
             chart = chart_by_symbol.get(str(row.get("symbol") or ""), [])
-            if len(chart) <= bars_back:
+            if not chart or not session_date or chart[-1][0] != session_date:
                 continue
-            start_date, start_close = chart[-1 - bars_back]
-            end_date, end_close = chart[-1]
+            if required_dates:
+                closes_by_date = dict(chart)
+                if any(date_s not in closes_by_date for date_s in required_dates):
+                    incomplete_window_count += 1
+                    continue
+                start_date, end_date = required_dates[0], required_dates[-1]
+                start_close, end_close = closes_by_date[start_date], closes_by_date[end_date]
+            else:
+                if len(chart) <= bars_back:
+                    incomplete_window_count += 1
+                    continue
+                start_date, start_close = chart[-1 - bars_back]
+                end_date, end_close = chart[-1]
             if start_close <= 0:
                 continue
             record = _record(row, end_date, (end_close / start_close - 1.0) * 100.0)
@@ -646,5 +806,8 @@ def period_rankings(rows: list[dict[str, Any]], limit: int = 10) -> dict[str, An
         result[label] = {
             "gainers": _rank(records, True, limit),
             "losers": _rank(records, False, limit),
+            "incomplete_window_count": incomplete_window_count,
+            "available_session_count": available_session_count,
+            "required_session_count": required_session_count,
         }
     return result
