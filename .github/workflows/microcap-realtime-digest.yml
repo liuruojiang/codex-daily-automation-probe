@@ -454,6 +454,21 @@ jobs:
             fi
             sleep $(( attempt < 6 ? attempt * 20 : 120 ))
           done
+          # Close the progress check once the refreshed state has passed validation.
+          if [[ -n "${progress_check_id}" ]]; then
+            completed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            elapsed_seconds=$(( $(date +%s) - started_epoch ))
+            PROGRESS_COMPLETED_AT="${completed_at}" \
+            PROGRESS_SUMMARY="result=success; attempt=${attempt}; elapsed_seconds=${elapsed_seconds}; state refresh validated" \
+              python -c 'import json, os; print(json.dumps({"name": "Microcap refresh progress", "head_sha": os.environ["GITHUB_SHA"], "status": "completed", "conclusion": "success", "completed_at": os.environ["PROGRESS_COMPLETED_AT"], "output": {"title": "Microcap Top100 refresh complete", "summary": os.environ["PROGRESS_SUMMARY"]}}))' > progress_check_payload.json
+            curl --silent --show-error --fail-with-body \
+              --request PATCH \
+              --header "Accept: application/vnd.github+json" \
+              --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
+              --data @progress_check_payload.json \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/check-runs/${progress_check_id}" >/dev/null || true
+          fi
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
           if [[ "${status}" -eq 0 ]]; then echo "validated=true" >> "${GITHUB_OUTPUT}"; fi
           echo "REFRESH_STATE_EXIT_CODE=${status}" >> "${GITHUB_ENV}"
