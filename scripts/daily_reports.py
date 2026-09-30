@@ -7,6 +7,7 @@ import email.utils
 import html
 import hashlib
 import json
+import math
 import os
 import re
 import time
@@ -5625,6 +5626,53 @@ def broad_mover_rows(records: list[dict[str, object]]) -> list[dict[str, object]
     return rows
 
 
+def yahoo_quote_asset_changes(
+    assets: list[MarketAsset],
+    universe: list[dict[str, object]],
+    expected_session_date: str,
+    expected_previous_date: str,
+    expected_quote_timestamp: int,
+    as_of: datetime,
+) -> list[dict[str, object]]:
+    by_symbol = {
+        str(row.get("symbol") or "").upper(): row
+        for row in universe
+        if row.get("symbol")
+    }
+    results: list[dict[str, object]] = []
+    for asset in assets:
+        row = by_symbol.get(asset.symbol.upper())
+        if row is None:
+            continue
+        aligned = broad_etf_movers.close_aligned_quote_change(
+            row,
+            expected_session_date,
+            as_of,
+            expected_quote_timestamp,
+        )
+        if aligned is None:
+            continue
+        history = dict(yahoo_daily_rows(asset.symbol, "1mo"))
+        try:
+            current_close = float(row["regularMarketPrice"])
+            previous_close = float(history[expected_previous_date])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if not all(math.isfinite(value) and value > 0 for value in (current_close, previous_close)):
+            continue
+        published_close = history.get(expected_session_date)
+        if published_close is not None and not math.isclose(
+            float(published_close), current_close, rel_tol=1e-6, abs_tol=1e-4
+        ):
+            continue
+        results.append({
+            "asset": asset,
+            "date": expected_session_date,
+            "change": (current_close / previous_close - 1.0) * 100.0,
+        })
+    return results
+
+
 A_STRATEGY_ASSETS = [
     MarketAsset("H20955", "中证红利低波100全收益", "csindex", "H20955", "A策略使用的红利低波权益全收益指数；日涨跌取中证指数官网 H20955。", "A策略"),
     MarketAsset("399606", "创业板指数", "eastmoney", "0.399606", "A策略权益池里的创业板宽基指数。", "A策略"),
@@ -5920,14 +5968,29 @@ def _build_etf(out_dir: Path) -> None:
     expected_dates: dict[str, str] = {}
     expected_previous_dates: dict[str, str] = {}
     us_session_dates: list[str] = []
+    us_session_date = ""
+    spy_quote_timestamp = 0
+    market_session_date = ""
+    stale_quote_count = 0
     if include_market_summary:
         strategy_assets = A_STRATEGY_ASSETS + ADK_STRATEGY_ASSETS + B_STRATEGY_ASSETS + D_STRATEGY_ASSETS
         broad_universe = broad_etf_movers.fetch_universe()
+        if not broad_universe:
+            raise RuntimeError("US ETF universe is unavailable; refusing to send a stale market digest")
+        us_session_date = broad_etf_movers.latest_completed_us_session(
+            started, US_MARKET_CLOSE_BUFFER
+        ).isoformat()
+        us_previous_session_date = broad_etf_movers.previous_us_market_session(
+            us_session_date
+        ).isoformat()
         us_reference_rows = yahoo_daily_rows("SPY", "1mo") if broad_universe else []
         us_session_dates = latest_complete_yahoo_sessions(us_reference_rows, started, limit=22)
-        us_session_date = us_session_dates[-1] if us_session_dates else ""
+        # Yahoo's chart endpoint can publish the just-completed daily bar hours
+        # after its close-quote screener.  Keep chart history for period windows,
+        # but never let that lag move today's session anchor backwards.
+        us_session_dates = sorted(set(us_session_dates + [us_session_date]))[-22:]
         expected_dates["yahoo"] = us_session_date
-        expected_previous_dates["yahoo"] = us_session_dates[-2] if len(us_session_dates) > 1 else ""
+        expected_previous_dates["yahoo"] = us_previous_session_date
 
         if any(asset.source == "eastmoney" for asset in strategy_assets):
             eastmoney_reference_rows = eastmoney_daily_rows("1.000300", 80)
@@ -5960,16 +6023,12 @@ def _build_etf(out_dir: Path) -> None:
             None,
         )
         spy_quote_timestamp = int(spy_quote.get("regularMarketTime") or 0) if spy_quote else 0
-        spy_quote_date = (
-            datetime.fromtimestamp(spy_quote_timestamp, timezone.utc)
-            .astimezone(ZoneInfo("America/New_York"))
-            .date()
-            .isoformat()
-            if spy_quote_timestamp
-            else ""
-        )
-        if spy_quote_date != us_session_date:
-            spy_quote_timestamp = 0
+        if spy_quote is None or broad_etf_movers.close_aligned_quote_change(
+            spy_quote, us_session_date, started
+        ) is None:
+            raise RuntimeError(
+                f"SPY close quote is not aligned to completed US session {us_session_date}; refusing delivery"
+            )
         daily_movers = broad_etf_movers.daily_rankings(
             broad_universe,
             as_of=started,
@@ -5978,13 +6037,41 @@ def _build_etf(out_dir: Path) -> None:
         )
         market_session_date = getattr(daily_movers, "session_date", us_session_date)
         stale_quote_count = getattr(daily_movers, "stale_quote_count", 0)
+        non_yahoo_assets = [asset for asset in strategy_assets if asset.source != "yahoo"]
         strategy_rows = fetch_asset_changes(
-            strategy_assets,
+            non_yahoo_assets,
             expected_dates=expected_dates,
             expected_previous_dates=expected_previous_dates,
         )
+        yahoo_strategy_rows = yahoo_quote_asset_changes(
+            B_STRATEGY_ASSETS,
+            broad_universe,
+            us_session_date,
+            us_previous_session_date,
+            spy_quote_timestamp,
+            started,
+        )
+        if len(yahoo_strategy_rows) != len(B_STRATEGY_ASSETS):
+            missing = sorted(
+                {asset.code for asset in B_STRATEGY_ASSETS}
+                - {row["asset"].code for row in yahoo_strategy_rows if isinstance(row.get("asset"), MarketAsset)}
+            )
+            raise RuntimeError(
+                f"US strategy ETF close quotes are incomplete for {us_session_date}: {missing}"
+            )
+        strategy_rows.extend(yahoo_strategy_rows)
+        strategy_order = {asset.code: index for index, asset in enumerate(strategy_assets)}
+        strategy_rows.sort(
+            key=lambda row: strategy_order[
+                row["asset"].code if isinstance(row.get("asset"), MarketAsset) else ""
+            ]
+        )
         top_rows = broad_mover_rows(daily_movers.gainers)
         bottom_rows = broad_mover_rows(daily_movers.losers)
+        if not top_rows and not bottom_rows:
+            raise RuntimeError(
+                f"US ETF mover table has no close-aligned rows for {us_session_date}; refusing delivery"
+            )
     mover_rows = top_rows + bottom_rows
 
     items: list[Item] = []
@@ -6246,6 +6333,21 @@ def _build_etf(out_dir: Path) -> None:
             "body_sha256": hashlib.sha256(report_text.encode("utf-8")).hexdigest(),
             "selected_items": [asdict(item) for item in rendered_items],
             "history_added_items": [asdict(item) for item in rendered_items],
+            "market_data": {
+                "included": include_market_summary,
+                "us_expected_session": us_session_date,
+                "us_reference_symbol": "SPY" if include_market_summary else None,
+                "us_reference_timestamp": spy_quote_timestamp or None,
+                "us_strategy_expected_count": len(B_STRATEGY_ASSETS) if include_market_summary else 0,
+                "us_strategy_rows": [
+                    {"code": row["asset"].code, "date": row["date"]}
+                    for row in strategy_rows
+                    if isinstance(row.get("asset"), MarketAsset) and row["asset"].source == "yahoo"
+                ],
+                "us_mover_session": market_session_date,
+                "us_mover_row_count": len(mover_rows),
+                "us_stale_quote_count": stale_quote_count,
+            },
         })
         (out_dir / "collection_manifest.json").write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
 

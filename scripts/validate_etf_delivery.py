@@ -63,6 +63,23 @@ def validate(metadata: dict, manifest: dict, history_before: dict | None = None,
         missing = actual - parser.links
         if missing:
             errors.append(f"html_body is missing clickable article links: {sorted(missing)}")
+    market_data = manifest.get("market_data")
+    if isinstance(market_data, dict) and market_data.get("included"):
+        expected_session = market_data.get("us_expected_session")
+        strategy_rows = market_data.get("us_strategy_rows")
+        expected_count = market_data.get("us_strategy_expected_count")
+        if not isinstance(expected_session, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", expected_session):
+            errors.append("market_data.us_expected_session must be an exact trading date")
+        if not isinstance(strategy_rows, list) or len(strategy_rows) != expected_count:
+            errors.append("all configured US strategy ETFs must have close-aligned rows")
+        elif any(not isinstance(row, dict) or row.get("date") != expected_session for row in strategy_rows):
+            errors.append("US strategy ETF rows must match the completed US session")
+        if market_data.get("us_mover_session") != expected_session:
+            errors.append("US mover session must match the completed US session")
+        if not isinstance(market_data.get("us_mover_row_count"), int) or market_data["us_mover_row_count"] <= 0:
+            errors.append("US mover table must contain close-aligned rows")
+        if not isinstance(market_data.get("us_reference_timestamp"), int):
+            errors.append("US market session must be backed by a close-aligned SPY quote")
     if require_candidate_audit or history_before is not None:
         candidate_result = audit_candidates(manifest, history_before)
         # Candidate-audit findings describe editorial/source-quality risks.  They
