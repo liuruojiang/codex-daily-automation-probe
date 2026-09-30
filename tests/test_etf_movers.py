@@ -42,6 +42,70 @@ def market_timestamp(day: str, hour_utc: int) -> int:
 
 
 class EtfMoverRulesTests(unittest.TestCase):
+    def test_latest_completed_us_session_uses_calendar_not_a_lagging_chart(self) -> None:
+        self.assertEqual(
+            movers.latest_completed_us_session(
+                datetime(2026, 9, 30, 0, 36, tzinfo=timezone.utc),
+                reports.US_MARKET_CLOSE_BUFFER,
+            ),
+            datetime(2026, 9, 29).date(),
+        )
+
+    def test_latest_completed_us_session_skips_regular_holidays(self) -> None:
+        self.assertEqual(
+            movers.latest_completed_us_session(
+                datetime(2026, 9, 8, 0, 0, tzinfo=timezone.utc),
+                reports.US_MARKET_CLOSE_BUFFER,
+            ),
+            datetime(2026, 9, 4).date(),
+        )
+
+    def test_previous_us_market_session_skips_weekends_and_holidays(self) -> None:
+        self.assertEqual(
+            movers.previous_us_market_session("2026-09-08"),
+            datetime(2026, 9, 4).date(),
+        )
+
+    def test_close_aligned_quote_change_accepts_current_close_and_rejects_old_close(self) -> None:
+        as_of = datetime(2026, 9, 30, 0, 36, tzinfo=timezone.utc)
+        current = row(
+            "QQQM", "Invesco NASDAQ 100 ETF", change=0.42,
+            market_time=market_timestamp("2026-09-29", 20),
+        )
+        stale = row(
+            "QQQM", "Invesco NASDAQ 100 ETF", change=-1.06,
+            market_time=market_timestamp("2026-09-28", 20),
+        )
+        self.assertEqual(
+            movers.close_aligned_quote_change(current, "2026-09-29", as_of),
+            ("2026-09-29", 0.42),
+        )
+        self.assertIsNone(
+            movers.close_aligned_quote_change(stale, "2026-09-29", as_of)
+        )
+
+    def test_strategy_quote_change_uses_raw_previous_close_not_adjusted_quote_percent(self) -> None:
+        asset = reports.MarketAsset(
+            "DBMF", "iMGP DBi Managed Futures Strategy ETF", "yahoo", "DBMF", "fixture"
+        )
+        quote = row(
+            "DBMF", "iMGP DBi Managed Futures Strategy ETF", price=32.43,
+            change=-0.105965, market_time=market_timestamp("2026-09-29", 20),
+        )
+        with patch.object(
+            reports,
+            "yahoo_daily_rows",
+            return_value=[("2026-09-28", 32.61), ("2026-09-29", 32.43)],
+        ):
+            result = reports.yahoo_quote_asset_changes(
+                [asset], [quote], "2026-09-29", "2026-09-28",
+                market_timestamp("2026-09-29", 20),
+                datetime(2026, 9, 30, 0, 36, tzinfo=timezone.utc),
+            )
+
+        self.assertEqual(result[0]["date"], "2026-09-29")
+        self.assertAlmostEqual(float(result[0]["change"]), (32.43 / 32.61 - 1.0) * 100.0)
+
     def test_us_market_close_calendar_covers_recurring_early_close_days(self) -> None:
         self.assertEqual(movers.us_market_close_for_date("2026-11-27"), movers.US_EARLY_MARKET_CLOSE)
         self.assertEqual(movers.us_market_close_for_date("2026-12-24"), movers.US_EARLY_MARKET_CLOSE)

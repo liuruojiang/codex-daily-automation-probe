@@ -24,6 +24,73 @@ QUOTE_CLOSE_WINDOW = timedelta(minutes=5)
 US_EARLY_MARKET_CLOSE = datetime_time(13, 0)
 
 
+def _observed_us_holiday(day: date) -> date:
+    if day.weekday() == 5:
+        return day - timedelta(days=1)
+    if day.weekday() == 6:
+        return day + timedelta(days=1)
+    return day
+
+
+def _nth_weekday(year: int, month: int, weekday: int, occurrence: int) -> date:
+    first = date(year, month, 1)
+    return first + timedelta(days=(weekday - first.weekday()) % 7, weeks=occurrence - 1)
+
+
+def _last_weekday(year: int, month: int, weekday: int) -> date:
+    first_next_month = date(year + (month == 12), month % 12 + 1, 1)
+    last = first_next_month - timedelta(days=1)
+    return last - timedelta(days=(last.weekday() - weekday) % 7)
+
+
+def _easter_sunday(year: int) -> date:
+    # Gregorian computus, valid for the years used by the live workflow.
+    a = year % 19
+    b, c = divmod(year, 100)
+    d, e = divmod(b, 4)
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = divmod(c, 4)
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = (h + l - 7 * m + 114) % 31 + 1
+    return date(year, month, day)
+
+
+def us_market_holidays(year: int) -> set[date]:
+    holidays = {
+        _observed_us_holiday(date(year, 1, 1)),
+        _nth_weekday(year, 1, 0, 3),  # Martin Luther King Jr. Day
+        _nth_weekday(year, 2, 0, 3),  # Washington's Birthday
+        _easter_sunday(year) - timedelta(days=2),  # Good Friday
+        _last_weekday(year, 5, 0),  # Memorial Day
+        _observed_us_holiday(date(year, 6, 19)),
+        _observed_us_holiday(date(year, 7, 4)),
+        _nth_weekday(year, 9, 0, 1),  # Labor Day
+        _nth_weekday(year, 11, 3, 4),  # Thanksgiving
+        _observed_us_holiday(date(year, 12, 25)),
+        # When next New Year's Day is Saturday, the exchange observes it on
+        # December 31 of the current year.
+        _observed_us_holiday(date(year + 1, 1, 1)),
+    }
+    return {holiday for holiday in holidays if holiday.year == year}
+
+
+def is_us_market_session(day: date) -> bool:
+    return day.weekday() < 5 and day not in us_market_holidays(day.year)
+
+
+def previous_us_market_session(session_day: str | date) -> date:
+    candidate = (
+        date.fromisoformat(session_day) if isinstance(session_day, str) else session_day
+    ) - timedelta(days=1)
+    while not is_us_market_session(candidate):
+        candidate -= timedelta(days=1)
+    return candidate
+
+
 def us_market_close_for_date(session_date: str | date) -> datetime_time:
     day = date.fromisoformat(session_date) if isinstance(session_date, str) else session_date
     november_first = date(day.year, 11, 1)
@@ -37,6 +104,66 @@ def us_market_close_for_date(session_date: str | date) -> datetime_time:
     if is_day_after_thanksgiving or is_christmas_eve_session or is_independence_eve_session:
         return US_EARLY_MARKET_CLOSE
     return US_MARKET_CLOSE
+
+
+def latest_completed_us_session(as_of: datetime, close_buffer: timedelta) -> date:
+    ny = ZoneInfo("America/New_York")
+    if as_of.tzinfo is None:
+        as_of = as_of.replace(tzinfo=ny)
+    local_as_of = as_of.astimezone(ny)
+    candidate = local_as_of.date()
+    if is_us_market_session(candidate):
+        close_boundary = datetime.combine(
+            candidate, us_market_close_for_date(candidate), tzinfo=ny
+        ) + close_buffer
+        if local_as_of < close_boundary:
+            candidate -= timedelta(days=1)
+    else:
+        candidate -= timedelta(days=1)
+    while not is_us_market_session(candidate):
+        candidate -= timedelta(days=1)
+    return candidate
+
+
+def close_aligned_quote_change(
+    row: dict[str, Any],
+    expected_session_date: str,
+    as_of: datetime,
+    expected_quote_timestamp: int | None = None,
+) -> tuple[str, float] | None:
+    if not expected_session_date:
+        return None
+    timestamp = int(row.get("regularMarketTime") or 0)
+    if not timestamp:
+        return None
+    ny = ZoneInfo("America/New_York")
+    cutoff_ny = as_of.astimezone(ny) if as_of.tzinfo else as_of.replace(tzinfo=ny)
+    quote_dt = datetime.fromtimestamp(timestamp, tz=timezone.utc).astimezone(ny)
+    if quote_dt.date().isoformat() != expected_session_date or quote_dt > cutoff_ny:
+        return None
+    close_dt = datetime.combine(
+        date.fromisoformat(expected_session_date),
+        us_market_close_for_date(expected_session_date),
+        tzinfo=ny,
+    )
+    earliest = close_dt - QUOTE_CLOSE_WINDOW
+    if expected_quote_timestamp:
+        earliest = max(
+            earliest,
+            datetime.fromtimestamp(
+                expected_quote_timestamp - int(QUOTE_CLOSE_WINDOW.total_seconds()),
+                tz=timezone.utc,
+            ).astimezone(ny),
+        )
+    if quote_dt < earliest or quote_dt > close_dt + QUOTE_CLOSE_WINDOW:
+        return None
+    try:
+        value = float(row["regularMarketChangePercent"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not math.isfinite(value):
+        return None
+    return expected_session_date, value
 
 QUERY_URL = "https://query1.finance.yahoo.com/v1/finance/screener"
 QUERY_PARAMS = {

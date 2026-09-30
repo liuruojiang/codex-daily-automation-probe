@@ -20,6 +20,32 @@ class DeliveryGateTests(unittest.TestCase):
     def test_valid_full_email_passes(self):
         self.assertEqual(validate(self.metadata, self.manifest), [])
 
+    def test_stale_us_strategy_or_mover_session_is_blocked(self):
+        self.manifest["market_data"] = {
+            "included": True,
+            "us_expected_session": "2026-09-29",
+            "us_reference_timestamp": 1_790_712_000,
+            "us_strategy_expected_count": 1,
+            "us_strategy_rows": [{"code": "QQQM", "date": "2026-09-28"}],
+            "us_mover_session": "2026-09-28",
+            "us_mover_row_count": 20,
+        }
+        errors = validate(self.metadata, self.manifest)
+        self.assertTrue(any("strategy ETF rows" in error for error in errors))
+        self.assertTrue(any("mover session" in error for error in errors))
+
+    def test_complete_us_market_evidence_passes(self):
+        self.manifest["market_data"] = {
+            "included": True,
+            "us_expected_session": "2026-09-29",
+            "us_reference_timestamp": 1_790_712_000,
+            "us_strategy_expected_count": 1,
+            "us_strategy_rows": [{"code": "QQQM", "date": "2026-09-29"}],
+            "us_mover_session": "2026-09-29",
+            "us_mover_row_count": 20,
+        }
+        self.assertEqual(validate(self.metadata, self.manifest), [])
+
     def test_edited_body_after_collection_is_blocked(self):
         self.metadata["body"] += "被改动的报告"
         self.assertTrue(any("body_sha256" in e for e in validate(self.metadata, self.manifest)))

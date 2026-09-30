@@ -62,15 +62,33 @@ class EtfHtmlEmailTests(unittest.TestCase):
 
     def test_build_etf_writes_full_inline_bodies_without_email_attachment(self) -> None:
         fixed_now = dr.datetime(2026, 8, 19, 8, 0, tzinfo=dr.BJ)
+        yahoo_rows = [
+            {"asset": asset, "date": "2026-08-18", "change": 1.0}
+            for asset in dr.B_STRATEGY_ASSETS
+        ]
+        mover_row = {
+            "asset": dr.MarketAsset("SMH", "半导体 ETF", "yahoo", "SMH", "半导体行业。"),
+            "date": "2026-08-18",
+            "change": 1.0,
+        }
         patches = [
             mock.patch.object(dr, "now_bj", return_value=fixed_now),
             mock.patch.object(dr, "fetch_asset_changes", return_value=[]),
-            mock.patch.object(dr.broad_etf_movers, "fetch_universe", return_value=[]),
+            mock.patch.object(dr, "yahoo_quote_asset_changes", return_value=yahoo_rows),
+            mock.patch.object(dr, "yahoo_daily_rows", return_value=[("2026-08-17", 100.0), ("2026-08-18", 101.0)]),
+            mock.patch.object(dr, "eastmoney_daily_rows", return_value=[("2026-08-17", 100.0), ("2026-08-18", 101.0)]),
+            mock.patch.object(dr, "csindex_daily_rows", return_value=[("2026-08-17", 100.0), ("2026-08-18", 101.0)]),
+            mock.patch.object(dr.broad_etf_movers, "fetch_universe", return_value=[{"symbol": "SPY", "regularMarketTime": 1}]),
+            mock.patch.object(dr.broad_etf_movers, "close_aligned_quote_change", return_value=("2026-08-18", 1.0)),
             mock.patch.object(
                 dr.broad_etf_movers,
                 "daily_rankings",
-                return_value=SimpleNamespace(gainers=[], losers=[], universe_count=0, eligible_count=0),
+                return_value=SimpleNamespace(
+                    gainers=[{}], losers=[], universe_count=1, eligible_count=1,
+                    session_date="2026-08-18", stale_quote_count=0,
+                ),
             ),
+            mock.patch.object(dr, "broad_mover_rows", side_effect=[[mover_row], []]),
             mock.patch.object(dr, "parse_feed", return_value=[]),
             mock.patch.object(dr, "collect_etf_fixed_monitor_updates_with_audit", return_value=([], [])),
             mock.patch.object(dr, "collect_etf_forum_items", return_value=[]),
