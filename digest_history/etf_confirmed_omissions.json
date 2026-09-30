@@ -520,6 +520,58 @@
       "zh_summary": "原文称 VFLO、QGRO、OUSM 等规则型 ETF 在九月按指数方法更换持仓；这提示“被动”并不等于持仓静态，个别持仓叙述仍需核实。",
       "evidence_level": "publisher_full_index_provider_article",
       "verify_next": "核对各指数方法、生效时点、真实持仓、交易成本及发行方披露。"
+    },
+    {
+      "origin_run_id": "36651165031",
+      "origin_report_date": "2026-09-30",
+      "source": "Seeking Alpha ETFs",
+      "title": "Staying Bullish On The HGER ETF",
+      "zh_title": "HGER 商品 ETF 的油金集中敞口",
+      "url": "https://seekingalpha.com/article/4950759-staying-bullish-on-hger-etf",
+      "published": "2026-09-29T17:50:13+00:00",
+      "summary": "The publisher public summary describes HGER as strongly weighted to oil products (38.2%) and gold (30.6%), with smaller agriculture and base-metal exposures. The author argues for a bullish commodity outlook amid inflation and geopolitical risk, while acknowledging an investment view rather than establishing a diversified all-weather result.",
+      "zh_summary": "作者公开摘要称，HGER 的石油产品和黄金权重分别约为 38.2% 和 30.6%，另有农业及基本金属敞口；作者基于通胀和地缘风险维持看多。这是个人观点，不能把名称中的“全天候”当作已验证的分散效果。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对发行人当期持仓、期货展期、黄金与油品集中度、费用及跨通胀状态的净值总回报。"
+    },
+    {
+      "origin_run_id": "36651165031",
+      "origin_report_date": "2026-09-30",
+      "source": "Seeking Alpha ETFs",
+      "title": "RDIV: Durable Income, Fair Price, Thin Margin Over Cash",
+      "zh_title": "RDIV 股息收入与现金收益率的比较",
+      "url": "https://seekingalpha.com/article/4950755-rdiv-durable-income-fair-price-thin-margin-over-cash",
+      "published": "2026-09-29T17:41:04+00:00",
+      "summary": "The publisher public summary puts RDIV trailing yield near 3.65% and describes its distributions as covered, but the author rates it Hold because the income spread over risk-free alternatives is thin. The summary cites utilities, REITs and staples as bond-like sector exposures vulnerable to sustained high interest rates and expects chiefly yield-driven mid-single-digit total returns.",
+      "zh_summary": "作者公开摘要称，RDIV 近 3.65% 的历史股息率有覆盖，但相对现金或国债的收益优势薄；公用事业、REITs 和必需消费品的利率敏感性可能压制总回报。中个位数总回报是作者预期，不是已实现结果。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "以同日、税后总回报和风险口径比较 RDIV、短债与现金，并核验行业权重、股息可持续性和基金费用。"
+    },
+    {
+      "origin_run_id": "36651165031",
+      "origin_report_date": "2026-09-30",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "Forget SPY’s Dividend. Here Is What $100,000 in State Street’s High-Dividend Version Pays",
+      "zh_title": "SPYD 与 SPY：较高分红背后的行业和总回报差异",
+      "url": "https://247wallst.com/investing/etf/2026/09/29/forget-spys-dividend-here-is-what-100000-in-state-streets-high-dividend-version-pays/?.tsrc=rss",
+      "published": "2026-09-29T23:06:47+00:00",
+      "summary": "The full article compares the capitalization-weighted S&P 500 fund SPY with SPYD, which selects high-yield S&P 500 constituents and weights them roughly equally. It quotes approximately 4.5% trailing yield for SPYD versus 1% for SPY, but also notes heavier REIT, utility, bank and energy exposure and weaker historical growth. Its performance table mixes SPYD adjusted returns with SPY unadjusted price returns, so the comparison needs a same-basis total-return reconstruction.",
+      "zh_summary": "原文比较市值加权 SPY 与高股息、近似等权的 SPYD：所列历史分红率约 1% 对 4.5%，但 SPYD 更偏 REITs、公用事业、银行和能源。原表把 SPYD 调整后收益与 SPY 未调整价格收益混用，不能直接据此断言长期总回报优劣。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "用基金官方分红和同区间含分红总回报重算，再比较行业权重、利率敏感性、税负、费用与买卖价差。"
+    },
+    {
+      "origin_run_id": "36651165031",
+      "origin_report_date": "2026-09-30",
+      "source": "arXiv q-fin.TR",
+      "title": "Optimal Liquidation with Support and Resistance Levels under Multi-Skew Brownian Motion",
+      "zh_title": "支撑与阻力水平下的最优清算模型",
+      "url": "https://arxiv.org/abs/2609.35063",
+      "published": "2026-09-29T04:00:00+00:00",
+      "summary": "The arXiv abstract studies perpetual optimal liquidation under a geometric multi-skew Brownian motion with local-time pushes at support and resistance levels. It derives three continuation-region geometries and a closed-form criterion for them, including a case where selling at resistance emerges as a model conclusion. Identification of resistance strength is only interval-valued, and the abstract gives no market-data validation or execution-cost test.",
+      "zh_summary": "论文摘要在多偏斜布朗运动的理想化价格模型中求最优清算，给出三种继续持有区间及判别条件；“阻力位卖出”是模型内结论。摘要没有真实市场回测，阻力强度也只能区间识别，不能视为可执行信号。",
+      "evidence_level": "arxiv_abstract_only",
+      "verify_next": "检查全文假设、价格点位的事前识别、样本外可预测性及点差、冲击、滑点后的可执行性。"
     }
   ]
 }
