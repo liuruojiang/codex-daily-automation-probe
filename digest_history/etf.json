@@ -3593,6 +3593,234 @@
       "source": "Seeking Alpha ETFs",
       "title": "TOPT: Plenty Of AI, Just The Wrong Layers",
       "url": "https://seekingalpha.com/article/4950071-topt-plenty-of-ai-just-the-wrong-layers"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "QQQM Charges 0.15% and QQQ Charges 0.18%. A Wide Spread Can Take That Back on a Single Trade",
+      "url": "https://247wallst.com/investing/etf/2026/09/29/qqqm-charges-0-15-and-qqq-charges-0-18-a-wide-spread-can-take-that-back-on-a-single-trade/?.tsrc=rss"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "S&P 500, Dow Extend Losses From Elevated Yield Pressure — SPCX, TGT, AAPL, MU, NTAP In Focus",
+      "url": "https://stocktwits.com/news-articles/markets/equity/s-and-p-500-dow-extend-losses-from-elevated-yield-pressure-spcx-tgt-aapl-mu-ntap-in-focus/cZMZLlCRBW0?.tsrc=rss"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "A Wealth of Common Sense",
+      "title": "A Brutal Bond Market",
+      "url": "https://awealthofcommonsense.com/2026/09/a-brutal-bond-market/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "Quantocracy",
+      "title": "Recent Quant Links from Quantocracy as of 09/28/2026",
+      "url": "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-09282026/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.TR",
+      "title": "Oracle-Parametrized Constant Function Market Makers: From Price Feeds to Pricing Rules",
+      "url": "https://arxiv.org/abs/2609.33799"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.TR",
+      "title": "Packets, Transactions and Queues: Design Principles for HFT Systems from a Measurement Study of CME Market Data",
+      "url": "https://arxiv.org/abs/2609.32848"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.TR",
+      "title": "Extended State-dependent Hawkes Process for Limit Order Books: Mathematical Foundation and the Reproduction of Volatility Signature Plots",
+      "url": "https://arxiv.org/abs/2604.23961"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.ST",
+      "title": "EverMine: Dissecting the Self-Evolution of Research Capabilities in Long-Horizon Alpha Research",
+      "url": "https://arxiv.org/abs/2609.33524"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.ST",
+      "title": "Source Exclusion in Regime-Gated Forecasting: A Cross-Market Audit of Equity-Factor Predictability",
+      "url": "https://arxiv.org/abs/2601.10732"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.ST",
+      "title": "Modeling Dynamic Correlation Matrices with Shrinkage Priors",
+      "url": "https://arxiv.org/abs/2605.06818"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.ST",
+      "title": "Estimating the Stochastic Discount Factor from Option Prices and Predicting the Equity Premium",
+      "url": "https://arxiv.org/abs/2607.08500"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.ST",
+      "title": "From Cointegration to Out-of-Sample Failure: A Pairs-Trading Case Study on PEP-KO",
+      "url": "https://arxiv.org/abs/2609.35359"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.RM",
+      "title": "Exact Trade-Level Attribution of FRTB-IMA Capital",
+      "url": "https://arxiv.org/abs/2609.32238"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.RM",
+      "title": "Robust distortion risk metrics with Wasserstein and Unimodal Constraints",
+      "url": "https://arxiv.org/abs/2511.08662"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.RM",
+      "title": "Implementability in Insurance Markets with Adverse Selection",
+      "url": "https://arxiv.org/abs/2609.31959"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.PM",
+      "title": "Optimal Reinsurance-Dividend Strategy with Fixed Transaction Costs in a Regime-Switching Brownian Risk Model: A Viscosity Solution to the Impulse Control Problem",
+      "url": "https://arxiv.org/abs/2609.32686"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.PM",
+      "title": "From Word Counts to Context: Topic Models for Asset Pricing",
+      "url": "https://arxiv.org/abs/2609.34169"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.PM",
+      "title": "Retrieval-Augmented Diffusion Modeling for Stochastic Discount Factor Portfolios",
+      "url": "https://arxiv.org/abs/2609.35086"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.PM",
+      "title": "Return-Decay Residuals and Tail-Risk Forecasting: Timing Artifacts, Conditional Inference, and Cross-Market Evidence",
+      "url": "https://arxiv.org/abs/2512.11913"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.PM",
+      "title": "Taming the Greeks: Option Portfolios with Inductive Biases",
+      "url": "https://arxiv.org/abs/2609.33767"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.PM",
+      "title": "Portfolio Choice with Competing Precautionary and Accumulation Goals",
+      "url": "https://arxiv.org/abs/2606.03158"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.TR",
+      "title": "Evolution of Market Microstructure in the Age of AI",
+      "url": "https://arxiv.org/abs/2609.33058"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "arXiv q-fin.RM",
+      "title": "Deep kernel hedging",
+      "url": "https://arxiv.org/abs/2609.34474"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "Morningstar The Long View（播客页面）",
+      "title": "Robin Wigglesworth: Why Bonds Are Behind Every Financial Boom and Bust",
+      "url": "https://www.morningstar.com/podcasts/the-long-view/robin-wigglesworth-why-bonds-are-behind-every-financial-boom-bust"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "Bogleheads.org Forum (comments/replies 101; views 8559)",
+      "title": "Personal Investments • Bond funds have jumped the shark",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8867281#p8867281"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "A Wealth of Common Sense",
+      "title": "Talk Your Book: The Next Generation of Income Strategies",
+      "url": "https://awealthofcommonsense.com/2026/09/talk-your-book-the-next-generation-of-income-strategies/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "Seeking Alpha ETFs",
+      "title": "JPC: Preferred Income, Hold Until Conditions Improve",
+      "url": "https://seekingalpha.com/article/4950404-jpc-preferred-income-hold-until-conditions-improve"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "Seeking Alpha ETFs",
+      "title": "DHS: Why Rates Could Chill, And US Dividend Stocks Could Benefit (Upgrade)",
+      "url": "https://seekingalpha.com/article/4950388-dhs-why-rates-could-chill-and-us-dividend-stocks-could-benefit-upgrade"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "HKEX News Releases",
+      "title": "香港交易所歡迎四隻追蹤香港交易所跨市場指數的新ETF上市",
+      "url": "https://www.hkex.com.hk/News/News-Release/2026/260928news?sc_lang=zh-HK"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "Capital Allocators",
+      "title": "People, Process, and Fixed Income Arbitrage at Bracebridge",
+      "url": "https://www.capitalallocators.com/podcast/people-process-and-fixed-income-arbitrage-at-bracebridge/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "ETF Trends",
+      "title": "Northern Trust to Convert $33 Billion in Mutual Funds to ETFs",
+      "url": "https://www.etftrends.com/equity-etf-content-hub/northern-trust-convert-33-billion-mutual-funds-etfs/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "ETF Trends",
+      "title": "Navigating Rate Uncertainty: Why USFR Shines After the Fed’s September Meeting",
+      "url": "https://www.etftrends.com/model-portfolio-content-hub/navigating-rate-uncertainty-usfr-shines-after-fed-september-meeting/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "ETF Trends",
+      "title": "Why Choose Free Cash Flow Over Other Accounting Metrics?",
+      "url": "https://www.etftrends.com/free-cash-flow-content-hub/choose-free-cash-flow-over-other-accounting-metrics/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "ETF Trends",
+      "title": "Putnam Converts Focused U.S. Research Strategy to ETF Structure",
+      "url": "https://www.etftrends.com/equity-etf-content-hub/putnam-converts-focused-u-s-research-strategy-etf-structure/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "ETF Trends",
+      "title": "BlackRock Model Portfolios Rebalance: Why Active Core Now Has Momentum",
+      "url": "https://www.etftrends.com/equity-etf-content-hub/blackrock-model-portfolios-rebalance-why-active-core-now-momentum/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "ETF Trends",
+      "title": "The Private-Market Liquidity Gap Advisors Can Close",
+      "url": "https://www.etftrends.com/equity-etf-content-hub/advisors-close-private-market-liquidity-gap/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "ETF Trends",
+      "title": "Rethinking Equal Weight: How RAFI Offers an Alternative",
+      "url": "https://www.etftrends.com/smart-beta-content-hub/rethinking-equal-weight-how-rafi-offers-alternative/"
+    },
+    {
+      "sent_date": "2026-09-30",
+      "source": "ETF Trends",
+      "title": "Who Are You Calling Passive? Many Index ETFs Dynamically Rebalanced in September",
+      "url": "https://www.etftrends.com/thematic-investing-content-hub/who-calling-passive-many-index-etfs-dynamically-rebalanced-september/"
     }
   ]
 }
