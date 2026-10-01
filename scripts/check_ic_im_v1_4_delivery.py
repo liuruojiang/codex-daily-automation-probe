@@ -31,6 +31,8 @@ FIX8_BUILD = "v1.4-20260929-r1-ordinaryput-open-fix8"
 FIX8_DELIVERY_REVISION = "20260929-v14-ordinary-put-open-fix8"
 FIX9_BUILD = "v1.4-20260929-r1-ordinaryput-open-ic-seller-mom120-fix9"
 FIX9_DELIVERY_REVISION = "20260929-v14-ordinary-put-open-ic-seller-mom120-fix9"
+FIX10_BUILD = "v1.4-20261008-r1-fear-grid25-50-fix10"
+FIX10_DELIVERY_REVISION = "20261008-v14-fear-grid25-50-fix10"
 FIX6_BUILD = "v1.4-20260926-r1-coreput3x-fixedshort95-fix6-nocall-repeatroll-iciv30-qdelta05"
 FIX6_DELIVERY_REVISION = "20260926-v14-coreput3x-fixedshort95-fix6-nocall-repeatroll-iciv30-qdelta05"
 LEGACY_BUILD = "v1.4-20260924-r1-coreput3x-fixedshort95-fix4-integrated-iciv30-qdelta05"
@@ -38,6 +40,7 @@ LEGACY_DELIVERY_REVISION = "20260924-v14-coreput3x-fixedshort95-fix4-integrated-
 REPEAT_ROLL_EFFECTIVE_DATE = date(2026, 9, 26)
 PROFIT_OPEN_EFFECTIVE_DATE = date(2026, 9, 28)
 ORDINARY_PUT_OPEN_EFFECTIVE_DATE = date(2026, 9, 29)
+FEAR_GRID_EFFECTIVE_DATE = date(2026, 10, 8)
 IDENTITY_TAG = hashlib.sha256(
     f"{EXPECTED_BUILD}\n{EXPECTED_DELIVERY_REVISION}".encode("utf-8")
 ).hexdigest()[:12]
@@ -53,9 +56,14 @@ FIX8_IDENTITY_TAG = hashlib.sha256(
 FIX9_IDENTITY_TAG = hashlib.sha256(
     f"{FIX9_BUILD}\n{FIX9_DELIVERY_REVISION}".encode("utf-8")
 ).hexdigest()[:12]
+FIX10_IDENTITY_TAG = hashlib.sha256(
+    f"{FIX10_BUILD}\n{FIX10_DELIVERY_REVISION}".encode("utf-8")
+).hexdigest()[:12]
 
 
 def expected_identity_for_day(value: date) -> tuple[str, str]:
+    if value >= FEAR_GRID_EFFECTIVE_DATE:
+        return FIX10_BUILD, FIX10_DELIVERY_REVISION
     if value >= ORDINARY_PUT_OPEN_EFFECTIVE_DATE:
         return FIX9_BUILD, FIX9_DELIVERY_REVISION
     if value >= PROFIT_OPEN_EFFECTIVE_DATE:
@@ -71,7 +79,8 @@ def marker_prefix(value: date, publication_mode: str) -> str:
         raise ValueError(f"unsupported publication mode: {publication_mode}")
     tag = (LEGACY_IDENTITY_TAG if value < REPEAT_ROLL_EFFECTIVE_DATE else
            FIX6_IDENTITY_TAG if value < PROFIT_OPEN_EFFECTIVE_DATE else
-           IDENTITY_TAG if value < ORDINARY_PUT_OPEN_EFFECTIVE_DATE else FIX9_IDENTITY_TAG)
+           IDENTITY_TAG if value < ORDINARY_PUT_OPEN_EFFECTIVE_DATE else
+           FIX9_IDENTITY_TAG if value < FEAR_GRID_EFFECTIVE_DATE else FIX10_IDENTITY_TAG)
     return (
         f"ic-im-v1-4-{REVISION}-{tag}-{mode}-digest-delivered-"
         f"{value.isoformat()}-"
