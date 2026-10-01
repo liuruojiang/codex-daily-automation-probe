@@ -356,6 +356,18 @@ def momentum_reason(product: str, signal: dict[str, Any]) -> str:
 
 
 def grid_reason(product: str, signal: dict[str, Any]) -> str:
+    if str(signal.get("market_date", ""))[:10] >= "2026-10-08":
+        fear = signal.get("fear_greed_index")
+        fear_text = "缺失" if fear is None else decimal(fear)
+        return (
+            f"独立网格：估值分{decimal(signal.get('score'))}，恐贪{fear_text}"
+            f"（{signal.get('fear_data_status', 'N/A')}）；"
+            f"当前{number(signal.get('grid_current'))}倍，目标{number(signal.get('grid_target'))}倍；"
+            f"入场来源{signal.get('grid_entry_source_current', 'N/A')}→"
+            f"{signal.get('grid_entry_source_target', 'N/A')}，"
+            f"原因{signal.get('grid_transition_reason', 'N/A')}。"
+            "恐慌入场按≥50退出，估值入场按原估值线退出；网格不配Put或Call。"
+        )
     entry, exit_ = ((0.5, 1.0) if product == "IC" else (1.6, 2.0))
     score = signal.get("score")
     current = float(signal.get("grid_current", 0) or 0)
@@ -614,7 +626,8 @@ def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
         [
             leg_row("核心期货", core_current, core_target, f"动作：{action_cn(signal.get('core_action'))}"),
             leg_row("动量袖", momentum_current, momentum_target, f"动作：{action_cn(signal.get('momentum_action'))}"),
-            leg_row("估值网格", grid_current, grid_target, f"动作：{action_cn(signal.get('grid_action'))}"),
+            leg_row("估值/恐慌网格" if str(signal.get("market_date", ""))[:10] >= "2026-10-08" else "估值网格",
+                    grid_current, grid_target, f"动作：{action_cn(signal.get('grid_action'))}"),
             leg_row("Put保护", put_current, put_target, f"动作：{action_cn(signal.get('put_action'))}"),
             leg_row("Call", call_current, call_target, "IC明确禁止Call" if product == "IC" else f"动作：{action_cn(signal.get('call_action'))}"),
         ]
@@ -742,6 +755,12 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
     signals = payload.get("signals")
     if not isinstance(signals, dict) or set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
+    if days["market_date"] >= date(2026, 10, 8):
+        if payload.get("grid_policy_revision") != "ic_im_or_fear25_paired_exit50_20261008_v1":
+            raise ValueError("fix10 grid policy identity mismatch")
+        shared = ("fear_greed_index", "fear_data_date", "fear_data_status", "fear_csv_sha256")
+        if any(signals["IC"].get(field) != signals["IM"].get(field) for field in shared):
+            raise ValueError("IC/IM Fear source snapshots disagree")
     for product, signal in signals.items():
         if not isinstance(signal, dict):
             raise ValueError(f"invalid {product} signal")
@@ -749,6 +768,23 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
             value = signal.get(field)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
                 raise ValueError(f"{product} requires finite numeric {field}")
+        if days["market_date"] >= date(2026, 10, 8):
+            if signal.get("grid_policy_revision") != payload.get("grid_policy_revision"):
+                raise ValueError(f"{product} fix10 grid policy mismatch")
+            for field, units in (("grid_entry_source_current", signal["grid_current"]),
+                                 ("grid_entry_source_target", signal["grid_target"])):
+                source = signal.get(field)
+                if units not in (0.0, 0.5) or source not in {"none", "valuation_only", "fear_only", "both"} or (units == 0.0) != (source == "none"):
+                    raise ValueError(f"{product} fix10 grid source/units mismatch")
+            fear = signal.get("fear_greed_index")
+            if fear is not None and (isinstance(fear, bool) or not isinstance(fear, (int, float)) or
+                                     not math.isfinite(fear) or not 0 <= fear <= 100 or
+                                     signal.get("fear_data_date") != days["market_date"].isoformat()):
+                raise ValueError(f"{product} fix10 Fear score/date invalid")
+            if payload["publication_mode"] == "close_confirmed" and signal.get("fear_data_status") not in {
+                "same_day_post_close", "retrospective_replay", "missing_published_history"
+            }:
+                raise ValueError(f"{product} fix10 Fear score not close-confirmed")
         if days["market_date"] >= date(2026, 9, 26):
             if str(signal.get("market_date") or "")[:10] != str(days["market_date"]):
                 raise ValueError(f"{product} signal day must match digest day")
