@@ -650,6 +650,19 @@
       "zh_summary": "原文按一年总回报比较 11 只周付 ETF 与 SPY，报告 SPY 16.73%、QDTE 22.41%、RDTE 17.05%、GOOW 40.99%，XDTE 为 15.34%；作者认为差异主要来自底层指数及杠杆等暴露，周付频率本身不产生超额收益，并提示费用、封顶与返还资本风险。",
       "evidence_level": "publisher_full_article",
       "verify_next": "用基金官方分配、净值总回报、费用、杠杆与税务记录重算同区间结果，并检验起点敏感性。"
+    },
+    {
+      "origin_run_id": "36661961568",
+      "origin_report_date": "2026-09-30",
+      "source": "Yahoo Finance ETF Headlines / The Motley Fool",
+      "title": "Vanguard S&P 500 ETF vs. Invesco QQQ: Which ETF Is the Better Buy for Investors?",
+      "zh_title": "VOO 与 QQQ：低费率宽基和集中成长的取舍",
+      "url": "https://www.fool.com/coverage/etfs/2026/09/29/vanguard-s-and-p-500-etf-vs-invesco-qqq-which-etf-is-the-better-buy-for-investors?.tsrc=rss",
+      "published": "2026-09-30T02:33:13+00:00",
+      "summary": "The readable publisher article compares VOO and QQQ. It reports expense ratios of 0.03% versus 0.18%, respectively, and describes VOO as broader and QQQ as more technology concentrated. The article gives QQQ higher one- and five-year returns but also a deeper five-year drawdown; its backward-looking comparison is not a forward return forecast.",
+      "zh_summary": "原文将 VOO 的 0.03% 费率与 QQQ 的 0.18% 对照：VOO 分散范围更广，QQQ 科技权重更高；文章列出的过去一年和五年 QQQ 收益更高，但五年最大回撤也更深。历史比较不能直接推成未来配置优劣。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "用基金官方持仓和同区间含分红总回报复核费率、行业集中、回撤与再平衡成本。"
     }
   ]
 }
