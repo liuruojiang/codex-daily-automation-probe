@@ -59,7 +59,7 @@ class ICIMV14WorkflowTests(unittest.TestCase):
         self.assertIn('strategy.GRID_POLICY_REVISION == "ic_im_or_fear25_paired_exit50_20261008_v1"', text)
         self.assertIn('strategy.IM_EXECUTION_FIX_REVISION == "im_put_execution_guards_20260908_v2"', text)
         self.assertIn('strategy.IM_PUT_EXECUTION_REVISION == "im_monthly_reset_20260907_v1"', text)
-        self.assertLess(text.index("Install strategy dependencies"), text.index("Verify corrected IM Put build"))
+        self.assertLess(text.index("Install strategy dependencies"), text.index("Verify IC/IM fix10 build and historical identities"))
         self.assertIn('strategy._latest_completed_exchange_day(clock)', text)
         self.assertIn("steps.calendar.outputs.completed_day", text)
         self.assertIn("steps.publication_mode.outputs.mode == 'realtime'", text)
