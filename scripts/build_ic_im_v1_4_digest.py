@@ -605,6 +605,23 @@ def iv_warning_html(signal: dict[str, Any]) -> str:
     return f'<div style="margin:12px 0;padding:10px;border:2px solid {color};color:{color};font-weight:700;">{escaped(iv_warning_text(signal))}</div>'
 
 
+def fear_observation_text(payload: dict[str, Any]) -> str:
+    day = str(payload.get("market_date", "未知日期"))
+    if day < "2026-10-08":
+        return f"当日恐慌指数（{day}）：历史日报未接入该来源，未核验。"
+    if payload.get("status") == "ok":
+        signal = (payload.get("signals") or {}).get("IC") or {}
+        score = signal.get("fear_greed_index")
+        status = signal.get("fear_data_status", "N/A")
+        data_day = signal.get("fear_data_date") or "未发布"
+    else:
+        score = payload.get("fear_greed_index")
+        status = payload.get("fear_data_status", "unavailable")
+        data_day = payload.get("fear_data_date") or "未发布"
+    value = "未核验" if score is None else decimal(score)
+    return f"当日恐慌指数（{day}）：{value}；数据日 {data_day}；状态 {status}。"
+
+
 def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
     title = "IC / 中证500" if product == "IC" else "IM / 中证1000"
     accent = "#f79009" if actionable else "#12b76a"
@@ -692,6 +709,7 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
   </td></tr>
   <tr><td style="padding:18px 18px 2px;background:#f8fafc;">
     <div style="margin-bottom:16px;padding:14px 15px;background:{banner_bg};border:1px solid {accent}33;border-radius:12px;color:#344054;font-size:14px;line-height:1.6;"><strong style="color:{accent};">{escaped(headline)}</strong><br>{escaped(warning)}</div>
+    <div style="margin-bottom:16px;padding:14px 15px;background:#fffaeb;border:1px solid #fedf89;border-radius:12px;color:#7a2e0e;font-size:14px;line-height:1.6;"><strong>今日恐慌指数</strong><br>{escaped(fear_observation_text(payload))}</div>
     <div style="margin-bottom:16px;padding:14px 15px;background:#fffaeb;border:1px solid #fedf89;border-radius:12px;color:#7a2e0e;font-size:14px;line-height:1.6;"><strong>估值数据来源</strong><br>{escaped(valuation_banner(signals))}</div>
     <div style="margin-bottom:16px;font-size:14px;line-height:1.6;">{escaped(payload.get('grid_release_note', ''))}</div>
     {cards}
@@ -722,8 +740,8 @@ def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
     return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:24px 10px;background:#f2f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',Arial,sans-serif;color:#101828;">
 <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #fecdca;border-radius:16px;overflow:hidden;">
-  <div style="padding:22px;background:#b42318;color:#ffffff;"><div style="font-size:12px;font-weight:700;">IC / IM 1.4-r1 · {escaped(mode_text)}</div><div style="margin-top:8px;font-size:24px;font-weight:760;">信号生成失败</div></div>
-  <div style="padding:20px;color:#344054;font-size:14px;line-height:1.7;"><strong>请勿依据旧邮件调整。</strong><p>错误：{escaped(payload.get('error_type', 'RuntimeError'))}: {escaped(payload.get('error', '未知错误'))}</p><p>持久账本没有因本次失败而跳日或部分推进。</p>{link}</div>
+  <div style="padding:22px;background:#b54708;color:#ffffff;"><div style="font-size:12px;font-weight:700;">IC / IM 1.4-r1 · {escaped(mode_text)}</div><div style="margin-top:8px;font-size:24px;font-weight:760;">当日信号警告</div></div>
+  <div style="padding:20px;color:#344054;font-size:14px;line-height:1.7;"><strong>当日新目标尚未确认，请勿依据旧邮件调整。</strong><p>{escaped(fear_observation_text(payload))}</p><p>{escaped(payload.get('fear_warning', '恐慌读数仅供独立观察'))}</p><p>提示：{escaped(payload.get('error_type', 'RuntimeError'))}: {escaped(payload.get('error', '未知原因'))}</p><p>持久账本不会把未确认目标记为当日信号。</p>{link}</div>
 </div></body></html>'''
 
 
@@ -838,6 +856,8 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         "",
         "**估值数据来源：" + valuation_banner(signals) + "**",
         "",
+        "**" + fear_observation_text(payload) + "**",
+        "",
         "**IC：" + iv_warning_text(signals["IC"]) + "**",
         "",
         "**IM：" + iv_warning_text(signals["IM"]) + "**",
@@ -890,22 +910,24 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
 
 def build_failure(payload: dict[str, Any], run_url: str, subject_prefix: str) -> tuple[str, str]:
     prefix = f"[{subject_prefix.strip().strip('[]')}]" if subject_prefix.strip() else ""
-    day = str(payload.get("generated_at", ""))[:10] or "未知日期"
+    day = str(payload.get("market_date") or payload.get("generated_at", ""))[:10] or "未知日期"
     realtime = str(payload.get("publication_mode", "close_confirmed")) == "realtime"
-    subject = f"{prefix}[异常][{'盘中实时' if realtime else '收盘确认'}] IC/IM 1.4-r1 日报 - {day}"
+    subject = f"{prefix}[警告][{'盘中实时' if realtime else '收盘确认'}] IC/IM 1.4-r1 日报 - {day}"
     body = "\n".join(
         [
             "## 今日结论",
             "",
             (
-                "**IC/IM盘中实时信号生成失败，请勿依据旧邮件调整。**"
+                "**IC/IM盘中实时信号尚未确认，请勿依据旧邮件调整。**"
                 if realtime
-                else "**IC/IM收盘信号生成失败，请勿依据旧邮件调整。**"
+                else "**IC/IM收盘信号尚未确认，请勿依据旧邮件调整。**"
             ),
             "",
+            f"- {fear_observation_text(payload)}",
+            f"- 恐慌数据提示：{payload.get('fear_warning', '读数仅供独立观察')}",
             f"- 构建：`{payload.get('build', 'N/A')}`",
-            f"- 错误：{payload.get('error_type', 'RuntimeError')}: {payload.get('error', '未知错误')}",
-            "- 持久账本没有因本次失败而跳日或部分推进。",
+            f"- 未确认原因：{payload.get('error_type', 'RuntimeError')}: {payload.get('error', '未知原因')}",
+            "- 持久账本不会把未确认目标记为当日信号。",
             f"- [查看GitHub运行记录]({run_url})" if run_url else "",
         ]
     ).rstrip()
