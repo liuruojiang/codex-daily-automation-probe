@@ -572,6 +572,84 @@
       "zh_summary": "论文摘要在多偏斜布朗运动的理想化价格模型中求最优清算，给出三种继续持有区间及判别条件；“阻力位卖出”是模型内结论。摘要没有真实市场回测，阻力强度也只能区间识别，不能视为可执行信号。",
       "evidence_level": "arxiv_abstract_only",
       "verify_next": "检查全文假设、价格点位的事前识别、样本外可预测性及点差、冲击、滑点后的可执行性。"
+    },
+    {
+      "origin_run_id": "36797212088",
+      "origin_report_date": "2026-10-01",
+      "source": "Seeking Alpha ETFs",
+      "title": "PSCI: SMID Industrials Are Likely To Trail IVV Amid Higher Rates",
+      "zh_title": "PSCI 工业股 ETF：高利率下小盘盈利韧性之争",
+      "url": "https://seekingalpha.com/article/4951207-psci-smid-industrials-are-likely-to-trail-ivv-amid-higher-rates",
+      "published": "2026-10-01T00:27:57+00:00",
+      "summary": "The publisher summary maintains a Hold view: PSCI small/mid-cap industrial holdings appear weaker than IVV on earnings resilience, quality and growth-at-a-reasonable-price traits. The author expects possible single-digit downside into 2027 but stops short of a bearish rating.",
+      "zh_summary": "作者公开摘要将 PSCI 与 IVV 比较，认为前者的中小盘工业股在盈利韧性、质量和合理估值成长上欠缺优势，并提出至 2027 年可能出现个位数下跌；这是预测而非已实现结果。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验两只基金当期持仓、规模与行业暴露，以相同日期和费用口径比较盈利、估值及样本外收益。"
+    },
+    {
+      "origin_run_id": "36797212088",
+      "origin_report_date": "2026-10-01",
+      "source": "Seeking Alpha ETFs",
+      "title": "FNDE: Still A Leader In EM Value With High Geopolitical Risk",
+      "zh_title": "FNDE 新兴市场价值：基本面加权与中台集中风险",
+      "url": "https://seekingalpha.com/article/4951182-fnde-still-leader-in-em-value-with-high-geopolitical-risk",
+      "published": "2026-09-30T21:55:18+00:00",
+      "summary": "The public summary says FNDE uses RAFI fundamental weights and has 57% combined China/Taiwan exposure. The author sees valuation at roughly half the S&P 500, upgrades to Hold and cites country/geopolitical concentration as the reason not to rate it Buy.",
+      "zh_summary": "公开摘要称 FNDE 采用基本面加权，约 57% 敞口位于中国与台湾；作者认为其估值折价明显，但因国家与地缘集中而仅上调至 Hold。长期跑赢和估值折价均需同口径复核。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验发行人最新国家权重、估值定义、汇率和费用；与相同区域及风格基准做同区间总回报比较。"
+    },
+    {
+      "origin_run_id": "36797212088",
+      "origin_report_date": "2026-10-01",
+      "source": "Seeking Alpha ETFs",
+      "title": "FDVV: Fidelity's High-Dividend ETF Keeps Passing The Test",
+      "zh_title": "FDVV 高股息 ETF：收入与科技股敞口并存",
+      "url": "https://seekingalpha.com/article/4951170-fdvv-fidelitys-high-dividend-etf-keeps-passing-the-test",
+      "published": "2026-09-30T21:20:14+00:00",
+      "summary": "The author estimates FDVV yield near 2.98%, notes low-yield technology holdings within a dividend fund and argues for quality/value/growth balance. The publisher summary claims downside outlier sensitivity and reiterates the author's positive rating; the author discloses a long FDVV position.",
+      "zh_summary": "作者公开摘要估算 FDVV 股息率约 2.98%，指出其包含低股息科技股，认为质量、价值、增长属性兼具，同时承认对极端下跌较敏感；作者披露持有 FDVV。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验基金持仓、分红和税后总回报，并以同区间数据复算科技权重与尾部风险。"
+    },
+    {
+      "origin_run_id": "36797212088",
+      "origin_report_date": "2026-10-01",
+      "source": "Seeking Alpha ETFs",
+      "title": "IVW: The Great Rotation Fizzled; Growth Looks Attractive For Q4 And 2027",
+      "zh_title": "IVW 成长股：所谓风格轮动是否短暂",
+      "url": "https://seekingalpha.com/article/4951167-ivw-the-great-rotation-fizzled-growth-looks-attractive-for-q4-and-2027",
+      "published": "2026-09-30T21:12:17+00:00",
+      "summary": "The public summary argues that the rotation from growth to value was temporary. It says IVW has 77% in technology, communication and consumer-cyclical sectors and claims growth earnings and valuation compression support a favorable outlook. These are the contributor's forward-looking views.",
+      "zh_summary": "作者公开摘要认为成长转价值的轮动偏短暂，并称 IVW 在科技、通信和可选消费合计约 77%；其后续看好基于盈利及估值判断，尚非可验证的组合信号。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验当期行业权重、估值及盈利预测，以事前定义检验风格轮动和回撤反例。"
+    },
+    {
+      "origin_run_id": "36797212088",
+      "origin_report_date": "2026-10-01",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "Forget Waiting Three Months for SPY’s Dividend. Invesco’s High-Dividend Fund Pays Every Month",
+      "zh_title": "SPHD 月度分红与 SPY 季度分红：频率背后的持仓差异",
+      "url": "https://247wallst.com/investing/etf/2026/09/30/forget-waiting-three-months-for-spys-dividend-invescos-high-dividend-fund-pays-every-month/?.tsrc=rss",
+      "published": "2026-09-30T23:06:29+00:00",
+      "summary": "The full article compares monthly-paying SPHD with quarterly-paying SPY. SPHD holds roughly 50 high-yield, low-volatility S&P 500 names with more utility, real-estate and staples exposure; its latest monthly distribution was $0.20156 versus $0.21963 previously. The article mixes adjusted SPHD returns with unadjusted SPY price returns, so its historical comparison is directional only.",
+      "zh_summary": "原文比较 SPHD 月付与 SPY 季付：SPHD 约持 50 只高股息低波动股票，更偏公用事业、房地产和必需消费；最近月度分配由 0.21963 美元降至 0.20156 美元。原表混用调整后与未调整价格收益，不能直接据此下总回报结论。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "按同一基准重算含分红总回报、税负、现金流波动、利率敏感性及交易成本。"
+    },
+    {
+      "origin_run_id": "36797212088",
+      "origin_report_date": "2026-10-01",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "Wall Street Now Sells 11 Weekly-Pay ETFs. Only Three Have Beaten the S&P. Here They Are",
+      "zh_title": "11 只周付 ETF 中仅三只跑赢：分配频率不等于总回报",
+      "url": "https://247wallst.com/investing/etf/2026/09/30/wall-street-now-sells-11-weekly-pay-etfs-only-three-have-beaten-the-sp-here-they-are/?.tsrc=rss",
+      "published": "2026-09-30T21:35:03+00:00",
+      "summary": "The full article compares 11 weekly-pay ETFs with SPY over a one-year total-return window ending around September 26, 2026. It reports SPY 16.73%, QDTE 22.41%, RDTE 17.05%, GOOW 40.99%, and XDTE 15.34%. The author attributes QDTE's edge chiefly to Nasdaq-100 exposure, while noting higher fees, capped upside, volatile payouts and possible return of capital.",
+      "zh_summary": "原文按一年总回报比较 11 只周付 ETF 与 SPY，报告 SPY 16.73%、QDTE 22.41%、RDTE 17.05%、GOOW 40.99%，XDTE 为 15.34%；作者认为差异主要来自底层指数及杠杆等暴露，周付频率本身不产生超额收益，并提示费用、封顶与返还资本风险。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "用基金官方分配、净值总回报、费用、杠杆与税务记录重算同区间结果，并检验起点敏感性。"
     }
   ]
 }
