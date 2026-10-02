@@ -42,6 +42,7 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
                      'test_delivery_transport_retry.py', 'test_poe_ic_im_v1_3_state.py',
                      'test_run_ic_im_v1_3_github_digest.py', 'test_adversarial_delivery.py',
                      'test_ic_im_v1_4_policy.py', 'test_ic_im_v1_4_state_guards.py',
+                     'test_ic_im_v1_4_ic_csi500_forward.py',
                      'test_ic_im_v1_4_integration_guards.py', 'test_run_ic_im_v1_4_github_digest.py',
                      'test_migrate_ic_im_v1_3_r7_to_v1_4_r1_state.py',
                      'test_adversarial_microcap_delivery.py', 'test_adversarial_icim_delivery.py',
