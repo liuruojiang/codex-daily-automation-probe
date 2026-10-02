@@ -663,6 +663,85 @@
       "zh_summary": "原文将 VOO 的 0.03% 费率与 QQQ 的 0.18% 对照：VOO 分散范围更广，QQQ 科技权重更高；文章列出的过去一年和五年 QQQ 收益更高，但五年最大回撤也更深。历史比较不能直接推成未来配置优劣。",
       "evidence_level": "publisher_full_article",
       "verify_next": "用基金官方持仓和同区间含分红总回报复核费率、行业集中、回撤与再平衡成本。"
+    },
+    {
+      "origin_run_id": "36948578936",
+      "origin_report_date": "2026-10-02",
+      "source": "Seeking Alpha ETFs",
+      "title": "XV: Fears Of A Black Swan Event May Result In Underperformance Despite Durable Structure",
+      "zh_title": "XV：障碍式看跌价差提供缓冲，但黑天鹅风险可能拖累表现",
+      "url": "https://seekingalpha.com/article/4951465-xv-fears-of-a-black-swan-event-may-result-in-underperformance-despite-durable-structure",
+      "published": "2026-10-01T21:21:41+00:00",
+      "summary": "作者公开摘要称 XV 用障碍式看跌价差争取月度分配，声称下跌缓冲约 25%，过去十二个月分配率 20.38%；作者评为 Hold，并强调净值和分配对波动及宏观风险敏感。",
+      "zh_summary": "作者公开摘要称 XV 用障碍式看跌价差争取月度分配，声称下跌缓冲约 25%，过去十二个月分配率 20.38%；作者评为 Hold，并强调净值和分配对波动及宏观风险敏感。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验基金招募书中的损失区间、障碍触发、分配来源、净值总回报和压力情景。"
+    },
+    {
+      "origin_run_id": "36948578936",
+      "origin_report_date": "2026-10-02",
+      "source": "Seeking Alpha ETFs",
+      "title": "DGRO: Banks Are The Next Dividend Growth Engine",
+      "zh_title": "DGRO：银行分红可能成为增长来源",
+      "url": "https://seekingalpha.com/article/4951460-dgro-banks-are-the-next-dividend-growth-engine",
+      "published": "2026-10-01T21:09:51+00:00",
+      "summary": "作者公开摘要称 DGRO 金融业权重约 19.8%，三年分红复合增长率 5.42%，预测 2026 年每份分配 1.57 美元；其看好银行分红属个人判断，作者披露持有 DGRO。",
+      "zh_summary": "作者公开摘要称 DGRO 金融业权重约 19.8%，三年分红复合增长率 5.42%，预测 2026 年每份分配 1.57 美元；其看好银行分红属个人判断，作者披露持有 DGRO。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "以发行人当期持仓和实际分配核对权重及增长，并测试利率变化和银行盈利反例。"
+    },
+    {
+      "origin_run_id": "36948578936",
+      "origin_report_date": "2026-10-02",
+      "source": "Seeking Alpha ETFs",
+      "title": "Weight Loss, No Ozempic Required: Whither The US Share Of Global Stocks?",
+      "zh_title": "美国股票全球权重：自由流通调整与本土偏好的差异",
+      "url": "https://seekingalpha.com/article/4951153-market-caps-uncapped",
+      "published": "2026-10-01T20:10:00+00:00",
+      "summary": "Victor Haghani 的公开摘要称，美国股票占未经调整的全球市值约 42%，但可投资性与自由流通调整后指数权重约 62%；其估计美国投资者股票组合平均 85% 配在本国，并指出美国股票估值溢价。",
+      "zh_summary": "Victor Haghani 的公开摘要称，美国股票占未经调整的全球市值约 42%，但可投资性与自由流通调整后指数权重约 62%；其估计美国投资者股票组合平均 85% 配在本国，并指出美国股票估值溢价。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对同期 SIFMA、MSCI/FTSE 口径、跨国估值和家庭持仓样本；不能把权重差直接视作减配信号。"
+    },
+    {
+      "origin_run_id": "36948578936",
+      "origin_report_date": "2026-10-02",
+      "source": "Seeking Alpha ETFs",
+      "title": "With Palladium And PALL Approaching Possible Support, I Reiterate My Buy Rating",
+      "zh_title": "PALL 钯金 ETF：供应集中与技术支撑位争议",
+      "url": "https://seekingalpha.com/article/4951443-with-palladium-and-pall-approaching-possible-support-i-reiterate-my-buy-rating",
+      "published": "2026-10-01T19:17:58+00:00",
+      "summary": "作者公开摘要认为俄罗斯及南非供应集中支持钯金，但价格走势偏弱；称 PALL 费率 0.60%，并提到 1156 美元支撑位。该买入评级属于作者观点。",
+      "zh_summary": "作者公开摘要认为俄罗斯及南非供应集中支持钯金，但价格走势偏弱；称 PALL 费率 0.60%，并提到 1156 美元支撑位。该买入评级属于作者观点。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验实物持仓、费率、工业需求、供给数据、现货与期货基差及跌破支撑位的反例。"
+    },
+    {
+      "origin_run_id": "36948578936",
+      "origin_report_date": "2026-10-02",
+      "source": "Seeking Alpha ETFs",
+      "title": "September AAII Asset Allocation Survey: Cash Allocations Fall",
+      "zh_title": "AAII 九月资产配置调查：现金占比下降",
+      "url": "https://seekingalpha.com/article/4951442-september-aaii-asset-allocation-survey-cash-allocations-fall",
+      "published": "2026-10-01T19:07:51+00:00",
+      "summary": "AAII 公开摘要报告，股票及股票基金占比升 0.7 个百分点至 71.8%，债券及债基升 0.3 个百分点至 14.9%，现金降 1.0 个百分点至 13.3%。这是受访个人投资者调查。",
+      "zh_summary": "AAII 公开摘要报告，股票及股票基金占比升 0.7 个百分点至 71.8%，债券及债基升 0.3 个百分点至 14.9%，现金降 1.0 个百分点至 13.3%。这是受访个人投资者调查。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验调查样本、响应率和历史分位；勿把受访者配置变化等同全市场资金流。"
+    },
+    {
+      "origin_run_id": "36948578936",
+      "origin_report_date": "2026-10-02",
+      "source": "Rational Reminder",
+      "title": "Who Causes Stock Market Anomalies? (w/ Victor Haghani) | #429",
+      "zh_title": "谁造成股市异象？与 Victor Haghani 讨论投资者行为",
+      "url": "https://rationalreminder.ca/podcast/429",
+      "published": "2026-10-01T09:30:28+00:00",
+      "summary": "第 429 期官方节目页和完整文字稿讨论基本面、静态配置及追逐近期收益的三类投资者如何影响波动与动量；Victor Haghani 区分收益追逐和系统动量，并讨论再平衡、价值与动量组合、杠杆成本及风险。节目为观点与模型讨论。",
+      "zh_summary": "第 429 期官方节目页和完整文字稿讨论基本面、静态配置及追逐近期收益的三类投资者如何影响波动与动量；Victor Haghani 区分收益追逐和系统动量，并讨论再平衡、价值与动量组合、杠杆成本及风险。节目为观点与模型讨论。",
+      "evidence_level": "publisher_full_transcript",
+      "verify_next": "核验节目提出的三类投资者模型、资金流和价格影响的样本外证据，区分受访者推论与可执行配置规则。",
+      "source_candidate_url": "https://www.youtube.com/watch?v=S4quRcCsEzs"
     }
   ]
 }
