@@ -376,6 +376,18 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
             self.assertEqual(restore.main(), 1)
         output.assert_called_once_with(False)
 
+    def test_success_email_requires_the_report_it_promises_as_attachment(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result_path = Path(temp_dir) / "result.json"
+            payload = {"report_file": "ic_im_v1_4_close_signal.md"}
+            with self.assertRaisesRegex(FileNotFoundError, "report is missing"):
+                digest.required_success_report(result_path, "", payload)
+            report = result_path.parent / payload["report_file"]
+            report.write_text("verified report", encoding="utf-8")
+            self.assertEqual(Path(digest.required_success_report(result_path, "", payload)), report.resolve())
+            with self.assertRaisesRegex(FileNotFoundError, "requires report_file"):
+                digest.required_success_report(result_path, "", {})
+
     def test_legacy_seed_cutoff_excludes_post_fix_artifact(self) -> None:
         payload = {
             "artifacts": [
