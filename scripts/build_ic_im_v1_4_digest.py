@@ -318,25 +318,39 @@ def product_action_text(signal: dict[str, Any]) -> str:
 
 def momentum_reason(product: str, signal: dict[str, Any]) -> str:
     score = signal.get("momentum_score")
-    abs20 = signal.get("momentum_abs20")
+    new_ic = product == "IC" and str(signal.get("market_date", ""))[:10] >= "2026-10-08"
+    abs_days = 40 if new_ic else 20
+    abs_value = signal.get("momentum_abs") if new_ic else signal.get("momentum_abs20")
     weight = number(signal.get("momentum_next_weight"))
-    if score is None or abs20 is None:
+    if score is None or abs_value is None:
         return f"动量袖：下一交易日权重为{weight}；详细判定字段未随本次结果输出。"
     score_value = float(score)
-    abs20_value = float(abs20)
-    base_weight = 0.0 if score_value <= 0 else (0.5 if abs20_value <= 0 else 1.0)
-    prefix = (
-        f"动量袖：Score {decimal(score)}（{'>0' if score_value > 0 else '≤0'}），"
-        f"Abs20 {percent(abs20)}（{'>0' if abs20_value > 0 else '≤0'}），"
-        f"基础权重{number(base_weight)}。"
+    legacy_state_missing = (
+        not new_ic and str(signal.get("market_date", ""))[:10] >= "2026-09-16"
+        and "momentum_abs_on" not in signal
     )
+    if legacy_state_missing:
+        prefix = (
+            f"动量袖：Score {decimal(score)}（{'>0' if score_value > 0 else '≤0'}），"
+            f"Abs{abs_days} {percent(abs_value)}；历史账本未保存 Abs 放行状态，"
+            "以已记录的目标权重为准。"
+        )
+    else:
+        abs_on = bool(signal.get("momentum_abs_on", float(abs_value) > 0))
+        base_weight = 0.0 if score_value <= 0 else (1.0 if abs_on else 0.5)
+        prefix = (
+            f"动量袖：Score {decimal(score)}（{'>0' if score_value > 0 else '≤0'}），"
+            f"Abs{abs_days} {percent(abs_value)}（{'放行' if abs_on else '不放行'}），"
+            f"基础权重{number(base_weight)}。"
+        )
     if product == "IC":
         base_dd = signal.get("momentum_base_dd")
         dd_text = percent(base_dd) if base_dd is not None else "N/A"
         defense = bool(signal.get("momentum_nav_defense", False))
         gate_text = "触发并减半" if defense else "未触发"
         return (
-            f"{prefix}基础NAV回撤{dd_text}，6%防守门槛{gate_text}；"
+            f"{prefix}{'Abs40>0即恢复，不使用两日防抖；' if new_ic else ''}"
+            f"基础NAV回撤{dd_text}，6%防守门槛{gate_text}；"
             f"最终目标权重{weight}，对应期货名义"
             f"{number(0.5 * float(signal.get('momentum_next_weight', 0)))}倍。"
         )
@@ -786,6 +800,14 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
             value = signal.get(field)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
                 raise ValueError(f"{product} requires finite numeric {field}")
+        if product == "IC" and days["market_date"] >= date(2026, 10, 8):
+            active_abs = signal.get("momentum_abs")
+            if (signal.get("momentum_abs_days") != 40 or
+                    signal.get("momentum_abs_debounce_active") is not False or
+                    isinstance(active_abs, bool) or not isinstance(active_abs, (int, float)) or
+                    not math.isfinite(active_abs) or
+                    signal.get("momentum_abs_on") is not (active_abs > 0.0)):
+                raise ValueError("fix11 IC Abs40 static signal fields missing or inconsistent")
         if days["market_date"] >= date(2026, 10, 8):
             if signal.get("grid_policy_revision") != payload.get("grid_policy_revision"):
                 raise ValueError(f"{product} fix10 grid policy mismatch")

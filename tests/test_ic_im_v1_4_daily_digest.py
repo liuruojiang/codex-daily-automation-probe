@@ -494,6 +494,88 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "signal-day identity"):
             marker.marker_name(payload)
 
+    def test_fix11_marker_starts_on_october_8_and_keeps_old_day_identity(self) -> None:
+        old_day = gate.marker_prefix(date(2026, 9, 30), "close_confirmed")
+        new_day = gate.marker_prefix(date(2026, 10, 8), "close_confirmed")
+        self.assertIn(gate.FIX9_IDENTITY_TAG, old_day)
+        self.assertIn(gate.FIX11_IDENTITY_TAG, new_day)
+        self.assertNotEqual(old_day, new_day)
+        self.assertEqual(gate.expected_identity_for_day(date(2026, 10, 8)),
+                         (gate.FIX11_BUILD, gate.FIX11_DELIVERY_REVISION))
+        payload = {
+            "status": "ok", "strategy_revision": "r1",
+            "build": gate.FIX11_BUILD, "delivery_revision": gate.FIX11_DELIVERY_REVISION,
+            "publication_mode": "close_confirmed", "market_date": "2026-10-08",
+            "digest": "a" * 64,
+        }
+        self.assertTrue(marker.marker_name(payload).startswith(new_day))
+        payload["build"] = gate.FIX10_BUILD
+        with self.assertRaisesRegex(ValueError, "signal-day identity"):
+            marker.marker_name(payload)
+
+    def test_fix11_ic_momentum_reason_uses_abs40_when_abs20_disagrees(self) -> None:
+        ic = signal("IC")
+        ic.update(market_date="2026-10-08", momentum_score=4.0,
+                  momentum_abs20=-0.03, momentum_abs=0.02, momentum_abs_days=40,
+                  momentum_abs_on=True, momentum_abs_debounce_active=False,
+                  momentum_base_dd=-0.01, momentum_nav_defense=False,
+                  momentum_next_weight=1.0)
+        reason = digest.momentum_reason("IC", ic)
+        self.assertIn("Abs40 2.00%", reason)
+        self.assertIn("基础权重1", reason)
+        self.assertIn("不使用两日防抖", reason)
+        self.assertNotIn("Abs20 -3.00%", reason)
+
+    def test_fix11_ic_momentum_reason_blocks_when_abs40_is_negative(self) -> None:
+        ic = signal("IC")
+        ic.update(market_date="2026-10-08", momentum_score=4.0,
+                  momentum_abs20=0.03, momentum_abs=-0.02, momentum_abs_days=40,
+                  momentum_abs_on=False, momentum_abs_debounce_active=False,
+                  momentum_next_weight=0.5)
+        reason = digest.momentum_reason("IC", ic)
+        self.assertIn("Abs40 -2.00%（不放行）", reason)
+        self.assertIn("基础权重0.5", reason)
+        self.assertNotIn("Abs20 3.00%", reason)
+
+    def test_historical_debounce_state_is_not_inferred_from_positive_abs20(self) -> None:
+        for product in ("IC", "IM"):
+            with self.subTest(product=product):
+                old = signal(product)
+                old.update(market_date="2026-09-17", momentum_score=5.0,
+                           momentum_abs20=0.005, momentum_next_weight=0.5)
+                old.pop("momentum_abs_on", None)
+                reason = digest.momentum_reason(product, old)
+                self.assertIn("历史账本未保存 Abs 放行状态", reason)
+                self.assertIn("最终目标权重0.5", reason)
+                self.assertNotIn("基础权重1", reason)
+                self.assertNotIn("（放行）", reason)
+
+    def test_fix11_digest_rejects_missing_ic_abs40_identity(self) -> None:
+        ic, im = signal("IC"), signal("IM")
+        ic["market_date"] = im["market_date"] = "2026-10-08"
+        payload = {
+            "status": "ok", "strategy_revision": "r1",
+            "build": gate.FIX11_BUILD, "delivery_revision": gate.FIX11_DELIVERY_REVISION,
+            "publication_mode": "close_confirmed", "market_date": "2026-10-08",
+            "completed_day": "2026-10-08", "verified_day": "2026-10-08",
+            "next_trade_day": "2026-10-09", "digest": "b" * 64,
+            "grid_policy_revision": "ic_im_or_fear25_paired_exit50_20261008_v1",
+            "signals": {"IC": ic, "IM": im},
+        }
+        with self.assertRaisesRegex(ValueError, "fix11 IC Abs40"):
+            digest.validate_success_payload(payload)
+        ic.update(momentum_abs=0.02, momentum_abs_days=40,
+                  momentum_abs_on=True, momentum_abs_debounce_active=False)
+        for item in (ic, im):
+            item.update(grid_policy_revision=payload["grid_policy_revision"],
+                        grid_entry_source_current="none", grid_entry_source_target="none",
+                        fear_greed_index=None, fear_data_date=None,
+                        fear_data_status="missing_published_history", fear_csv_sha256=None)
+        digest.validate_success_payload(payload)
+        ic["momentum_abs_on"] = False
+        with self.assertRaisesRegex(ValueError, "fix11 IC Abs40"):
+            digest.validate_success_payload(payload)
+
     def test_fix9_digest_accepts_only_its_signal_day_identity(self) -> None:
         ic, im = signal("IC"), signal("IM")
         ic["market_date"] = im["market_date"] = "2026-09-29"
