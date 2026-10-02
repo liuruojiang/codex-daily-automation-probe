@@ -956,6 +956,15 @@ def build_failure(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
     return subject, body
 
 
+def required_success_report(result_path: Path, report_arg: str, payload: dict[str, Any]) -> str:
+    report = report_arg or str(result_path.resolve().parent / str(payload.get("report_file", "")))
+    if not report_arg and not payload.get("report_file"):
+        raise FileNotFoundError("successful IC/IM digest requires report_file")
+    if not Path(report).is_file():
+        raise FileNotFoundError(f"successful IC/IM digest report is missing: {report}")
+    return report
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--result", required=True)
@@ -976,10 +985,7 @@ def main() -> int:
     if payload.get("status") == "ok":
         subject, body, _ = build_success(payload, run_url, args.subject_prefix)
         html_body = build_success_html(payload, run_url)
-        report = args.report
-        if not report and payload.get("report_file"):
-            report = str(Path(args.result).resolve().parent / str(payload["report_file"]))
-        attachment = report if report and Path(report).is_file() else None
+        attachment = required_success_report(Path(args.result), args.report, payload)
     else:
         subject, body = build_failure(payload, run_url, args.subject_prefix)
         html_body = build_failure_html(payload, run_url)
