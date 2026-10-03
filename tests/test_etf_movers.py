@@ -117,6 +117,11 @@ class EtfMoverRulesTests(unittest.TestCase):
         self.assertFalse(movers.is_liquid(row("LOWD", "Low Dollar ETF", price=10.0, volume=100_000)))
         self.assertFalse(movers.is_liquid(row("LOWS", "Low Share ETF", price=200.0, volume=30_000)))
 
+    def test_universe_scan_fails_instead_of_silently_truncating(self) -> None:
+        with patch.object(movers, "_fetch_page", return_value=[row("SMH", "VanEck Semiconductor ETF")]):
+            with self.assertRaisesRegex(RuntimeError, "scan limit"):
+                movers.fetch_universe(max_scan=1)
+
     def test_excludes_leveraged_inverse_bear_and_etn(self) -> None:
         self.assertEqual(movers.exclusion_reason(row("TQQQ", "ProShares UltraPro QQQ")), "leveraged_or_inverse")
         self.assertEqual(movers.exclusion_reason(row("SH", "ProShares Short S&P500")), "leveraged_or_inverse")
@@ -281,9 +286,15 @@ class EtfMoverRulesTests(unittest.TestCase):
         ranked = movers._rank(records, True, 10)
         self.assertEqual([item["symbol"] for item in ranked], ["BLOK"])
 
-    def test_unknown_theme_is_dropped_instead_of_using_placeholder_copy(self) -> None:
+    def test_unknown_theme_keeps_source_name_without_guessing_exposure(self) -> None:
         unknown = movers._record(row("ZZZZ", "Example Distinctive Opportunities ETF"), "2026-08-25", 1.0)
-        self.assertIsNone(unknown)
+        self.assertIsNotNone(unknown)
+        assert unknown is not None
+        self.assertEqual(unknown["name"], "Example Distinctive Opportunities ETF")
+        self.assertIn("待核验", unknown["description"])
+        another = movers._record(row("YYYY", "Example Distinctive Opportunities ETF"), "2026-08-25", 2.0)
+        assert another is not None
+        self.assertEqual(len(movers._rank([unknown, another], True, 10)), 2)
 
     def test_daily_rankings_uses_only_quotes_on_the_reference_session(self) -> None:
         as_of = datetime(2026, 9, 29, 15, 0, tzinfo=timezone.utc)
@@ -582,6 +593,68 @@ class MarketSessionAlignmentTests(unittest.TestCase):
 
         self.assertEqual(result["chart_errors"], 1)
         self.assertEqual(result["stale_symbol_count"], 0)
+
+    def test_period_rankings_use_close_aligned_quote_when_latest_chart_bar_lags(self) -> None:
+        sessions = [
+            "2026-09-25", "2026-09-28", "2026-09-29",
+            "2026-09-30", "2026-10-01", "2026-10-02",
+        ]
+        prior_bars = [(day, 100.0) for day in sessions[:-1]]
+        close_time = market_timestamp("2026-10-02", 20)
+        products = [
+            row("SMH", "VanEck Semiconductor ETF", price=120.0, market_time=close_time),
+            row("ZZZZ", "Example Distinctive Opportunities ETF", price=110.0, market_time=close_time),
+        ]
+        with patch.object(movers, "_chart_rows", return_value=prior_bars):
+            result = movers.period_rankings(
+                products,
+                as_of=datetime(2026, 10, 3, 0, 34, tzinfo=timezone.utc),
+                expected_session_dates=sessions,
+                expected_quote_timestamp=close_time,
+            )
+        self.assertEqual(result["quote_fallback_count"], 2)
+        self.assertEqual(result["stale_symbol_count"], 0)
+        self.assertEqual(result["one_week"]["coverage_count"], 2)
+        self.assertEqual(
+            [item["symbol"] for item in result["one_week"]["gainers"]],
+            ["SMH", "ZZZZ"],
+        )
+
+    def test_period_rankings_hide_partial_universe_and_reject_stale_quote(self) -> None:
+        sessions = [
+            "2026-09-25", "2026-09-28", "2026-09-29",
+            "2026-09-30", "2026-10-01", "2026-10-02",
+        ]
+        prior_bars = [(day, 100.0) for day in sessions[:-1]]
+        close_time = market_timestamp("2026-10-02", 20)
+        products = [
+            row("SMH", "VanEck Semiconductor ETF", price=120.0, market_time=close_time),
+            row("XBI", "SPDR S&P Biotech ETF", price=110.0,
+                market_time=market_timestamp("2026-10-01", 20)),
+        ]
+        with patch.object(movers, "_chart_rows", return_value=prior_bars):
+            result = movers.period_rankings(
+                products,
+                as_of=datetime(2026, 10, 3, 0, 34, tzinfo=timezone.utc),
+                expected_session_dates=sessions,
+                expected_quote_timestamp=close_time,
+            )
+        self.assertEqual(result["quote_fallback_count"], 1)
+        self.assertEqual(result["stale_symbol_count"], 1)
+        self.assertEqual(result["one_week"]["coverage_count"], 1)
+        self.assertFalse(result["one_week"]["coverage_sufficient"])
+        self.assertEqual(result["one_week"]["gainers"], [])
+        notes: list[str] = []
+        reports.append_etf_period_quality_notes(
+            notes, {}, {**result["one_week"], "eligible_count": result["eligible_count"]}
+        )
+        self.assertIn("> 有效覆盖：1/2 只合格 ETF。", notes)
+        self.assertTrue(any("榜单暂停展示" in line for line in notes))
+        partial_notes: list[str] = []
+        reports.append_etf_period_quality_notes(
+            partial_notes, {}, {"coverage_count": 99, "eligible_count": 100, "coverage_sufficient": True}
+        )
+        self.assertTrue(any("可能遗漏" in line for line in partial_notes))
 
 
 if __name__ == "__main__":

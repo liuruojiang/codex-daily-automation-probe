@@ -16,8 +16,9 @@ from zoneinfo import ZoneInfo
 MIN_PRICE = 5.0
 MIN_AVG_DAILY_VOLUME = 50_000
 MIN_AVG_DAILY_DOLLAR_VOLUME = 5_000_000.0
-MAX_UNIVERSE_SCAN = 6_000
+MAX_UNIVERSE_SCAN = 10_000
 MAX_CHART_WORKERS = 16
+MIN_PERIOD_COVERAGE = 0.99
 US_MARKET_CLOSE = datetime_time(16, 0)
 US_MARKET_CLOSE_BUFFER = timedelta(minutes=30)
 QUOTE_CLOSE_WINDOW = timedelta(minutes=5)
@@ -629,14 +630,20 @@ def _fetch_page(offset: int, size: int, min_price: float) -> list[dict[str, Any]
 def fetch_universe(max_scan: int = MAX_UNIVERSE_SCAN, min_price: float = MIN_PRICE) -> list[dict[str, Any]]:
     rows_by_symbol: dict[str, dict[str, Any]] = {}
     page_size = 250
+    last_page_full = False
     for offset in range(0, max_scan, page_size):
-        page = _fetch_page(offset, min(page_size, max_scan - offset), min_price)
+        requested = min(page_size, max_scan - offset)
+        page = _fetch_page(offset, requested, min_price)
         if not page:
             break
+        last_page_full = len(page) >= requested
         for row in page:
             symbol = str(row.get("symbol") or "")
             if symbol:
                 rows_by_symbol[symbol] = row
+    else:
+        if last_page_full:
+            raise RuntimeError(f"ETF screener reached scan limit {max_scan} before exhaustion")
     return list(rows_by_symbol.values())
 
 
@@ -692,8 +699,9 @@ def _rank(records: list[dict[str, Any]], reverse: bool, limit: int) -> list[dict
 def _record(row: dict[str, Any], date_s: str, change: float) -> dict[str, Any] | None:
     key = theme_key(row)
     details = product_details(row, key)
+    unclassified = details is None
     if details is None:
-        return None
+        details = (_name(row), "名称来自行情源；具体经济敞口和产品机制待核验。")
     name, detail = details
     return {
         "symbol": str(row.get("symbol") or ""),
@@ -701,7 +709,7 @@ def _record(row: dict[str, Any], date_s: str, change: float) -> dict[str, Any] |
         "original_name": _name(row),
         "description": detail,
         "category": key,
-        "dedupe_family": dedupe_family(row, key),
+        "dedupe_family": f"unclassified_{row.get('symbol') or ''}" if unclassified else dedupe_family(row, key),
         "date": date_s,
         "change": change,
         "average_daily_volume": average_daily_volume(row),
@@ -831,6 +839,7 @@ def period_rankings(
     limit: int = 10,
     as_of: datetime | None = None,
     expected_session_dates: list[str] | None = None,
+    expected_quote_timestamp: int | None = None,
 ) -> dict[str, Any]:
     eligible, excluded = eligible_universe(rows)
     chart_by_symbol: dict[str, list[tuple[str, float]]] = {}
@@ -879,6 +888,23 @@ def period_rankings(
         )
         for symbol, chart in chart_by_symbol.items()
     }
+    quote_fallback_count = 0
+    if expected_quote_timestamp and session_date:
+        for row in eligible:
+            symbol = str(row.get("symbol") or "")
+            chart = chart_by_symbol.get(symbol)
+            if chart is None or (chart and chart[-1][0] == session_date):
+                continue
+            if close_aligned_quote_change(row, session_date, cutoff, expected_quote_timestamp) is None:
+                continue
+            try:
+                close = float(row["regularMarketPrice"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if not math.isfinite(close) or close <= 0:
+                continue
+            chart.append((session_date, close))
+            quote_fallback_count += 1
     aligned_symbol_count = sum(
         bool(chart) and chart[-1][0] == session_date
         for chart in chart_by_symbol.values()
@@ -891,6 +917,7 @@ def period_rankings(
         "chart_errors": chart_errors,
         "market_date": session_date,
         "stale_symbol_count": stale_symbol_count,
+        "quote_fallback_count": quote_fallback_count,
     }
     for label, bars_back in (("one_week", 5), ("one_month", 21)):
         records: list[dict[str, Any]] = []
@@ -905,6 +932,8 @@ def period_rankings(
                 "incomplete_window_count": incomplete_window_count,
                 "available_session_count": available_session_count,
                 "required_session_count": required_session_count,
+                "coverage_count": 0,
+                "coverage_sufficient": False,
             }
             continue
         for row in eligible:
@@ -930,11 +959,14 @@ def period_rankings(
             if record is None:
                 continue
             records.append(record)
+        coverage_sufficient = bool(eligible) and len(records) / len(eligible) >= MIN_PERIOD_COVERAGE
         result[label] = {
-            "gainers": _rank(records, True, limit),
-            "losers": _rank(records, False, limit),
+            "gainers": _rank(records, True, limit) if coverage_sufficient else [],
+            "losers": _rank(records, False, limit) if coverage_sufficient else [],
             "incomplete_window_count": incomplete_window_count,
             "available_session_count": available_session_count,
             "required_session_count": required_session_count,
+            "coverage_count": len(records),
+            "coverage_sufficient": coverage_sufficient,
         }
     return result
