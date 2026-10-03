@@ -292,6 +292,10 @@ class EtfMoverRulesTests(unittest.TestCase):
         assert unknown is not None
         self.assertEqual(unknown["name"], "Example Distinctive Opportunities ETF")
         self.assertIn("待核验", unknown["description"])
+        rendered: list[str] = []
+        reports.append_mover_table(rendered, reports.broad_mover_rows([unknown]))
+        self.assertIn("Example Distinctive Opportunities ETF", rendered[2])
+        self.assertNotIn("| 名称来自行情源 |", rendered[2])
         another = movers._record(row("YYYY", "Example Distinctive Opportunities ETF"), "2026-08-25", 2.0)
         assert another is not None
         self.assertEqual(len(movers._rank([unknown, another], True, 10)), 2)
