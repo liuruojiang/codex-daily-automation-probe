@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "strategy_sha": "db889f7d1517763b3d1ff99c3ae024e338514ce9",
-  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-recovery-20260917/microcap-approved-state-20260917.zip",
-  "state_sha256": "3d1476b87c873823a2d7cc160d2384a7d4ee9272d7344517ecea3684119d5628",
-  "state_date": "2026-09-17"
+  "strategy_sha": "f570815281b25286bcfb2c39142afe276ae757d8",
+  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-recovery-20261003-l7/microcap-approved-state-20260930-f5708152.zip",
+  "state_sha256": "548c545c2c412e6b400e4055908782d8fcc49ba3230ca5a2b87e4c55a4fefea4",
+  "state_date": "2026-09-30"
 }
