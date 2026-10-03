@@ -742,6 +742,71 @@
       "evidence_level": "publisher_full_transcript",
       "verify_next": "核验节目提出的三类投资者模型、资金流和价格影响的样本外证据，区分受访者推论与可执行配置规则。",
       "source_candidate_url": "https://www.youtube.com/watch?v=S4quRcCsEzs"
+    },
+    {
+      "origin_run_id": "37082644394",
+      "origin_report_date": "2026-10-03",
+      "source": "A Wealth of Common Sense",
+      "title": "Why is Consumer Sentiment so Low?",
+      "zh_title": "美国消费者信心为何偏低：价格水平与调查方法的争议",
+      "url": "https://awealthofcommonsense.com/2026/10/why-is-consumer-sentiment-so-low/",
+      "published": "2026-10-02T20:30:19+00:00",
+      "summary": "Ben Carlson argues that cumulative price levels, housing affordability, inequality, politics, social media and war may contribute to weak U.S. consumer sentiment. He also questions whether Michigan's 2024 move from phone to online interviews affects comparability; the causal effect is not established in the article.",
+      "zh_summary": "Ben Carlson 讨论累计物价、住房负担、财富差距及政治等因素，并质疑密歇根大学 2024 年从电话转向线上调查后，消费者信心序列的可比性；原文未证明方法变化造成低读数。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对密歇根大学调查方法、桥接样本及历史修订，再测试情绪指标对资产配置决策的增量价值。"
+    },
+    {
+      "origin_run_id": "37082644394",
+      "origin_report_date": "2026-10-03",
+      "source": "Seeking Alpha ETFs",
+      "title": "PDBC And The Case For Commodities",
+      "zh_title": "PDBC 与商品配置：强势表现能否持续",
+      "url": "https://seekingalpha.com/article/4951666-pdbc-and-the-case-for-commodities",
+      "published": "2026-10-02T18:44:38+00:00",
+      "summary": "The author's public summary claims PDBC gained 21.54% in Q3 and 45.66% year to date, versus a 13.37% rise in a commodity composite, and expects continued strength. These are contributor claims, not independently verified total returns.",
+      "zh_summary": "作者公开摘要称 PDBC 第三季度上涨 21.54%、年初至今上涨 45.66%，并据商品板块表现提出继续看多观点；这些收益口径及持续性尚未独立核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "用发行人 NAV 总回报核对收益、基准成分、期货展期与能源权重，并测试美元及利率上升时的反例。"
+    },
+    {
+      "origin_run_id": "37082644394",
+      "origin_report_date": "2026-10-03",
+      "source": "Seeking Alpha ETFs",
+      "title": "MGC: Less Attractive As Earnings Broaden",
+      "zh_title": "MGC 超大盘 ETF：盈利扩散可能削弱集中持有的吸引力",
+      "url": "https://seekingalpha.com/article/4951656-mgc-less-attractive-as-earnings-broaden",
+      "published": "2026-10-02T17:45:35+00:00",
+      "summary": "The author's public summary states MGC has 42.7% technology exposure and that large-cap valuations carry a 27% premium over mid-caps despite only a one-point difference in expected 2027 earnings growth; the author rates MGC Hold.",
+      "zh_summary": "作者公开摘要称 MGC 科技股权重为 42.7%，大盘股估值较中盘股溢价约 27%，但预测 2027 年盈利增长仅高约 1 个百分点，因此给出 Hold 观点。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金持仓、估值与盈利预测口径，并以同口径总回报和行业暴露检验中盘替代方案。"
+    },
+    {
+      "origin_run_id": "37082644394",
+      "origin_report_date": "2026-10-03",
+      "source": "Seeking Alpha ETFs",
+      "title": "Virtus Convertible & Income Fund II: Balancing High Yield And Capital Protection",
+      "zh_title": "NCZ 可转债与高收益债封闭式基金：折价、杠杆与收益风险",
+      "url": "https://seekingalpha.com/article/4951653-virtus-convertible-and-income-fund-ii-balancing-high-yield-and-capital-protection",
+      "published": "2026-10-02T17:33:22+00:00",
+      "summary": "The contributor's public summary describes NCZ as a leveraged convertible and high-yield bond closed-end fund, citing an 11.3% NAV discount, 10.37% distribution yield and about 33% leverage. These are time-sensitive claims and the fund is not an ETF.",
+      "zh_summary": "作者公开摘要介绍 NCZ 将可转债与高收益债结合，称其市价较净值折价 11.3%、分配率 10.37%、杠杆约 33%；NCZ 是封闭式基金，分配率不等于总回报。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对当期净值折价、杠杆融资成本、分配来源、信用与转股敏感度，以及折价扩大的压力情景。"
+    },
+    {
+      "origin_run_id": "37082644394",
+      "origin_report_date": "2026-10-03",
+      "source": "Seeking Alpha ETFs",
+      "title": "CLM: The 23%-Yielding Money Glitch",
+      "zh_title": "CLM 所谓 23% 高分配率：再投资结构与稀释风险",
+      "url": "https://seekingalpha.com/article/4951637-clm-the-23-percent-yielding-money-glitch",
+      "published": "2026-10-02T16:30:08+00:00",
+      "summary": "The contributor's public summary argues that CLM's dividend reinvestment plan can exploit a market-price premium to NAV, while acknowledging realized gains, return of capital and recent dilution. The claimed 23% yield is a distribution figure, not total return.",
+      "zh_summary": "作者公开摘要认为 CLM 的分红再投资计划可能利用市价相对净值的溢价，但同时提到资本返还、近期稀释和分配调整；标题中的 23% 是分配率主张，并非总回报。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对分配政策、再投资定价、净值溢折价、发行稀释、税务与含再投资的长期总回报。"
     }
   ]
 }
