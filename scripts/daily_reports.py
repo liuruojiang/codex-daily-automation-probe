@@ -1481,6 +1481,8 @@ def fat_fire_heading(title: str, summary: str = "") -> str:
 
 
 def asset_display_name(asset: "MarketAsset") -> str:
+    if asset.description.startswith("名称来自行情源；"):
+        return asset.name
     overrides = {
         "QQQM": "纳斯达克100 ETF",
         "EMXC": "新兴市场 ex China ETF",
