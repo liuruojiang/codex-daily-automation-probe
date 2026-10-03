@@ -1568,6 +1568,9 @@ def append_mover_table(lines: list[str], rows: list[dict[str, object]]) -> None:
 def append_etf_period_quality_notes(
     lines: list[str], period_movers: dict[str, object], period_block: dict[str, object]
 ) -> None:
+    quote_fallback_count = int(period_movers.get("quote_fallback_count") or 0)
+    if quote_fallback_count:
+        lines.append(f"> {quote_fallback_count} 只 ETF 使用与美股收盘时间对齐的报价作为周期末价格。")
     stale_symbol_count = int(period_movers.get("stale_symbol_count") or 0)
     if stale_symbol_count:
         lines.append(f"> {stale_symbol_count} 只 ETF 的日线数据未能与共同交易日对齐，已略去。")
@@ -1589,7 +1592,17 @@ def append_etf_period_quality_notes(
             f"> 共同交易日只有 {int(available_session_count)} 个，少于计算该周期所需的 "
             f"{int(required_session_count)} 个，未生成该周期涨跌榜。"
         )
-    if stale_symbol_count or chart_errors or incomplete_window_count or reference_window_short:
+    coverage_count = period_block.get("coverage_count")
+    eligible_count = period_block.get("eligible_count")
+    if coverage_count is not None and eligible_count is not None:
+        lines.append(f"> 有效覆盖：{int(coverage_count)}/{int(eligible_count)} 只合格 ETF。")
+        if not period_block.get("coverage_sufficient") and not reference_window_short:
+            threshold = broad_etf_movers.MIN_PERIOD_COVERAGE
+            lines.append(f"> 有效覆盖低于 {threshold:.0%}，本周期榜单暂停展示，避免把部分 ETF 的排序误称为全市场前十。")
+        elif int(coverage_count) < int(eligible_count) and not reference_window_short:
+            lines.append("> 本榜仅对已覆盖的 ETF 排名，可能遗漏其他合格 ETF 的实际前十。")
+    if (quote_fallback_count or stale_symbol_count or chart_errors or incomplete_window_count
+            or reference_window_short or coverage_count is not None):
         lines.append("")
 
 
@@ -6183,7 +6196,7 @@ def _build_etf(out_dir: Path) -> None:
             "",
             "## ETF 涨跌幅榜",
             "",
-            "排行范围：美国上市 ETF 全市场，不使用精选 ETF 池。流动性门槛为近 3 个月平均成交额至少 500 万美元/日且平均成交量至少 5 万份/日。",
+            "排行范围：行情源中的美国上市 ETF 搜索结果，不使用精选 ETF 池。流动性门槛为近 3 个月平均成交额至少 500 万美元/日且平均成交量至少 5 万份/日。",
             "",
             f"涨跌榜交易日：{market_session_date or '数据不足'}。",
             *(
@@ -6191,7 +6204,7 @@ def _build_etf(out_dir: Path) -> None:
                 if stale_quote_count
                 else []
             ),
-            "过滤口径：已排除杠杆、反向/做空、单股日内目标、期权收益增强/定义结果、ETN、单一加密资产和实物/现货信托；正常的商品、外汇、波动率和管理期货 ETF 可以纳入。每个榜单按共同经济驱动强去重；同一经济敞口优先保留近 3 个月平均成交额更高的 ETF，成交额缺失或相同时再比较基金资产规模，涨跌幅不参与同类代表选择。涨幅榜只展示正收益，跌幅榜只展示负收益。",
+            "过滤口径：已排除杠杆、反向/做空、单股日内目标、期权收益增强/定义结果、ETN、单一加密资产和实物/现货信托；正常的商品、外汇、波动率和管理期货 ETF 可以纳入。已识别经济驱动的 ETF 按主题去重；同一敞口优先保留近 3 个月平均成交额更高的 ETF，成交额缺失或相同时再比较基金资产规模，涨跌幅不参与同类代表选择。未能可靠识别主题的 ETF 保留行情源原名，单独列示并标注待核验。涨幅榜只展示正收益，跌幅榜只展示负收益。",
             "",
             "### 涨幅前 10",
             "",
@@ -6219,6 +6232,7 @@ def _build_etf(out_dir: Path) -> None:
             broad_universe,
             as_of=started,
             expected_session_dates=us_session_dates,
+            expected_quote_timestamp=spy_quote_timestamp,
         )
         lines += ["", "## ETF 周期涨跌幅榜", ""]
         append_etf_period_quality_notes(lines, period_movers, {})
@@ -6226,7 +6240,7 @@ def _build_etf(out_dir: Path) -> None:
             period_block = period_movers[key]
             assert isinstance(period_block, dict)
             lines += ["", f"### {label}涨幅前 10", "", f"共同交易日：{period_movers['market_date'] or '数据不足'}。"]
-            append_etf_period_quality_notes(lines, {}, period_block)
+            append_etf_period_quality_notes(lines, {}, {**period_block, "eligible_count": period_movers["eligible_count"]})
             append_mover_table(lines, broad_mover_rows(period_block["gainers"]))
             lines += ["", f"### {label}跌幅前 10", "", f"共同交易日：{period_movers['market_date'] or '数据不足'}。"]
             append_mover_table(lines, broad_mover_rows(period_block["losers"]))
@@ -6245,7 +6259,7 @@ def _build_etf(out_dir: Path) -> None:
     fixed_monitor_rendered_count = append_etf_fixed_monitor_section(lines, fixed_monitor_updates, fixed_monitor_audit)
     market_audit_line = (
         f"- ETF 排行宇宙：扫描 {daily_movers.universe_count} 只美国上市 ETF，流动性及产品结构过滤后合格 {daily_movers.eligible_count} 只；"
-        f"共同交易日 {market_session_date or '数据不足'}，剔除日期不一致或缺少时间戳的报价 {stale_quote_count} 只；每个涨跌榜按共同经济驱动强去重。"
+        f"共同交易日 {market_session_date or '数据不足'}，剔除日期不一致或缺少时间戳的报价 {stale_quote_count} 只；已识别经济驱动的 ETF 按主题去重，未分类 ETF 保留原名并标注待核验。"
         if daily_movers is not None
         else "- 市场行情：北京时间周日和周一按规则主动跳过，未调用行情快照、ETF 涨跌榜或周期涨跌榜；资讯源与来源审计正常运行。"
     )
