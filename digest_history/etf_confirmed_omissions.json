@@ -807,6 +807,71 @@
       "zh_summary": "作者公开摘要认为 CLM 的分红再投资计划可能利用市价相对净值的溢价，但同时提到资本返还、近期稀释和分配调整；标题中的 23% 是分配率主张，并非总回报。",
       "evidence_level": "publisher_public_summary_only",
       "verify_next": "核对分配政策、再投资定价、净值溢折价、发行稀释、税务与含再投资的长期总回报。"
+    },
+    {
+      "origin_run_id": "37163349411",
+      "origin_report_date": "2026-10-04",
+      "source": "Seeking Alpha ETFs",
+      "title": "BIZD: It's Time For Cherry-Picking",
+      "zh_title": "BIZD 商业发展公司 ETF：作者倾向个股筛选",
+      "url": "https://seekingalpha.com/article/4951790-bizd-its-time-for-cherry-picking",
+      "published": "2026-10-03T15:41:01+00:00",
+      "summary": "The public summary describes BIZD's roughly 12% distribution yield and concentration in ARCC and MAIN, while arguing that weaker dividend coverage, NAV declines and non-accruals among some BDCs favor selective holdings. These are contributor claims, not independently verified fund returns.",
+      "zh_summary": "作者公开摘要称 BIZD 分配率约 12%，持有 ARCC、MAIN 等 BDC；同时认为部分成分的分配覆盖、净值下滑和不良贷款风险使主动筛选更有吸引力。分配率不等于总回报。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对 BIZD 持仓与权重、BDC 净值及非应计贷款、分配覆盖和含费用总回报，并测试主动筛选的事前规则与交易成本。"
+    },
+    {
+      "origin_run_id": "37163349411",
+      "origin_report_date": "2026-10-04",
+      "source": "Seeking Alpha ETFs",
+      "title": "Powerlaw: Would An 8.5% Forward Yield At A 30% Discount To NAV Pique Your Interest?",
+      "zh_title": "PWRL 私营科技资产基金：折价和预期分配率的估值风险",
+      "url": "https://seekingalpha.com/article/4951786-powerlaw-would-an-8-5-percent-forward-yield-at-a-30-percent-discount-to-nav-pique-your-interest",
+      "published": "2026-10-03T15:16:00+00:00",
+      "summary": "The contributor's public summary claims about a 30% discount to NAV and 8.5% forward distribution yield for Powerlaw, whose portfolio includes late-stage private technology holdings. Illiquidity and private-asset marks limit the interpretation of the discount.",
+      "zh_summary": "作者公开摘要称 PWRL 持有后期私营科技资产，市价较其公布净值折价约 30%，预期分配率约 8.5%；私营资产估值和流动性使折价不能直接视为安全边际。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对公布净值的估值日期、私营持仓占比、分配来源、回购执行和二级市场流动性；用压力情景检验折价扩大。"
+    },
+    {
+      "origin_run_id": "37163349411",
+      "origin_report_date": "2026-10-04",
+      "source": "Seeking Alpha ETFs",
+      "title": "PDI: Collect 18.7% While You Wait (Rating Upgrade)",
+      "zh_title": "PDI 封闭式收益基金：高分配率与覆盖缺口并存",
+      "url": "https://seekingalpha.com/article/4951758-pdi-collect-18-7-percent-while-you-wait-rating-upgrade",
+      "published": "2026-10-03T10:53:55+00:00",
+      "summary": "The public summary claims an 18.7% distribution rate, a 5.85% NAV discount and only 62.75% net-investment-income coverage. The author upgrades the fund based partly on expected reinvestment as bonds mature. The figures are time-sensitive contributor claims.",
+      "zh_summary": "作者公开摘要称 PDI 分配率为 18.7%、市价较净值折价 5.85%，但净投资收入仅覆盖分配的 62.75%；其评级上调依赖债券到期再投资后收入改善的预期。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金同期折价、杠杆、净投资收入覆盖、资本返还、到期分布和含分配总回报，并测试利率及信用压力。"
+    },
+    {
+      "origin_run_id": "37163349411",
+      "origin_report_date": "2026-10-04",
+      "source": "Seeking Alpha ETFs",
+      "title": "WDI: Very High Yield, But Might Not Be A Good Long-Term Holding",
+      "zh_title": "WDI 封闭式债券基金：高分配与净值侵蚀之忧",
+      "url": "https://seekingalpha.com/article/4951730-wdi-very-high-yield-but-might-not-be-a-good-long-term-holding",
+      "published": "2026-10-03T06:45:21+00:00",
+      "summary": "The contributor's public summary cites a 15.10% distribution yield, 9.42% year-to-date NAV decline and 11.3% NAV discount, warning that realized and unrealized losses may undermine payout sustainability despite net-investment-income coverage.",
+      "zh_summary": "作者公开摘要称 WDI 分配率为 15.10%、年内净值下跌 9.42%、市价较净值折价 11.3%；即使净投资收入覆盖分配，已实现和未实现损失仍可能侵蚀长期资本。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金同期净值、分配构成、杠杆和信用敞口，并用含分配总回报检验长期资本保存。"
+    },
+    {
+      "origin_run_id": "37163349411",
+      "origin_report_date": "2026-10-04",
+      "source": "24/7 Wall St.",
+      "title": "Is the AI Bull Market About to Crash? This Risk Indicator Is Saying Yes",
+      "zh_title": "AI 牛市的杠杆风险：保证金债务升高是否预示下跌",
+      "url": "https://247wallst.com/investing/2026/10/03/is-the-ai-bull-market-about-to-crash-this-risk-indicator-is-saying-yes/",
+      "published": "2026-10-03T14:44:43+00:00",
+      "summary": "The full article says FINRA margin debt reached about $1.502 trillion in June 2026 and $1.454 trillion in August, while VIX and the Sahm Rule did not indicate broader stress. Historical analogies are presented as warnings, not a validated crash forecast.",
+      "zh_summary": "文章称 FINRA 保证金债务在 2026 年 6 月约为 1.502 万亿美元、8 月约为 1.454 万亿美元，同时 VIX 和 Sahm 指标未显示广泛压力；历史类比是杠杆风险警示，不能当作已验证的崩盘预测。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对 FINRA 原始序列与口径，按市值或 GDP 标准化杠杆，并检验历史阈值、提前期、误报率及当期融资成本。"
     }
   ]
 }
