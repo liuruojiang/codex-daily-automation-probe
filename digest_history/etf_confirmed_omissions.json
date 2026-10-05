@@ -872,6 +872,84 @@
       "zh_summary": "文章称 FINRA 保证金债务在 2026 年 6 月约为 1.502 万亿美元、8 月约为 1.454 万亿美元，同时 VIX 和 Sahm 指标未显示广泛压力；历史类比是杠杆风险警示，不能当作已验证的崩盘预测。",
       "evidence_level": "publisher_full_article",
       "verify_next": "核对 FINRA 原始序列与口径，按市值或 GDP 标准化杠杆，并检验历史阈值、提前期、误报率及当期融资成本。"
+    },
+    {
+      "origin_run_id": "37245857461",
+      "origin_report_date": "2026-10-05",
+      "source": "Seeking Alpha ETFs",
+      "title": "DVY: A Strong Option To Balance Out A Tech-Heavy Portfolio (Rating Upgrade)",
+      "zh_title": "DVY：低科技权重能否平衡科技股偏重的组合",
+      "url": "https://seekingalpha.com/article/4951865-dvy-a-strong-option-to-balance-out-a-tech-heavy-portfolio-rating-upgrade",
+      "published": "2026-10-04T20:06:51+00:00",
+      "summary": "The public summary upgrades DVY based on its low technology and high financials exposure, proposing dividend income and sector diversification as the thesis.",
+      "zh_summary": "作者公开摘要把 DVY 的低科技、高金融权重视为分散科技股集中的依据，并上调个人评级；这不是独立验证的收益预测。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对同期持仓与行业权重、股息可持续性、总回报及不同利率情景。"
+    },
+    {
+      "origin_run_id": "37245857461",
+      "origin_report_date": "2026-10-05",
+      "source": "Seeking Alpha ETFs",
+      "title": "VFLO And CGDV: The Perfect Pairing For AI Growth",
+      "zh_title": "VFLO 与 CGDV：作者提出的 AI 增长组合搭配",
+      "url": "https://seekingalpha.com/article/4951864-vflo-and-cgdv-the-perfect-pairing-for-ai-growth",
+      "published": "2026-10-04T20:03:14+00:00",
+      "summary": "The public summary claims low holdings overlap, a 15.8x average P/E for VFLO, and complementary value and dividend-growth exposures; the author discloses ownership of both funds.",
+      "zh_summary": "作者公开摘要称 VFLO 与 CGDV 持仓重叠较低，VFLO 平均市盈率约 15.8 倍；作者持有两只基金，搭配效果尚未独立检验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "用当期逐股持仓核对重叠、行业与 AI 暴露，并比较组合净总回报、回撤和费用。"
+    },
+    {
+      "origin_run_id": "37245857461",
+      "origin_report_date": "2026-10-05",
+      "source": "Seeking Alpha ETFs",
+      "title": "VTG: A Low Cost But Smaller ETF, Facing Anti-Duration Macro Developments",
+      "zh_title": "VTG 美国国债 ETF：低费率仍须承担久期风险",
+      "url": "https://seekingalpha.com/article/4951859-vtg-a-low-cost-but-smaller-etf-facing-anti-duration-macro-developments",
+      "published": "2026-10-04T18:47:45+00:00",
+      "summary": "The public summary describes VTG as a low-cost Treasury ETF with roughly 5-6 years of duration and 0.03% expenses; its rate sensitivity remains material despite negligible credit risk.",
+      "zh_summary": "作者公开摘要称 VTG 费率为 0.03%、久期约 5—6 年，利率变动仍会影响价格；其宏观判断属于个人观点。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金事实表的有效久期、到期结构与费率，模拟利率曲线平移及非平移冲击。"
+    },
+    {
+      "origin_run_id": "37245857461",
+      "origin_report_date": "2026-10-05",
+      "source": "Seeking Alpha ETFs",
+      "title": "CGDV: Why Dividend Quality Matters More Than Quantity",
+      "zh_title": "CGDV：股息质量能否比股息率更重要",
+      "url": "https://seekingalpha.com/article/4951858-cgdv-why-dividend-quality-matters-more-than-quantity",
+      "published": "2026-10-04T18:38:56+00:00",
+      "summary": "The public summary argues that CGDV emphasizes dividend sustainability, profitability and earnings growth, while noting top holdings including MSFT, NVDA and META and potential technology concentration.",
+      "zh_summary": "作者公开摘要主张 CGDV 侧重股息可持续性、盈利能力和增长；MSFT、NVDA、META 等持仓也带来科技集中风险。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对当期持仓、分配增长、估值和含分红总回报，并检验风格及科技股集中度。"
+    },
+    {
+      "origin_run_id": "37245857461",
+      "origin_report_date": "2026-10-05",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "Forget the S&P 500: SCHD Is Beating It by Nearly 10 Points in 2026 and Its Dividend Just Grew",
+      "zh_title": "SCHD 年内领先 SPY 近 10 个百分点：长期比较与税务成本",
+      "url": "https://247wallst.com/investing/etf/2026/10/04/forget-the-sp-500-schd-is-beating-it-by-nearly-10-points-in-2026-and-its-dividend-just-grew/",
+      "published": "2026-10-04T21:03:17+00:00",
+      "summary": "The publisher article cites Oct 2 year-to-date changes of 22.18% for SCHD and 12.52% for SPY, a $0.2665 quarterly SCHD distribution, weaker long-run SCHD performance, and taxable-account switching costs.",
+      "zh_summary": "原文称截至 10 月 2 日 SCHD 年内上涨 22.18%、SPY 上涨 12.52%，SCHD 最新季度分配每股 0.2665 美元；长期比较与应税账户换仓成本使单年领先不足以决定配置。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "以同日 NAV 含分红总回报核对各窗口表现，并纳入税费、再平衡和风格暴露。"
+    },
+    {
+      "origin_run_id": "37245857461",
+      "origin_report_date": "2026-10-05",
+      "source": "Yahoo Finance ETF Headlines / Stocktwits",
+      "title": "Michael Saylor Says Strategy's STRC Is Now Steadier Than The S&P 500's Biggest Tracker: ‘A Milestone For Digital Credit’",
+      "zh_title": "STRC 的 30 日波动率低于 SPY：不能据此当作债券替代",
+      "url": "https://stocktwits.com/news-articles/markets/equity/michael-saylor-mstr-strc-steady-sp-500-tracker-digital-credit/cZDZpACRB1h",
+      "published": "2026-10-03T17:46:24+00:00",
+      "summary": "The full article reports Saylor's own 30-day volatility chart: STRC 9%, SPY 10%, BND 5%; he argues that STRC belongs in an income sleeve, while acknowledging Bitcoin, spread and financing risks.",
+      "zh_summary": "报道转述 Saylor 的 30 日波动率图：STRC 为 9%、SPY 为 10%、BND 为 5%；短期低波动不能证明其信用、流动性或比特币关联风险等同债券。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对证券条款、价格与分配、较长窗口波动及压力期相关性，区分短期波动与信用风险。"
     }
   ]
 }
