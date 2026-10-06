@@ -4265,6 +4265,108 @@
       "source": "24/7 Wall St.",
       "title": "Is the AI Bull Market About to Crash? This Risk Indicator Is Saying Yes",
       "url": "https://247wallst.com/investing/2026/10/03/is-the-ai-bull-market-about-to-crash-this-risk-indicator-is-saying-yes/"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "arXiv q-fin.TR",
+      "title": "Axient: Manifest-Bound Evidence for On-Chain Financial Protocols: Seven-Layer Derivation, Correlation, Tamper Rejection, and Reproducible Claim Promotion",
+      "url": "https://arxiv.org/abs/2610.02838"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "arXiv q-fin.TR",
+      "title": "Mixture-of-Experts for Cryptocurrency Order Execution: Training Stability, Tail Risk, and Failure Modes",
+      "url": "https://arxiv.org/abs/2610.03369"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "arXiv q-fin.TR",
+      "title": "MintEval: Do LLMs Implement the Trading Strategy You Asked For? A Behavioural-Equivalence Benchmark for Natural-Language-to-Strategy Code",
+      "url": "https://arxiv.org/abs/2610.03080"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "arXiv q-fin.RM",
+      "title": "Landscape-Dependent Performance of Photonic Quantum Solvers in QUBO Feature Selection for Financial Risk Detection",
+      "url": "https://arxiv.org/abs/2610.03161"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "arXiv q-fin.PM",
+      "title": "Constrained portfolio optimization in a life-cycle model: A deep pricing kernel approach",
+      "url": "https://arxiv.org/abs/2410.20060"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "arXiv q-fin.PM",
+      "title": "Optimal Fees for Liquidity Provision in Automated Market Makers",
+      "url": "https://arxiv.org/abs/2508.08152"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "arXiv q-fin.TR",
+      "title": "When a Correct Reward Is Not Enough: Diagnosing and Guiding PPO in an Analytically Solved Broker-Trader Game",
+      "url": "https://arxiv.org/abs/2610.03598"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "arXiv q-fin.PM",
+      "title": "Optimal Investment and Consumption in a Stochastic Factor Model",
+      "url": "https://arxiv.org/abs/2509.09452"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "Alpha Architect（博客）",
+      "title": "Buying Complex Retail Investment Products May Not be a Great Idea",
+      "url": "https://alphaarchitect.com/financial-complexity/"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "Capital Allocators（条件页面）",
+      "title": "Building the Total Portfolio at Ontario Teachers - Capital Allocators with Ted Seides",
+      "url": "https://www.capitalallocators.com/podcast/building-the-total-portfolio-at-ontario-teachers/"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "Bogleheads.org Forum (comments/replies 224; views 81697)",
+      "title": "Investing - Theory, News & General • Total Bond Market Index Fund -- A Very Unusual Occurrence",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8871424#p8871424"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "Seeking Alpha ETFs",
+      "title": "DVY: A Strong Option To Balance Out A Tech-Heavy Portfolio (Rating Upgrade)",
+      "url": "https://seekingalpha.com/article/4951865-dvy-a-strong-option-to-balance-out-a-tech-heavy-portfolio-rating-upgrade"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "Seeking Alpha ETFs",
+      "title": "VFLO And CGDV: The Perfect Pairing For AI Growth",
+      "url": "https://seekingalpha.com/article/4951864-vflo-and-cgdv-the-perfect-pairing-for-ai-growth"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "Seeking Alpha ETFs",
+      "title": "VTG: A Low Cost But Smaller ETF, Facing Anti-Duration Macro Developments",
+      "url": "https://seekingalpha.com/article/4951859-vtg-a-low-cost-but-smaller-etf-facing-anti-duration-macro-developments"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "Seeking Alpha ETFs",
+      "title": "CGDV: Why Dividend Quality Matters More Than Quantity",
+      "url": "https://seekingalpha.com/article/4951858-cgdv-why-dividend-quality-matters-more-than-quantity"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "Forget the S&P 500: SCHD Is Beating It by Nearly 10 Points in 2026 and Its Dividend Just Grew",
+      "url": "https://247wallst.com/investing/etf/2026/10/04/forget-the-sp-500-schd-is-beating-it-by-nearly-10-points-in-2026-and-its-dividend-just-grew/"
+    },
+    {
+      "sent_date": "2026-10-06",
+      "source": "Yahoo Finance ETF Headlines / Stocktwits",
+      "title": "Michael Saylor Says Strategy's STRC Is Now Steadier Than The S&P 500's Biggest Tracker: ‘A Milestone For Digital Credit’",
+      "url": "https://stocktwits.com/news-articles/markets/equity/michael-saylor-mstr-strc-steady-sp-500-tracker-digital-credit/cZDZpACRB1h"
     }
   ]
 }
