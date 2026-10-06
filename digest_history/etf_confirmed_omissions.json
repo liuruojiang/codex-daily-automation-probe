@@ -950,6 +950,71 @@
       "zh_summary": "报道转述 Saylor 的 30 日波动率图：STRC 为 9%、SPY 为 10%、BND 为 5%；短期低波动不能证明其信用、流动性或比特币关联风险等同债券。",
       "evidence_level": "publisher_full_article",
       "verify_next": "核对证券条款、价格与分配、较长窗口波动及压力期相关性，区分短期波动与信用风险。"
+    },
+    {
+      "origin_run_id": "37401015619",
+      "origin_report_date": "2026-10-06",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "A New ETF Is Betting the S&P 500 Hits 10,000 and Almost Nobody Is Buying It",
+      "zh_title": "押注标普500在2030年达到一万点的新ETF：期权归零与流动性风险",
+      "url": "https://247wallst.com/investing/etf/2026/10/05/a-new-etf-is-betting-the-sp-500-hits-10000-and-almost-nobody-is-buying-it/",
+      "published": "2026-10-05T21:17:05+00:00",
+      "summary": "The full publisher article says Roundhill XX holds long-dated calls with a 10,000 implied strike expiring January 2030; its first two sessions traded 3,314 and 8,467 shares, under $300,000 in combined value. The invested principal can be lost if the target is not reached.",
+      "zh_summary": "原文介绍 Roundhill XX 持有2020年代末到期、隐含执行位约一万点的长期看涨期权；上市前两日仅成交3314和8467股，合计不足30万美元。标的不到目标时本金可能全部损失。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对发行人招募说明书、实际期权持仓、时间价值、费率与买卖价差，并模拟到期和中途退出路径。"
+    },
+    {
+      "origin_run_id": "37401015619",
+      "origin_report_date": "2026-10-06",
+      "source": "Quantpedia",
+      "title": "A Century of Meme Stocks and the Price of Coordination",
+      "zh_title": "百年迷因股与群体协调的价格效应",
+      "url": "https://quantpedia.com/a-century-of-meme-stocks-and-the-price-of-coordination/",
+      "published": "2026-10-05T13:17:13+00:00",
+      "summary": "Quantpedia's original review describes a market-data model trained on MEME ETF holdings and projected back to 1926. It reports a weekly correction pattern, 21-22% weekly turnover, 37-40% maximum drawdowns, and 13.0% versus 9.6% frequency of 50% one-year losses for meme-like versus broad stocks; reported returns are gross of costs.",
+      "zh_summary": "Quantpedia 原文介绍以 MEME ETF 持仓训练、回推至1926年的市场数据识别方法；周频调仓约21%—22%，最大回撤约37%—40%，迷因股一年内腰斩频率13.0%（广泛样本9.6%）。收益仍是未扣成本的研究结果。",
+      "evidence_level": "publisher_research_review",
+      "verify_next": "独立复核原论文的样本、训练标签时点、周频交易成本、容量、卖空约束和2023—2025年样本外表现。"
+    },
+    {
+      "origin_run_id": "37401015619",
+      "origin_report_date": "2026-10-06",
+      "source": "Seeking Alpha ETFs",
+      "title": "FTEC: Dominated By The AI Trade",
+      "zh_title": "FTEC的人工智能相关持仓集中度",
+      "url": "https://seekingalpha.com/article/4952059-ftec-dominated-by-the-ai-trade",
+      "published": "2026-10-05T19:57:19+00:00",
+      "summary": "The publisher's public summary claims Nvidia, Apple and Microsoft make up 45% of FTEC assets and AI-linked holdings 47%; the author highlights concentration risk and maintains a Hold view.",
+      "zh_summary": "作者公开摘要称 Nvidia、Apple、Microsoft 合计占 FTEC 约45%，其定义的 AI 相关持仓约47%；核心问题是行业基金的个股与主题集中风险。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "用同日基金持仓核对权重与AI分类，检验与宽基的重叠、估值和压力情景；全文仍需核验。"
+    },
+    {
+      "origin_run_id": "37401015619",
+      "origin_report_date": "2026-10-06",
+      "source": "Seeking Alpha ETFs",
+      "title": "INFL: Why An Inflation ETF Isn't A Clear Buy In An Inflationary Market",
+      "zh_title": "INFL通胀受益ETF：能源与材料权重并不保证抗通胀",
+      "url": "https://seekingalpha.com/article/4952056-infl-why-an-inflation-etf-isnt-a-clear-buy-in-an-inflationary-market",
+      "published": "2026-10-05T19:51:03+00:00",
+      "summary": "The publisher's public summary describes an active real-asset equity ETF with 31% energy and 21% materials weights; the author rates it Hold because the commodity outlook is mixed.",
+      "zh_summary": "作者公开摘要称 INFL 主动配置实物资产受益股票，能源约31%、材料约21%；油价与贵金属路径可能分化，不能由“通胀受益”名称推断稳定对冲效果。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对同期持仓、行业权重与费用，按不同通胀冲击比较净总回报及与商品期货、TIPS的相关性；全文仍需核验。"
+    },
+    {
+      "origin_run_id": "37401015619",
+      "origin_report_date": "2026-10-06",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "Financials Are 26.30% of DIA. No One Set That Target, Share Prices Did",
+      "zh_title": "DIA金融股权重达26.30%：价格加权如何改变行业敞口",
+      "url": "https://247wallst.com/investing/etf/2026/10/05/financials-are-26-30-of-dia-no-one-set-that-target-share-prices-did/",
+      "published": "2026-10-05T22:03:36+00:00",
+      "summary": "The full publisher article attributes a 26.30% Financials weight in DIA to the Dow's price-weighting method, claims Goldman Sachs alone is about 10% and contrasts DIA's 0.16% fee with VOO's 0.03%.",
+      "zh_summary": "原文称DIA因道指价格加权，金融股占26.30%、高股价的高盛单股约占10%；这说明蓝筹ETF名称不能替代实际行业与个股权重检查。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "用同日发行人持仓与指数方法核对权重，并比较基金费用、再平衡与税后净总回报。"
     }
   ]
 }
