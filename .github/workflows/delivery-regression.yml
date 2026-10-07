@@ -125,6 +125,8 @@ jobs:
             test_live_mo_put_midpoint_20260908.py test_external_review_fixes_20260911.py \
             test_ic_im_chinabond.py test_grid_half_release_20260913.py test_im_grid160_half_release_20260914.py \
             test_adversarial_icim_delivery.py \
+            test_adversarial_market_20261007.py test_adversarial_state_20261007.py \
+            test_adversarial_delivery_20261007.py test_adversarial_policy_20261007.py \
             --junitxml=regression.xml
       - name: Preserve tests and actual tested strategy SHA
         if: always()
