@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
 
@@ -135,7 +136,9 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('git rev-parse HEAD', text)
         self.assertIn('--strategy-sha "${{ steps.microcap_sha.outputs.sha }}"', text)
         self.assertIn('repository: liuruojiang/microcap', text)
-        self.assertEqual(text.count('ref: f570815281b25286bcfb2c39142afe276ae757d8'), 3)
+        published_sha = json.loads((ROOT / 'config' / 'microcap_approved_state.json').read_text(encoding='utf-8'))['strategy_sha']
+        self.assertRegex(published_sha, r'^[0-9a-f]{40}$')
+        self.assertEqual(text.count('ref: ' + published_sha), 3)
         self.assertNotIn('ref: main', text)
         self.assertIn("name: Check out isolated v2.3 close-confirmed workspace", text)
         self.assertIn("name: Check out isolated v2.5 close-confirmed workspace", text)
