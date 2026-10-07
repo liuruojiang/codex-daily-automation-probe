@@ -1015,6 +1015,19 @@
       "zh_summary": "原文称DIA因道指价格加权，金融股占26.30%、高股价的高盛单股约占10%；这说明蓝筹ETF名称不能替代实际行业与个股权重检查。",
       "evidence_level": "publisher_full_article",
       "verify_next": "用同日发行人持仓与指数方法核对权重，并比较基金费用、再平衡与税后净总回报。"
+    },
+    {
+      "origin_run_id": "37554148897",
+      "origin_report_date": "2026-10-07",
+      "source": "Seeking Alpha ETFs",
+      "title": "SPHQ: Still A Buy, But Its Quality Advantage Over JQUA May Not Be Sustainable",
+      "zh_title": "SPHQ与JQUA的质量因子差异：高盈利优势可能难以持续",
+      "url": "https://seekingalpha.com/article/4952355-sphq-still-a-buy-but-its-quality-advantage-over-jqua-may-not-be-sustainable",
+      "published": "2026-10-06T21:52:04+00:00",
+      "summary": "The publisher public summary says SPHQ has reached a 40% technology sector cap and reports 41.57% ROE; the author argues that JQUA has broader diversification and an 18% P/E discount, while SPHQ profitability may be hard to sustain.",
+      "zh_summary": "作者公开摘要称，SPHQ的科技行业权重已到40%上限，组合ROE为41.57%；作者认为JQUA更分散、市盈率约低18%，并质疑SPHQ高盈利能力的可持续性。这些是作者陈述，未独立核验同期持仓或估值。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对两只ETF同日持仓、指数方法、ROE和估值口径，以及同区间含费总回报与行业集中风险。"
     }
   ]
 }
