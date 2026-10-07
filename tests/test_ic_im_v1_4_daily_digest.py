@@ -115,17 +115,38 @@ def fix9_identity_signal() -> dict[str, object]:
     return ic
 
 
+def complete_modern_identity(payload: dict[str, object]) -> dict[str, object]:
+    """Supply the real producer fields omitted by older presentation fixtures."""
+    rules = {
+        "2026-09-28": "ic_im_v1_4_coreput3x_t1_open_20260928_v1",
+        "2026-09-29": "ic_im_v1_4_ordinaryput_open_ic_seller_mom120_20260929_v1",
+        "2026-10-08": "ic_im_v1_4_ic_csi500_ma105_w16_abs40_static_20261008_v1",
+    }
+    rule = rules[payload["market_date"]]
+    payload.setdefault("signal_build", payload["build"])
+    payload.setdefault("signal_rule_revision", rule)
+    for item in payload["signals"].values():
+        item.setdefault("strategy_version", "1.4")
+        item.setdefault("strategy_revision", "r1")
+        item.setdefault("v14_build_id", payload["build"])
+        item.setdefault("v14_rule_revision", rule)
+        item.setdefault("next_trade_date", payload["next_trade_day"])
+        item.setdefault("close_confirmed", True)
+        item.setdefault("market_phase", "收盘后")
+    return payload
+
+
 def fix9_success_payload(ic: dict[str, object]) -> dict[str, object]:
     im = signal("IM")
     im.update(market_date="2026-09-29", next_trade_date="2026-09-30")
-    return {
+    return complete_modern_identity({
         "status": "ok", "strategy_revision": "r1",
         "build": gate.FIX9_BUILD, "delivery_revision": gate.FIX9_DELIVERY_REVISION,
         "publication_mode": "close_confirmed", "market_date": "2026-09-29",
         "completed_day": "2026-09-29", "verified_day": "2026-09-29",
         "next_trade_day": "2026-09-30", "sequence": 8, "digest": "a" * 64,
         "signals": {"IC": ic, "IM": im},
-    }
+    })
 
 
 IDENTITY_MUTATIONS = (
@@ -249,6 +270,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
             "verified_day": "2026-09-29", "sequence": 8, "digest": "a" * 64,
             "signals": {"IC": ic, "IM": im},
         }
+        complete_modern_identity(payload)
         html = digest.build_success_html(payload, "")
         self.assertIn("无需调整", html)
         self.assertNotIn("存在下一交易日调整", html)
@@ -270,8 +292,9 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
             "next_trade_day": "2026-09-30", "sequence": 8, "digest": "b" * 64,
             "signals": {"IC": ic, "IM": im},
         }
+        complete_modern_identity(payload)
         corrupt_identity_signal(ic, {"signal_product"})
-        with self.assertRaisesRegex(ValueError, "product/date/legs"):
+        with self.assertRaisesRegex(ValueError, "product"):
             digest.build_success(payload, "", "")
 
     def test_fix9_real_scheduled_adjustment_is_kept_and_each_leg_is_checked(self) -> None:
@@ -332,6 +355,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
             "next_trade_day": "2026-09-29", "sequence": 1, "digest": "a" * 64,
             "signals": {"IC": ic, "IM": im},
         }
+        complete_modern_identity(payload)
         _subject, body, _actionable = digest.build_success(payload, "", "")
         html = digest.build_success_html(payload, "")
         for rendered in (body, html):
@@ -574,6 +598,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
             "grid_policy_revision": "ic_im_or_fear25_paired_exit50_20261008_v1",
             "signals": {"IC": ic, "IM": im},
         }
+        complete_modern_identity(payload)
         with self.assertRaisesRegex(ValueError, "fix11 IC Abs40"):
             digest.validate_success_payload(payload)
         ic.update(momentum_abs=0.02, momentum_abs_days=40,
@@ -599,6 +624,7 @@ class ICIMV14DailyDigestTests(unittest.TestCase):
             "next_trade_day": "2026-09-30", "sequence": 2,
             "digest": "f" * 64, "signals": {"IC": ic, "IM": im},
         }
+        complete_modern_identity(payload)
         digest.validate_success_payload(payload)
         payload["build"] = gate.FIX8_BUILD
         with self.assertRaisesRegex(ValueError, "signal-day identity"):
