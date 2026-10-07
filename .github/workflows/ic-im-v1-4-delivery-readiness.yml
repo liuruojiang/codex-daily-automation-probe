@@ -1,0 +1,132 @@
+name: IC IM v1.4-r1 Delivery Readiness (no send)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  regression:
+    uses: ./.github/workflows/delivery-regression.yml
+    with:
+      family: icim
+  readiness:
+    needs: regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Resolve the exact production strategy pin
+        id: pin
+        run: |
+          python - <<'PY'
+          import os, re
+          from pathlib import Path
+          text = Path('automation/.github/workflows/ic-im-v1-4-daily-digest.yml').read_text()
+          pins = set(re.findall(r'repository: liuruojiang/ic-im-rolling-arbitrage\s+ref: ([0-9a-f]{40})\b', text))
+          assert len(pins) == 1
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('sha=' + pins.pop() + '\n')
+          PY
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/ic-im-rolling-arbitrage
+          ref: ${{ steps.pin.outputs.sha }}
+          path: strategy
+          persist-credentials: false
+      - name: Install the production dependencies
+        run: python -m pip install -r strategy/requirements-poe-v1.4-server.txt
+      - name: Restore a verified production ledger to an isolated volume
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          python automation/scripts/restore_ic_im_v1_4_ledger.py
+          --state-dir readiness-state --artifact-name ic-im-v1-4-r1-ledger --required
+      - name: Verify producer identity, migration and completed-session coverage
+        env:
+          ICIM_STATE_DIR: readiness-state
+          ICIM_REQUIRE_MIGRATION: '1'
+          EXPECTED_STRATEGY_SHA: ${{ steps.pin.outputs.sha }}
+        run: |
+          python - <<'PY'
+          import sys, os, json, subprocess
+          from pathlib import Path
+          from datetime import datetime, date
+          from zoneinfo import ZoneInfo
+          sys.path.insert(0, 'strategy')
+          import poe_ic_im_mainline_v1_4_bot as bot
+          import poe_ic_im_v1_4_state as state
+          import run_ic_im_v1_4_github_digest as runner
+          assert bot.BUILD_ID == 'v1.4-20261008-r1-ic-csi500-abs40-fix11'
+          assert runner.DELIVERY_REVISION == '20261008-v14-ic-csi500-abs40-fix11'
+          sha = subprocess.check_output(['git', '-C', 'strategy', 'rev-parse', 'HEAD'], text=True).strip()
+          assert sha == os.environ['EXPECTED_STRATEGY_SHA']
+          store = state.StateStore('readiness-state')
+          latest = store.load_latest()
+          state.anchors_from_record(latest)
+          proof = json.loads(Path('readiness-state/migration_record.json').read_text())
+          assert proof['new_ledger']['digest'] == store.load_sequence(0)['digest']
+          clock = datetime.now(ZoneInfo('Asia/Shanghai'))
+          completed = bot._latest_completed_exchange_day(clock)
+          summary = {'strategy_sha': sha, 'program_build': bot.BUILD_ID,
+                     'generated_at': clock.isoformat(), 'completed_day': completed.isoformat(),
+                     'restored_verified_day': latest['verified_day'], 'restored_digest': latest['digest'],
+                     'today_is_trade_day': bot._is_exchange_trading_day(clock.date()),
+                     'signal_build_expected': bot.v14_policy.identity_for_signal_day(completed)[0],
+                     'prospective_fix11_signal_observed': False}
+          Path('readiness-artifacts').mkdir()
+          Path('readiness-artifacts/preflight.json').write_text(json.dumps(summary, indent=2))
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('COMPLETED_DAY=' + completed.isoformat() + '\n')
+          PY
+      - name: Run the official close producer on the isolated ledger
+        env:
+          ICIM_STATE_DIR: readiness-state
+          ICIM_REQUIRE_MIGRATION: '1'
+          ICIM_LEGULEGU_DAILY_SNAPSHOT: ${{ secrets.ICIM_LEGULEGU_DAILY_SNAPSHOT }}
+        run: >-
+          timeout --foreground 65m python -B -X utf8 strategy/run_ic_im_v1_4_github_digest.py
+          --state-dir readiness-state --out-dir readiness-artifacts --mode close
+          --max-sessions 20 --network-budget-per-product 180 --expected-market-date "$COMPLETED_DAY"
+      - name: Validate the normal digest and dated marker without publishing
+        run: |
+          python automation/scripts/build_ic_im_v1_4_digest.py --result readiness-artifacts/result.json --out-dir readiness-mail
+          python automation/scripts/prepare_ic_im_v1_4_marker.py --result readiness-artifacts/result.json --marker-dir readiness-marker
+          python - <<'PY'
+          import sys, json
+          from pathlib import Path
+          sys.path.insert(0, 'automation/scripts')
+          import check_ic_im_v1_4_delivery as gate
+          result = json.loads(Path('readiness-artifacts/result.json').read_text())
+          assert result['status'] == 'ok'
+          assert result['build'] == gate.expected_identity_for_day(__import__('datetime').date.fromisoformat(result['market_date']))[0]
+          metadata = json.loads(Path('readiness-mail/metadata.json').read_text())
+          assert metadata['subject'] and metadata['body']
+          PY
+      - name: Authenticate SMTP and validate envelopes without DATA
+        env:
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
+        run: python automation/scripts/check_mail_transport.py --output readiness-artifacts/mail-transport.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ic-im-v1-4-r1-readiness-${{ github.run_id }}
+          path: |
+            readiness-artifacts/
+            readiness-mail/
+          if-no-files-found: error
+          retention-days: 30
