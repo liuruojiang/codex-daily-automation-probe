@@ -88,7 +88,8 @@ def test_validation_keeps_actual_refresh_consumers_and_final_artifacts():
 def test_validation_artifact_cannot_be_consumed_as_production_state():
     steps = {step.get("name"): step for step in workflow()["jobs"]["send"]["steps"]}
     name = steps["Preserve verified whole delivery for the next trading day"]["with"]["name"]
-    assert "inputs.validation_only == true && 'microcap-whole-delivery-validation-state'" in name
+    assert "inputs.validation_only == true || inputs.delivery_test_id != ''" in name
+    assert "&& 'microcap-whole-delivery-validation-state'" in name
     assert "|| 'microcap-whole-delivery-state'" in name
 
 

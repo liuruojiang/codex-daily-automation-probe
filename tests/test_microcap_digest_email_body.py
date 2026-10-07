@@ -660,7 +660,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             "[纠正版][无需操作] 微盘股 v2.5 日报 - 2026-08-07",
         )
 
-    def test_stale_anchor_uses_abnormal_subject_and_visible_warning(self) -> None:
+    def test_stale_final_csv_anchor_uses_abnormal_subject_and_visible_warning(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             meta = self.run_digest(
                 Path(tmp),
@@ -669,23 +669,27 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                         [
                             "realtime_signal",
                             "strategy_version: v2.0",
-                            "snapshot_time: 2026-05-20 14:52:59+08:00",
-                            "latest_anchor_trade_date: 2026-05-15",
-                            "quote_trade_date: 2026-05-20",
+                            "snapshot_time: 2026-08-07 09:33:00+08:00",
+                            "latest_anchor_trade_date: 2026-08-06",
+                            "quote_trade_date: 2026-08-07",
                             "current_holding: long_microcap_short_zz1000",
                             "next_holding: long_microcap_short_zz1000",
                             "trade_state: hold",
                         ]
                     )
                 },
+                {"v2.0": {
+                    **self.signal_fields("v2.0", "long_microcap_short_zz1000", "long_microcap_short_zz1000"),
+                    "latest_anchor_trade_date": "2026-08-05",
+                }},
             )
 
         body = str(meta["body"])
+        self.assertEqual(meta["status"], "FAILED")
         self.assertEqual(meta["subject"], "[异常] 微盘股 v2.0 日报 - 2026-08-07")
         self.assertIn("**存在异常版本，请勿执行异常版本信号。**", body)
-        self.assertIn("**v2.0：**数据过期", body)
-        self.assertIn("2026-05-15", body)
-        self.assertIn("2026-05-19", body)
+        self.assertIn("final CSV anchor must match the verified previous completed session", body)
+        self.assertIn("不可用", body)
         self.assertNotIn("Digest status", body)
 
     def test_missing_required_holdings_is_abnormal_instead_of_no_action(self) -> None:

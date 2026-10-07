@@ -6,7 +6,7 @@ import json
 import math
 import os
 import re
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -38,23 +38,6 @@ def extract_value(text: str, key: str) -> str:
     return line.split(":", 1)[1].strip()
 
 
-def parse_iso_date(value: str) -> date | None:
-    match = re.search(r"\d{4}-\d{2}-\d{2}", value.strip())
-    if not match:
-        return None
-    try:
-        return date.fromisoformat(match.group(0))
-    except ValueError:
-        return None
-
-
-def previous_weekday(value: date) -> date:
-    value = value - timedelta(days=1)
-    while value.weekday() >= 5:
-        value = value - timedelta(days=1)
-    return value
-
-
 def classify_signal_output(
     output: str,
     exit_code: str,
@@ -75,12 +58,8 @@ def classify_signal_output(
     if re.search(rf"^{re.escape(expected_marker)}\s*$", output, flags=re.M) is None:
         return "FAILED", f"{expected_marker} marker is missing"
 
-    anchor = parse_iso_date(extract_value(output, "latest_anchor_trade_date"))
-    quote_trade_date = parse_iso_date(extract_value(output, "quote_trade_date"))
-    if anchor and quote_trade_date and anchor < quote_trade_date:
-        expected_anchor = previous_weekday(quote_trade_date)
-        if anchor < expected_anchor:
-            return "STALE", f"anchor {anchor.isoformat()} is older than expected {expected_anchor.isoformat()}"
+    # Session freshness belongs to the verified final CSV contract. Weekdays
+    # cannot establish the previous exchange session across market holidays.
     return "OK", ""
 
 
@@ -171,12 +150,24 @@ def read_last_csv_row(path_value: str) -> tuple[dict[str, str], str]:
         return {}, "final signal CSV is unreadable"
     try:
         with path.open("r", encoding="utf-8-sig", newline="") as handle:
-            rows = list(csv.DictReader(handle))
+            reader = csv.reader(handle, strict=True)
+            # Windows atomic exports may contain CRCRLF separators, which
+            # csv.reader exposes as completely empty records. They carry no
+            # signal fields; delimiter-only or quoted-empty rows still count.
+            header = next((row for row in reader if row != []), None)
+            rows = [row for row in reader if row != []]
     except (OSError, UnicodeError, csv.Error) as exc:
         return {}, f"final signal CSV is unreadable: {type(exc).__name__}"
-    if not rows:
+    if header is None or not rows:
         return {}, "final signal CSV is empty"
-    row = {str(key): str(value).strip() for key, value in rows[-1].items() if key and value is not None}
+    if (not header or any(not key or key != key.strip() for key in header)
+            or len(set(header)) != len(header)):
+        return {}, "final signal CSV must have unique nonempty column names"
+    if len(rows) != 1:
+        return {}, "final signal CSV must contain exactly one signal row"
+    if len(rows[0]) != len(header):
+        return {}, "final signal CSV row width does not match column names"
+    row = {key: value.strip() for key, value in zip(header, rows[0])}
     if not row or not any(row.values()):
         return {}, "final signal CSV is empty"
     return row, ""
@@ -188,6 +179,8 @@ def parse_signal_csv_specs(specs: list[str]) -> dict[str, str]:
         version, value = split_version_spec(spec, "")
         if not version:
             raise ValueError("--signal-csv values must use version=path format")
+        if version in mapped:
+            raise ValueError(f"duplicate --signal-csv version {version}")
         mapped[version] = value
     return mapped
 
@@ -402,10 +395,11 @@ def validate_publication_contract(
         if publication_date is None or action_date != publication_date:
             return False, "member action contract invalid: actionable date does not match publication session"
     if publication_mode != "close_confirmed":
+        publication_time = now_bj().astimezone(BJ)
         quote = parse_strict_iso_date(first_value(fields, "quote_trade_date"))
         anchor = parse_strict_iso_date(first_value(fields, "latest_anchor_trade_date"))
         expected_anchor = parse_strict_iso_date(first_value(fields, "expected_latest_completed_trade_date"))
-        if quote != now_bj().date() or parse_strict_iso_date(first_value(fields, "date")) != quote:
+        if quote != publication_time.date() or parse_strict_iso_date(first_value(fields, "date")) != quote:
             return False, "publication contract invalid: realtime final CSV must match today's quote session"
         if anchor is None or expected_anchor is None or anchor != expected_anchor or anchor >= quote:
             return False, "publication contract invalid: realtime final CSV anchor must match the verified previous completed session"
@@ -415,6 +409,9 @@ def validate_publication_contract(
             return False, "publication contract invalid: invalid final CSV snapshot_time"
         if snapshot.tzinfo is None or snapshot.astimezone(BJ).date() != quote:
             return False, "publication contract invalid: final CSV snapshot must be timezone-aware and match quote session"
+        if (snapshot.astimezone(BJ).time().replace(tzinfo=None) >= time(15, 0)
+                or publication_time.time().replace(tzinfo=None) >= time(15, 0)):
+            return False, "publication contract invalid: realtime snapshot and publication must both be before 15:00 Asia/Shanghai"
         if (parse_strict_bool(first_value(fields, "official_close_confirmed_signal")) is not False
                 or first_value(fields, "signal_timing") != "intraday_hypothetical_if_now_close"):
             return False, "publication contract invalid: realtime cannot use a close-confirmed final CSV"
@@ -813,6 +810,7 @@ def main() -> int:
     parser.add_argument("--planned", default="12:45 Asia/Shanghai")
     parser.add_argument("--started", default="")
     parser.add_argument("--subject-prefix", default="")
+    parser.add_argument("--delivery-test-id", default="")
     parser.add_argument("--strategy-sha", default="", help="Checked-out microcap strategy commit SHA")
     parser.add_argument(
         "--publication-mode",
@@ -833,12 +831,26 @@ def main() -> int:
         help="Required version=path final realtime signal CSV. Can be repeated.",
     )
     args = parser.parse_args()
+    if args.delivery_test_id:
+        if re.fullmatch(r"[a-z0-9][a-z0-9-]{7,63}", args.delivery_test_id, flags=re.ASCII) is None:
+            raise ValueError("invalid delivery test ID")
+        if args.publication_mode != "close_confirmed":
+            raise ValueError("delivery tests require close-confirmed publication")
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     exit_codes, default_exit_code = parse_exit_codes(args.exit_code)
     signal_csv_paths = parse_signal_csv_specs(args.signal_csv)
     result_specs = [split_version_spec(spec, "v2.0" if len(args.result) == 1 else "") for spec in args.result]
+    result_versions = [version for version, _ in result_specs]
+    if len(set(result_versions)) != len(result_versions):
+        raise ValueError("duplicate --result version")
+    if args.delivery_test_id:
+        expected_versions = {"v2.0", "v2.3", "v2.5"}
+        if set(result_versions) != expected_versions or len(result_specs) != 3:
+            raise ValueError("delivery tests require exactly v2.0/v2.3/v2.5 results")
+        if set(signal_csv_paths) != expected_versions:
+            raise ValueError("delivery tests require exactly v2.0/v2.3/v2.5 final CSVs")
     results: list[dict[str, object]] = []
     for version, result_value in result_specs:
         if not version:
@@ -937,6 +949,14 @@ def main() -> int:
         subject_prefix=args.subject_prefix,
         publication_mode=args.publication_mode,
     )
+    if args.delivery_test_id:
+        subject = (f"[发送验收测试][收盘确认] 微盘股 v2.0/v2.3/v2.5 日报 - {date_s}"
+                   f" - {args.delivery_test_id}")
+        digest_text = ("## 邮件发送验收测试\n\n"
+                       f"本邮件仅用于核对日报收发链路，数据截至 {date_s}。"
+                       "下文为历史收盘日报样本，不作为今日交易指令。\n\n"
+                       f"验收编号：{args.delivery_test_id}\n\n"
+                       + digest_text.replace("## 今日结论", "## 历史收盘日报样本", 1))
 
     md = out_dir / f"microcap_realtime_signal_digest_{date_s}.md"
     md.write_text(digest_text, encoding="utf-8")
@@ -949,6 +969,8 @@ def main() -> int:
         "publication_mode": args.publication_mode,
         "signal_date": date_s,
     }
+    if args.delivery_test_id:
+        meta["delivery_test_id"] = args.delivery_test_id
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     return 0
 

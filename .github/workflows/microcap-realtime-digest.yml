@@ -8,6 +8,11 @@ on:
         required: false
         type: boolean
         default: false
+      delivery_test_id:
+        description: "Explicit close-confirmed mail acceptance test ID (8-64 lowercase letters/digits/hyphens); separate dedupe markers"
+        required: false
+        type: string
+        default: ""
       approved_state_url:
         description: "Optional explicitly approved whole-state release asset; used only for this manual run"
         required: false
@@ -53,6 +58,8 @@ concurrency:
 
 jobs:
   regression:
+    needs: check-trading-day
+    if: needs.check-trading-day.result == 'success' && (needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true' || (github.event_name == 'workflow_dispatch' && inputs.external_schedule != true && (inputs.validation_only == true || inputs.correction == true || inputs.delivery_test_id != '')))
     uses: ./.github/workflows/delivery-regression.yml
     with:
       family: microcap
@@ -101,7 +108,7 @@ jobs:
 
   send:
     needs: [check-trading-day, regression]
-    if: always() && needs.regression.result == 'success' && needs.check-trading-day.result == 'success' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true')
+    if: always() && needs.regression.result == 'success' && needs.check-trading-day.result == 'success' && (needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true' || (github.event_name == 'workflow_dispatch' && inputs.external_schedule != true && (inputs.validation_only == true || inputs.correction == true || inputs.delivery_test_id != '')))
     runs-on: ubuntu-latest
     timeout-minutes: 100
     env:
@@ -136,6 +143,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           VALIDATION_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.validation_only && 'true' || 'false' }}
           CORRECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.correction && 'true' || 'false' }}
+          DELIVERY_TEST_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.delivery_test_id || '' }}
+          EXTERNAL_SCHEDULE: ${{ inputs.external_schedule == true && 'true' || 'false' }}
         run: |
           args=()
           if [[ "${VALIDATION_ONLY}" == "true" ]]; then
@@ -143,6 +152,13 @@ jobs:
           fi
           if [[ "${CORRECTION}" == "true" ]]; then
             args+=(--correction)
+          fi
+          if [[ -n "${DELIVERY_TEST_ID}" ]]; then
+            if [[ "${EXTERNAL_SCHEDULE}" == "true" ]]; then
+              echo "Delivery tests cannot be scheduled production runs"
+              exit 1
+            fi
+            args+=(--delivery-test-id "${DELIVERY_TEST_ID}")
           fi
           python automation/scripts/check_microcap_delivery.py --publication-mode "${{ steps.publication_mode.outputs.mode }}" "${args[@]}"
 
@@ -167,7 +183,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 501b269b9f51a83f05f3b71488143b4da285cd0b
+          ref: de6ce1a9f05bf9032d3423b63121f778723db3d0
           path: microcap
 
       - name: Check out isolated v2.3 close-confirmed workspace
@@ -175,7 +191,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 501b269b9f51a83f05f3b71488143b4da285cd0b
+          ref: de6ce1a9f05bf9032d3423b63121f778723db3d0
           path: microcap-v23
 
       - name: Check out isolated v2.5 close-confirmed workspace
@@ -183,7 +199,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 501b269b9f51a83f05f3b71488143b4da285cd0b
+          ref: de6ce1a9f05bf9032d3423b63121f778723db3d0
           path: microcap-v25
 
       - name: Record microcap strategy SHA
@@ -527,7 +543,7 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.validation_only == true && 'microcap-verified-state-validation' || format('microcap-verified-state-recovery-v2-{0}', steps.microcap_sha.outputs.sha) }}
+          name: ${{ inputs.validation_only == true && 'microcap-verified-state-validation' || inputs.delivery_test_id != '' && 'microcap-verified-state-validation' || format('microcap-verified-state-recovery-v2-{0}', steps.microcap_sha.outputs.sha) }}
           path: microcap/.realtime_state_bundle/microcap-top100-state.zip
           if-no-files-found: error
           retention-days: 90
@@ -536,7 +552,7 @@ jobs:
       # Gmail.  A later interruption therefore never discards a completed
       # refresh and the next run can continue instead of rebuilding globally.
       - name: Persist validated state bundle for same-day recovery
-        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
+        if: inputs.validation_only != true && inputs.delivery_test_id == '' && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
         continue-on-error: true
         uses: actions/cache/save@v4
         with:
@@ -562,7 +578,7 @@ jobs:
             --bundle "${RUNNER_TEMP}/microcap-top100-state.zip"
 
       - name: Save refreshed full rebalance cache
-        if: inputs.validation_only != true && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
+        if: inputs.validation_only != true && inputs.delivery_test_id == '' && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
         continue-on-error: true
         uses: actions/cache/save@v4
         with:
@@ -680,7 +696,8 @@ jobs:
             --signal-csv v2.5=${v25_root}/outputs/microcap_top100_mom16_biweekly_live_v2_5_${signal_suffix}.csv \
             --out-dir artifacts \
             --publication-mode "${{ steps.publication_mode.outputs.mode }}" \
-            --expected-signal-date "${{ (github.event_name == 'schedule' || inputs.external_schedule == true) && steps.delivery_gate.outputs.delivery_date || '' }}" \
+            --expected-signal-date "${{ inputs.validation_only != true && inputs.correction != true && inputs.delivery_test_id == '' && steps.delivery_gate.outputs.delivery_date || '' }}" \
+            --delivery-test-id "${{ steps.delivery_gate.outputs.delivery_test_id }}" \
             --planned "${PLANNED_BJ}" \
             --started "${STARTED_BJ}" \
             --strategy-sha "${{ steps.microcap_sha.outputs.sha }}" \
@@ -703,7 +720,7 @@ jobs:
 
       - name: Send Gmail
         id: send_gmail
-        if: inputs.validation_only != true && always() && steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outcome == 'success' && (steps.digest.outputs.status != 'OK' || (steps.send_intent.outcome == 'success' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.validated == 'true')))
+        if: inputs.validation_only != true && always() && steps.delivery_gate.outputs.should_send == 'true' && steps.digest.outcome == 'success' && (inputs.delivery_test_id == '' || steps.digest.outputs.status == 'OK') && (steps.digest.outputs.status != 'OK' || (steps.send_intent.outcome == 'success' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.whole_delivery.outputs.validated == 'true')))
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -712,7 +729,7 @@ jobs:
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
-        run: python automation/scripts/send_report.py artifacts/metadata.json
+        run: python automation/scripts/send_report.py artifacts/metadata.json --receipt artifacts/smtp-accepted.json
 
       # Persist SMTP acceptance before the delivery marker. If a runner stops
       # after acceptance, a later run can reconcile the marker without sending
@@ -723,7 +740,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.delivery_gate.outputs.marker_name }}-smtp-accepted
-          path: artifacts/metadata.json
+          path: |
+            artifacts/metadata.json
+            artifacts/smtp-accepted.json
           if-no-files-found: error
           retention-days: 30
 
@@ -738,7 +757,7 @@ jobs:
         if: steps.whole_delivery.outputs.validated == 'true' && steps.digest.outputs.status == 'OK' && (inputs.validation_only == true || steps.send_gmail.outcome == 'success')
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ inputs.validation_only == true && 'microcap-whole-delivery-validation-state' || 'microcap-whole-delivery-state' }}
+          name: ${{ (inputs.validation_only == true || inputs.delivery_test_id != '') && 'microcap-whole-delivery-validation-state' || 'microcap-whole-delivery-state' }}
           path: ${{ runner.temp }}/microcap-whole-delivery-state.zip
           if-no-files-found: error
           retention-days: 90

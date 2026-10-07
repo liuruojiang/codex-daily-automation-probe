@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "strategy_sha": "501b269b9f51a83f05f3b71488143b4da285cd0b",
-  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-audit-20261007/microcap-approved-state-20260930-501b269b.zip",
-  "state_sha256": "d6c5e5833d3384fb9990c79567315f7e845b8dacfd4e7b6a651c9c0aa5a12fbe",
+  "strategy_sha": "de6ce1a9f05bf9032d3423b63121f778723db3d0",
+  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-delivery-20261007-de6ce1a9/microcap-approved-state-20260930-de6ce1a9.zip",
+  "state_sha256": "13fc81b0331807cb19bc43d12d2b2abb9d3acfcaf61917ca847747a37f248af6",
   "state_date": "2026-09-30"
 }

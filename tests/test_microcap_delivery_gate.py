@@ -86,6 +86,7 @@ class MicrocapDeliveryGateTests(unittest.TestCase):
         outputs: list[dict[str, str]] = []
         with (
             patch.object(gate, "now_utc", return_value=day),
+            patch.object(gate, "verify_smtp_receipt"),
             patch.object(gate, "fetch_artifacts", side_effect=lambda _repo, _token, name, _api: payloads.get(name, {"artifacts": []})),
             patch.object(sys, "argv", ["check_microcap_delivery.py", "--publication-mode", "close_confirmed", "--repository", "o/r", "--token", "t"]),
             patch.object(gate, "write_outputs", outputs.append),
