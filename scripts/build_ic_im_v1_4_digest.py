@@ -30,6 +30,24 @@ ACTION_CN = {
 }
 EXPECTED_BUILD = "v1.4-20260928-r1-coreput3x-open-fix7-nocall-repeatroll-iciv30-qdelta05"
 EXPECTED_DELIVERY_REVISION = "20260928-v14-coreput3x-open-fix7-nocall-repeatroll-iciv30-qdelta05"
+# Pre-fix6 archived payloads retain their historical, incomplete field contract.
+# Every successful modern producer result must pass the full per-leg boundary.
+STRICT_SIGNAL_IDENTITY_DATE = date(2026, 9, 26)
+
+
+def expected_rule_revision_for_day(day: date) -> str:
+    """Mirror the date-authoritative strategy rule registry, not payload fields."""
+    if day >= date(2026, 10, 8):
+        return "ic_im_v1_4_ic_csi500_ma105_w16_abs40_static_20261008_v1"
+    if day >= date(2026, 9, 29):
+        return "ic_im_v1_4_ordinaryput_open_ic_seller_mom120_20260929_v1"
+    if day >= date(2026, 9, 28):
+        return "ic_im_v1_4_coreput3x_t1_open_20260928_v1"
+    if day >= STRICT_SIGNAL_IDENTITY_DATE:
+        return "ic_im_v1_4_no_im_call_repeat_short_put_roll_20260926_v1"
+    if day >= date(2026, 9, 18):
+        return "ic_im_v1_4_iciv30_qdelta05_20260918_v1"
+    return "ic_im_v1_4_coreput3x_fixed_short95_20260917_v1"
 
 
 def number(value: Any) -> str:
@@ -784,6 +802,12 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
         raise ValueError("realtime digest must retain prior completed ledger day")
     if days["next_trade_day"] <= days["market_date"]:
         raise ValueError("next trade day must follow market day")
+    strict_identity = days["market_date"] >= STRICT_SIGNAL_IDENTITY_DATE
+    expected_rule = expected_rule_revision_for_day(days["market_date"])
+    if strict_identity and payload.get("signal_build") != expected_build:
+        raise ValueError("signal build must match the authoritative signal-day identity")
+    if strict_identity and payload.get("signal_rule_revision") != expected_rule:
+        raise ValueError("signal rule must match the authoritative signal-day identity")
     signals = payload.get("signals")
     if not isinstance(signals, dict) or set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
@@ -796,6 +820,34 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
     for product, signal in signals.items():
         if not isinstance(signal, dict):
             raise ValueError(f"invalid {product} signal")
+        for field, expected in (
+            ("product", product),
+            ("strategy_version", "1.4"),
+            ("strategy_revision", payload["strategy_revision"]),
+            ("market_date", days["market_date"].isoformat()),
+            ("next_trade_date", days["next_trade_day"].isoformat()),
+        ):
+            if (strict_identity or field in signal) and signal.get(field) != expected:
+                raise ValueError(f"{product} {field} identity does not match the result and signal day")
+        # Old delivery tags used a simplified LEGACY mapping. Preserve their
+        # recorded producer identity; when available, compare it with the
+        # original payload identity instead of relabeling it by today's map.
+        for field, payload_field, expected in (
+            ("v14_build_id", "signal_build", expected_build),
+            ("v14_rule_revision", "signal_rule_revision", expected_rule),
+        ):
+            if strict_identity:
+                if signal.get(field) != expected:
+                    raise ValueError(f"{product} {field} identity does not match the authoritative signal day")
+            elif field in signal and payload_field in payload and signal[field] != payload[payload_field]:
+                raise ValueError(f"{product} {field} identity differs from its archived payload")
+        realtime = payload["publication_mode"] == "realtime"
+        if (strict_identity or "close_confirmed" in signal) and signal.get("close_confirmed") is not (not realtime):
+            raise ValueError(f"{product} close_confirmed must be a mode-consistent boolean")
+        if (strict_identity or "market_phase" in signal) and signal.get("market_phase") != ("盘中" if realtime else "收盘后"):
+            raise ValueError(f"{product} market phase does not match publication mode")
+        if realtime and (strict_identity or "state_anchor_day" in signal) and signal.get("state_anchor_day") != days["completed_day"].isoformat():
+            raise ValueError(f"{product} realtime signal must use the completed ledger day")
         for field in ("total_units_current", "total_units_target", "momentum_current_weight", "momentum_next_weight", "grid_current", "grid_target"):
             value = signal.get(field)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
@@ -825,6 +877,10 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
                 "same_day_post_close", "retrospective_replay", "missing_published_history"
             }:
                 raise ValueError(f"{product} fix10 Fear score not close-confirmed")
+            if payload["publication_mode"] == "realtime" and signal.get("fear_data_status") not in {
+                "intraday_provisional", "intraday_unpublished"
+            }:
+                raise ValueError(f"{product} fix10 Fear status is not a valid realtime observation")
         if days["market_date"] >= date(2026, 9, 26):
             if str(signal.get("market_date") or "")[:10] != str(days["market_date"]):
                 raise ValueError(f"{product} signal day must match digest day")
