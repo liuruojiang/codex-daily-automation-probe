@@ -1028,6 +1028,58 @@
       "zh_summary": "作者公开摘要称，SPHQ的科技行业权重已到40%上限，组合ROE为41.57%；作者认为JQUA更分散、市盈率约低18%，并质疑SPHQ高盈利能力的可持续性。这些是作者陈述，未独立核验同期持仓或估值。",
       "evidence_level": "publisher_public_summary_only",
       "verify_next": "核对两只ETF同日持仓、指数方法、ROE和估值口径，以及同区间含费总回报与行业集中风险。"
+    },
+    {
+      "origin_run_id": "37711315092",
+      "origin_report_date": "2026-10-08",
+      "source": "A Wealth of Common Sense",
+      "title": "The Rich Are Getting Richer. So Is Everyone Else",
+      "zh_title": "富人财富增长，其他家庭也有进展：财富效应的两面",
+      "url": "https://awealthofcommonsense.com/2026/10/the-rich-are-getting-richer-so-is-everyone-else/",
+      "published": "2026-10-06T20:20:51+00:00",
+      "summary": "Ben Carlson cites household-wealth statistics and argues that wealth has broadened beyond the top 0.1%, while explicitly acknowledging inequality and a recession-related wealth-effect risk.",
+      "zh_summary": "作者引述家庭财富统计，认为财富增长不限于最顶层，也指出不平等仍在，并把衰退时的财富效应列为风险。数据及图表口径尚未独立核验。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对原始财富数据的年份、通胀调整、家庭年龄结构与分位数，并检验财富效应和消费、股债回报的关系。"
+    },
+    {
+      "origin_run_id": "37711315092",
+      "origin_report_date": "2026-10-08",
+      "source": "Seeking Alpha ETFs",
+      "title": "Have You Ever Seen An S&P 500 Covered Call That Goes After Alpha? I Have, And It's FYEE",
+      "zh_title": "FYEE：覆盖标普500指数的备兑看涨期权能否保留选股超额收益",
+      "url": "https://seekingalpha.com/article/4952609-have-you-ever-seen-an-s-and-p-500-covered-call-that-goes-after-alpha-i-have-and-its-fyee",
+      "published": "2026-10-07T21:07:16+00:00",
+      "summary": "The publisher's public summary says FYEE sells calls on the S&P 500 rather than its individual holdings; the author reports a 9.18% distribution rate, a near-full options overlay and turnover above 90%, while warning of potential S&P 500 underperformance.",
+      "zh_summary": "作者公开摘要称，FYEE卖出标普500指数看涨期权而非逐只持股期权，主张选股超额收益仍有空间；文中9.18%为分配率，且提示覆盖率接近全部、换手率超过90%及跑输标普500的风险。全文未取得。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金持仓、期权名义敞口、分配来源和同区间含费总回报；检验上涨与下跌市场中超额收益是否保留。"
+    },
+    {
+      "origin_run_id": "37711315092",
+      "origin_report_date": "2026-10-08",
+      "source": "Seeking Alpha ETFs",
+      "title": "CGDG: High-Quality Global Dividend Growth Comes At A Price",
+      "zh_title": "CGDG全球股息增长策略：质量与估值的权衡",
+      "url": "https://seekingalpha.com/article/4952607-cgdg-high-quality-global-dividend-growth-comes-at-a-price",
+      "published": "2026-10-07T20:58:28+00:00",
+      "summary": "The publisher's public summary describes CGDG as an actively managed global dividend fund with a 0.47% expense ratio, 2.33% trailing yield and 19.21x trailing P/E; the author says its total return has lagged selected global dividend ETFs since September 2023.",
+      "zh_summary": "作者公开摘要称CGDG为主动全球股息基金，费用率0.47%、历史股息率2.33%、市盈率19.21倍；并称自2023年成立以来总回报落后部分全球股息ETF。这些是作者口径，全文与同期基金数据未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金和基准的日期一致的持仓、费用、分红再投资总回报及汇率风险；避免把历史分配率当预期收益。"
+    },
+    {
+      "origin_run_id": "37711315092",
+      "origin_report_date": "2026-10-08",
+      "source": "Seeking Alpha ETFs",
+      "title": "VONE: Hard To Justify The Large-Cap Premium",
+      "zh_title": "VONE：美国大盘股估值溢价是否过高",
+      "url": "https://seekingalpha.com/article/4952580-vone-hard-to-justify-the-large-cap-premium",
+      "published": "2026-10-07T18:27:47+00:00",
+      "summary": "The publisher's public summary says VONE has 36.2% technology exposure and cites a 27% large-cap valuation premium over mid-caps against less than one percentage point of expected earnings-growth advantage.",
+      "zh_summary": "作者公开摘要称VONE科技股权重36.2%，并认为大盘股较中盘股27%的估值溢价，与不到1个百分点的预期盈利增速优势不匹配；属于作者的估值判断，全文未取得。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对同期指数成分、权重、估值与盈利预测口径，并用不同利率环境的含费总回报检验溢价解释力。"
     }
   ]
 }
