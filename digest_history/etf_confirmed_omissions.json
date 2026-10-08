@@ -1080,6 +1080,32 @@
       "zh_summary": "作者公开摘要称VONE科技股权重36.2%，并认为大盘股较中盘股27%的估值溢价，与不到1个百分点的预期盈利增速优势不匹配；属于作者的估值判断，全文未取得。",
       "evidence_level": "publisher_public_summary_only",
       "verify_next": "核对同期指数成分、权重、估值与盈利预测口径，并用不同利率环境的含费总回报检验溢价解释力。"
+    },
+    {
+      "origin_run_id": "37711315092",
+      "origin_report_date": "2026-10-08",
+      "source": "ETF Trends",
+      "title": "Combined Assets in SPY, SPYM Cross $1 Trillion for the First Time",
+      "zh_title": "SPY与SPYM合计资产首次突破1万亿美元",
+      "url": "https://www.etftrends.com/equity-etf-content-hub/combined-assets-spy-spym-cross-1-trillion/",
+      "published": "2026-10-07T21:00:23+00:00",
+      "summary": "The publisher RSS summary states that the combined assets of SPY and its lower-cost sister fund SPYM crossed $1 trillion for the first time. The article page was access blocked in this review.",
+      "zh_summary": "发布者RSS摘要称，SPY与费用较低的同类基金SPYM合计资产首次越过1万亿美元；原文章页访问受阻，未核验分项规模或资金流构成。",
+      "evidence_level": "publisher_rss_summary_only",
+      "verify_next": "核对发行人同期基金规模、费用、跟踪差异与净申赎，区分资产价格上涨和新增资金。"
+    },
+    {
+      "origin_run_id": "37711315092",
+      "origin_report_date": "2026-10-08",
+      "source": "ETF Trends",
+      "title": "Foreign ETFs Draw Nearly Double U.S. Large-Cap Flows",
+      "zh_title": "海外股票ETF九月吸金接近美国大盘ETF两倍",
+      "url": "https://www.etftrends.com/equity-etf-content-hub/foreign-etfs-draw-nearly-double-u-s-large-cap-flows/",
+      "published": "2026-10-07T18:30:50+00:00",
+      "summary": "The publisher RSS summary, citing FactSet's monthly ETF summary, says foreign-stock ETFs attracted almost twice the September inflows of U.S. large-cap funds; utilities and financials attracted assets while energy and industrials had the largest outflows. The article page was access blocked.",
+      "zh_summary": "发布者RSS摘要引用FactSet月度统计，称九月海外股票ETF流入接近美国大盘ETF两倍，公用事业和金融板块吸金，能源及工业流出较多。原文章页访问受阻，未核验统计宇宙与具体金额。",
+      "evidence_level": "publisher_rss_summary_only",
+      "verify_next": "取得FactSet原始月度表，核对产品分类、净流入绝对额、基数和市场涨跌对资产规模的影响。"
     }
   ]
 }
