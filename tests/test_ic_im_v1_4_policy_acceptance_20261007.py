@@ -96,6 +96,23 @@ def modern_payload(day, next_day, build, delivery, rule):
                           grid_entry_source_current="none", grid_entry_source_target="none",
                           fear_greed_index=40., fear_data_date=day,
                           fear_data_status="same_day_post_close", fear_csv_sha256="a" * 64)
+            signal.update(core_units_current=.5, core_units_target=.5,
+                          momentum_units_current=0., momentum_units_target=0.,
+                          momentum_units_change=0., total_units_change=0.,
+                          v14_core_put_qty=0., v14_short_put_qty_normalized=0.,
+                          v14_profit_old_qty=0., v14_profit_reentry_qty=0.,
+                          v14_route_state="future", v14_ordinary_put_pending=None,
+                          v14_profit_pending=False, v14_roll_pending=False, v14_settlement_pending=False,
+                          v14_profit_trigger_day=None, v14_profit_execution_day=None,
+                          v14_profit_old_contract=None, v14_profit_reentry_contract=None)
+            if signal["product"] == "IC":
+                signal.update({f"put_{when}_{leg}_qty": 0
+                               for when in ("current", "target")
+                               for leg in ("core", "momentum", "grid", "total")})
+            else:
+                signal.update({f"{leg}_put_{when}_qty_normalized": 0.
+                               for when in ("current", "target")
+                               for leg in ("core", "momentum", "total")})
         result["signals"]["IC"].update(momentum_abs=.02, momentum_abs_days=40,
                                           momentum_abs_on=True, momentum_abs_debounce_active=False)
     return result
@@ -112,6 +129,15 @@ def modern_payload(day, next_day, build, delivery, rule):
      "ic_im_v1_4_ic_csi500_ma105_w16_abs40_static_20261008_v1"),
 ])
 def test_authoritative_forward_boundaries(day, next_day, build, delivery, rule):
+    # The policy becomes effective on this Saturday, but that identity mapping
+    # does not turn the exchange closure into a valid signal session.
+    if day == "2026-09-26":
+        from datetime import date
+        assert gate.expected_identity_for_day(date.fromisoformat(day)) == (build, delivery)
+        assert digest.expected_rule_revision_for_day(date.fromisoformat(day)) == rule
+        with pytest.raises(ValueError, match="exchange trading session"):
+            digest.validate_success_payload(modern_payload(day, next_day, build, delivery, rule))
+        return
     digest.validate_success_payload(modern_payload(day, next_day, build, delivery, rule))
 
 

@@ -44,6 +44,11 @@ def main() -> int:
     args = parser.parse_args()
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
+    # The naming helper is also used inside this validator.  Keep the import
+    # at the write boundary so standalone CLI use gets the full contract
+    # without introducing a module-level circular dependency.
+    from build_ic_im_v1_4_digest import validate_success_payload
+    validate_success_payload(payload)
     name = marker_name(payload)
     marker_dir = Path(args.marker_dir)
     marker_dir.mkdir(parents=True, exist_ok=True)

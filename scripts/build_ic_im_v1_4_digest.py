@@ -228,6 +228,11 @@ def validate_ordinary_put_plan(product: str, signal: dict[str, Any], next_trade_
         plan_new_qty = _finite_qty(leg.get("new_qty"))
         if None in (old_qty, new_qty, plan_old_qty, plan_new_qty):
             raise ValueError(f"{product} ordinary Put {name} quantities must be finite")
+        if min(old_qty, new_qty, plan_old_qty, plan_new_qty) < 0:
+            raise ValueError(f"{product} ordinary Put {name} quantities must be nonnegative")
+        if ((old_qty > 0 and not current_contracts[name])
+                or (new_qty > 0 and not target_contracts[name])):
+            raise ValueError(f"{product} ordinary Put {name} positive quantity lacks contract")
         expected_old_contract = current_contracts[name]
         expected_new_contract = target_contracts[name]
         if old_qty == 0:
@@ -803,6 +808,9 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
     if days["next_trade_day"] <= days["market_date"]:
         raise ValueError("next trade day must follow market day")
     strict_identity = days["market_date"] >= STRICT_SIGNAL_IDENTITY_DATE
+    if strict_identity:
+        from ic_im_v1_4_delivery_contract import validate_session_dates
+        validate_session_dates(days, payload["publication_mode"])
     expected_rule = expected_rule_revision_for_day(days["market_date"])
     if strict_identity and payload.get("signal_build") != expected_build:
         raise ValueError("signal build must match the authoritative signal-day identity")
@@ -882,6 +890,9 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
             }:
                 raise ValueError(f"{product} fix10 Fear status is not a valid realtime observation")
         if days["market_date"] >= date(2026, 9, 26):
+            from ic_im_v1_4_delivery_contract import validate_pending_plans, validate_quantities
+            validate_quantities(product, signal)
+            validate_pending_plans(product, signal)
             if str(signal.get("market_date") or "")[:10] != str(days["market_date"]):
                 raise ValueError(f"{product} signal day must match digest day")
             if signal.get("v14_ordinary_put_plan_status") == "scheduled_t_plus_1_open":
