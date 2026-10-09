@@ -21,6 +21,11 @@ def test_readiness_never_uploads_formal_ledger_or_delivery_marker():
     assert 'ref: ${{ steps.pin.outputs.sha }}' in text
     assert '--state-dir readiness-state' in text and '--required' in text
     assert "ICIM_REQUIRE_MIGRATION: '1'" in text
+    assert 'ICIM_CHINABOND_SNAPSHOT_FILE: readiness-artifacts/chinabond.json' in text
+    assert '--expected-date "$COMPLETED_DAY"' in text
+    assert text.index('strategy/ic_im_chinabond.py') < text.index('strategy/run_ic_im_v1_4_github_digest.py')
+    assert 'delivery_contract.CALENDAR_YEARS == bot._OFFICIAL_EXCHANGE_CALENDAR_YEARS' in text
+    assert 'delivery_contract.EXCHANGE_CLOSURES == bot._EXCHANGE_CLOSURES' in text
 
 
 @pytest.mark.parametrize('use_ssl', [True, False])

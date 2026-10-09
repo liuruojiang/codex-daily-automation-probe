@@ -133,6 +133,26 @@ def complete_modern_identity(payload: dict[str, object]) -> dict[str, object]:
         item.setdefault("next_trade_date", payload["next_trade_day"])
         item.setdefault("close_confirmed", True)
         item.setdefault("market_phase", "收盘后")
+        if payload["market_date"] >= "2026-10-08":
+            for when, weight in (("current", "momentum_current_weight"), ("target", "momentum_next_weight")):
+                item.setdefault(f"core_units_{when}", .5)
+                item.setdefault(f"momentum_units_{when}", .5 * item[weight])
+            item.setdefault("momentum_units_change", item["momentum_units_target"] - item["momentum_units_current"])
+            item.setdefault("total_units_change", item["total_units_target"] - item["total_units_current"])
+            item.setdefault("v14_short_put_qty_normalized", 0.)
+            item.setdefault("v14_core_put_qty", 10 if item["product"] == "IC" else 0.)
+            item.setdefault("v14_ordinary_put_pending", None)
+            item.setdefault("v14_route_state", "future")
+            for flag in ("v14_profit_pending", "v14_roll_pending", "v14_settlement_pending"):
+                item.setdefault(flag, False)
+            for field in ("v14_profit_trigger_day", "v14_profit_execution_day", "v14_profit_old_contract", "v14_profit_reentry_contract"):
+                item.setdefault(field, None)
+            for field in ("v14_profit_old_qty", "v14_profit_reentry_qty"):
+                item.setdefault(field, 0.)
+            if item["product"] == "IC":
+                for when in ("current", "target"):
+                    for leg, qty in (("core", 10), ("momentum", 4), ("grid", 0)):
+                        item.setdefault(f"put_{when}_{leg}_qty", qty)
     return payload
 
 

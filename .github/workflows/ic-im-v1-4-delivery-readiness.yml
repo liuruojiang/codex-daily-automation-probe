@@ -63,6 +63,10 @@ jobs:
           from zoneinfo import ZoneInfo
           sys.path.insert(0, 'strategy')
           import poe_ic_im_mainline_v1_4_bot as bot
+          sys.path.insert(0, 'automation/scripts')
+          import ic_im_v1_4_delivery_contract as delivery_contract
+          assert delivery_contract.CALENDAR_YEARS == bot._OFFICIAL_EXCHANGE_CALENDAR_YEARS
+          assert delivery_contract.EXCHANGE_CLOSURES == bot._EXCHANGE_CLOSURES
           import poe_ic_im_v1_4_state as state
           import run_ic_im_v1_4_github_digest as runner
           assert bot.BUILD_ID == 'v1.4-20261008-r1-ic-csi500-abs40-fix11'
@@ -92,10 +96,15 @@ jobs:
           ICIM_STATE_DIR: readiness-state
           ICIM_REQUIRE_MIGRATION: '1'
           ICIM_LEGULEGU_DAILY_SNAPSHOT: ${{ secrets.ICIM_LEGULEGU_DAILY_SNAPSHOT }}
-        run: >-
-          timeout --foreground 65m python -B -X utf8 strategy/run_ic_im_v1_4_github_digest.py
-          --state-dir readiness-state --out-dir readiness-artifacts --mode close
-          --max-sessions 20 --network-budget-per-product 180 --expected-market-date "$COMPLETED_DAY"
+          ICIM_CHINABOND_SNAPSHOT_FILE: readiness-artifacts/chinabond.json
+        run: |
+          # Match the production rate source and its explicitly disclosed fallback.
+          timeout --foreground 90s python -B -X utf8 -u strategy/ic_im_chinabond.py \
+            --expected-date "$COMPLETED_DAY" \
+            --output readiness-artifacts/chinabond.json || echo "ChinaBond fetch unavailable; use disclosed frozen fallback"
+          timeout --foreground 65m python -B -X utf8 strategy/run_ic_im_v1_4_github_digest.py \
+            --state-dir readiness-state --out-dir readiness-artifacts --mode close \
+            --max-sessions 20 --network-budget-per-product 180 --expected-market-date "$COMPLETED_DAY"
       - name: Validate the normal digest and dated marker without publishing
         run: |
           python automation/scripts/build_ic_im_v1_4_digest.py --result readiness-artifacts/result.json --out-dir readiness-mail

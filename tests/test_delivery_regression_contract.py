@@ -42,17 +42,32 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
                      'test_delivery_transport_retry.py', 'test_poe_ic_im_v1_3_state.py',
                      'test_run_ic_im_v1_3_github_digest.py', 'test_adversarial_delivery.py',
                      'test_ic_im_v1_4_policy.py', 'test_ic_im_v1_4_state_guards.py',
+                     'test_poe_ic_im_v1_4_state.py',
                      'test_ic_im_v1_4_ic_csi500_forward.py',
                      'test_ic_im_v1_4_integration_guards.py', 'test_run_ic_im_v1_4_github_digest.py',
                      'test_migrate_ic_im_v1_3_r7_to_v1_4_r1_state.py',
                      'test_adversarial_microcap_delivery.py', 'test_adversarial_icim_delivery.py',
-                     'test_realtime_exchange_calendar.py', 'test_exchange_calendar_provider.py'):
+                     'test_realtime_exchange_calendar.py', 'test_exchange_calendar_provider.py',
+                     'test_adversarial_cffex_transport_20261009.py',
+                     'test_adversarial_cffex_close_runner_20261009.py'):
         assert required in text
     assert 'ref: ${{ steps.pin.outputs.sha }}' in text
     assert 'tested-sha.txt' in text
     assert '--junitxml=' in text
     assert workflow['on']['workflow_call']['inputs']['family']['default'] == 'all'
     assert 'fromJSON(inputs.family' in workflow['jobs']['strategy-tests']['strategy']['matrix']['family']
+
+
+def test_icim_regression_preserves_isolation_cache_and_hard_timeout_contract():
+    workflow = read('delivery-regression.yml')
+    steps = workflow['jobs']['strategy-tests']['steps']
+    step = next(s for s in steps if s.get('name') == 'Test ICIM source failover and persistent ledger invariants')
+    assert step['env']['ICIM_REQUIRE_MIGRATION'] == '0'
+    assert step['env']['PYTHONDONTWRITEBYTECODE'] == '1'
+    assert step['env']['ICIM_STATE_DIR'].startswith('${{ runner.temp }}/')
+    assert 'timeout --foreground 60s python -B -X utf8 -m pytest -q -p no:cacheprovider' in step['run']
+    assert 'v14_ledger_20261008 runtime/ic_im_v1_4_r1' in step['run']
+    assert "assert not list(root.iter('skipped'))" in step['run']
 
 
 def test_microcap_automation_suite_is_not_coupled_to_icim_release_fixtures():
@@ -98,6 +113,37 @@ def test_stale_market_fixture_is_frozen_real_data_and_never_in_production_steps(
     assert hashlib.sha256(data).hexdigest() == 'c5121b044133099e250fd5e5e803c447bf8811e5a4ae8cf8f19e2b8f5c2ddcfd'
     for name in ('microcap-realtime-digest.yml', 'ic-im-v1-4-daily-digest.yml'):
         assert 'tests/fixtures/' not in (WORKFLOWS / name).read_text(encoding='utf-8')
+
+
+def test_real_ledger_fixture_retains_exact_artifact_bytes_and_full_chain():
+    import json
+
+    fixture = ROOT / 'tests/fixtures/icim/v14_ledger_20261008'
+    provenance = json.loads((fixture / 'fixture_provenance.json').read_text(encoding='utf-8'))
+    assert provenance['source_run_id'] == 37773833605
+    assert provenance['source_artifact_id'] == 11549730442
+    assert len(provenance['sha256']) == 13
+    for name, digest in provenance['sha256'].items():
+        assert hashlib.sha256((fixture / name).read_bytes()).hexdigest() == digest
+    journals = sorted((fixture / 'journal').glob('*.json'))
+    assert len(journals) == 11
+    previous = None
+    for sequence, path in enumerate(journals):
+        record = json.loads(path.read_text(encoding='utf-8'))
+        payload = {k: v for k, v in record.items() if k != 'digest'}
+        canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False)
+        assert hashlib.sha256(canonical.encode('utf-8')).hexdigest() == record['digest']
+        assert record['sequence'] == sequence
+        assert record['schema_version'] == 4
+        assert record['strategy_revision'] == 'r1'
+        if previous is not None:
+            assert record['previous_digest'] == previous['digest']
+        previous = record
+    assert json.loads((fixture / 'latest.json').read_text(encoding='utf-8')) == previous
+    assert previous['verified_day'] == provenance['verified_day'] == '2026-10-08'
+    assert previous['digest'] == provenance['digest']
+    migration = json.loads((fixture / 'migration_record.json').read_text(encoding='utf-8'))
+    assert migration['new_ledger']['digest'] == json.loads(journals[0].read_text(encoding='utf-8'))['digest']
 
 
 def test_calendar_failure_cannot_be_silent_holiday_or_manual_bypass():

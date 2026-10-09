@@ -99,7 +99,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 739071a201506dd869b9a156e490c3bafd95a334
+          ref: 408c9badea5351ae7c0021f9b1e9adfdb804d554
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -125,6 +125,10 @@ jobs:
           sys.path.insert(0, "strategy")
           import poe_ic_im_mainline_v1_4_bot as strategy
           assert strategy.BUILD_ID == "v1.4-20261008-r1-ic-csi500-abs40-fix11"
+          sys.path.insert(0, "automation/scripts")
+          import ic_im_v1_4_delivery_contract as delivery_contract
+          assert delivery_contract.CALENDAR_YEARS == strategy._OFFICIAL_EXCHANGE_CALENDAR_YEARS
+          assert delivery_contract.EXCHANGE_CLOSURES == strategy._EXCHANGE_CLOSURES
           import ic_im_v1_4_policy as policy
           assert policy.RULE_REVISION == "ic_im_v1_4_ic_csi500_ma105_w16_abs40_static_20261008_v1"
           assert policy.IC_CSI500_EFFECTIVE_SIGNAL_DATE.isoformat() == "2026-10-08"
