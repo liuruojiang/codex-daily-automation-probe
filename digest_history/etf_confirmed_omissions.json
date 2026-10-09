@@ -1106,6 +1106,84 @@
       "zh_summary": "发布者RSS摘要引用FactSet月度统计，称九月海外股票ETF流入接近美国大盘ETF两倍，公用事业和金融板块吸金，能源及工业流出较多。原文章页访问受阻，未核验统计宇宙与具体金额。",
       "evidence_level": "publisher_rss_summary_only",
       "verify_next": "取得FactSet原始月度表，核对产品分类、净流入绝对额、基数和市场涨跌对资产规模的影响。"
+    },
+    {
+      "origin_run_id": "37869083614",
+      "origin_report_date": "2026-10-09",
+      "source": "Alpha Architect",
+      "title": "Why Tail Risk Hedges Fail Before the Crash",
+      "zh_title": "尾部风险对冲为何可能在危机前失效",
+      "url": "https://alphaarchitect.com/built-to-survive-the-waiting/",
+      "published": "2026-10-08T15:52:00+00:00",
+      "summary": "The full publisher article treats option premium, opportunity cost and evaluation pressure as a combined hedge-maintenance problem. It documents one fund that lost 45.40% NAV in 2022 and one pension plan that terminated protection before a later crisis, then proposes an eight-part due-diligence framework.",
+      "zh_summary": "发布者全文将权利金、机会成本与考核压力合并为尾部对冲的持续持有问题；文中举出一只基金在2022年净值亏损45.40%及一个养老金过早终止对冲的案例，并提出八项尽调框架。案例不证明其他对冲方案必然有效。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对案例原始文件、组合层年化拖累、对冲目标、缓跌和跳跌两类路径及危机时流动性。"
+    },
+    {
+      "origin_run_id": "37869083614",
+      "origin_report_date": "2026-10-09",
+      "source": "arXiv q-fin.PM / q-fin.TR",
+      "title": "SOTA: Stock Options Trading Agents Guided by Option-Implied Return Distributions",
+      "zh_title": "SOTA：由期权隐含收益分布引导的股票期权交易代理",
+      "url": "https://arxiv.org/abs/2610.10407",
+      "published": "2026-10-07T16:55:05+00:00",
+      "summary": "The arXiv abstract describes a strategy-level options agent with deterministic contract resolution, trained by supervised and reinforcement learning. It reports 18.3% return, Sharpe 1.60 and 8.96% maximum drawdown over a six-month out-of-sample period on options for nine U.S. large caps and SPY; keeping news in reinforcement learning reduced the reported return to -2.7%.",
+      "zh_summary": "论文摘要提出先由代理选择期权策略、再用确定性规则落实合约；作者称在九只美股大盘股及SPY期权的六个月样本外测试中，收益18.3%、夏普1.60、最大回撤8.96%，而强化学习保留新闻输入时收益降至-2.7%。仅核验摘要，未复现成本和回测。",
+      "evidence_level": "arxiv_abstract_only",
+      "verify_next": "核对全文中的样本划分、合约选择、交易时点、点差与滑点、基准和跨期反例。"
+    },
+    {
+      "origin_run_id": "37869083614",
+      "origin_report_date": "2026-10-09",
+      "source": "Seeking Alpha ETFs",
+      "title": "NCZ To NCV: The Virtus Convertible Twins Trade Unusually Far Apart",
+      "zh_title": "NCZ与NCV：两只可转债封闭式基金的折价差扩大",
+      "url": "https://seekingalpha.com/article/4952903-ncz-to-ncv-the-virtus-convertible-twins-trade-unusually-far-apart",
+      "published": "2026-10-08T20:32:15+00:00",
+      "summary": "The publisher's public summary says NCZ traded at a 9.51% discount and NCV at a 12.13% discount, with daily NAV moves correlated at 0.998 over the preceding year. The author proposes a relative-value trade but discloses a long NCV and short NCZ position.",
+      "zh_summary": "作者公开摘要称，NCZ与NCV折价分别为9.51%和12.13%，过去一年每日净值变动相关系数0.998；作者主张关注价差，但披露自己持有NCV多头与NCZ空头。全文未取得，借券和分配差异未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对同日净值折价、杠杆、持仓、分配、借券成本和价差收敛历史。"
+    },
+    {
+      "origin_run_id": "37869083614",
+      "origin_report_date": "2026-10-09",
+      "source": "Seeking Alpha ETFs",
+      "title": "VPL: Pacific Stocks Sport Big EPS Growth And A Low P/E",
+      "zh_title": "VPL：太平洋股票的盈利增长与估值主张",
+      "url": "https://seekingalpha.com/article/4952897-vpl-pacific-stocks-sport-big-eps-growth-and-a-low-pe",
+      "published": "2026-10-08T19:38:07+00:00",
+      "summary": "The publisher's public summary cites 12.2x P/E and 11.6% long-term EPS growth for VPL, and describes Japan-heavy, technology-tilted exposure with concentration risk in Samsung and SK hynix.",
+      "zh_summary": "作者公开摘要称，VPL市盈率12.2倍、长期每股盈利增长预期11.6%，并指出基金偏重日本和科技，三星与SK海力士带来集中风险。数据和预测为作者口径，全文未取得。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对同期基金地区和成分权重、估值与盈利预测口径、汇率及含费总回报。"
+    },
+    {
+      "origin_run_id": "37869083614",
+      "origin_report_date": "2026-10-09",
+      "source": "Seeking Alpha ETFs",
+      "title": "REET: The Two Enemies I Can't Ignore",
+      "zh_title": "REET：通胀与较高国债收益率带来的两重压力",
+      "url": "https://seekingalpha.com/article/4952895-reet-the-two-enemies-i-cant-ignore",
+      "published": "2026-10-08T19:32:19+00:00",
+      "summary": "The publisher's public summary argues that inflation and Treasury yields reduce the relative appeal of the global REIT fund REET. It cites CPI of 3.4%, a trailing distribution yield of 3.62%, Treasuries above 4%, and a possible contrary case if cap-rate spreads remain acceptable.",
+      "zh_summary": "作者公开摘要认为，通胀和较高国债收益率削弱全球REIT基金REET的相对吸引力；其引用CPI 3.4%、历史分配率3.62%及国债收益率高于4%，同时承认若资本化率利差被市场接受，结论可能改变。全文未取得。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对同日利率、实际收益率、REIT净资产和杠杆、分配来源及不同利率情景总回报。"
+    },
+    {
+      "origin_run_id": "37869083614",
+      "origin_report_date": "2026-10-09",
+      "source": "Seeking Alpha ETFs",
+      "title": "SPTM: The Valuation Premium Is Hard To Justify",
+      "zh_title": "SPTM：广泛持股下的大盘股估值溢价争议",
+      "url": "https://seekingalpha.com/article/4952890-sptm-the-valuation-premium-is-hard-to-justify",
+      "published": "2026-10-08T19:18:16+00:00",
+      "summary": "The publisher's public summary says SPTM holds more than 1,500 securities but its top ten account for 36.2% of the portfolio; the author argues that a large-cap valuation premium is hard to justify as relative expected earnings growth narrows.",
+      "zh_summary": "作者公开摘要称，SPTM虽持有超过1500只证券，前十大仍占36.2%；作者认为大盘股相对中盘股的估值溢价，与收窄的预期盈利增长优势不匹配。全文未取得，属于作者判断。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金当期持仓、指数方法、估值及盈利预测的同日口径，并与中小盘含费总回报比较。"
     }
   ]
 }
