@@ -1,0 +1,8 @@
+{
+  "purpose": "Frozen real no-send readiness producer result; never a current quote or production ledger source",
+  "source_run_id": 37911491710,
+  "source_artifact_id": 11607311463,
+  "automation_sha": "06767dbb1d61cdc6f25f0cbededef52db155eae4",
+  "strategy_sha": "408c9badea5351ae7c0021f9b1e9adfdb804d554",
+  "sha256": "f1aefa507640bed818ddd367f809b5b6ce206d54db5ab63c448db4e9d59c3f6c"
+}

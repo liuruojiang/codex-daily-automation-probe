@@ -9,6 +9,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+import ic_im_v1_4_put_display as put_display
+
 
 HOLD_ACTIONS = {"", "HOLD", "NONE", "NO_ACTION", "MAINTAIN", "WAIT_IV"}
 ACTION_CN = {
@@ -686,6 +688,8 @@ def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
             leg_row("Call", call_current, call_target, "IC明确禁止Call" if product == "IC" else f"动作：{action_cn(signal.get('call_action'))}"),
         ]
     )
+    put_details = put_display.html_tables(product, signal)
+    put_details_row = f'\n  <tr><td>{put_details}</td></tr>' if put_details else ''
     return f'''<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 16px;background:#ffffff;border:1px solid #e4e7ec;border-radius:14px;overflow:hidden;border-collapse:separate;">
   <tr>
     <td style="padding:18px 18px 14px;border-left:5px solid {accent};">
@@ -701,7 +705,7 @@ def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
     </td>
   </tr>
   <tr><td style="padding:0 8px 8px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">{rows}</table></td></tr>
-  <tr><td>{reasons_html(product, signal)}</td></tr>
+  <tr><td>{reasons_html(product, signal)}</td></tr>{put_details_row}
 </table>'''
 
 
@@ -975,6 +979,9 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         lines.append("")
         lines.extend(f"- {reason}" for reason in product_reasons(product, signals[product]))
         lines.append("")
+        put_details = put_display.markdown(product, signals[product])
+        if put_details:
+            lines.append(put_details)
     lines += [
         "## 审计状态",
         "",
