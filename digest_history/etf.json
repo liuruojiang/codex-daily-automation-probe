@@ -4601,6 +4601,186 @@
       "source": "Seeking Alpha ETFs",
       "title": "SPHQ: Still A Buy, But Its Quality Advantage Over JQUA May Not Be Sustainable",
       "url": "https://seekingalpha.com/article/4952355-sphq-still-a-buy-but-its-quality-advantage-over-jqua-may-not-be-sustainable"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Why Buy-and-Hold Investors Are Switching From QQQ to This Lower-Fee Alternative",
+      "url": "https://247wallst.com/investing/etf/2026/10/08/why-buy-and-hold-investors-are-switching-from-qqq-to-this-lower-fee-alternative/?.tsrc=rss"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "XLG Cuts the S&P 500 Down to 50 Stocks. The Result Is an Index Fund Built Entirely Around Mega-Caps",
+      "url": "https://247wallst.com/investing/etf/2026/10/08/xlg-cuts-the-sp-500-down-to-50-stocks-the-result-is-an-index-fund-built-entirely-around-mega-caps/?.tsrc=rss"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "Quantocracy",
+      "title": "Recent Quant Links from Quantocracy as of 10/07/2026",
+      "url": "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-10072026/"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.TR",
+      "title": "OOM-RL: Out-of-Money Reinforcement Learning Market-Driven Alignment for LLM-Based Multi-Agent Systems",
+      "url": "https://arxiv.org/abs/2604.11477"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.TR",
+      "title": "A Hawkes Microfoundation for Multitype Inverse Gaussian Subordinators",
+      "url": "https://arxiv.org/abs/2610.10525"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.TR",
+      "title": "On Bonart's interpretation of the Square-Root Impact Law",
+      "url": "https://arxiv.org/abs/2610.10053"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.ST",
+      "title": "Residual Learning in Empirical Asset Pricing",
+      "url": "https://arxiv.org/abs/2610.09613"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.ST",
+      "title": "STOCK-JEPA: Prior-Anchored Latent Revision Representation Learning in Equity Markets",
+      "url": "https://arxiv.org/abs/2610.07006"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.ST",
+      "title": "Optimal Transport for Actuarial Science",
+      "url": "https://arxiv.org/abs/2610.08797"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.RM",
+      "title": "Recursive Copula Aggregation for Market and Credit Portfolios",
+      "url": "https://arxiv.org/abs/2610.08798"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.RM",
+      "title": "Two-Regime Risk Measures under Convex Loss",
+      "url": "https://arxiv.org/abs/2610.08821"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.RM",
+      "title": "Learned Monotone Recurrent Features in Governed Credit Scoring: The Price of the Frame and the Necessity of Macro Conditioning",
+      "url": "https://arxiv.org/abs/2610.08869"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.RM",
+      "title": "Approximate Design-Based Intervals for Downsampled Cross-Sectional Market Aggregates: A Randomized Design for Bandwidth-Constrained Financial Data Pipelines",
+      "url": "https://arxiv.org/abs/2610.08801"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.RM",
+      "title": "Equivalent Behavioural Martingale Measure",
+      "url": "https://arxiv.org/abs/2610.08803"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.RM",
+      "title": "Explicit Finite-Sum Tail Risk Measures for Hierarchical Market--Credit Copula Aggregation",
+      "url": "https://arxiv.org/abs/2610.08799"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.PM",
+      "title": "Conditional value-at-risk under reward-penalty mechanism with applications to robust portfolio management",
+      "url": "https://arxiv.org/abs/2610.09246"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.PM",
+      "title": "OOM-RL II: Reality Is an Oracle, Not a Debugger Provenance-Constrained Diagnosis in Continually Evolving Agent-Engineered Systems",
+      "url": "https://arxiv.org/abs/2610.10256"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.TR",
+      "title": "Outsourced Cryptocurrency Wash Trading",
+      "url": "https://arxiv.org/abs/2411.08720"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.ST",
+      "title": "DSTNet: Dynamic Spectral Trajectory Network for Causal Multi-Horizon Financial Forecasting",
+      "url": "https://arxiv.org/abs/2610.09654"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "arXiv q-fin.RM",
+      "title": "Agentic AI Systems and Financial Stability, From Model Risk to Systemic Risk",
+      "url": "https://arxiv.org/abs/2610.08806"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "Meb Faber",
+      "title": "What If AI Stocks Are Like The….Airlines?!",
+      "url": "https://mebfaber.com/2026/10/08/what-if-ai-stocks-are-like-the-airlines/"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "A Wealth of Common Sense（博客）",
+      "title": "Better Investment Right Now: Stocks or Bonds?",
+      "url": "https://awealthofcommonsense.com/2026/10/better-investment-right-now-stocks-or-bonds/"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "Capital Allocators（条件页面）",
+      "title": "Real Estate Credit Over Yield at Invesco - Capital Allocators with Ted Seides",
+      "url": "https://www.capitalallocators.com/podcast/real-estate-credit-over-yield-at-invesco/"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "Bogleheads.org Forum (comments/replies 39; views 7320)",
+      "title": "Investing - Theory, News & General • Bernstein's LMP (Liability Matching Portfolio) no longer effective??? Articles to read: Comments?",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8873490#p8873490"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "A Wealth of Common Sense",
+      "title": "The Rich Are Getting Richer. So Is Everyone Else",
+      "url": "https://awealthofcommonsense.com/2026/10/the-rich-are-getting-richer-so-is-everyone-else/"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "Seeking Alpha ETFs",
+      "title": "Have You Ever Seen An S&P 500 Covered Call That Goes After Alpha? I Have, And It's FYEE",
+      "url": "https://seekingalpha.com/article/4952609-have-you-ever-seen-an-s-and-p-500-covered-call-that-goes-after-alpha-i-have-and-its-fyee"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "Seeking Alpha ETFs",
+      "title": "CGDG: High-Quality Global Dividend Growth Comes At A Price",
+      "url": "https://seekingalpha.com/article/4952607-cgdg-high-quality-global-dividend-growth-comes-at-a-price"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "Seeking Alpha ETFs",
+      "title": "VONE: Hard To Justify The Large-Cap Premium",
+      "url": "https://seekingalpha.com/article/4952580-vone-hard-to-justify-the-large-cap-premium"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "ETF Trends",
+      "title": "Combined Assets in SPY, SPYM Cross $1 Trillion for the First Time",
+      "url": "https://www.etftrends.com/equity-etf-content-hub/combined-assets-spy-spym-cross-1-trillion/"
+    },
+    {
+      "sent_date": "2026-10-09",
+      "source": "ETF Trends",
+      "title": "Foreign ETFs Draw Nearly Double U.S. Large-Cap Flows",
+      "url": "https://www.etftrends.com/equity-etf-content-hub/foreign-etfs-draw-nearly-double-u-s-large-cap-flows/"
     }
   ]
 }
