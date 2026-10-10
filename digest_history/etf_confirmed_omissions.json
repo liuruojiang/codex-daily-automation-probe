@@ -1184,6 +1184,71 @@
       "zh_summary": "作者公开摘要称，SPTM虽持有超过1500只证券，前十大仍占36.2%；作者认为大盘股相对中盘股的估值溢价，与收窄的预期盈利增长优势不匹配。全文未取得，属于作者判断。",
       "evidence_level": "publisher_public_summary_only",
       "verify_next": "核对基金当期持仓、指数方法、估值及盈利预测的同日口径，并与中小盘含费总回报比较。"
+    },
+    {
+      "origin_run_id": "38011609305",
+      "origin_report_date": "2026-10-10",
+      "source": "A Wealth of Common Sense",
+      "title": "The Winners & Losers of Higher Interest Rates",
+      "zh_title": "较高利率下的受益者与承压者",
+      "url": "https://awealthofcommonsense.com/2026/10/the-winners-losers-of-higher-interest-rates/",
+      "published": "2026-10-09T20:30:53+00:00",
+      "summary": "Ben Carlson argues that higher rates improve cash and high-quality bond income, while burdening new homebuyers, floating-rate small businesses and rate-sensitive housing supply. He notes that a locked-in low fixed mortgage can hedge the rate rise, and reduced apartment construction may later lift rents.",
+      "zh_summary": "Ben Carlson认为，较高利率提高现金与高质量债券的收益，却压制新购房者、浮息融资的小企业及住房供给；此前锁定低固定房贷者受益，而建设放缓可能推高未来租金。文中利率和住房数字是作者当时引用，不能当作最新行情。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对文中利率和住房数据时点、税后实际收益率，以及不同久期和信用风险的组合表现。"
+    },
+    {
+      "origin_run_id": "38011609305",
+      "origin_report_date": "2026-10-10",
+      "source": "Seeking Alpha ETFs",
+      "title": "VOOG: Growth Is Good, But QQQ Is Better",
+      "zh_title": "VOOG与QQQ：增长敞口及集中度之争",
+      "url": "https://seekingalpha.com/article/4953175-voog-growth-is-good-but-qqq-is-better",
+      "published": "2026-10-09T21:10:05+00:00",
+      "summary": "The publisher public summary says VOOG has nearly 60% in its top ten holdings and a 14.8% Nvidia weight. The author says QQQ outperformed over major historical horizons but acknowledges VOOG had lower drawdowns and beat the S&P 500.",
+      "zh_summary": "作者公开摘要称，VOOG前十大权重接近60%，英伟达约14.8%；作者认为历史主要区间内QQQ表现更好，同时承认VOOG回撤较低、曾跑赢标普500。全文与同日持仓、含费总回报未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "以同日基金持仓、指数成分和含费总回报比较两者，并分离集中度、行业与时间窗口效应。"
+    },
+    {
+      "origin_run_id": "38011609305",
+      "origin_report_date": "2026-10-10",
+      "source": "Seeking Alpha ETFs",
+      "title": "QYLG Vs. QDVO: Market Fear Is Good For These Paychecks",
+      "zh_title": "QYLG与QDVO：部分备兑看涨策略的收益权衡",
+      "url": "https://seekingalpha.com/article/4953172-qylg-vs-qdvo-market-fear-is-good-for-these-paychecks",
+      "published": "2026-10-09T20:55:35+00:00",
+      "summary": "The public summary compares two partial covered-call funds. The author favors actively managed QDVO over rule-based QYLG for flexible option writing and upside capture, but notes neither should be a sole technology or index holding.",
+      "zh_summary": "作者公开摘要比较两只部分备兑看涨基金，认为主动管理的QDVO写权更灵活、上行参与及分配更有优势；也提示两者都不宜仅凭收益分配代替宽基持仓。全文、实际期权覆盖和总回报未取得。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对期权覆盖比例、分配来源、上行封顶、税后含费总回报及高波动和下跌情景。"
+    },
+    {
+      "origin_run_id": "38011609305",
+      "origin_report_date": "2026-10-10",
+      "source": "Seeking Alpha ETFs",
+      "title": "MLPA Vs. AMLP: Why I'm Buying The Higher-Yielding Underdog",
+      "zh_title": "MLPA与AMLP：较高分配率背后的基金层税负",
+      "url": "https://seekingalpha.com/article/4953170-mlpa-vs-amlp-why-im-buying-the-higher-yielding-underdog",
+      "published": "2026-10-09T20:41:55+00:00",
+      "summary": "The public summary says MLPA yielded about 7.5% and the author expected 8-12% total return. It highlights C-corporation fund-level taxation and deferred tax liabilities around 10% of NAV, so cash distributions do not by themselves establish superior net returns.",
+      "zh_summary": "作者公开摘要称，MLPA分配率约7.5%，并提出8%至12%的总回报预期；同时指出基金层C公司税制及约占净值10%的递延税负可能影响净回报。这是作者预测，全文和税务口径未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对最新基金税项、递延税负、分配构成、含税含费总回报，以及MLPA与AMLP的持仓差异。"
+    },
+    {
+      "origin_run_id": "38011609305",
+      "origin_report_date": "2026-10-10",
+      "source": "Seeking Alpha ETFs",
+      "title": "SMBS: 11 Points Of Pull-To-Par, A Positive OAS At Equal Credit Risk",
+      "zh_title": "SMBS：机构按揭证券折价回归与利差主张",
+      "url": "https://seekingalpha.com/article/4953167-smbs-11-points-of-pull-to-par-a-positive-oas-at-equal-credit-risk",
+      "published": "2026-10-09T20:30:15+00:00",
+      "summary": "The public summary claims a 5.23% yield, a 0.03% expense ratio and 11 points of pull-to-par for an agency MBS portfolio, while warning that current mortgage rates limit near-term prepayment and price gains. The author rates it Hold.",
+      "zh_summary": "作者公开摘要称，SMBS收益率约5.23%、费率0.03%，并讨论按揭证券折价向面值回归的潜力；同时指出当前房贷利率限制近期提前偿付与价格修复，结论为持有评级。数值与机制尚未独立核对。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金事实表、有效久期、OAS、提前偿付模型、当前持仓折价及相同信用和久期的国债比较。"
     }
   ]
 }
