@@ -50,7 +50,10 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
                      'test_realtime_exchange_calendar.py', 'test_exchange_calendar_provider.py',
                      'test_adversarial_cffex_transport_20261009.py',
                      'test_adversarial_cffex_close_runner_20261009.py',
-                     'test_tencent_ohlcv_pagination_20261012.py'):
+                     'test_tencent_ohlcv_pagination_20261012.py',
+                     'test_panel_exchange_session_guard_20261012.py',
+                     'test_security_meta_current_st_history_resolution_20261012.py',
+                     'test_security_meta_preserve_20260917.py'):
         assert required in text
     assert 'ref: ${{ steps.pin.outputs.sha }}' in text
     assert 'tested-sha.txt' in text
