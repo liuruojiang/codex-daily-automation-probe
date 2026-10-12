@@ -133,6 +133,9 @@ jobs:
             tests/test_adversarial_v20_plain_20260904.py tests/test_adversarial_v23_plain_20260904.py \
             tests/test_adversarial_delivery_plain_20260904.py tests/test_adversarial_delivery_state_consistency.py \
             tests/test_v23_identity_adversarial.py tests/test_index_history_preflight.py \
+            tests/test_panel_exchange_session_guard_20261012.py \
+            tests/test_security_meta_current_st_history_resolution_20261012.py \
+            tests/test_security_meta_preserve_20260917.py \
             tests/test_v25_realtime_artifact_invalidation.py --junitxml=regression.xml
           python -B -X utf8 - <<'PY'
           import xml.etree.ElementTree as ET
