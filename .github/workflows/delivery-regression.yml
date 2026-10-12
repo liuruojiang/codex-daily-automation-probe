@@ -2,10 +2,10 @@ name: Delivery regression gate
 
 on:
   pull_request:
-    paths: ['.github/workflows/**', 'scripts/**', 'tests/**']
+    paths: ['.github/workflows/**', 'scripts/**', 'tests/**', 'cloudflare-workers/**']
   push:
     branches: [main]
-    paths: ['.github/workflows/**', 'scripts/**', 'tests/**']
+    paths: ['.github/workflows/**', 'scripts/**', 'tests/**', 'cloudflare-workers/**']
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -33,8 +33,8 @@ jobs:
           TEST_FAMILY: ${{ inputs.family || 'all' }}
         run: |
           case "${TEST_FAMILY}" in
-            microcap) suites=(tests/test_microcap_*.py tests/test_v23_identity_adversarial.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py) ;;
-            icim) suites=(tests/test_ic_im_v1_4_*.py tests/test_ic_im_v1_3_*.py tests/test_ic_im_r7_spread.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_adversarial_delivery.py) ;;
+            microcap) suites=(tests/test_microcap_*.py tests/test_v23_identity_adversarial.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_cloudflare_dispatch_retry.py tests/test_restore_approved_microcap_state.py) ;;
+            icim) suites=(tests/test_ic_im_v1_4_*.py tests/test_ic_im_v1_3_*.py tests/test_ic_im_r7_spread.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_adversarial_delivery.py tests/test_cloudflare_dispatch_retry.py) ;;
             all) suites=(tests) ;;
             *) echo "Unknown test family"; exit 1 ;;
           esac
@@ -136,6 +136,7 @@ jobs:
             tests/test_panel_exchange_session_guard_20261012.py \
             tests/test_security_meta_current_st_history_resolution_20261012.py \
             tests/test_security_meta_preserve_20260917.py \
+            tests/test_adversarial_recovery_boundaries_20261013.py \
             tests/test_v25_realtime_artifact_invalidation.py --junitxml=regression.xml
           python -B -X utf8 - <<'PY'
           import xml.etree.ElementTree as ET

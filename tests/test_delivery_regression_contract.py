@@ -53,7 +53,8 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
                      'test_tencent_ohlcv_pagination_20261012.py',
                      'test_panel_exchange_session_guard_20261012.py',
                      'test_security_meta_current_st_history_resolution_20261012.py',
-                     'test_security_meta_preserve_20260917.py'):
+                     'test_security_meta_preserve_20260917.py',
+                     'test_adversarial_recovery_boundaries_20261013.py'):
         assert required in text
     assert 'ref: ${{ steps.pin.outputs.sha }}' in text
     assert 'tested-sha.txt' in text
@@ -95,6 +96,7 @@ def test_microcap_regression_covers_required_files_with_isolated_zero_skip_gate(
         'test_v25_plain_promotion.py',
         'test_v25_realtime_artifact_invalidation.py',
         'test_realtime_publication_deadline.py',
+        'test_adversarial_recovery_boundaries_20261013.py',
     )
     assert step['env']['MICROCAP_DIGEST_SOURCE'] == '${{ github.workspace }}/automation/scripts/build_microcap_realtime_digest.py'
     assert step['env']['PYTHONDONTWRITEBYTECODE'] == '1'
@@ -108,6 +110,19 @@ def test_microcap_regression_covers_required_files_with_isolated_zero_skip_gate(
     assert "if destination.exists():" in step['run']
     for name in required:
         assert name in step['run'], f'missing mandatory microcap test: {name}'
+
+
+def test_external_dispatch_repairs_are_tested_on_changes_and_each_family():
+    workflow = read('delivery-regression.yml')
+    for event in ('push', 'pull_request'):
+        assert 'cloudflare-workers/**' in workflow['on'][event]['paths']
+    step = next(s for s in workflow['jobs']['automation-tests']['steps']
+                if s.get('name') == 'Check delivery contracts and all automation regressions')
+    for line in step['run'].splitlines():
+        if line.strip().startswith(('microcap)', 'icim)')):
+            assert 'tests/test_cloudflare_dispatch_retry.py' in line
+        if line.strip().startswith('microcap)'):
+            assert 'tests/test_restore_approved_microcap_state.py' in line
 
 
 def test_microcap_v23_identity_fixture_matches_frozen_real_whole_delivery():
