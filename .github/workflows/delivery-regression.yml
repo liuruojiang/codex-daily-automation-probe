@@ -172,6 +172,7 @@ jobs:
             test_adversarial_market_20261007.py test_adversarial_state_20261007.py \
             test_adversarial_delivery_20261007.py test_adversarial_policy_20261007.py \
             test_adversarial_cffex_transport_20261009.py test_adversarial_cffex_close_runner_20261009.py \
+            test_tencent_ohlcv_pagination_20261012.py \
             --junitxml=regression.xml
           python -B -X utf8 - <<'PY'
           import xml.etree.ElementTree as ET
