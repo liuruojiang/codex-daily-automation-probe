@@ -1379,6 +1379,32 @@
       "zh_summary": "发布者 RSS 摘要转述 CoinShares 的观点：债券抛售和财政可持续性担忧可能支持比特币配置，同时近期数字资产基金流入放缓。原网页受阻，发行人观点及资金流数据未独立核验。",
       "evidence_level": "publisher_rss_summary_only",
       "verify_next": "核对资金流原始表、股票债券与比特币相关性及尾部风险，并与替代配置作同区间比较。"
+    },
+    {
+      "origin_run_id": "38188835239",
+      "origin_report_date": "2026-10-12",
+      "source": "Seeking Alpha ETFs",
+      "title": "EUFN: Fear Mounts In France, But European Banks Are Now Too Cheap (Upgrade)",
+      "zh_title": "EUFN：法国风险升温下的欧洲银行估值争议",
+      "url": "https://seekingalpha.com/article/4953365-eufn-fear-mounts-in-france-but-european-banks-are-now-too-cheap-rating-upgrade",
+      "published": "2026-10-11T19:24:58+00:00",
+      "summary": "The publisher public summary argues EUFN looks inexpensive after an 11% drawdown, citing 8.8x earnings, a claimed 11.9% long-term growth rate and a 4.31% yield, while acknowledging Eurozone fiscal risk and top-ten concentration. Full analysis is gated.",
+      "zh_summary": "作者公开摘要称，EUFN 在约11%回撤后估值为约8.8倍盈利、股息率约4.31%，并主张欧洲银行板块偏便宜；同时存在欧元区财政风险和前十大持仓接近半数的集中度。上述数据和估值判断尚未独立复核，全文不可读。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金持仓、估值与股息口径、法国敞口、银行资本质量、汇率和同区间含费总回报。"
+    },
+    {
+      "origin_run_id": "38188835239",
+      "origin_report_date": "2026-10-12",
+      "source": "Yahoo Finance ETF Headlines / The Motley Fool",
+      "title": "Which Corporate Bond ETF Is the Better Buy: iShares’ LQD or State Street’s SPLB?",
+      "zh_title": "LQD 与 SPLB：投资级公司债 ETF 的期限、费用与回撤比较",
+      "url": "https://www.fool.com/coverage/etfs/2026/10/11/which-corporate-bond-etf-is-the-better-buy-ishares-lqd-or-state-street-s-splb",
+      "published": "2026-10-11T23:52:38+00:00",
+      "summary": "The original publisher article compares LQD with long-term corporate bond ETF SPLB. It reports 0.14% versus 0.04% fees, roughly 4.9% versus 6.0% trailing distribution yields, and five-year drawdowns of -24.5% versus -34.4%. The funds have different duration mandates, so the comparison is not an equal-risk test.",
+      "zh_summary": "原文比较 LQD 与长久期公司债 ETF SPLB：列示费率约0.14%与0.04%、过去12个月分配率约4.9%与6.0%，以及五年最大回撤约-24.5%与-34.4%。两只基金期限不同，不能把较高分配率直接当作风险调整后优势；原文数字尚未向发行人核对。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对同日基金久期、信用评级、SEC收益率、费用及含费总回报，并做利率与信用利差冲击测试。"
     }
   ]
 }
