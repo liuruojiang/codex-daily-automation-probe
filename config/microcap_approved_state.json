@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "strategy_sha": "bea4a0f0f3d8d6e023a8d5b2f8f62f365520bc3a",
+  "strategy_sha": "6d09f4c3ad47f536fd76cce0990a6665f300269e",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-delivery-20261012-bea4a0f0/microcap-approved-state-20261012-bea4a0f0.zip",
   "state_sha256": "22cdff59543fb03263c6184031db52d728f985cc641b01efb518ea79f04e078d",
   "state_date": "2026-10-12"

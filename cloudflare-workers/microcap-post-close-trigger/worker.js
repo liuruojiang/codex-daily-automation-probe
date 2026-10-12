@@ -13,8 +13,9 @@ async function dispatchWorkflow(env, workflow) {
   const url = `https://api.github.com/repos/${REPOSITORY}/actions/workflows/${workflow}/dispatches`;
   let lastError;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    let response;
     try {
-      const response = await fetch(url, {
+      response = await fetch(url, {
         method: "POST",
         signal: AbortSignal.timeout(30000),
         headers: {
@@ -29,18 +30,27 @@ async function dispatchWorkflow(env, workflow) {
           inputs: { correction: false, external_schedule: true, publication_mode: "close_confirmed" },
         }),
       });
-      if (response.ok) {
-        console.log(`${workflow}: GitHub dispatch accepted (${response.status})`);
-        return;
-      }
-      const detail = (await response.text()).slice(0, 500);
-      lastError = new Error(`${workflow}: GitHub dispatch failed (${response.status}): ${detail}`);
-      if (!RETRYABLE_STATUS.has(response.status)) throw lastError;
     } catch (error) {
       lastError = error;
       if (attempt === MAX_ATTEMPTS) break;
+      await sleep(1000 * attempt);
+      continue;
     }
-    await sleep(1000 * attempt);
+    if (response.ok) {
+      console.log(`${workflow}: GitHub dispatch accepted (${response.status})`);
+      return;
+    }
+    let detail;
+    try {
+      detail = (await response.text()).slice(0, 500);
+    } catch {
+      detail = "response body unavailable";
+    }
+    lastError = new Error(`${workflow}: GitHub dispatch failed (${response.status}): ${detail}`);
+    // Classify outside the connection catch: a permanent HTTP error must
+    // not be converted into another dispatch, even if reading its body fails.
+    if (!RETRYABLE_STATUS.has(response.status)) throw lastError;
+    if (attempt < MAX_ATTEMPTS) await sleep(1000 * attempt);
   }
   throw lastError ?? new Error(`${workflow}: GitHub dispatch failed`);
 }
