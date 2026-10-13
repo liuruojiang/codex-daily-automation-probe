@@ -1,0 +1,23 @@
+{
+  "manifest_sha256": "7d153645e16b50adabfd6cff530bf40229059c8274f7fdf99e78ba6e37bf18c2",
+  "migration": "ic_im_v1_3_r5_to_r6",
+  "new_ledger": {
+    "digest": "3fc9ee49a628cfb1d30c86cc0fc7867ed4562a1ff9c9c67747adf4f0fa288739",
+    "path": "D:\\动量策略\\IC和IM滚动套利\\runtime\\ic_im_v1_3_r6",
+    "sequence": 0,
+    "strategy_revision": "r6",
+    "verified_day": "2026-09-02"
+  },
+  "old_ledger": {
+    "digest": "c3d7d80ccf1287cc9dd79591d40fc1014035b08e8a8ceae5ead8e6d299bb6daa",
+    "path": "D:\\动量策略\\IC和IM滚动套利\\tmp\\gh-run-33708813109\\ic-im-v1-3-ledger",
+    "sequence": 7,
+    "verified_day": "2026-09-02"
+  },
+  "source_sha256": {
+    "migration_runner": "6af15c76cc897ceede2d8db16e21696bf54dcf3206066b5756f281e9cd0280a5",
+    "state": "5f55e3379c68c30de316b299437f9ce6d98348f1a754cba2621f67cd2ad35a50",
+    "strategy": "e2e4276f15b4b9e6c6cbd5473290d78789282bdbb51b65201650dab507f3e8bb"
+  },
+  "status": "research_signal_publication_not_order_authorization"
+}
