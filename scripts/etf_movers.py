@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import re
 import time
@@ -17,6 +18,8 @@ MIN_PRICE = 5.0
 MIN_AVG_DAILY_VOLUME = 50_000
 MIN_AVG_DAILY_DOLLAR_VOLUME = 5_000_000.0
 MAX_UNIVERSE_SCAN = 10_000
+SCREENER_REQUEST_TIMEOUT = 30
+SCREENER_RETRY_DELAYS = (2.0, 5.0)
 MAX_CHART_WORKERS = 16
 MIN_PERIOD_COVERAGE = 0.99
 US_MARKET_CLOSE = datetime_time(16, 0)
@@ -615,16 +618,48 @@ def _screener_body(offset: int, size: int, min_price: float) -> dict[str, Any]:
 def _fetch_page(offset: int, size: int, min_price: float) -> list[dict[str, Any]]:
     try:
         from yfinance.data import YfData
+        from yfinance.exceptions import YFRateLimitError
     except ImportError as exc:
         raise RuntimeError("yfinance is required for broad ETF rankings") from exc
-    response = YfData().post(
-        QUERY_URL,
-        body=_screener_body(offset, size, min_price),
-        params=QUERY_PARAMS,
-    )
-    response.raise_for_status()
-    result = response.json().get("finance", {}).get("result") or []
-    return (result[0].get("quotes") or []) if result else []
+    attempts = len(SCREENER_RETRY_DELAYS) + 1
+    for attempt in range(attempts):
+        try:
+            response = YfData().post(
+                QUERY_URL,
+                body=_screener_body(offset, size, min_price),
+                params=QUERY_PARAMS,
+                timeout=SCREENER_REQUEST_TIMEOUT,
+            )
+            response.raise_for_status()
+            break
+        except (OSError, YFRateLimitError) as exc:
+            # curl_cffi transport errors (including Timeout) inherit OSError.
+            # Retry only this page, never the build/send operation as a whole.
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            if status and 400 <= status < 500 and status not in {408, 429}:
+                raise
+            if attempt == attempts - 1:
+                raise RuntimeError(
+                    f"ETF screener page at offset {offset} unavailable after {attempts} attempts; "
+                    "full universe not obtained"
+                ) from exc
+            logging.getLogger(__name__).warning(
+                "ETF screener retry %s/%s: offset=%s, error=%s, status=%s",
+                attempt + 1, attempts - 1, offset, type(exc).__name__, status,
+            )
+            time.sleep(SCREENER_RETRY_DELAYS[attempt])
+    payload = response.json()
+    finance = payload.get("finance") if isinstance(payload, dict) else None
+    result = finance.get("result") if isinstance(finance, dict) else None
+    if (
+        not isinstance(finance, dict) or finance.get("error")
+        or not isinstance(result, list) or len(result) != 1
+        or not isinstance(result[0], dict) or not isinstance(result[0].get("quotes"), list)
+        or any(not isinstance(row, dict) or not row.get("symbol") for row in result[0]["quotes"])
+    ):
+        # An error/malformed page must not look like successful pagination end.
+        raise RuntimeError(f"Invalid ETF screener response at offset {offset}; full universe not obtained")
+    return result[0]["quotes"]
 
 
 def fetch_universe(max_scan: int = MAX_UNIVERSE_SCAN, min_price: float = MIN_PRICE) -> list[dict[str, Any]]:
