@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "fixture_id": "icim-quarter-roll-20261013",
+  "classification": "offline_test_fixture_only; not production state or a newly fetched market dataset",
+  "created_at": "2026-10-13T19:32:12.744280+08:00",
+  "source_repository": "D:\\动量策略\\IC和IM滚动套利",
+  "reviewed_execution_commit": "427cf45fd78710583c8028f7eca1ed88968036ee",
+  "source_repository_current_head": "43cbc5e36179425d99e2c9447f9745109215339b",
+  "source_provenance": "Existing saved r6 migration chain, real historical research roll-event outputs, and saved CFFEX contract histories from the source repository. No synthetic rows, date changes, column reduction, candidate filtering, source edits, or price generation. This package adds CI availability only.",
+  "target_test": {
+    "relative_path": "test_ic_im_quarter_roll_v1_3.py",
+    "sha256": "f66b6470fba985618a94e3dddb50f7d0a368e6c3e1ae46411e3b44e74004ffc3",
+    "unchanged": true
+  },
+  "omitted_source_files": [
+    {
+      "path": "runtime/ic_im_v1_3_r6/.ledger.lock",
+      "reason": "Ephemeral lock file, not ledger data and not read by validate_r6; all three persisted JSON files included."
+    }
+  ],
+  "files": [
+    {
+      "source_relative_path": "runtime/ic_im_v1_3_r6/latest.json",
+      "source_sha256": "dbb17fee14ec7152eb66bb3a9015ce31f51d648bbeea532aba211959d96bc883",
+      "source_bytes": 2955,
+      "payload_relative_path": "payload/runtime/ic_im_v1_3_r6/latest.json",
+      "payload_sha256": "dbb17fee14ec7152eb66bb3a9015ce31f51d648bbeea532aba211959d96bc883",
+      "payload_bytes": 2955,
+      "target_relative_path": "runtime/ic_im_v1_3_r6/latest.json",
+      "transformation": "none; full original file copied byte-for-byte",
+      "payload_schema": {
+        "format": "json",
+        "top_level_keys": [
+          "digest",
+          "genesis",
+          "previous_digest",
+          "products",
+          "schema_version",
+          "sequence",
+          "signals",
+          "source",
+          "strategy_revision",
+          "strategy_version",
+          "updated_at",
+          "verified_day"
+        ],
+        "schema_version": 3,
+        "strategy_revision": "r6",
+        "sequence": 0,
+        "verified_day": "2026-09-02",
+        "ledger_digest": "3fc9ee49a628cfb1d30c86cc0fc7867ed4562a1ff9c9c67747adf4f0fa288739"
+      }
+    },
+    {
+      "source_relative_path": "runtime/ic_im_v1_3_r6/migration_record.json",
+      "source_sha256": "e68383d2d4668a60d02468b8d25501e6ac3f7f7347fae07f09e7c6ebbed22b11",
+      "source_bytes": 998,
+      "payload_relative_path": "payload/runtime/ic_im_v1_3_r6/migration_record.json",
+      "payload_sha256": "e68383d2d4668a60d02468b8d25501e6ac3f7f7347fae07f09e7c6ebbed22b11",
+      "payload_bytes": 998,
+      "target_relative_path": "runtime/ic_im_v1_3_r6/migration_record.json",
+      "transformation": "none; full original file copied byte-for-byte",
+      "payload_schema": {
+        "format": "json",
+        "top_level_keys": [
+          "manifest_sha256",
+          "migration",
+          "new_ledger",
+          "old_ledger",
+          "source_sha256",
+          "status"
+        ],
+        "schema_version": null,
+        "strategy_revision": null,
+        "sequence": null,
+        "verified_day": null,
+        "ledger_digest": null
+      }
+    },
+    {
+      "source_relative_path": "runtime/ic_im_v1_3_r6/journal/000000-2026-09-02.json",
+      "source_sha256": "dbb17fee14ec7152eb66bb3a9015ce31f51d648bbeea532aba211959d96bc883",
+      "source_bytes": 2955,
+      "payload_relative_path": "payload/runtime/ic_im_v1_3_r6/journal/000000-2026-09-02.json",
+      "payload_sha256": "dbb17fee14ec7152eb66bb3a9015ce31f51d648bbeea532aba211959d96bc883",
+      "payload_bytes": 2955,
+      "target_relative_path": "runtime/ic_im_v1_3_r6/journal/000000-2026-09-02.json",
+      "transformation": "none; full original file copied byte-for-byte",
+      "payload_schema": {
+        "format": "json",
+        "top_level_keys": [
+          "digest",
+          "genesis",
+          "previous_digest",
+          "products",
+          "schema_version",
+          "sequence",
+          "signals",
+          "source",
+          "strategy_revision",
+          "strategy_version",
+          "updated_at",
+          "verified_day"
+        ],
+        "schema_version": 3,
+        "strategy_revision": "r6",
+        "sequence": 0,
+        "verified_day": "2026-09-02",
+        "ledger_digest": "3fc9ee49a628cfb1d30c86cc0fc7867ed4562a1ff9c9c67747adf4f0fa288739"
+      }
+    },
+    {
+      "source_relative_path": "quant_param_scan_runs/20260904_ic_v13_full_roll_tenor_timing_v2/roll_events.csv",
+      "source_sha256": "e3f2663b9b79196deb8f56c9968f37d3982dd869423bb10770ba3d6eb4565452",
+      "source_bytes": 544000,
+      "payload_relative_path": "payload/quant_param_scan_runs/20260904_ic_v13_full_roll_tenor_timing_v2/roll_events.csv",
+      "payload_sha256": "e3f2663b9b79196deb8f56c9968f37d3982dd869423bb10770ba3d6eb4565452",
+      "payload_bytes": 544000,
+      "target_relative_path": "quant_param_scan_runs/20260904_ic_v13_full_roll_tenor_timing_v2/roll_events.csv",
+      "transformation": "none; full original file copied byte-for-byte",
+      "payload_schema": {
+        "format": "csv",
+        "columns": [
+          "date",
+          "expiry",
+          "days_before",
+          "old_contract",
+          "new_contract",
+          "old_close",
+          "new_close",
+          "old_settle",
+          "new_settle",
+          "old_volume",
+          "new_volume",
+          "new_open_interest",
+          "return_bridge",
+          "candidate",
+          "tenor",
+          "put_calendar",
+          "month_gap"
+        ],
+        "rows": 3746,
+        "min_date": "2015-04-30",
+        "max_date": "2026-07-17",
+        "required_candidate": "quarter_T3_fixed",
+        "required_candidate_rows": 46,
+        "required_event_first": "2015-05-12",
+        "required_event_last": "2026-06-16"
+      }
+    },
+    {
+      "source_relative_path": "quant_param_scan_runs/20260904_im_v13_quarter_t3_close_impact_v4/roll_events.csv",
+      "source_sha256": "3060c968361d8b34bb1e93380b2c41d6cb159093782a11a2c7eaca5e15208e03",
+      "source_bytes": 31840,
+      "payload_relative_path": "payload/quant_param_scan_runs/20260904_im_v13_quarter_t3_close_impact_v4/roll_events.csv",
+      "payload_sha256": "3060c968361d8b34bb1e93380b2c41d6cb159093782a11a2c7eaca5e15208e03",
+      "payload_bytes": 31840,
+      "target_relative_path": "quant_param_scan_runs/20260904_im_v13_quarter_t3_close_impact_v4/roll_events.csv",
+      "transformation": "none; full original file copied byte-for-byte",
+      "payload_schema": {
+        "format": "csv",
+        "columns": [
+          "date",
+          "old_contract",
+          "new_contract",
+          "volume",
+          "open_interest",
+          "candidate",
+          "destination",
+          "fixed_td",
+          "tenor",
+          "days_before",
+          "old_td_remaining",
+          "new_listed_rank_after_old",
+          "new_calendar_dte",
+          "old_close",
+          "new_close",
+          "raw_roll_gap",
+          "old_volume",
+          "old_open_interest",
+          "new_volume",
+          "new_open_interest"
+        ],
+        "rows": 227,
+        "min_date": "2022-08-16",
+        "max_date": "2026-07-17",
+        "required_candidate": "quarter_T1_close",
+        "required_candidate_rows": 17,
+        "required_event_first": "2022-08-18",
+        "required_event_last": "2026-06-18"
+      }
+    },
+    {
+      "source_relative_path": "data/ic_monthly_discount_roll_v1/cffex_ic_contracts.csv",
+      "source_sha256": "4e02b889747112459125999382c3ff2fe89017aaea30df05e91bb2a7bc1e2104",
+      "source_bytes": 918156,
+      "payload_relative_path": "payload/data/ic_monthly_discount_roll_v1/cffex_ic_contracts.csv",
+      "payload_sha256": "4e02b889747112459125999382c3ff2fe89017aaea30df05e91bb2a7bc1e2104",
+      "payload_bytes": 918156,
+      "target_relative_path": "data/ic_monthly_discount_roll_v1/cffex_ic_contracts.csv",
+      "transformation": "none; full original file copied byte-for-byte",
+      "payload_schema": {
+        "format": "csv",
+        "columns": [
+          "contract",
+          "date",
+          "open",
+          "high",
+          "low",
+          "volume",
+          "turnover",
+          "open_interest",
+          "close",
+          "settle",
+          "pre_settle"
+        ],
+        "rows": 11024,
+        "min_date": "2015-04-16",
+        "max_date": "2026-08-14",
+        "unique_dates": 2756,
+        "contracts": 139,
+        "test_used_columns": [
+          "date",
+          "contract"
+        ]
+      }
+    },
+    {
+      "source_relative_path": "data/im_monthly_roll_3m_lowest_put_v1/cffex_im_contracts.csv",
+      "source_sha256": "6f19f04824026e3cf7e4fc7ebfeb20f60637e53bfc3caebc616fae47794f3cc0",
+      "source_bytes": 333905,
+      "payload_relative_path": "payload/data/im_monthly_roll_3m_lowest_put_v1/cffex_im_contracts.csv",
+      "payload_sha256": "6f19f04824026e3cf7e4fc7ebfeb20f60637e53bfc3caebc616fae47794f3cc0",
+      "payload_bytes": 333905,
+      "target_relative_path": "data/im_monthly_roll_3m_lowest_put_v1/cffex_im_contracts.csv",
+      "transformation": "none; full original file copied byte-for-byte",
+      "payload_schema": {
+        "format": "csv",
+        "columns": [
+          "contract",
+          "date",
+          "open",
+          "high",
+          "low",
+          "volume",
+          "turnover",
+          "open_interest",
+          "close",
+          "settle",
+          "pre_settle"
+        ],
+        "rows": 3944,
+        "min_date": "2022-07-22",
+        "max_date": "2026-08-14",
+        "unique_dates": 986,
+        "contracts": 52,
+        "test_used_columns": [
+          "date",
+          "contract"
+        ]
+      }
+    }
+  ],
+  "total_payload_bytes": 1834809,
+  "install": "python -B -X utf8 tests/fixtures/icim/quarter_roll_20261013/prepare_fixture.py --strategy-root strategy",
+  "expected_executed_real_cases": [
+    "test_real_r6_migration_preserves_every_anchor",
+    "test_real_scan_calendar_parity[IC-quarter_T3_fixed-20260904_ic_v13_full_roll_tenor_timing_v2]",
+    "test_real_scan_calendar_parity[IM-quarter_T1_close-20260904_im_v13_quarter_t3_close_impact_v4]"
+  ]
+}

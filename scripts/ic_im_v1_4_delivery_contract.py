@@ -156,9 +156,16 @@ def validate_pending_plans(product: str, signal: dict[str, Any]) -> None:
             if trigger > _day(signal.get("market_date"), f"{product} signal day"):
                 raise ValueError(f"{product} {kind} trigger cannot be later than its signal")
     if plan is not None:
-        if (signal.get("v14_route_state", "future") != "future"
-                or signal.get("v14_profit_pending") or signal.get("option_monthly_reset_due")):
-            raise ValueError(f"{product} ordinary Put plan conflicts with core route, 3x plan or monthly maintenance")
+        if signal.get("option_monthly_reset_due"):
+            raise ValueError(f"{product} ordinary Put plan conflicts with monthly maintenance")
+        if (route != "future" or signal.get("v14_profit_pending")
+                or signal.get("v14_action") in {"CORE_PUT_PROFIT3X_REENTER", "EXECUTE_CORE_PUT_PROFIT3X_REENTER"}):
+            legs = plan.get("legs") if isinstance(plan, dict) else None
+            core = legs.get("core") if isinstance(legs, dict) else None
+            if not isinstance(core, dict) or core.get("changed") is not False:
+                raise ValueError(f"{product} ordinary Put plan cannot change a route/3x-owned core")
+            # The digest's per-leg gate binds both unchanged core identities,
+            # security IDs and quantities to the appropriate held stage.
     if signal.get("v14_profit_pending"):
         if route != "future":
             raise ValueError(f"{product} 3x plan requires the future core route")

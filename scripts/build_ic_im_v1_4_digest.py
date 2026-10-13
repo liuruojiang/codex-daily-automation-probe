@@ -189,7 +189,13 @@ def validate_ordinary_put_plan(product: str, signal: dict[str, Any], next_trade_
             "core": signal.get("v14_core_put_contract") or signal.get("put_target_contract"),
             "momentum": signal.get("put_target_contract"),
         }
-        current_security_id = signal.get("put_current_security_id")
+        current_security_ids = {
+            "core": (signal.get("v14_core_put_security_id")
+                     if current_contracts["core"] == signal.get("v14_core_put_contract")
+                     else signal.get("put_current_security_id")
+                     if current_contracts["core"] == signal.get("put_current_contract") else None),
+            "momentum": signal.get("put_current_security_id"),
+        }
         target_security_ids = {
             "core": signal.get("v14_core_put_security_id") or signal.get("put_target_security_id"),
             "momentum": signal.get("put_target_security_id"),
@@ -219,6 +225,66 @@ def validate_ordinary_put_plan(product: str, signal: dict[str, Any], next_trade_
             "core": signal.get("core_put_target_qty_normalized"),
             "momentum": signal.get("momentum_put_target_qty_normalized"),
         }
+        current_security_ids = target_security_ids = {"core": None, "momentum": None}
+
+    # Match the producer's profit_core_reference / ordinary scheduler. A route
+    # switch owns the core exit; a concurrent 3x event owns its own core trade.
+    # In either case only momentum may change in this ordinary T+1 plan.
+    route = signal.get("v14_route_state", "future")
+    action = signal.get("v14_action")
+    executed = action == "EXECUTE_CORE_PUT_PROFIT3X_REENTER"
+    profit_core = signal.get("v14_profit_pending") or executed or action == "CORE_PUT_PROFIT3X_REENTER"
+    core_locked = route != "future" or profit_core
+    if route != "future":
+        if (route not in {"short_put", "assigned_etf", "cash_wait", "recovery_future"}
+                or profit_core or _finite_qty(target_quantities["core"]) != 0.0
+                or (product == "IC" and _finite_qty(signal.get("v14_core_put_qty")) != 0.0)):
+            raise ValueError(f"{product} ordinary Put route has an invalid core target")
+        current_contracts["core"] = target_contracts["core"] = None
+        current_security_ids["core"] = target_security_ids["core"] = None
+        current_quantities["core"] = target_quantities["core"] = 0.0
+    elif profit_core:
+        if executed:
+            contract = signal.get("v14_core_put_contract") if product == "IC" else target_contracts["core"]
+            security_id = signal.get("v14_core_put_security_id") if product == "IC" else None
+            qty = _finite_qty(signal.get("v14_core_put_qty") if product == "IC" else target_quantities["core"])
+            target_qty = _finite_qty(target_quantities["core"])
+            executed_qty = _finite_qty(signal.get("v14_profit_open_executed_qty"))
+            old_qty = _finite_qty(signal.get("v14_profit_open_old_qty"))
+            current_qty = _finite_qty(current_quantities["core"])
+            open_prices = [_finite_qty(signal.get(field)) for field in (
+                "v14_profit_exit_open_price", "v14_profit_reentry_entry_premium")]
+            if (signal.get("v14_profit_pending")
+                    or signal.get("v14_profit_reentry_status") != "confirmed_open_research_price"
+                    or _iso_day(signal.get("v14_profit_open_price_day")) != signal_day
+                    or any(value is None or value <= 0 for value in open_prices)
+                    or signal.get("v14_profit_open_executed_contract") != contract
+                    or contract != target_contracts["core"]
+                    or qty is None or executed_qty is None or target_qty is None
+                    or not math.isclose(qty, target_qty, abs_tol=1e-12)
+                    or not math.isclose(qty, executed_qty, abs_tol=1e-12)
+                    or signal.get("v14_profit_open_old_contract") != current_contracts["core"]
+                    or old_qty is None or current_qty is None or old_qty <= 0
+                    or not math.isclose(old_qty, current_qty, abs_tol=1e-12)):
+                raise ValueError(f"{product} ordinary Put core lacks confirmed 3x opening identity")
+        else:
+            contract = signal.get("v14_profit_old_contract")
+            security_id = signal.get("v14_profit_old_security_id") if product == "IC" else None
+            qty = _finite_qty(signal.get("v14_profit_old_qty"))
+            current_qty = _finite_qty(current_quantities["core"])
+            if (signal.get("v14_profit_pending") is not True
+                    or contract != current_contracts["core"]
+                    or qty is None or current_qty is None
+                    or not math.isclose(qty, current_qty, abs_tol=1e-12)
+                    or (product == "IC" and current_security_ids["core"] is not None
+                        and security_id != current_security_ids["core"])):
+                raise ValueError(f"{product} ordinary Put core differs from pending 3x held identity")
+        if (not contract or qty is None or qty <= 0
+                or (product == "IC" and not security_id)):
+            raise ValueError(f"{product} ordinary Put 3x core reference is incomplete")
+        current_contracts["core"] = target_contracts["core"] = contract
+        current_security_ids["core"] = target_security_ids["core"] = security_id
+        current_quantities["core"] = target_quantities["core"] = qty
 
     for name in ("core", "momentum"):
         leg = plan["legs"][name]
@@ -245,10 +311,10 @@ def validate_ordinary_put_plan(product: str, signal: dict[str, Any], next_trade_
             target_security_ids[name] if product == "IC" and new_qty > 0 else None
         )
         old_security_matches = (
-            product != "IC"
-            or old_qty == 0
-            or current_security_id is None
-            or leg.get("old_security_id") == current_security_id
+            leg.get("old_security_id") is None if product != "IC" or old_qty == 0
+            else leg.get("old_security_id") == current_security_ids[name]
+            if current_security_ids[name] is not None or (core_locked and name == "core")
+            else True
         )
         changed = expected_old_contract != expected_new_contract or not math.isclose(
             old_qty, new_qty, abs_tol=1e-12
@@ -292,6 +358,19 @@ def put_text(product: str, signal: dict[str, Any], target: bool) -> str:
     contract = signal.get(f"put_{prefix}_contract") or "无"
     if product == "IC":
         qty = signal.get(f"put_{prefix}_total_qty", 0)
+        # Historical sparse results have only a combined quantity. Modern
+        # results record independent core and momentum identities and sizes.
+        core_qty = signal.get(f"put_{prefix}_core_qty")
+        momentum_qty = signal.get(f"put_{prefix}_momentum_qty")
+        if core_qty is not None and momentum_qty is not None:
+            def leg_contract(leg: str, leg_qty: Any) -> str:
+                if leg_qty == 0:
+                    return "无"
+                return put_display.ic_contract(signal, prefix, leg) or "N/A（result合约缺失）"
+            return (
+                f"合计{number(qty)}张（核心{number(core_qty)}张 {leg_contract('core', core_qty)}；"
+                f"动量{number(momentum_qty)}张 {leg_contract('momentum', momentum_qty)}）"
+            )
         return f"{number(qty)}张 {contract}"
     core_qty = signal.get(f"core_put_{prefix}_qty_normalized", 0)
     momentum_qty = signal.get(f"momentum_put_{prefix}_qty_normalized", 0)

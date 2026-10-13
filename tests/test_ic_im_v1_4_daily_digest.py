@@ -255,6 +255,25 @@ def test_fix9_malformed_identity_payload_is_rejected_before_email_build(mutation
 
 
 class ICIMV14DailyDigestTests(unittest.TestCase):
+    def test_ic_compact_put_summary_separates_nonzero_core_and_momentum(self) -> None:
+        ic = signal('IC')
+        ic.update(v14_core_put_current_contract='CORE-OLD', v14_core_put_contract='CORE-NEXT',
+                  put_current_contract='MOM-OLD', put_target_contract='MOM-NEXT',
+                  put_current_core_qty=10, put_current_momentum_qty=4,
+                  put_target_core_qty=11, put_target_momentum_qty=3)
+        self.assertEqual(digest.put_text('IC', ic, False),
+                         '合计14张（核心10张 CORE-OLD；动量4张 MOM-OLD）')
+        self.assertEqual(digest.put_text('IC', ic, True),
+                         '合计14张（核心11张 CORE-NEXT；动量3张 MOM-NEXT）')
+        ic.update(v14_profit_pending=True, v14_profit_reentry_contract='UNEXECUTED-3X')
+        self.assertNotIn('UNEXECUTED-3X', digest.put_text('IC', ic, True))
+        ic['put_target_core_qty'] = 0
+        self.assertIn('核心0张 无', digest.put_text('IC', ic, True))
+        self.assertNotIn('CORE-NEXT', digest.put_text('IC', ic, True))
+
+    def test_sparse_historical_ic_summary_keeps_its_recorded_combined_quantity(self) -> None:
+        self.assertEqual(digest.put_text('IC', signal('IC'), False), '14张 P-OLD')
+
     def test_fix8_ordinary_put_open_plan_and_paper_confirmation_are_visible(self) -> None:
         ic = signal("IC")
         ic.update(

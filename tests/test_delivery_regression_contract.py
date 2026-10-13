@@ -41,7 +41,7 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
                      'test_top100_delivery.py', 'test_ohlcv_provider_validation.py',
                      'test_delivery_transport_retry.py', 'test_poe_ic_im_v1_3_state.py',
                      'test_run_ic_im_v1_3_github_digest.py', 'test_adversarial_delivery.py',
-                     'test_ic_im_v1_4_policy.py', 'test_ic_im_v1_4_state_guards.py',
+                     'test_ic_im_v1_4_policy.py',
                      'test_poe_ic_im_v1_4_state.py',
                      'test_ic_im_v1_4_ic_csi500_forward.py',
                      'test_ic_im_v1_4_integration_guards.py', 'test_run_ic_im_v1_4_github_digest.py',
@@ -51,6 +51,12 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
                      'test_adversarial_cffex_transport_20261009.py',
                      'test_adversarial_cffex_close_runner_20261009.py',
                      'test_tencent_ohlcv_pagination_20261012.py',
+                     'test_ic_im_v1_4_repeat_roll_20260925.py',
+                     'test_ic_im_v1_4_market_maker_quotes_20260925.py',
+                     'test_ic_im_quarter_roll_v1_3.py',
+                     'test_ic_im_ordinary_put_route_fix_20261013.py',
+                     'test_ic_im_quote_snapshot_guard_20261013.py',
+                     'test_ic_im_split_put_summary_20261013.py',
                      'test_panel_exchange_session_guard_20261012.py',
                      'test_security_meta_current_st_history_resolution_20261012.py',
                      'test_security_meta_preserve_20260917.py',
@@ -72,7 +78,12 @@ def test_icim_regression_preserves_isolation_cache_and_hard_timeout_contract():
     assert step['env']['ICIM_STATE_DIR'].startswith('${{ runner.temp }}/')
     assert 'timeout --foreground 60s python -B -X utf8 -m pytest -q -p no:cacheprovider' in step['run']
     assert 'v14_ledger_20261008 runtime/ic_im_v1_4_r1' in step['run']
+    assert 'quarter_roll_20261013/prepare_fixture.py --strategy-root .' in step['run']
     assert "assert not list(root.iter('skipped'))" in step['run']
+    # The stable state entrypoint imports the guard cases. Running both files
+    # collects the same behavior twice and inflates the reported gate count.
+    assert 'test_poe_ic_im_v1_4_state.py' in step['run']
+    assert 'test_ic_im_v1_4_state_guards.py' not in step['run']
 
 
 def test_microcap_regression_covers_required_files_with_isolated_zero_skip_gate():

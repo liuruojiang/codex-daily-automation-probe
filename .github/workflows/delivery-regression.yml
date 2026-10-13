@@ -161,10 +161,13 @@ jobs:
           test ! -e runtime/ic_im_v1_4_r1
           mkdir -p runtime
           cp -R ../automation/tests/fixtures/icim/v14_ledger_20261008 runtime/ic_im_v1_4_r1
+          # Exact real r6/roll/calendar inputs for the unchanged historical
+          # audits; verify their hashes before installing into this checkout.
+          python -B -X utf8 ../automation/tests/fixtures/icim/quarter_roll_20261013/prepare_fixture.py --strategy-root .
           timeout --foreground 60s python -B -X utf8 -m pytest -q -p no:cacheprovider \
             test_delivery_transport_retry.py test_ohlcv_provider_validation.py \
             test_poe_ic_im_v1_3_state.py test_run_ic_im_v1_3_github_digest.py \
-            test_ic_im_v1_4_policy.py test_ic_im_v1_4_state_guards.py test_poe_ic_im_v1_4_state.py test_ic_im_v1_4_ic_csi500_forward.py test_ic_im_fear_grid_v1.py \
+            test_ic_im_v1_4_policy.py test_poe_ic_im_v1_4_state.py test_ic_im_v1_4_ic_csi500_forward.py test_ic_im_fear_grid_v1.py \
             test_ic_im_v1_4_integration_guards.py test_run_ic_im_v1_4_github_digest.py \
             test_migrate_ic_im_v1_3_r7_to_v1_4_r1_state.py \
             test_ic_im_daily_valuation.py test_im_put_policy.py \
@@ -177,6 +180,10 @@ jobs:
             test_adversarial_delivery_20261007.py test_adversarial_policy_20261007.py \
             test_adversarial_cffex_transport_20261009.py test_adversarial_cffex_close_runner_20261009.py \
             test_tencent_ohlcv_pagination_20261012.py \
+            test_ic_im_v1_4_repeat_roll_20260925.py test_ic_im_v1_4_market_maker_quotes_20260925.py \
+            test_ic_im_quarter_roll_v1_3.py \
+            test_ic_im_ordinary_put_route_fix_20261013.py test_ic_im_quote_snapshot_guard_20261013.py \
+            test_ic_im_split_put_summary_20261013.py \
             --junitxml=regression.xml
           python -B -X utf8 - <<'PY'
           import xml.etree.ElementTree as ET

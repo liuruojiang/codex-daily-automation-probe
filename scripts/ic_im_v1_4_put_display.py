@@ -30,6 +30,22 @@ def contract_terms(contract):
     return f'20{match[1]}-{match[2]} / {strike:g}（按合约编码）'
 
 
+def ic_contract(signal, when, leg):
+    """Read the producer's separate held/ordinary-target IC identities.
+
+    The independent core target is also what the ordinary T+1 planner uses.
+    Monthly maintenance and confirmed 3x execution already update that field;
+    an unexecuted 3x replacement remains a separate lifecycle plan.
+    """
+    if signal.get(f'put_{when}_{leg}_qty') == 0:
+        return None
+    if leg == 'core':
+        if when == 'current':
+            return signal.get('v14_core_put_current_contract')
+        return signal.get('v14_core_put_contract') or signal.get('put_target_contract')
+    return signal.get(f'put_{when}_contract')
+
+
 def evidence(product, signal):
     """Return human tables from this result only, keeping lifecycle scopes apart."""
     if str(signal.get('market_date', '')) < EFFECTIVE_DAY:
@@ -40,7 +56,7 @@ def evidence(product, signal):
         tier = f"估值分{value(s.get('score'))}；{s.get('valuation_tier_label', 'N/A（估值档缺失）')}；估值Delta {pct(s.get('valuation_put_delta'))}"
         final = f"MOM120 {pct(s.get('momentum_120'))}；下限{pct(s.get('mom120_floor_delta'))}；最终核心/动量/组合Delta {pct(s.get('core_put_target_delta'))}/{pct(s.get('momentum_put_target_delta'))}/{pct(s.get('total_put_target_delta'))}；{s.get('core_put_driver', 'N/A（主导来源缺失）')}"
         qty = lambda when, leg: s.get(f'put_{when}_{leg}_qty')
-        contracts = lambda when, leg: s.get(f'put_{when}_contract') if qty(when, leg) else None
+        contracts = lambda when, leg: ic_contract(s, when, leg)
         ratio_note = 'IC当日动态比例按IC名义金额/ETF期权名义金额×目标Delta/所选Put绝对Delta并取整；result未保存所选Put绝对Delta，本次动态重算N/A。下表比例仅为已记录数量/已记录期货单位，沿用数量不冒称今日重选。'
     else:
         tier = f"估值分{value(s.get('score'))}；绝对轴{s.get('absolute_valuation_tier_label', 'N/A')}；57个月相对轴{s.get('relative_valuation_tier_label', 'N/A')}；估值每完整IM {value(s.get('valuation_puts_per_full_core'))}张"
@@ -68,7 +84,10 @@ def evidence(product, signal):
             q = qty(when, leg)
             empty = q == 0
             pricing = s.get('put_pricing_evidence') or {}
-            field = 'put_current_contract' if when == 'current' and leg == 'core' else f'{leg}_put_{when}_contract'
+            if product == 'IC':
+                field = ('v14_core_put_current_contract' if when == 'current' else 'v14_core_put_contract') if leg == 'core' else f'put_{when}_contract'
+            else:
+                field = 'put_current_contract' if when == 'current' and leg == 'core' else f'{leg}_put_{when}_contract'
             quote = pricing.get(field) or {}
             raw = quote.get('market_text') if quote.get('contract') == contract else None
             raw = raw or s.get('put_market')

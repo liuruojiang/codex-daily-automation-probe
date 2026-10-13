@@ -1,0 +1,4 @@
+# Preserve the exact source bytes referenced by manifest.json on all platforms.
+payload/** -text whitespace=cr-at-eol
+manifest.json text eol=lf
+prepare_fixture.py text eol=lf

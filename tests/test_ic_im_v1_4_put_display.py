@@ -59,7 +59,7 @@ def test_other_iv_contract_and_wrong_leg_quote_cannot_fill_put_quote_evidence():
 
 def test_missing_contract_and_zero_future_ratio_are_explicit_na():
     s = actual()['signals']['IC']
-    s['put_current_contract'] = None
+    s['v14_core_put_current_contract'] = None
     s['total_units_current'] = 0
     table = display.markdown('IC', s)
     assert 'N/A（result合约缺失）' in table
@@ -78,3 +78,96 @@ def test_historical_rendering_has_no_added_rows_or_blank_table():
 @pytest.mark.parametrize('contract', [None, 'P-OLD', 'MO2613-P-7600', '510500P2613M07500'])
 def test_unverified_contract_encoding_never_invents_strike_or_month(contract):
     assert display.contract_terms(contract).startswith('N/A')
+
+
+CORE = '510500P2612M07500'
+MOMENTUM = '510500P2612M07300'
+NEW_CORE = '510500P2701M07200'
+
+
+def split_signal():
+    """Synthetic identity fault injection over the hash-checked real result."""
+    s = actual()['signals']['IC']
+    s.update(v14_core_put_current_contract=CORE, v14_core_put_contract=CORE,
+             put_current_contract=MOMENTUM, put_target_contract=MOMENTUM,
+             put_current_core_qty=10, put_target_core_qty=10,
+             put_current_momentum_qty=3, put_target_momentum_qty=3,
+             put_current_total_qty=13, put_target_total_qty=13,
+             put_market=f'`{MOMENTUM}`，最新 0.25；买/卖 0.24/0.26',
+             put_pricing_evidence={})
+    return s
+
+
+def contract_rows(s):
+    table = next(item for item in display.evidence('IC', s)
+                 if item[0] == '当前Put与下一目标Put合约证据')
+    return {row[0]: row for row in table[2]}
+
+
+def test_split_ic_contracts_keep_separate_rows_and_do_not_borrow_momentum_quote():
+    s = split_signal()
+    before = copy.deepcopy(s)
+    rows = contract_rows(s)
+    assert rows['当前 核心'][1:3] == ['10', CORE]
+    assert rows['下一目标 核心'][1:3] == ['10', CORE]
+    assert rows['当前 动量'][1:3] == ['3', MOMENTUM]
+    assert rows['下一目标 动量'][1:3] == ['3', MOMENTUM]
+    assert 'N/A（result未保存该合约报价原文）' in rows['当前 核心'][4]
+    assert '最新 0.25' in rows['当前 动量'][4]
+    assert s == before
+
+
+@pytest.mark.parametrize('status', ['monthly', 'confirmed_3x', 'ordinary_pending'])
+def test_updated_target_identity_does_not_replace_saved_current_core(status):
+    s = split_signal()
+    s.update(v14_core_put_contract=NEW_CORE, put_target_core_qty=12,
+             put_target_total_qty=15)
+    if status == 'monthly':
+        s.update(option_monthly_reset_due=True, put_target_contract=NEW_CORE)
+    elif status == 'confirmed_3x':
+        s.update(v14_profit_reentry_status='confirmed_open_research_price',
+                 v14_profit_open_executed_contract=NEW_CORE,
+                 v14_profit_open_executed_qty=12)
+    else:
+        s.update(v14_ordinary_put_plan_status='scheduled_t_plus_1_open',
+                 v14_ordinary_put_pending={'legs': {'core': {
+                     'old_contract': CORE, 'old_qty': 10,
+                     'new_contract': NEW_CORE, 'new_qty': 12}}})
+    rows = contract_rows(s)
+    assert rows['当前 核心'][1:3] == ['10', CORE]
+    assert rows['下一目标 核心'][1:3] == ['12', NEW_CORE]
+
+
+def test_pending_3x_replacement_is_not_the_ordinary_or_held_core():
+    s = split_signal()
+    s.update(v14_profit_pending=True, v14_profit_reentry_contract=NEW_CORE,
+             v14_profit_reentry_qty=12,
+             v14_profit_reentry_status='scheduled_t_plus_1_open')
+    rows = contract_rows(s)
+    assert rows['当前 核心'][2] == rows['下一目标 核心'][2] == CORE
+    assert NEW_CORE not in display.markdown('IC', s)
+
+
+def test_initial_core_target_uses_shared_selection_without_inventing_current_holding():
+    s = split_signal()
+    s.update(v14_core_put_current_contract=None, v14_core_put_contract=None,
+             put_current_core_qty=0, put_target_contract=NEW_CORE)
+    rows = contract_rows(s)
+    assert rows['当前 核心'][2] == '无（数量0）'
+    assert rows['下一目标 核心'][2] == NEW_CORE
+
+
+@pytest.mark.parametrize('leg', ['core', 'momentum'])
+@pytest.mark.parametrize('when', ['current', 'target'])
+def test_zero_quantity_never_reuses_a_stale_contract(leg, when):
+    s = split_signal()
+    s[f'put_{when}_{leg}_qty'] = 0
+    label = ('当前' if when == 'current' else '下一目标') + (' 核心' if leg == 'core' else ' 动量')
+    row = contract_rows(s)[label]
+    assert row[2:5] == ['无（数量0）'] * 3
+
+
+def test_missing_independent_current_core_is_na_even_with_a_momentum_contract():
+    s = split_signal()
+    s.pop('v14_core_put_current_contract')
+    assert contract_rows(s)['当前 核心'][2] == 'N/A（result合约缺失）'
