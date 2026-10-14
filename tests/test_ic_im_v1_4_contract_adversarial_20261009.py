@@ -312,3 +312,120 @@ def test_existing_identity_check_control_still_rejects_wrong_rule():
     payload["signals"]["IM"]["v14_rule_revision"] = "wrong-rule"
     with pytest.raises(ValueError):
         digest.validate_success_payload(payload)
+
+
+def close_fallback_payload():
+    value = valid_fix11_payload()
+    value.update(market_date="2026-10-14", completed_day="2026-10-14", verified_day="2026-10-14",
+                 next_trade_day="2026-10-15", signal_timing="retrospective_replay",
+                 generated_at="2026-10-15T01:30:00+08:00")
+    for signal in value["signals"].values():
+        signal.update(market_date="2026-10-14", next_trade_date="2026-10-15",
+            fear_data_status="close_previous_session", fear_greed_index=39.32, fear_data_date="2026-10-13",
+            fear_previous_exchange_date="2026-10-13", fear_latest_available_date="2026-10-13",
+            fear_page_data_date="2026-10-13", fear_source_url="https://baifenwei.com/data/fear-greed/fear-greed-full.csv",
+            fear_csv_sha256="b"*64, fear_close_policy_revision="ic_im_close_fear_previous_session_20261015_v1",
+            fear_fallback_applied=True, fear_fallback_reason="same_day_not_published",
+            fear_retrieved_at="2026-10-15T01:20:00+08:00", fear_page_updated_at="2026-10-14T21:08:00+08:00",
+            fear_fallback_timing="retrospective_replay", signal_generation_timing="retrospective_replay",
+            signal_generated_at="2026-10-15T01:21:00+08:00")
+    return value
+
+
+def test_approved_close_fallback_passes_and_is_labeled_in_mail_subject_and_body():
+    value = close_fallback_payload()
+    digest.validate_success_payload(value)
+    subject, body, _ = digest.build_success(value, "", "")
+    html = digest.build_success_html(value, "")
+    assert "历史模型补录" in subject and "[收盘确认]" not in subject
+    assert "retrospective_replay" in body and "沿用上一交易日" in body
+    assert "数据日 2026-10-13" in body
+    assert "历史模型补录" in html and "不是原信号日已发布" in html
+
+
+@pytest.mark.parametrize("field,changed", [
+    ("fear_data_date", "2026-10-14"), ("fear_data_date", "2026-10-12"),
+    ("fear_previous_exchange_date", "2026-10-12"), ("fear_page_data_date", "2026-10-14"),
+    ("fear_latest_available_date", "2026-10-12"), ("fear_close_policy_revision", "old"),
+    ("fear_fallback_applied", False), ("fear_fallback_reason", "old_cache"),
+    ("fear_fallback_timing", "same_day_post_close"), ("close_confirmed", False),
+    ("signal_generation_timing", "close_confirmed"), ("signal_generated_at", "2026-10-14T20:00:00+08:00"),
+    ("fear_csv_sha256", "bad"), ("fear_source_url", "https://example.invalid/fear.csv"),
+    ("fear_page_updated_at", "2026-10-13T15:00:00+08:00"),
+    ("fear_page_updated_at", "2026-10-15T02:00:00+08:00"),
+    ("fear_retrieved_at", "2026-10-14T14:59:00+08:00"),
+    ("fear_retrieved_at", "2026-10-15T01:20:00"), ("fear_greed_index", float("nan")),
+])
+def test_close_fallback_cannot_bypass_independent_mail_contract(field, changed):
+    value = close_fallback_payload()
+    for signal in value["signals"].values():
+        signal[field] = changed
+    with pytest.raises(ValueError):
+        digest.validate_success_payload(value)
+
+
+def test_close_fallback_replay_cannot_be_hidden_by_outer_payload():
+    value = close_fallback_payload()
+    value.pop("signal_timing")
+    with pytest.raises(ValueError, match="historical model replay"):
+        digest.validate_success_payload(value)
+
+
+def test_close_fallback_evidence_must_agree_between_products():
+    value = close_fallback_payload()
+    value["signals"]["IM"]["fear_close_policy_revision"] = "different"
+    with pytest.raises(ValueError, match="snapshots disagree"):
+        digest.validate_success_payload(value)
+
+
+def test_intraday_fallback_is_accepted_only_in_realtime_channel():
+    value = close_fallback_payload()
+    value.update(publication_mode="realtime", completed_day="2026-10-13", verified_day="2026-10-13",
+                 signal_timing="intraday_hypothetical_if_now_close")
+    for signal in value["signals"].values():
+        signal.update(close_confirmed=False, market_phase="盘中", state_anchor_day="2026-10-13",
+                      fear_data_status="intraday_previous_session",
+                      fear_intraday_policy_revision="ic_im_intraday_fear_previous_session_20261014_v1",
+                      fear_retrieved_at="2026-10-14T14:30:00+08:00",
+                      fear_page_updated_at="2026-10-14T06:17:00+08:00")
+        signal.pop("fear_fallback_timing", None)
+    digest.validate_success_payload(value)
+
+
+def test_provisional_T_point_can_carry_previous_close_but_must_retain_actual_source_day():
+    value = close_fallback_payload()
+    for signal in value["signals"].values():
+        signal.update(fear_fallback_reason="same_day_not_close_confirmed",
+                      fear_latest_available_date="2026-10-14", fear_page_data_date="2026-10-14",
+                      fear_page_updated_at="2026-10-14T14:30:00+08:00")
+    digest.validate_success_payload(value)
+    for signal in value["signals"].values():
+        signal["fear_page_updated_at"] = "2026-10-14T15:01:00+08:00"
+    with pytest.raises(ValueError, match="qualified T close"):
+        digest.validate_success_payload(value)
+
+
+def test_replayed_ordinary_put_plan_shows_actual_creation_instead_of_original_close_preselection():
+    value = close_fallback_payload()["signals"]["IM"]
+    value.update(v14_ordinary_put_plan_status="scheduled_t_plus_1_open",
+                 v14_ordinary_put_pending={"signal_day":"2026-10-14","execution_day":"2026-10-15",
+                     "created_at":"2026-10-15T01:30:00+08:00","creation_timing":"retrospective_replay","legs":{}})
+    text = digest.v14_route_reason(value, "IM")
+    assert "实际创建2026-10-15T01:30:00+08:00" in text
+    assert "2026-10-14收盘预选" not in text
+
+
+@pytest.mark.parametrize("created", [None, "2026-10-14T20:00:00+08:00", "2026-10-15T01:20:30", "2026-10-15T02:00:00+08:00"])
+def test_replayed_ordinary_plan_cannot_erase_or_forge_actual_creation_time(created):
+    value=close_fallback_payload()
+    signal=ordinary_plan(value)
+    signal["v14_ordinary_put_pending"].update(creation_timing="retrospective_replay", research_scope="retrospective_model_plan", created_at=created)
+    with pytest.raises(ValueError):
+        digest.validate_success_payload(value)
+
+
+def test_replayed_ordinary_plan_with_bound_actual_creation_passes():
+    value=close_fallback_payload()
+    signal=ordinary_plan(value)
+    signal["v14_ordinary_put_pending"].update(creation_timing="retrospective_replay", research_scope="retrospective_model_plan", created_at="2026-10-15T01:20:30+08:00")
+    digest.validate_success_payload(value)

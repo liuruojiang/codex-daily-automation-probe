@@ -8,9 +8,11 @@ _OFFICIAL_EXCHANGE_CALENDAR_YEARS.  This is an explicit covered-year snapshot,
 never a NAV-derived or weekday-only calendar.  New years fail closed until
 their official schedule is added and checked against the strategy calendar.
 """
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 import math
+import re
 from typing import Any
+from zoneinfo import ZoneInfo
 
 
 CALENDAR_SOURCE_REVISION = "739071a201506dd869b9a156e490c3bafd95a334"
@@ -47,6 +49,60 @@ def validate_session_dates(days: dict[str, date], publication_mode: str) -> None
         raise ValueError("next_trade_day is not the next actual common exchange session")
     if publication_mode == "realtime" and days["completed_day"] != adjacent_session(days["market_date"], -1):
         raise ValueError("realtime completed day is not the previous actual common exchange session")
+
+
+def validate_fear_fallback(signal: dict[str, Any], day: date, mode: str) -> None:
+    """Independent source/date/time boundary for the explicitly approved carry."""
+    close = mode == "close_confirmed"
+    expected_status = "close_previous_session" if close else "intraday_previous_session"
+    revision_field = "fear_close_policy_revision" if close else "fear_intraday_policy_revision"
+    revision = ("ic_im_close_fear_previous_session_20261015_v1" if close else
+                "ic_im_intraday_fear_previous_session_20261014_v1")
+    if day < date(2026, 10, 14) or not is_session(day):
+        raise ValueError("Fear fallback is outside its approved signal-day/calendar scope")
+    prior = adjacent_session(day, -1)
+    reason = signal.get("fear_fallback_reason")
+    source_day = day if close and reason == "same_day_not_close_confirmed" else prior
+    if (signal.get("fear_data_status") != expected_status or signal.get(revision_field) != revision
+            or signal.get("fear_fallback_applied") is not True
+            or reason not in ({"same_day_not_published", "same_day_not_close_confirmed"} if close else {"same_day_not_published"})
+            or signal.get("close_confirmed") is not close
+            or any(signal.get(field) != prior.isoformat() for field in (
+                "fear_data_date", "fear_previous_exchange_date"))
+            or any(signal.get(field) != source_day.isoformat() for field in ("fear_latest_available_date", "fear_page_data_date"))):
+        raise ValueError("Fear fallback revision/date/mode evidence invalid")
+    value = signal.get("fear_greed_index")
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= 100:
+        raise ValueError("Fear fallback score invalid")
+    if signal.get("fear_source_url") != "https://baifenwei.com/data/fear-greed/fear-greed-full.csv" or re.fullmatch(
+        r"[0-9a-f]{64}", str(signal.get("fear_csv_sha256", ""))
+    ) is None:
+        raise ValueError("Fear fallback source/hash invalid")
+    stamps = {}
+    beijing = ZoneInfo("Asia/Shanghai")
+    for field in ("fear_retrieved_at", "fear_page_updated_at"):
+        stamp = datetime.fromisoformat(str(signal.get(field)))
+        if stamp.tzinfo is None:
+            raise ValueError("Fear fallback time lacks timezone")
+        stamps[field] = stamp.astimezone(beijing)
+    retrieved, updated = stamps["fear_retrieved_at"], stamps["fear_page_updated_at"]
+    if updated > retrieved or updated <= datetime.combine(prior, time(15), tzinfo=beijing):
+        raise ValueError("Fear fallback page lacks prior-session close evidence")
+    if close:
+        if reason == "same_day_not_close_confirmed" and (updated.date() != day or updated > datetime.combine(day, time(15), tzinfo=beijing)):
+            raise ValueError("qualified T close evidence cannot be discarded for carried Fear")
+        if retrieved.date() < day or (retrieved.date() == day and retrieved.time() <= time(15)):
+            raise ValueError("Fear close fallback was not acquired after signal close")
+        timing = "retrospective_replay" if retrieved.date() > day else "same_day_post_close"
+        if signal.get("fear_fallback_timing") != timing:
+            raise ValueError("Fear fallback replay timing invalid")
+        if timing == "retrospective_replay":
+            generated = datetime.fromisoformat(str(signal.get("signal_generated_at")))
+            if (generated.tzinfo is None or generated.astimezone(beijing) < retrieved
+                    or signal.get("signal_generation_timing") != "retrospective_replay"):
+                raise ValueError("Fear fallback replay must retain real signal generation time")
+    elif retrieved.date() != day or retrieved.time() >= time(15):
+        raise ValueError("Fear intraday fallback was not acquired on T before 15:00")
 
 
 def quantity(value: Any, label: str, *, signed: bool = False) -> float:
@@ -156,6 +212,14 @@ def validate_pending_plans(product: str, signal: dict[str, Any]) -> None:
             if trigger > _day(signal.get("market_date"), f"{product} signal day"):
                 raise ValueError(f"{product} {kind} trigger cannot be later than its signal")
     if plan is not None:
+        if (signal.get("signal_generation_timing") == "retrospective_replay"
+                and plan.get("signal_day") == signal.get("market_date")):
+            if plan.get("creation_timing") != "retrospective_replay" or plan.get("research_scope") != "retrospective_model_plan":
+                raise ValueError("replayed ordinary Put plan lacks creation identity")
+            stamps = [datetime.fromisoformat(str(value)) for value in (
+                signal.get("fear_retrieved_at"), plan.get("created_at"), signal.get("signal_generated_at"))]
+            if any(stamp.tzinfo is None for stamp in stamps) or not stamps[0] <= stamps[1] <= stamps[2]:
+                raise ValueError("replayed ordinary Put plan creation is outside actual collection interval")
         if signal.get("option_monthly_reset_due"):
             raise ValueError(f"{product} ordinary Put plan conflicts with monthly maintenance")
         if (route != "future" or signal.get("v14_profit_pending")
