@@ -914,6 +914,8 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
     signals = payload.get("signals")
     if not isinstance(signals, dict) or set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
+    from ic_im_v1_4_delivery_contract import validate_report_clock
+    validate_report_clock(payload, days["market_date"])
     if days["market_date"] >= date(2026, 10, 8):
         if payload.get("grid_policy_revision") != "ic_im_or_fear25_paired_exit50_20261008_v1":
             raise ValueError("fix10 grid policy identity mismatch")
@@ -974,6 +976,8 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
                 if units not in (0.0, 0.5) or source not in {"none", "valuation_only", "fear_only", "both"} or (units == 0.0) != (source == "none"):
                     raise ValueError(f"{product} fix10 grid source/units mismatch")
             fear = signal.get("fear_greed_index")
+            from ic_im_v1_4_delivery_contract import validate_fear_clock
+            validate_fear_clock(signal, days["market_date"], payload["publication_mode"])
             lagged_fear = signal.get("fear_data_status") in {"intraday_previous_session", "close_previous_session"}
             if lagged_fear:
                 from ic_im_v1_4_delivery_contract import validate_fear_fallback

@@ -51,6 +51,67 @@ def validate_session_dates(days: dict[str, date], publication_mode: str) -> None
         raise ValueError("realtime completed day is not the previous actual common exchange session")
 
 
+def _validation_clock() -> datetime:
+    return datetime.now(ZoneInfo("Asia/Shanghai"))
+
+
+def validate_fear_clock(signal: dict[str, Any], day: date, mode: str) -> None:
+    if day < date(2026, 10, 14):
+        return
+    carried = signal.get("fear_data_status") in {"close_previous_session", "intraday_previous_session"}
+    applied = signal.get("fear_fallback_applied")
+    if applied is not None and type(applied) is not bool:
+        raise ValueError("Fear fallback flag must be boolean")
+    if not carried and (applied is True or signal.get("fear_fallback_reason") is not None
+                        or signal.get("fear_fallback_timing") is not None):
+        raise ValueError("nonfallback Fear status has contradictory carry evidence")
+    beijing = ZoneInfo("Asia/Shanghai")
+    fields = ["fear_retrieved_at", "fear_page_updated_at"]
+    if carried or signal.get("fear_fetch_started_at") is not None:
+        fields.append("fear_fetch_started_at")
+    if signal.get("signal_generated_at") is not None:
+        fields.append("signal_generated_at")
+    stamps = {}
+    for field in fields:
+        stamp = datetime.fromisoformat(str(signal.get(field)))
+        if stamp.tzinfo is None:
+            raise ValueError("Fear collection/generation clock lacks timezone")
+        stamps[field] = stamp.astimezone(beijing)
+    retrieved = stamps["fear_retrieved_at"]
+    if stamps["fear_page_updated_at"] > retrieved:
+        raise ValueError("Fear page update is later than completed retrieval")
+    checked = _validation_clock()
+    if checked.tzinfo is None or retrieved > checked.astimezone(beijing):
+        raise ValueError("Fear retrieval is later than independent validation clock")
+    if "fear_fetch_started_at" in stamps and stamps["fear_fetch_started_at"] > retrieved:
+        raise ValueError("Fear collection starts after completed retrieval")
+    if mode == "realtime" and (retrieved.date() != day or retrieved.time() >= time(15)):
+        raise ValueError("Fear realtime retrieval must complete on T before 15:00")
+    generated = stamps.get("signal_generated_at")
+    if generated is not None and not retrieved <= generated <= checked.astimezone(beijing):
+        raise ValueError("Fear generation is outside collection/independent validation interval")
+    if (retrieved.date() > day or (generated is not None and generated.date() > day)) and (generated is None
+            or signal.get("signal_generation_timing") != "retrospective_replay"):
+        raise ValueError("cross-day Fear signal must retain real generation and retrospective identity")
+
+
+def validate_report_clock(payload: dict[str, Any], day: date) -> None:
+    if day < date(2026, 10, 14):
+        return
+    values = [s.get("signal_generated_at") for s in payload["signals"].values()
+              if s.get("signal_generated_at") is not None]
+    if not values and payload.get("report_generated_at") is None:
+        return  # Read-only sparse archives predate the real completion field.
+    completed = datetime.fromisoformat(str(payload.get("report_generated_at")))
+    checked = _validation_clock()
+    if completed.tzinfo is None or not completed <= checked:
+        raise ValueError("report completion is later than independent validation clock or lacks timezone")
+    for value in values:
+        generated = datetime.fromisoformat(str(value))
+        if generated.tzinfo is None or generated > completed:
+            raise ValueError("signal generation is later than actual report completion")
+
+
 def validate_fear_fallback(signal: dict[str, Any], day: date, mode: str) -> None:
     """Independent source/date/time boundary for the explicitly approved carry."""
     close = mode == "close_confirmed"
@@ -60,6 +121,7 @@ def validate_fear_fallback(signal: dict[str, Any], day: date, mode: str) -> None
                 "ic_im_intraday_fear_previous_session_20261014_v1")
     if day < date(2026, 10, 14) or not is_session(day):
         raise ValueError("Fear fallback is outside its approved signal-day/calendar scope")
+    validate_fear_clock(signal, day, mode)
     prior = adjacent_session(day, -1)
     reason = signal.get("fear_fallback_reason")
     source_day = day if close and reason == "same_day_not_close_confirmed" else prior
@@ -212,13 +274,23 @@ def validate_pending_plans(product: str, signal: dict[str, Any]) -> None:
             if trigger > _day(signal.get("market_date"), f"{product} signal day"):
                 raise ValueError(f"{product} {kind} trigger cannot be later than its signal")
     if plan is not None:
-        if (signal.get("signal_generation_timing") == "retrospective_replay"
+        day = date.fromisoformat(signal["market_date"])
+        replay = (signal.get("signal_generation_timing") == "retrospective_replay"
+                  or signal.get("fear_data_status") == "retrospective_replay"
+                  or signal.get("fear_fallback_timing") == "retrospective_replay"
+                  or any(datetime.fromisoformat(str(signal[field])).astimezone(ZoneInfo("Asia/Shanghai")).date() > day
+                         for field in ("fear_retrieved_at", "signal_generated_at")
+                         if signal.get(field) is not None))
+        if (day >= date(2026, 10, 14) and replay
                 and plan.get("signal_day") == signal.get("market_date")):
+            if signal.get("signal_generation_timing") != "retrospective_replay":
+                raise ValueError("replayed ordinary Put plan cannot erase real replay identity")
             if plan.get("creation_timing") != "retrospective_replay" or plan.get("research_scope") != "retrospective_model_plan":
                 raise ValueError("replayed ordinary Put plan lacks creation identity")
             stamps = [datetime.fromisoformat(str(value)) for value in (
                 signal.get("fear_retrieved_at"), plan.get("created_at"), signal.get("signal_generated_at"))]
-            if any(stamp.tzinfo is None for stamp in stamps) or not stamps[0] <= stamps[1] <= stamps[2]:
+            if (any(stamp.tzinfo is None for stamp in stamps)
+                    or not stamps[0] <= stamps[1] <= stamps[2] <= _validation_clock()):
                 raise ValueError("replayed ordinary Put plan creation is outside actual collection interval")
         if signal.get("option_monthly_reset_due"):
             raise ValueError(f"{product} ordinary Put plan conflicts with monthly maintenance")

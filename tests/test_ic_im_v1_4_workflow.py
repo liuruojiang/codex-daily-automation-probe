@@ -3,6 +3,8 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 import sys
+import ast
+import pytest
 import yaml
 
 
@@ -67,7 +69,7 @@ class ICIMV14WorkflowTests(unittest.TestCase):
         self.assertIn("--source legacy-state", text)
         self.assertIn("--target state", text)
         self.assertIn("run_ic_im_v1_4_github_digest.py", text)
-        self.assertIn("ref: ae62d9fede4e79cc7159a37b463615272ce490b1", text)
+        self.assertIn("ref: 435bbfdcf1f412f2542b3d5dbfeb90404b0e7261", text)
         self.assertIn("delivery_contract.CALENDAR_YEARS == strategy._OFFICIAL_EXCHANGE_CALENDAR_YEARS", text)
         self.assertIn("delivery_contract.EXCHANGE_CLOSURES == strategy._EXCHANGE_CLOSURES", text)
         self.assertIn("--network-budget-per-product 180", text)
@@ -111,6 +113,147 @@ class ICIMV14WorkflowTests(unittest.TestCase):
         self.assertIn("steps.send_gmail.outcome == 'success'", text)
         self.assertIn("steps.build_digest.outcome == 'success'", text)
         self.assertIn("name: ic-im-v1-4-r1-post-close-digest", text)
+
+
+class _WorkflowContext:
+    """Missing GitHub context properties evaluate to an empty string."""
+    def __init__(self, values=None):
+        self.values = values or {}
+
+    def __getattr__(self, name):
+        value = self.values.get(name, {})
+        return _WorkflowContext(value) if isinstance(value, dict) else value
+
+    def __bool__(self):
+        return bool(self.values)
+
+    def __eq__(self, other):
+        return (self.values or "") == other
+
+
+def _workflow_step_enabled(name, context, *, healthy=True):
+    """Execute real YAML conditions, including GitHub's implicit success()."""
+    steps = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))["jobs"]["send"]["steps"]
+    expression = next(step for step in steps if step.get("name") == name).get("if", "true")
+    expression = expression.replace("&&", " and ").replace("||", " or ")
+    tree = ast.parse(expression, mode="eval")
+    permitted = (ast.Expression, ast.BoolOp, ast.And, ast.Or, ast.Compare, ast.Eq,
+                 ast.NotEq, ast.Name, ast.Attribute, ast.Call, ast.Load, ast.Constant)
+    assert all(isinstance(node, permitted) for node in ast.walk(tree))
+    explicit_status = any(isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                          and node.func.id in {"always", "success", "failure", "cancelled"}
+                          for node in ast.walk(tree))
+    namespace = {"true": True, "false": False, "always": lambda: True,
+                 "success": lambda: healthy, "failure": lambda: not healthy}
+    namespace.update({key: _WorkflowContext(value) for key, value in context.items()})
+    allowed = eval(compile(tree, "<actual ICIM workflow condition>", "eval"),
+                   {"__builtins__": {}}, namespace)
+    return bool(allowed) and (healthy or explicit_status)
+
+
+def _healthy_delivery_context(*, ledger_only):
+    outputs = classify_attempt("workflow_dispatch", str(ledger_only).lower(),
+                               "close_confirmed", "false", "false")
+    return {
+        "github": {"event_name": "workflow_dispatch"},
+        "inputs": {"external_schedule": False},
+        "steps": {
+            "attempt": {"outcome": "success", "outputs": outputs},
+            "delivery_gate": {"outcome": "success", "outputs": {"should_send": "true"}},
+            "calendar": {"outcome": "success", "outputs": {"trade_day": "true"}},
+            "run_signal": {"outcome": "success", "outputs": {"exit_code": "0"}},
+            "build_digest": {"outcome": "success"},
+            "prepare_marker": {"outcome": "success"},
+            "result_day_gate": {"outcome": "success", "outputs": {"should_send_result_day": "true"}},
+            "verify_recovery": {"outcome": "success" if ledger_only else "skipped"},
+            "send_intent": {"outcome": "success"},
+            "send_gmail": {"outcome": "success"},
+        },
+    }
+
+
+_SEND_BOUNDARIES = ("Persist normal-send intent before SMTP", "Send Gmail", "Mark digest delivered")
+
+
+@pytest.mark.parametrize("ledger_only", [False, True])
+def test_actual_yaml_healthy_normal_and_ledger_only_are_distinct(ledger_only):
+    context = _healthy_delivery_context(ledger_only=ledger_only)
+    assert _workflow_step_enabled("Upload successful ledger", context)
+    for name in _SEND_BOUNDARIES:
+        assert _workflow_step_enabled(name, context) is (not ledger_only)
+
+
+@pytest.mark.parametrize("ledger_only", [False, True])
+@pytest.mark.parametrize("missing", ["ledger_only", "smtp_enabled", "final_attempt", "all"])
+def test_actual_yaml_missing_classifier_outputs_fail_closed(ledger_only, missing):
+    context = _healthy_delivery_context(ledger_only=ledger_only)
+    if missing == "all":
+        context["steps"]["attempt"]["outputs"] = {}
+    else:
+        del context["steps"]["attempt"]["outputs"][missing]
+    context["steps"]["verify_recovery"]["outcome"] = "skipped"
+    assert not _workflow_step_enabled("Upload successful ledger", context)
+    for name in _SEND_BOUNDARIES:
+        assert not _workflow_step_enabled(name, context)
+
+
+@pytest.mark.parametrize("ledger,smtp", [
+    ("true", "true"), ("false", "false"), ("TRUE", "false"), ("false", "yes"),
+    (True, "false"), ("false", True), (None, "true"), ("true", None),
+])
+def test_actual_yaml_contradictory_or_untyped_classifier_outputs_cannot_promote_or_send(ledger, smtp):
+    context = _healthy_delivery_context(ledger_only=True)
+    context["steps"]["attempt"]["outputs"].update(ledger_only=ledger, smtp_enabled=smtp)
+    assert not _workflow_step_enabled("Upload successful ledger", context)
+    for name in _SEND_BOUNDARIES:
+        assert not _workflow_step_enabled(name, context)
+
+
+@pytest.mark.parametrize("ledger_only", [False, True])
+@pytest.mark.parametrize("outcome", ["failure", "cancelled", "skipped"])
+def test_actual_yaml_classifier_not_success_cannot_promote_or_send(ledger_only, outcome):
+    context = _healthy_delivery_context(ledger_only=ledger_only)
+    context["steps"]["attempt"]["outcome"] = outcome
+    # Also evaluate with a healthy job to challenge the explicit step guard.
+    for healthy in (True, False):
+        assert not _workflow_step_enabled("Upload successful ledger", context, healthy=healthy)
+        for name in _SEND_BOUNDARIES:
+            assert not _workflow_step_enabled(name, context, healthy=healthy)
+
+
+@pytest.mark.parametrize("ledger_only", [False, True])
+@pytest.mark.parametrize("phase", ["run_signal", "build_digest", "prepare_marker", "result_day_gate"])
+def test_actual_yaml_failed_production_boundary_cannot_promote_or_emit_intent(ledger_only, phase):
+    context = _healthy_delivery_context(ledger_only=ledger_only)
+    context["steps"][phase]["outcome"] = "failure"
+    if phase == "run_signal":
+        context["steps"][phase]["outputs"]["exit_code"] = "1"
+    # Causal later steps cannot succeed after a failure before intent.
+    context["steps"]["send_intent"]["outcome"] = "skipped"
+    context["steps"]["send_gmail"]["outcome"] = "skipped"
+    assert not _workflow_step_enabled("Upload successful ledger", context, healthy=False)
+    assert not _workflow_step_enabled("Persist normal-send intent before SMTP", context, healthy=False)
+    assert not _workflow_step_enabled("Mark digest delivered", context, healthy=False)
+    if ledger_only or phase != "run_signal":
+        assert not _workflow_step_enabled("Send Gmail", context, healthy=False)
+
+
+@pytest.mark.parametrize("outcome", ["failure", "cancelled", "skipped"])
+def test_actual_yaml_ledger_only_requires_successful_recovery_verification(outcome):
+    context = _healthy_delivery_context(ledger_only=True)
+    context["steps"]["verify_recovery"]["outcome"] = outcome
+    assert not _workflow_step_enabled("Upload successful ledger", context)
+    for name in _SEND_BOUNDARIES:
+        assert not _workflow_step_enabled(name, context)
+
+
+def test_actual_yaml_missing_final_attempt_disables_failed_run_diagnostic_mail():
+    context = _healthy_delivery_context(ledger_only=False)
+    context["steps"]["run_signal"]["outputs"]["exit_code"] = "1"
+    context["steps"]["send_intent"]["outcome"] = "skipped"
+    del context["steps"]["attempt"]["outputs"]["final_attempt"]
+    assert not _workflow_step_enabled("Send Gmail", context)
+    assert not _workflow_step_enabled("Upload successful ledger", context)
 
 
 if __name__ == "__main__":

@@ -108,7 +108,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: ae62d9fede4e79cc7159a37b463615272ce490b1
+          ref: 435bbfdcf1f412f2542b3d5dbfeb90404b0e7261
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -324,7 +324,7 @@ jobs:
 
       - name: Persist normal-send intent before SMTP
         id: send_intent
-        if: steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success' && steps.result_day_gate.outputs.should_send_result_day == 'true'
+        if: steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success' && steps.result_day_gate.outputs.should_send_result_day == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.prepare_marker.outputs.marker_name }}-send-intent
@@ -334,7 +334,7 @@ jobs:
 
       - name: Send Gmail
         id: send_gmail
-        if: always() && steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && steps.build_digest.outcome == 'success' && ((steps.run_signal.outputs.exit_code == '0' && steps.send_intent.outcome == 'success') || (steps.run_signal.outputs.exit_code != '0' && steps.attempt.outputs.final_attempt == 'true'))
+        if: always() && steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && steps.build_digest.outcome == 'success' && ((steps.run_signal.outputs.exit_code == '0' && steps.send_intent.outcome == 'success') || (steps.run_signal.outputs.exit_code != '0' && steps.attempt.outputs.final_attempt == 'true'))
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -376,7 +376,7 @@ jobs:
           PY
 
       - name: Upload successful ledger
-        if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && (steps.attempt.outputs.ledger_only != 'true' || steps.verify_recovery.outcome == 'success')
+        if: steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success' && steps.result_day_gate.outcome == 'success' && ((steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true') || (steps.attempt.outputs.ledger_only == 'true' && steps.attempt.outputs.smtp_enabled == 'false' && steps.verify_recovery.outcome == 'success'))
         uses: actions/upload-artifact@v7
         with:
           name: ic-im-v1-4-r1-ledger
@@ -388,7 +388,7 @@ jobs:
           retention-days: 90
 
       - name: Mark digest delivered
-        if: steps.attempt.outputs.smtp_enabled == 'true' && steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.send_gmail.outcome == 'success'
+        if: steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true' && steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.send_gmail.outcome == 'success'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.prepare_marker.outputs.marker_name }}
