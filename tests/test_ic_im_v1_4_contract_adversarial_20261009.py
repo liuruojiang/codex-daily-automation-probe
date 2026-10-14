@@ -4,6 +4,7 @@ The fixture is explicitly synthetic and copies the observed 2026-09-30
 producer schema.  It is not a market observation or a trading target.
 """
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 import sys
 
@@ -12,6 +13,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import build_ic_im_v1_4_digest as digest
 import check_ic_im_v1_4_delivery as gate
+import ic_im_v1_4_delivery_contract as delivery_contract
 
 
 def valid_payload():
@@ -318,7 +320,7 @@ def close_fallback_payload():
     value = valid_fix11_payload()
     value.update(market_date="2026-10-14", completed_day="2026-10-14", verified_day="2026-10-14",
                  next_trade_day="2026-10-15", signal_timing="retrospective_replay",
-                 generated_at="2026-10-15T01:30:00+08:00")
+                 generated_at="2026-10-15T01:10:00+08:00", report_generated_at="2026-10-15T01:30:00+08:00")
     for signal in value["signals"].values():
         signal.update(market_date="2026-10-14", next_trade_date="2026-10-15",
             fear_data_status="close_previous_session", fear_greed_index=39.32, fear_data_date="2026-10-13",
@@ -326,6 +328,7 @@ def close_fallback_payload():
             fear_page_data_date="2026-10-13", fear_source_url="https://baifenwei.com/data/fear-greed/fear-greed-full.csv",
             fear_csv_sha256="b"*64, fear_close_policy_revision="ic_im_close_fear_previous_session_20261015_v1",
             fear_fallback_applied=True, fear_fallback_reason="same_day_not_published",
+            fear_fetch_started_at="2026-10-15T01:19:00+08:00",
             fear_retrieved_at="2026-10-15T01:20:00+08:00", fear_page_updated_at="2026-10-14T21:08:00+08:00",
             fear_fallback_timing="retrospective_replay", signal_generation_timing="retrospective_replay",
             signal_generated_at="2026-10-15T01:21:00+08:00")
@@ -387,6 +390,9 @@ def test_intraday_fallback_is_accepted_only_in_realtime_channel():
                       fear_data_status="intraday_previous_session",
                       fear_intraday_policy_revision="ic_im_intraday_fear_previous_session_20261014_v1",
                       fear_retrieved_at="2026-10-14T14:30:00+08:00",
+                      fear_fetch_started_at="2026-10-14T14:29:00+08:00",
+                      signal_generated_at="2026-10-14T14:31:00+08:00",
+                      signal_generation_timing="intraday_hypothetical_if_now_close",
                       fear_page_updated_at="2026-10-14T06:17:00+08:00")
         signal.pop("fear_fallback_timing", None)
     digest.validate_success_payload(value)
@@ -429,3 +435,157 @@ def test_replayed_ordinary_plan_with_bound_actual_creation_passes():
     signal=ordinary_plan(value)
     signal["v14_ordinary_put_pending"].update(creation_timing="retrospective_replay", research_scope="retrospective_model_plan", created_at="2026-10-15T01:20:30+08:00")
     digest.validate_success_payload(value)
+
+
+@pytest.fixture
+def trusted_synthetic_validation_clock(monkeypatch):
+    """Explicit synthetic clock; fixture timestamps are never current observations."""
+    clock = datetime.fromisoformat("2026-10-15T02:00:00+08:00")
+    monkeypatch.setattr(delivery_contract, "_validation_clock", lambda: clock)
+    return clock
+
+
+def test_close_fallback_is_accepted_under_independent_synthetic_clock(trusted_synthetic_validation_clock):
+    value = close_fallback_payload()
+    digest.validate_success_payload(value)
+    assert datetime.fromisoformat(value["report_generated_at"]) < trusted_synthetic_validation_clock
+
+
+@pytest.mark.parametrize("fault", [
+    "future_retrieved", "future_generated", "generation_before_retrieval", "missing_started",
+    "started_after_retrieved", "naive_started", "future_started",
+])
+def test_independent_fear_clock_rejects_future_inverted_or_missing_evidence(trusted_synthetic_validation_clock, fault):
+    value = close_fallback_payload()
+    signal = value["signals"]["IC"]
+    if fault == "future_retrieved":
+        signal.update(fear_fetch_started_at="2026-10-15T02:01:00+08:00",
+                      fear_retrieved_at="2026-10-15T02:02:00+08:00",
+                      signal_generated_at="2026-10-15T02:03:00+08:00")
+    elif fault == "future_generated":
+        signal["signal_generated_at"] = "2026-10-15T02:01:00+08:00"
+    elif fault == "generation_before_retrieval":
+        signal["signal_generated_at"] = "2026-10-15T01:19:59+08:00"
+    elif fault == "missing_started":
+        signal.pop("fear_fetch_started_at")
+    elif fault == "started_after_retrieved":
+        signal["fear_fetch_started_at"] = "2026-10-15T01:20:01+08:00"
+    elif fault == "naive_started":
+        signal["fear_fetch_started_at"] = "2026-10-15T01:19:00"
+    elif fault == "future_started":
+        signal["fear_fetch_started_at"] = "2026-10-16T01:19:00+08:00"
+    with pytest.raises(ValueError):
+        delivery_contract.validate_fear_clock(signal, datetime.fromisoformat("2026-10-14").date(), "close_confirmed")
+
+
+def test_complete_consumer_rejects_self_consistent_future_collection_and_report(trusted_synthetic_validation_clock):
+    value = close_fallback_payload()
+    value["report_generated_at"] = "2026-10-16T01:30:00+08:00"
+    for signal in value["signals"].values():
+        signal.update(fear_fetch_started_at="2026-10-16T01:19:00+08:00",
+                      fear_retrieved_at="2026-10-16T01:20:00+08:00",
+                      signal_generated_at="2026-10-16T01:21:00+08:00")
+    with pytest.raises(ValueError, match="independent validation clock"):
+        digest.validate_success_payload(value)
+
+
+@pytest.mark.parametrize("fault", ["missing", "naive", "future", "before_both_legs", "before_im_leg_only"])
+def test_report_completion_cannot_precede_any_leg_or_exceed_independent_clock(trusted_synthetic_validation_clock, fault):
+    value = close_fallback_payload()
+    if fault == "missing":
+        value.pop("report_generated_at")
+    elif fault == "naive":
+        value["report_generated_at"] = "2026-10-15T01:30:00"
+    elif fault == "future":
+        value["report_generated_at"] = "2026-10-15T02:00:01+08:00"
+    elif fault == "before_both_legs":
+        value["report_generated_at"] = "2026-10-15T01:20:30+08:00"
+    else:
+        value["signals"]["IM"]["signal_generated_at"] = "2026-10-15T01:22:00+08:00"
+        value["report_generated_at"] = "2026-10-15T01:21:30+08:00"
+    with pytest.raises(ValueError):
+        digest.validate_success_payload(value)
+
+
+@pytest.mark.parametrize("field,changed", [
+    ("fear_fallback_applied", True), ("fear_fallback_applied", "false"),
+    ("fear_fallback_reason", "same_day_not_published"),
+    ("fear_fallback_timing", "retrospective_replay"),
+])
+def test_nonfallback_status_cannot_carry_contradictory_metadata(trusted_synthetic_validation_clock, field, changed):
+    value = close_fallback_payload()
+    for signal in value["signals"].values():
+        signal.update(fear_data_status="retrospective_replay", fear_data_date="2026-10-14",
+                      fear_latest_available_date="2026-10-14", fear_page_data_date="2026-10-14",
+                      fear_fallback_applied=False, fear_fallback_reason=None, fear_fallback_timing=None)
+    digest.validate_success_payload(value)
+    for signal in value["signals"].values():
+        signal[field] = changed
+    with pytest.raises(ValueError, match="contradictory|boolean"):
+        digest.validate_success_payload(value)
+
+
+@pytest.mark.parametrize("page_update", [
+    "2026-10-16T02:00:00+08:00",  # Future relative to the independent clock.
+    "2026-10-15T01:21:00+08:00",  # Before validation, but after completed retrieval.
+    "2026-10-15T01:00:00",        # Missing timezone cannot prove snapshot ordering.
+])
+def test_nonfallback_page_timestamp_must_be_bound_to_its_acquisition(trusted_synthetic_validation_clock, page_update):
+    value = close_fallback_payload()
+    for signal in value["signals"].values():
+        signal.update(fear_data_status="retrospective_replay", fear_data_date="2026-10-14",
+                      fear_latest_available_date="2026-10-14", fear_page_data_date="2026-10-14",
+                      fear_fallback_applied=False, fear_fallback_reason=None, fear_fallback_timing=None)
+    digest.validate_success_payload(value)
+    for signal in value["signals"].values():
+        signal["fear_page_updated_at"] = page_update
+    with pytest.raises(ValueError):
+        digest.validate_success_payload(value)
+
+
+@pytest.mark.parametrize("erased", ["outer", "leg", "both"])
+def test_real_collection_dates_prevent_erasing_replay_labels(trusted_synthetic_validation_clock, erased):
+    value = close_fallback_payload()
+    if erased in {"outer", "both"}:
+        value.pop("signal_timing")
+    if erased in {"leg", "both"}:
+        for signal in value["signals"].values():
+            signal.pop("signal_generation_timing")
+    with pytest.raises(ValueError):
+        digest.validate_success_payload(value)
+
+
+def test_pending_plan_replay_is_derived_from_actual_dates_after_all_labels_are_erased(trusted_synthetic_validation_clock):
+    value = close_fallback_payload()
+    signal = ordinary_plan(value)
+    signal["v14_ordinary_put_pending"].update(creation_timing="retrospective_replay",
+        research_scope="retrospective_model_plan", created_at="2026-10-15T01:20:30+08:00")
+    signal.pop("signal_generation_timing")
+    signal.pop("fear_fallback_timing")
+    signal["fear_data_status"] = "same_day_post_close"
+    with pytest.raises(ValueError, match="erase real replay identity"):
+        delivery_contract.validate_pending_plans("IM", signal)
+
+
+@pytest.mark.parametrize("generated", ["2026-10-15T07:00:00+08:00", "2026-10-14T23:00:00Z"])
+def test_next_bj_day_generation_cannot_hide_replay_with_utc_spelling(monkeypatch, generated):
+    """Same synthetic instant, with T acquisition and T+1 Beijing generation."""
+    checked = datetime.fromisoformat("2026-10-15T08:00:00+08:00")
+    monkeypatch.setattr(delivery_contract, "_validation_clock", lambda: checked)
+    assert datetime.fromisoformat(generated) == datetime.fromisoformat("2026-10-15T07:00:00+08:00")
+    value = close_fallback_payload()
+    value.pop("signal_timing")
+    value["report_generated_at"] = "2026-10-15T07:01:00+08:00"
+    for signal in value["signals"].values():
+        signal.update(fear_fetch_started_at="2026-10-14T19:59:00+08:00",
+                      fear_retrieved_at="2026-10-14T20:00:00+08:00",
+                      fear_page_updated_at="2026-10-14T19:00:00+08:00",
+                      fear_fallback_timing="same_day_post_close", signal_generated_at=generated)
+        signal.pop("signal_generation_timing")
+    im = ordinary_plan(value)
+    for field in ("creation_timing", "research_scope", "created_at"):
+        im["v14_ordinary_put_pending"].pop(field, None)
+    with pytest.raises(ValueError, match="replay|retrospective"):
+        delivery_contract.validate_pending_plans("IM", im)
+    with pytest.raises(ValueError, match="replay|retrospective"):
+        digest.validate_success_payload(value)
