@@ -636,8 +636,12 @@ def v14_route_reason(signal: dict[str, Any], product: str = "") -> str:
             f"{leg.get('old_qty')}→{leg.get('new_qty')}"
             for name, leg in (plan.get("legs") or {}).items() if leg.get("changed")
         )
-        text += (f"普通核心/动量买Put：{plan.get('signal_day')}收盘预选，"
-                 f"{plan.get('execution_day')}开盘待核验；{changes}；尚非成交。")
+        text += (
+            f"普通核心/动量买Put：按{plan.get('signal_day')}收盘口径补录模型计划；"
+            f"实际创建{plan.get('created_at')}；下一模型执行日{plan.get('execution_day')}；{changes}；尚非成交。"
+            if plan.get("creation_timing") == "retrospective_replay" else
+            f"普通核心/动量买Put：{plan.get('signal_day')}收盘预选，"
+            f"{plan.get('execution_day')}开盘待核验；{changes}；尚非成交。")
     if isinstance(signal.get("v14_expiry_conditional_signal"), dict):
         text += (
             "到期条件信号：模型结算依据尚待核验；价外失效则结束卖Put周期并返回普通期货路线；"
@@ -737,7 +741,11 @@ def fear_observation_text(payload: dict[str, Any]) -> str:
         status = payload.get("fear_data_status", "unavailable")
         data_day = payload.get("fear_data_date") or "未发布"
     value = "未核验" if score is None else decimal(score)
-    return f"当日恐慌指数（{day}）：{value}；数据日 {data_day}；状态 {status}。"
+    basis = "；沿用上一交易日（当日未发布）" if status in {
+        "intraday_previous_session", "close_previous_session"
+    } else ""
+    title = f"信号日{day}的恐慌输入" if basis else f"当日恐慌指数（{day}）"
+    return f"{title}：{value}；数据日 {data_day}；状态 {status}{basis}。"
 
 
 def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
@@ -803,6 +811,10 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
         if realtime
         else "这是研究审计信号，不是账户持仓，也不会自动下单；实际成交、行权、结算和交割由用户自行处理。"
     )
+    if payload.get("signal_timing") == "retrospective_replay":
+        mode_text, headline = "历史模型补录", "参考差异" if actionable else "模型持仓维持"
+        warning = (f"实际报告完成 {payload.get('report_generated_at', payload.get('generated_at', 'N/A'))}；retrospective_replay。"
+                   "这是历史模型补录，不是原信号日已发布的前瞻调整目标或账户成交。")
     accent = "#f79009" if actionable else "#12b76a"
     banner_bg = "#fff7ed" if actionable else "#ecfdf3"
     link = (
@@ -905,7 +917,9 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
     if days["market_date"] >= date(2026, 10, 8):
         if payload.get("grid_policy_revision") != "ic_im_or_fear25_paired_exit50_20261008_v1":
             raise ValueError("fix10 grid policy identity mismatch")
-        shared = ("fear_greed_index", "fear_data_date", "fear_data_status", "fear_csv_sha256")
+        shared = ("fear_greed_index", "fear_data_date", "fear_data_status", "fear_csv_sha256",
+                  "fear_intraday_policy_revision", "fear_close_policy_revision", "fear_fallback_applied",
+                  "fear_previous_exchange_date", "fear_fallback_reason", "fear_fallback_timing")
         if any(signals["IC"].get(field) != signals["IM"].get(field) for field in shared):
             raise ValueError("IC/IM Fear source snapshots disagree")
     for product, signal in signals.items():
@@ -960,18 +974,24 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
                 if units not in (0.0, 0.5) or source not in {"none", "valuation_only", "fear_only", "both"} or (units == 0.0) != (source == "none"):
                     raise ValueError(f"{product} fix10 grid source/units mismatch")
             fear = signal.get("fear_greed_index")
+            lagged_fear = signal.get("fear_data_status") in {"intraday_previous_session", "close_previous_session"}
+            if lagged_fear:
+                from ic_im_v1_4_delivery_contract import validate_fear_fallback
+                validate_fear_fallback(signal, days["market_date"], payload["publication_mode"])
             if fear is not None and (isinstance(fear, bool) or not isinstance(fear, (int, float)) or
                                      not math.isfinite(fear) or not 0 <= fear <= 100 or
-                                     signal.get("fear_data_date") != days["market_date"].isoformat()):
+                                     (not lagged_fear and signal.get("fear_data_date") != days["market_date"].isoformat())):
                 raise ValueError(f"{product} fix10 Fear score/date invalid")
             if payload["publication_mode"] == "close_confirmed" and signal.get("fear_data_status") not in {
-                "same_day_post_close", "retrospective_replay", "missing_published_history"
+                "same_day_post_close", "retrospective_replay", "missing_published_history", "close_previous_session"
             }:
                 raise ValueError(f"{product} fix10 Fear score not close-confirmed")
             if payload["publication_mode"] == "realtime" and signal.get("fear_data_status") not in {
-                "intraday_provisional", "intraday_unpublished"
+                "intraday_provisional", "intraday_unpublished", "intraday_previous_session"
             }:
                 raise ValueError(f"{product} fix10 Fear status is not a valid realtime observation")
+            if signal.get("fear_fallback_timing") == "retrospective_replay" and payload.get("signal_timing") != "retrospective_replay":
+                raise ValueError("digest must label retrospective Fear fallback as historical model replay")
         if days["market_date"] >= date(2026, 9, 26):
             from ic_im_v1_4_delivery_contract import validate_pending_plans, validate_quantities
             validate_quantities(product, signal)
@@ -1006,6 +1026,9 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         else ("需调整" if actionable else "无需调整")
     )
     mode_tag = "盘中实时" if realtime else "收盘确认"
+    replay = payload.get("signal_timing") == "retrospective_replay"
+    if replay:
+        mode_tag, tag = "历史模型补录", "参考差异" if actionable else "模型持仓维持"
     prefix = f"[{subject_prefix.strip().strip('[]')}]" if subject_prefix.strip() else ""
     day = str(
         payload.get("market_date" if realtime else "completed_day", "未知日期")
@@ -1014,7 +1037,11 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
     lines = [
         "## 今日结论",
         "",
+        f"报告完成：{payload.get('report_generated_at', payload.get('generated_at', 'N/A'))}",
+        "",
         (
+            "**历史模型补录 retrospective_replay；以下差异仅供参考，不是原信号日已发布的前瞻调整目标。**"
+            if replay else
             "**盘中预估存在下一交易日调整，请等待收盘确认。**"
             if actionable and realtime
             else "**盘中暂未出现下一交易日调整，收盘前仍可能变化。**"
