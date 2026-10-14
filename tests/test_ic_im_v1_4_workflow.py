@@ -2,13 +2,43 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
+import sys
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "ic-im-v1-4-daily-digest.yml"
+sys.path.insert(0, str(ROOT / "scripts"))
+from resolve_ic_im_v1_4_attempt import classify_attempt
 
 
 class ICIMV14WorkflowTests(unittest.TestCase):
+    def test_manual_ledger_recovery_cannot_enable_smtp(self) -> None:
+        recovery = classify_attempt("workflow_dispatch", "true", "close_confirmed", "false", "false")
+        self.assertEqual(recovery["smtp_enabled"], "false")
+        steps = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))["jobs"]["send"]["steps"]
+        for name in ("Persist normal-send intent before SMTP", "Send Gmail", "Mark digest delivered"):
+            with self.subTest(step=name):
+                condition = next(s["if"] for s in steps if s.get("name") == name)
+                self.assertIn("steps.attempt.outputs.smtp_enabled == 'true'", condition)
+        promotion = next(s["if"] for s in steps if s.get("name") == "Upload successful ledger")
+        self.assertIn("steps.verify_recovery.outcome == 'success'", promotion)
+
+    def test_ledger_recovery_rejects_scheduled_realtime_and_correction_modes(self) -> None:
+        for args in [("schedule", "true", "close_confirmed", "false", "false"),
+                     ("workflow_dispatch", "true", "realtime", "false", "false"),
+                     ("workflow_dispatch", "true", "close_confirmed", "true", "false"),
+                     ("workflow_dispatch", "true", "close_confirmed", "false", "true"),
+                     ("workflow_dispatch", "yes", "close_confirmed", "false", "false")]:
+            with self.subTest(args=args), self.assertRaises(ValueError):
+                classify_attempt(*args)
+
+    def test_ordinary_schedule_and_manual_delivery_keep_smtp_enabled(self) -> None:
+        for event in ("schedule", "workflow_dispatch"):
+            result = classify_attempt(event, "false", "close_confirmed", "false", "false")
+            self.assertEqual(result["smtp_enabled"], "true")
+            self.assertEqual(result["ledger_only"], "false")
+
     def test_workflow_uses_r1_migration_persistence_and_gmail_gate(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("name: IC IM v1.4-r1 Post-Close Digest", text)

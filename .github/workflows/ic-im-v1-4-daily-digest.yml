@@ -7,6 +7,11 @@ on:
     - cron: "0 12 * * *"
   workflow_dispatch:
     inputs:
+      ledger_only:
+        description: "Repair and persist the verified close ledger without SMTP, send intent or delivered marker"
+        required: false
+        type: boolean
+        default: false
       correction:
         description: "Bypass today's delivery marker and label the email as corrected"
         required: false
@@ -62,8 +67,12 @@ jobs:
       - name: Classify attempt
         id: attempt
         shell: bash
-        run: |
-          echo "final_attempt=true" >> "${GITHUB_OUTPUT}"
+        env:
+          LEDGER_ONLY: ${{ inputs.ledger_only && 'true' || 'false' }}
+          REQUESTED_MODE: ${{ inputs.publication_mode || 'close_confirmed' }}
+          CORRECTION: ${{ inputs.correction && 'true' || 'false' }}
+          EXTERNAL_SCHEDULE: ${{ inputs.external_schedule && 'true' || 'false' }}
+        run: python automation/scripts/resolve_ic_im_v1_4_attempt.py
 
       - name: Resolve publication mode
         id: publication_mode
@@ -243,6 +252,11 @@ jobs:
           migration = json.loads(Path("state/migration_record.json").read_text(encoding="utf-8"))
           assert migration["new_ledger"]["strategy_revision"] == "r1"
           assert migration["new_ledger"]["digest"] == store.load_sequence(0)["digest"]
+          import hashlib
+          Path("strategy-artifacts").mkdir(exist_ok=True)
+          before = {p.relative_to(Path("state")).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+                    for p in Path("state").rglob("*.json")}
+          Path("strategy-artifacts/ledger-before.json").write_text(json.dumps(before))
           PY
 
       - name: Run IC/IM signal
@@ -310,7 +324,7 @@ jobs:
 
       - name: Persist normal-send intent before SMTP
         id: send_intent
-        if: steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success' && steps.result_day_gate.outputs.should_send_result_day == 'true'
+        if: steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success' && steps.result_day_gate.outputs.should_send_result_day == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.prepare_marker.outputs.marker_name }}-send-intent
@@ -320,7 +334,7 @@ jobs:
 
       - name: Send Gmail
         id: send_gmail
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && steps.build_digest.outcome == 'success' && ((steps.run_signal.outputs.exit_code == '0' && steps.send_intent.outcome == 'success') || (steps.run_signal.outputs.exit_code != '0' && steps.attempt.outputs.final_attempt == 'true'))
+        if: always() && steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && steps.build_digest.outcome == 'success' && ((steps.run_signal.outputs.exit_code == '0' && steps.send_intent.outcome == 'success') || (steps.run_signal.outputs.exit_code != '0' && steps.attempt.outputs.final_attempt == 'true'))
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -331,8 +345,38 @@ jobs:
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
         run: python automation/scripts/send_report.py mail-artifacts/metadata.json
 
+      - name: Verify ledger-only recovery before artifact promotion
+        id: verify_recovery
+        if: steps.attempt.outputs.ledger_only == 'true' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success' && steps.result_day_gate.outcome == 'success'
+        env:
+          ICIM_REQUIRE_MIGRATION: "1"
+          ICIM_STATE_DIR: state
+        run: |
+          python -B -X utf8 - <<'PY'
+          import hashlib, json, sys
+          from pathlib import Path
+          sys.path.insert(0, "strategy")
+          import poe_ic_im_v1_4_state as state
+          store = state.StateStore("state")
+          latest = store.load_latest()
+          state.anchors_from_record(latest)
+          result = json.loads(Path("strategy-artifacts/result.json").read_text())
+          assert result["status"] == "ok" and result["publication_mode"] == "close_confirmed"
+          assert all(result[key] == latest[key] for key in ("verified_day", "sequence", "digest"))
+          assert result["market_date"] == latest["verified_day"] and result["signals"] == latest["signals"]
+          migration = json.loads(Path("state/migration_record.json").read_text())
+          assert migration["new_ledger"]["digest"] == store.load_sequence(0)["digest"]
+          before = json.loads(Path("strategy-artifacts/ledger-before.json").read_text())
+          assert all(hashlib.sha256((Path("state") / name).read_bytes()).hexdigest() == digest
+                     for name, digest in before.items() if name != "latest.json")
+          assert len(list(Path("state/journal").glob("*.json"))) == latest["sequence"] + 1
+          Path("strategy-artifacts/ledger-recovery.json").write_text(json.dumps({
+              "verified_day": latest["verified_day"], "sequence": latest["sequence"], "digest": latest["digest"],
+              "full_chain_verified": True, "old_journals_unchanged": True, "message_sent": False}))
+          PY
+
       - name: Upload successful ledger
-        if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0'
+        if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && (steps.attempt.outputs.ledger_only != 'true' || steps.verify_recovery.outcome == 'success')
         uses: actions/upload-artifact@v7
         with:
           name: ic-im-v1-4-r1-ledger
@@ -344,7 +388,7 @@ jobs:
           retention-days: 90
 
       - name: Mark digest delivered
-        if: steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.send_gmail.outcome == 'success'
+        if: steps.attempt.outputs.smtp_enabled == 'true' && steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.send_gmail.outcome == 'success'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.prepare_marker.outputs.marker_name }}
@@ -377,6 +421,8 @@ jobs:
             echo "- Planned: ${PLANNED_BJ}"
             echo "- Trading day: ${{ steps.calendar.outputs.trade_day }}"
             echo "- Final attempt: ${{ steps.attempt.outputs.final_attempt }}"
+            echo "- Ledger only: ${{ steps.attempt.outputs.ledger_only }}"
+            echo "- SMTP enabled: ${{ steps.attempt.outputs.smtp_enabled }}"
             echo "- Ledger restored: ${{ steps.restore_ledger.outputs.restored }}"
             echo "- Current r7 migration seed restored: ${{ steps.restore_v13_seed.outputs.restored }}"
             echo "- Pre-fix r7 fallback seed restored: ${{ steps.restore_prefx_ledger.outputs.restored }}"
