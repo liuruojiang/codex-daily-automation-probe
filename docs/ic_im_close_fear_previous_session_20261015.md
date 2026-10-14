@@ -9,3 +9,5 @@
 跨日补录保留close_confirmed交付通道，单列 `signal_timing=retrospective_replay`。邮件主题/正文显示“历史模型补录”“参考差异”，不得冒称原日晚间已发布目标；读取真实报告完成及新普通Put计划创建证据。正常发送、无发送readiness与Gmail INBOX各自核验；无发送预检不会写正式ledger/intent/marker或提交SMTP DATA。
 
 首个未完成的10/14信号使用新口径只前向新增，原seq0–13与历史身份不改。策略参数fix11、schema4/r1、阈值/数量与Put执行证据保持原规则。
+
+收盘补录后续传输修复：正式执行pin升级至 `ae62d9fede4e79cc7159a37b463615272ce490b1`。月包仅连接/超时失败时，可使用实际取数前后仍为最近完成session的合格同日收盘快照；完整源校验保留，历史零成交MO Put不以备用中价冒充官方结算，挂牌身份保留。详细规则见策略仓库 `docs/ic_im_latest_completed_close_snapshot_20261015.md`。
