@@ -1639,6 +1639,71 @@
       "zh_summary": "原节目页称嘉宾负责哥伦比亚大学捐赠基金私募市场组合，节目讨论经理选择、组合构建、团队领导及通才与专才分工。仅节目说明可读，文字稿标记为待发布，未听完音频。",
       "evidence_level": "publisher_episode_description_only",
       "verify_next": "取得完整文字稿或音频，并核对私募估值、经理选择流程与实际组合约束。"
+    },
+    {
+      "origin_run_id": "38490095110",
+      "origin_report_date": "2026-10-14",
+      "source": "Robot Wealth",
+      "title": "The Questions That Change Everything",
+      "zh_title": "量化交易访谈：先辨认可持续优势，再扩展独立策略",
+      "url": "https://robotwealth.com/the-questions-that-change-everything/",
+      "published": "2026-10-13T05:22:33+00:00",
+      "summary": "Kris Longmore介绍72分钟访谈并写出个人交易框架：个人交易者难复制机构低延迟期货统计套利；比起过度打磨首个策略，先寻找独立收益来源，并警惕依赖交易收益支付日常开销。未听完整音频。",
+      "zh_summary": "Kris Longmore介绍72分钟访谈并写出个人交易框架：个人交易者难复制机构低延迟期货统计套利；比起过度打磨首个策略，先寻找独立收益来源，并警惕依赖交易收益支付日常开销。未听完整音频。",
+      "evidence_level": "publisher_full_blog_with_episode_chapters",
+      "verify_next": "核对完整访谈、独立收益来源相关性、样本外表现、资金约束及交易成本。"
+    },
+    {
+      "origin_run_id": "38490095110",
+      "origin_report_date": "2026-10-14",
+      "source": "Seeking Alpha ETFs",
+      "title": "Swap VXUS For SCHY To Avoid Over-Diversification",
+      "zh_title": "VXUS与SCHY：广泛分散和国际股息聚焦的取舍",
+      "url": "https://seekingalpha.com/article/4953880-swap-vxus-for-schy-to-avoid-over-diversification",
+      "published": "2026-10-13T18:06:23+00:00",
+      "summary": "作者公开摘要主张SCHY股息收益和股息增长较强、行业更偏防御；VXUS覆盖更广、科技及亚洲敞口较多。全文受限，所谓“过度分散”不是已证实的劣势。",
+      "zh_summary": "作者公开摘要主张SCHY股息收益和股息增长较强、行业更偏防御；VXUS覆盖更广、科技及亚洲敞口较多。全文受限，所谓“过度分散”不是已证实的劣势。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对两基金持仓、行业与地区权重、税费、含费总回报及不同市场环境下的回撤。"
+    },
+    {
+      "origin_run_id": "38490095110",
+      "origin_report_date": "2026-10-14",
+      "source": "Seeking Alpha ETFs",
+      "title": "The SLVR ETF Remains A Buy So Long As Critical Technical Support Holds",
+      "zh_title": "SLVR白银矿企与实物白银组合的技术支撑观点",
+      "url": "https://seekingalpha.com/article/4953879-the-slvr-etf-remains-a-buy-so-long-as-critical-technical-support-holds",
+      "published": "2026-10-13T17:58:53+00:00",
+      "summary": "作者公开摘要将SLVR的矿企股票与实物白银混合敞口作为论据，并主张关注白银期货技术支撑；该主张是个人技术判断，全文受限。",
+      "zh_summary": "作者公开摘要将SLVR的矿企股票与实物白银混合敞口作为论据，并主张关注白银期货技术支撑；该主张是个人技术判断，全文受限。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对持仓与跟踪方式、商品与矿企风险、信号时点及含费回撤，检验技术阈值的样本外稳定性。"
+    },
+    {
+      "origin_run_id": "38490095110",
+      "origin_report_date": "2026-10-14",
+      "source": "Seeking Alpha ETFs",
+      "title": "XMPT: Under Amplified Downside Pressure",
+      "zh_title": "XMPT市政债封闭式基金组合的久期与折价风险",
+      "url": "https://seekingalpha.com/article/4953862-xmpt-under-amplified-downside-pressure",
+      "published": "2026-10-13T16:58:39+00:00",
+      "summary": "作者公开摘要称XMPT底层持有带杠杆的市政债封闭式基金，实际久期约15.15年；国债利率上行和底层折价扩大共同施压。全文受限，久期数字未独立核算。",
+      "zh_summary": "作者公开摘要称XMPT底层持有带杠杆的市政债封闭式基金，实际久期约15.15年；国债利率上行和底层折价扩大共同施压。全文受限，久期数字未独立核算。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金底层杠杆、有效久期、折价、税后收益及利率和流动性压力情景。"
+    },
+    {
+      "origin_run_id": "38490095110",
+      "origin_report_date": "2026-10-14",
+      "source": "Yahoo Finance ETF Headlines / 24/7 Wall St.",
+      "title": "If You Own SPY, This Lower-Cost Fund Tracks Identical Holdings for Less Than Half the Fee",
+      "zh_title": "SPY与IVV同指数基金的费用、流动性和税务取舍",
+      "url": "https://247wallst.com/investing/etf/2026/10/13/if-you-own-spy-this-lower-cost-fund-tracks-identical-holdings-for-less-than-half-the-fee/",
+      "published": "2026-10-13T23:33:53+00:00",
+      "summary": "原文称SPY费率0.0945%、IVV为0.03%，均跟踪标普500；同时提醒SPY交易和期权流动性、应税账户卖出资本利得以及不同总回报口径。费率和结构需以同日官方材料复核。",
+      "zh_summary": "原文称SPY费率0.0945%、IVV为0.03%，均跟踪标普500；同时提醒SPY交易和期权流动性、应税账户卖出资本利得以及不同总回报口径。费率和结构需以同日官方材料复核。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对发行人同日费率、持仓和跟踪差异、账户税务、价差与成交成本；勿把费率差直接当作切换收益。"
     }
   ]
 }
