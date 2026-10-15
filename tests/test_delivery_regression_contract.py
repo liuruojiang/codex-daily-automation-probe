@@ -108,11 +108,15 @@ def test_microcap_regression_covers_required_files_with_isolated_zero_skip_gate(
         'test_v25_realtime_artifact_invalidation.py',
         'test_realtime_publication_deadline.py',
         'test_adversarial_recovery_boundaries_20261013.py',
+        'test_cninfo_history_fail_closed_20261015.py',
+        'test_exchange_session_completeness_20261015.py',
+        'test_return_integrity_20261015.py',
+        'test_security_meta_fail_closed_20261015.py',
     )
     assert step['env']['MICROCAP_DIGEST_SOURCE'] == '${{ github.workspace }}/automation/scripts/build_microcap_realtime_digest.py'
     assert step['env']['PYTHONDONTWRITEBYTECODE'] == '1'
     assert 'working-directory' not in step or step['working-directory'] == 'strategy'
-    assert 'timeout --foreground 60s python -B -X utf8 -m pytest -q -p no:cacheprovider' in step['run']
+    assert 'timeout --foreground 120s python -B -X utf8 -m pytest -q -p no:cacheprovider' in step['run']
     assert '--junitxml=regression.xml' in step['run']
     assert 'assert not list(root.iter(\'skipped\'))' in step['run'] or "root.iter('skipped')" in step['run']
     assert "Path('../automation')" in step['run']

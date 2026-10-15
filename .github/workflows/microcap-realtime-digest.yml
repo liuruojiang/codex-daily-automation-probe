@@ -183,7 +183,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 6d09f4c3ad47f536fd76cce0990a6665f300269e
+          ref: 35327072c1872f964bba3e74d84036090ec0e68d
           path: microcap
 
       - name: Check out isolated v2.3 close-confirmed workspace
@@ -191,7 +191,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 6d09f4c3ad47f536fd76cce0990a6665f300269e
+          ref: 35327072c1872f964bba3e74d84036090ec0e68d
           path: microcap-v23
 
       - name: Check out isolated v2.5 close-confirmed workspace
@@ -199,7 +199,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 6d09f4c3ad47f536fd76cce0990a6665f300269e
+          ref: 35327072c1872f964bba3e74d84036090ec0e68d
           path: microcap-v25
 
       - name: Record microcap strategy SHA
@@ -472,15 +472,30 @@ jobs:
             if [[ "${status}" -eq 0 ]]; then
               break
             fi
+            # A rejected history/lineage cannot be repaired by re-fetching the
+            # same inputs. Preserve the failed status and require exact-hash
+            # review; transient transport failures keep the existing retry path.
+            if grep -Eiq 'SecurityMetaHistoryCorrectionRequired|Security metadata (historical intervals|identity) changed|exact-hash lineage review is required|Exact frozen proxy seed|proxy metadata fingerprint mismatch|historical rewrite (detected|audit missing key columns)' "${attempt_log}"; then
+              echo "::error title=Microcap refresh blocked::Non-retryable lineage or frozen-history rejection; review exact hashes before another run." | tee -a realtime_state_refresh_result.txt
+              break
+            fi
             sleep $(( attempt < 6 ? attempt * 20 : 120 ))
           done
-          # Close the progress check once the refreshed state has passed validation.
+          # Close the progress check with the actual refresh outcome.
           if [[ -n "${progress_check_id}" ]]; then
             completed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             elapsed_seconds=$(( $(date +%s) - started_epoch ))
+            progress_conclusion=failure
+            progress_title="Microcap Top100 refresh blocked"
+            if [[ "${status}" -eq 0 ]]; then
+              progress_conclusion=success
+              progress_title="Microcap Top100 refresh complete"
+            fi
             PROGRESS_COMPLETED_AT="${completed_at}" \
-            PROGRESS_SUMMARY="result=success; attempt=${attempt}; elapsed_seconds=${elapsed_seconds}; state refresh validated" \
-              python -c 'import json, os; print(json.dumps({"name": "Microcap refresh progress", "head_sha": os.environ["GITHUB_SHA"], "status": "completed", "conclusion": "success", "completed_at": os.environ["PROGRESS_COMPLETED_AT"], "output": {"title": "Microcap Top100 refresh complete", "summary": os.environ["PROGRESS_SUMMARY"]}}))' > progress_check_payload.json
+            PROGRESS_CONCLUSION="${progress_conclusion}" \
+            PROGRESS_TITLE="${progress_title}" \
+            PROGRESS_SUMMARY="result=${progress_conclusion}; attempt=${attempt}; elapsed_seconds=${elapsed_seconds}; refresh_exit_code=${status}" \
+              python -c 'import json, os; print(json.dumps({"name": "Microcap refresh progress", "head_sha": os.environ["GITHUB_SHA"], "status": "completed", "conclusion": os.environ["PROGRESS_CONCLUSION"], "completed_at": os.environ["PROGRESS_COMPLETED_AT"], "output": {"title": os.environ["PROGRESS_TITLE"], "summary": os.environ["PROGRESS_SUMMARY"]}}))' > progress_check_payload.json
             curl --silent --show-error --fail-with-body \
               --request PATCH \
               --header "Accept: application/vnd.github+json" \

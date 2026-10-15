@@ -70,11 +70,14 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         refresh_end = text.index("- name: Record refresh failure for digest", refresh_start)
         refresh_step = text[refresh_start:refresh_end]
         completion = refresh_step[
-            refresh_step.index("# Close the progress check once the refreshed state has passed validation.") :
+            refresh_step.index("# Close the progress check with the actual refresh outcome.") :
         ]
         self.assertIn('if [[ -n "${progress_check_id}" ]]', completion)
         self.assertIn('"status": "completed"', completion)
-        self.assertIn('"conclusion": "success"', completion)
+        self.assertIn('progress_conclusion=failure', completion)
+        self.assertIn('if [[ "${status}" -eq 0 ]]', completion)
+        self.assertIn('progress_conclusion=success', completion)
+        self.assertIn('"conclusion": os.environ["PROGRESS_CONCLUSION"]', completion)
         self.assertIn('check-runs/${progress_check_id}', completion)
         self.assertIn("--max-workers 4", refresh_step)
         self.assertIn("static_refresh_args+=(--force-refresh-static-inputs)", refresh_step)

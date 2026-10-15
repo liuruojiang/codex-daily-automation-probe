@@ -122,7 +122,7 @@ jobs:
               destination.parent.mkdir(parents=True, exist_ok=True)
               destination.write_bytes(raw)
           PY
-          timeout --foreground 60s python -B -X utf8 -m pytest -q -p no:cacheprovider \
+          timeout --foreground 120s python -B -X utf8 -m pytest -q -p no:cacheprovider \
             tests/test_realtime_preflight.py tests/test_realtime_state_guard_20260915.py \
             tests/test_top100_delivery.py tests/test_top100_cloud_delivery.py \
             tests/test_full_rebalance_cache_bundle.py tests/test_top100_data_guards.py \
@@ -137,6 +137,10 @@ jobs:
             tests/test_security_meta_current_st_history_resolution_20261012.py \
             tests/test_security_meta_preserve_20260917.py \
             tests/test_adversarial_recovery_boundaries_20261013.py \
+            tests/test_cninfo_history_fail_closed_20261015.py \
+            tests/test_exchange_session_completeness_20261015.py \
+            tests/test_return_integrity_20261015.py \
+            tests/test_security_meta_fail_closed_20261015.py \
             tests/test_v25_realtime_artifact_invalidation.py --junitxml=regression.xml
           python -B -X utf8 - <<'PY'
           import xml.etree.ElementTree as ET
