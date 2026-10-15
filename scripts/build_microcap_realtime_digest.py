@@ -519,6 +519,9 @@ def action_label(item: dict[str, object]) -> str:
     assert isinstance(fields, dict)
     current = first_value(fields, "current_holding", "holding")
     next_holding = first_value(fields, "next_holding")
+    if current == next_holding == "cash":
+        # A dated universe update does not trade an empty strategy position.
+        return "无操作"
     if current and next_holding and current != next_holding:
         if current == "cash" and next_holding != "cash":
             return "开仓"
@@ -751,6 +754,7 @@ def build_compact_digest(
         f"| 版本 | 当前 → 下一持仓 | {action_heading} | 下一交易日仓位 | 核心动量 |",
         "|---|---|---|---:|---|",
     ]
+    member_background: list[str] = []
     for item in results:
         fields = item["fields"]
         assert isinstance(fields, dict)
@@ -776,6 +780,17 @@ def build_compact_digest(
             )
             + " |"
         )
+        if (trusted and first_value(fields, "current_holding", "holding") == "cash"
+                and first_value(fields, "next_holding") == "cash"):
+            update = member_rebalance_action(fields)
+            if update:
+                member_background.append(
+                    f"- {escape_markdown_inline(str(item['version']))}："
+                    f"{escape_markdown_inline(update.replace('名单调仓', '名单更新', 1))}；"
+                    "当前及下一交易日均为空仓，无需买卖。"
+                )
+    if member_background:
+        lines += ["", "名单更新背景：", "", *member_background]
 
     warnings = [warning for item in results for warning in risk_warnings(item)]
     if date_s == "2026-09-04" and any(item["version"] == "v2.0" and item["status"] == "OK" for item in results):
