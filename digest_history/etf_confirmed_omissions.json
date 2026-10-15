@@ -1704,6 +1704,84 @@
       "zh_summary": "原文称SPY费率0.0945%、IVV为0.03%，均跟踪标普500；同时提醒SPY交易和期权流动性、应税账户卖出资本利得以及不同总回报口径。费率和结构需以同日官方材料复核。",
       "evidence_level": "publisher_full_article",
       "verify_next": "核对发行人同日费率、持仓和跟踪差异、账户税务、价差与成交成本；勿把费率差直接当作切换收益。"
+    },
+    {
+      "origin_run_id": "38657355655",
+      "origin_report_date": "2026-10-15",
+      "source": "Seeking Alpha ETFs",
+      "title": "PVAL: How Putnam's ETF Stacks Up Against CGDV, VFLO, And Other Leading Value Funds",
+      "zh_title": "PVAL价值ETF与同类基金的估值、盈利和重合度比较",
+      "url": "https://seekingalpha.com/article/4954234-pval-how-putnams-etf-stacks-up-against-cgdv-vflo-and-other-leading-value-funds",
+      "published": "2026-10-14T20:49:29+00:00",
+      "summary": "作者公开摘要称PVAL前瞻市盈率15.92倍、下一年盈利增长预期10%，比较CGDV、AVLV、SEIV、VFLO和IWD，并称其与部分同类持仓重合较低。业绩与预期均为作者主张，全文未核验。",
+      "zh_summary": "作者公开摘要称PVAL前瞻市盈率15.92倍、下一年盈利增长预期10%，比较CGDV、AVLV、SEIV、VFLO和IWD，并称其与部分同类持仓重合较低。业绩与预期均为作者主张，全文未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对同日基金持仓、费率、估值口径、含费总回报和样本外结果。"
+    },
+    {
+      "origin_run_id": "38657355655",
+      "origin_report_date": "2026-10-15",
+      "source": "Seeking Alpha ETFs",
+      "title": "EWY Heading For A -75% Like In The 1997 \"Great Crisis\"? Not In My Opinion",
+      "zh_title": "EWY韩国ETF：1997年危机类比与半导体集中风险",
+      "url": "https://seekingalpha.com/article/4954228-ewy-heading-for-a-minus-75-percent-like-in-the-1997-great-crisis-not-in-my-opinion",
+      "published": "2026-10-14T20:24:15+00:00",
+      "summary": "作者公开摘要称EWY集中于三星和SK海力士，认为韩元、出口和存储芯片订单条件与1997年不同；同时提及散户杠杆和外资流出，给出个人持有观点。全文未核验。",
+      "zh_summary": "作者公开摘要称EWY集中于三星和SK海力士，认为韩元、出口和存储芯片订单条件与1997年不同；同时提及散户杠杆和外资流出，给出个人持有观点。全文未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对当期持仓、韩元汇率、出口、估值、外资流向及历史危机可比性。"
+    },
+    {
+      "origin_run_id": "38657355655",
+      "origin_report_date": "2026-10-15",
+      "source": "Seeking Alpha ETFs",
+      "title": "SCHQ: Duration Risky When Energy Inflation Spills Into Other Influential Components",
+      "zh_title": "SCHQ长期国债ETF的久期与能源通胀传导风险",
+      "url": "https://seekingalpha.com/article/4954225-schq-duration-risky-when-energy-inflation-spills-into-other-influential-components",
+      "published": "2026-10-14T20:14:10+00:00",
+      "summary": "作者公开摘要认为能源冲击和通胀预期可能推高长期收益率，从而压低SCHQ价格；这是情景判断，不是已验证的因果或收益预测。全文未核验。",
+      "zh_summary": "作者公开摘要认为能源冲击和通胀预期可能推高长期收益率，从而压低SCHQ价格；这是情景判断，不是已验证的因果或收益预测。全文未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金有效久期、收益率曲线、通胀预期与能源冲击传导的历史反例。"
+    },
+    {
+      "origin_run_id": "38657355655",
+      "origin_report_date": "2026-10-15",
+      "source": "Seeking Alpha ETFs",
+      "title": "PTY Vs. PDO: The Former Should Outperform The Latter For Structural Reasons",
+      "zh_title": "PTY与PDO封闭式基金的溢价和期限结构差异",
+      "url": "https://seekingalpha.com/article/4954217-pty-vs-pdo-one-should-outperform-for-structural-reasons",
+      "published": "2026-10-14T19:34:35+00:00",
+      "summary": "作者公开摘要称两基金净值回报相近但市场价格表现分化；PTY溢价对债市反弹更敏感也承受溢价回落风险，PDO的期限安排约束价格更贴近净值。全文未核验。",
+      "zh_summary": "作者公开摘要称两基金净值回报相近但市场价格表现分化；PTY溢价对债市反弹更敏感也承受溢价回落风险，PDO的期限安排约束价格更贴近净值。全文未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对同期净值总回报、溢折价、杠杆、分配覆盖率和2033年期限条款。"
+    },
+    {
+      "origin_run_id": "38657355655",
+      "origin_report_date": "2026-10-15",
+      "source": "Yahoo Finance ETF Headlines / Motley Fool",
+      "title": "Invesco QQQ Doesn't Own a Single Bank, and That's Not the Only Thing the Nasdaq-100 Leaves Out",
+      "zh_title": "QQQ为何不持有银行及部分大型上市公司",
+      "url": "https://www.fool.com/investing/2026/10/14/invesco-qqq-doesn-t-own-a-single-bank-and-that-s-not-the-only-thing-the-nasdaq-100-leaves-out/",
+      "published": "2026-10-14T23:23:01+00:00",
+      "summary": "原文解释纳斯达克100的非金融业和纳斯达克上市地规则，因此不含银行，也排除在纽交所上市的伯克希尔、Visa和Oracle等。作者提醒QQQ不等于全市场；文中个别持仓与业绩数字应按同日指数文件核对。",
+      "zh_summary": "原文解释纳斯达克100的非金融业和纳斯达克上市地规则，因此不含银行，也排除在纽交所上市的伯克希尔、Visa和Oracle等。作者提醒QQQ不等于全市场；文中个别持仓与业绩数字应按同日指数文件核对。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对指数方法、截至当日成分及行业权重，并比较与宽基ETF叠加后的集中度。"
+    },
+    {
+      "origin_run_id": "38657355655",
+      "origin_report_date": "2026-10-15",
+      "source": "Yahoo Finance ETF Headlines / Motley Fool",
+      "title": "Bond Market Mayhem: History Says This Is the 1 Thing That Matters Most for Investors",
+      "zh_title": "长期国债下跌后，作者强调起始收益率与久期机会",
+      "url": "https://www.fool.com/investing/2026/10/14/bond-market-mayhem-history-says-1-thing-matters/",
+      "published": "2026-10-14T17:02:00+00:00",
+      "summary": "作者称年内10年期美债收益率上升超过100基点、TLT下跌，并认为较高起始收益率改善长期债券的未来收入条件；其降息时价格回升是情景推断，非保证回报。",
+      "zh_summary": "作者称年内10年期美债收益率上升超过100基点、TLT下跌，并认为较高起始收益率改善长期债券的未来收入条件；其降息时价格回升是情景推断，非保证回报。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "以同日国债收益率、TLT含息总回报及久期测算复核，并测试收益率继续上行的反例。"
     }
   ]
 }
