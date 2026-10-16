@@ -25,7 +25,11 @@ def payload(monkeypatch, source="csv", missing=False):
                  fear_fetch_started_at="2026-10-16T12:00:00+08:00", fear_retrieved_at="2026-10-16T12:01:00+08:00",
                  fear_greed_index=None if missing else 40., fear_data_date=None if missing else "2026-10-09",
                  fear_data_status="unavailable" if missing else "retrospective_replay", fear_fallback_applied=False,
-                 fear_available_sources=[] if missing else [source], fear_selected_source=None if missing else source,
+                 fear_available_sources=[] if missing else [source],
+                 fear_csv_observations={"2026-10-09": 40.} if source == "csv" and not missing else None,
+                 fear_csv_latest_date="2026-10-09" if source == "csv" and not missing else None,
+                 fear_csv_latest_value=40. if source == "csv" and not missing else None,
+                 fear_page_value=40. if source == "page" and not missing else None, fear_selected_source=None if missing else source,
                  fear_cross_validation="unavailable" if missing else "single_source",
                  fear_source_url=None if missing else contract.CSV_URL if source == "csv" else contract.PAGE_URL,
                  fear_csv_sha256="a"*64 if source == "csv" and not missing else None,
@@ -36,14 +40,14 @@ def payload(monkeypatch, source="csv", missing=False):
                  fear_source_warning="百分位没有合格读数" if missing else "仅取得单侧数据，未完成双侧验证",
                  fear_unavailable_reason="百分位没有合格读数" if missing else None)
         if missing:
-            s.update(signal_completeness="partial", incomplete_components=["grid", "total_futures"],
+            s.update(signal_completeness="partial", grid_target_confirmed=False, total_units_target_confirmed=False, incomplete_components=["grid", "total_futures"],
                      reference_grid_target=s["grid_current"], reference_grid_action="HOLD",
                      reference_grid_entry_source_target=s["grid_entry_source_current"],
                      reference_grid_transition_reason="fear_unavailable", reference_total_units_target=s["total_units_target"],
                      reference_total_units_change=0, grid_target=None, grid_action="UNCONFIRMED",
                      grid_entry_source_target=None, grid_transition_reason=None, total_units_target=None, total_units_change=None)
     if missing:
-        saved.update(status="partial", signal_completeness="partial", incomplete_components=["IC.grid", "IM.grid"])
+        saved.update(status="partial", signal_completeness="partial", incomplete_components=["IC.grid", "IC.total_futures", "IM.grid", "IM.total_futures"])
     saved["jiu_reference"] = dict(jiu_fear_greed_index=2.28, jiu_data_date="2026-10-08",
         jiu_retrieved_at=clock.isoformat(), jiu_status="reference_only", jiu_reference_only=True)
     return saved
@@ -77,3 +81,21 @@ def test_partial_does_not_allow_hidden_grid_change(monkeypatch):
     data["signals"]["IC"]["reference_grid_target"] = .5
     with pytest.raises(ValueError, match="preserve grid state"):
         digest.validate_success_payload(data)
+
+
+def test_missing_fear_cannot_disguise_complete_or_create_marker(monkeypatch):
+    data = payload(monkeypatch, missing=True)
+    data.update(status="ok", signal_completeness="complete")
+    for signal in data["signals"].values():
+        for field in ("grid_target", "grid_action", "grid_entry_source_target", "grid_transition_reason", "total_units_target", "total_units_change"):
+            signal[field] = signal["reference_" + field]
+    for boundary in [digest.validate_success_payload, marker.marker_name]:
+        with pytest.raises(ValueError, match="missing Fear"):
+            boundary(data)
+
+
+def test_missing_fear_cannot_hide_one_component_from_manifest(monkeypatch):
+    data = payload(monkeypatch, missing=True)
+    data["incomplete_components"].remove("IM.total_futures")
+    with pytest.raises(ValueError, match="partial publication manifest"):
+        marker.marker_name(data)

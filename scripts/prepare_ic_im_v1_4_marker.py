@@ -15,6 +15,8 @@ from check_ic_im_v1_4_delivery import (
 
 
 def marker_name(payload: dict[str, object]) -> str:
+    from ic_im_v1_4_delivery_contract import validate_fear_publication
+    validate_fear_publication(payload)
     if payload.get("status") not in {"ok", "partial"}:
         raise ValueError("delivery marker requires a successful signal result")
     if payload.get("status") == "partial" and (
