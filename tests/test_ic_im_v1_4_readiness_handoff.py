@@ -1,5 +1,4 @@
 """Bounded handoff tests: synthetic modules, real disposable files, no live state."""
-import base64
 from datetime import date, timedelta
 import hashlib
 import io
@@ -86,10 +85,19 @@ def invoke_and_decode(capsys):
     handoff.main()
     output = capsys.readouterr().out
     rows = output.splitlines()
+    metadata_rows = [row.split("=", 1)[1] for row in rows if row.startswith("ICIM_HANDOFF_META_AP=")]
+    assert len(metadata_rows) == 1 and set(metadata_rows[0]) <= set("ABCDEFGHIJKLMNOP")
+    metadata = json.loads(bytes.fromhex(metadata_rows[0].translate(str.maketrans("ABCDEFGHIJKLMNOP", "0123456789abcdef"))))
     expected_hash = next(row.split("=", 1)[1] for row in rows if row.startswith("ICIM_HANDOFF_SHA256="))
+    assert rows.count("ICIM_HANDOFF_ENCODING=nibble-ap") == 1
     encoded = "".join(row.split("=", 1)[1] for row in rows if row.startswith("ICIM_HANDOFF_CHUNK="))
-    raw = base64.b64decode(encoded, validate=True)
+    assert encoded and set(encoded) <= set("ABCDEFGHIJKLMNOP") and len(encoded) % 2 == 0
+    # These configured transport values must not collide with research chunks
+    # and trigger GitHub's irreversible log masking again.
+    assert not any(value in encoded for value in ("true", "false", "465", "587"))
+    raw = bytes.fromhex(encoded.translate(str.maketrans("ABCDEFGHIJKLMNOP", "0123456789abcdef")))
     assert hashlib.sha256(raw).hexdigest() == expected_hash
+    assert metadata == dict(sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw), encoding="nibble-ap")
     assert len(raw) == int(next(row.split("=", 1)[1] for row in rows if row.startswith("ICIM_HANDOFF_END=")))
     return output, raw
 
