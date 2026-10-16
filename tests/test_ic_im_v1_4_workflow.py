@@ -69,7 +69,7 @@ class ICIMV14WorkflowTests(unittest.TestCase):
         self.assertIn("--source legacy-state", text)
         self.assertIn("--target state", text)
         self.assertIn("run_ic_im_v1_4_github_digest.py", text)
-        self.assertIn("ref: 95c26fb599d5f209fb887f0208a4a8463f6f52f3", text)
+        self.assertIn("ref: 36ef68aa1e96a1d352d67f60eeb36e3e622bd010", text)
         self.assertIn("delivery_contract.CALENDAR_YEARS == strategy._OFFICIAL_EXCHANGE_CALENDAR_YEARS", text)
         self.assertIn("delivery_contract.EXCHANGE_CLOSURES == strategy._EXCHANGE_CLOSURES", text)
         self.assertIn("--network-budget-per-product 180", text)

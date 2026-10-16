@@ -99,3 +99,24 @@ def test_missing_fear_cannot_hide_one_component_from_manifest(monkeypatch):
     data["incomplete_components"].remove("IM.total_futures")
     with pytest.raises(ValueError, match="partial publication manifest"):
         marker.marker_name(data)
+
+
+def test_dynamic_page_documents_can_differ_when_semantic_observation_matches(monkeypatch):
+    data = payload(monkeypatch, source="page")
+    data["signals"]["IM"]["fear_page_sha256"] = "c" * 64
+    digest.validate_success_payload(data)
+    assert digest.build_success(data, "", "")[0]
+
+
+def test_cross_product_page_update_times_must_match(monkeypatch):
+    data = payload(monkeypatch, source="page")
+    data["signals"]["IM"]["fear_page_updated_at"] = "2026-10-09T15:04:00+08:00"
+    with pytest.raises(ValueError, match="snapshots disagree"):
+        digest.validate_success_payload(data)
+
+
+def test_cross_product_selected_values_must_match_even_if_each_is_valid(monkeypatch):
+    data = payload(monkeypatch, source="page")
+    data["signals"]["IM"].update(fear_greed_index=20., fear_page_value=20.)
+    with pytest.raises(ValueError, match="snapshots disagree"):
+        digest.validate_success_payload(data)

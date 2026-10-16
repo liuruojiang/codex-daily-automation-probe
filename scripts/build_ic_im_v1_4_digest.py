@@ -1066,7 +1066,8 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
                   "fear_intraday_policy_revision", "fear_close_policy_revision", "fear_fallback_applied",
                   "fear_previous_exchange_date", "fear_fallback_reason", "fear_fallback_timing",
                   "fear_source_policy_revision", "fear_available_sources", "fear_selected_source",
-                  "fear_cross_validation", "fear_page_sha256")
+                  "fear_cross_validation", "fear_page_updated_at", "fear_page_data_date", "fear_page_value",
+                  "fear_csv_latest_date", "fear_csv_latest_value", "fear_csv_observations")
         if any(signals["IC"].get(field) != signals["IM"].get(field) for field in shared):
             raise ValueError("IC/IM Fear source snapshots disagree")
     for product, signal in signals.items():
