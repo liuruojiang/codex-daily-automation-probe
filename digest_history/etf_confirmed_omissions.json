@@ -1782,6 +1782,84 @@
       "zh_summary": "作者称年内10年期美债收益率上升超过100基点、TLT下跌，并认为较高起始收益率改善长期债券的未来收入条件；其降息时价格回升是情景推断，非保证回报。",
       "evidence_level": "publisher_full_article",
       "verify_next": "以同日国债收益率、TLT含息总回报及久期测算复核，并测试收益率继续上行的反例。"
+    },
+    {
+      "origin_run_id": "38825336443",
+      "origin_report_date": "2026-10-16",
+      "source": "A Wealth of Common Sense",
+      "title": "Hedging the AI Trade",
+      "zh_title": "如何分散人工智能交易的集中风险",
+      "url": "https://awealthofcommonsense.com/2026/10/hedging-the-ai-trade/",
+      "published": "2026-10-15T17:14:26+00:00",
+      "summary": "Ben Carlson discusses S&P 500 concentration and possible diversifiers if the AI trade reverses, including bonds, foreign developed equities and less concentrated equity styles. The scenarios are opinions, not tested forecasts.",
+      "zh_summary": "Ben Carlson 讨论标普500前十大股票约占市值40%的集中风险，提出债券、海外发达市场和较少集中于科技股的风格作为可能的分散方向；各资产在AI行情逆转时的表现是作者情景判断，并非已验证预测。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对同日指数与ETF持仓集中度，以多次科技股回撤及利率上行情景检验相关性、含费总回报和再平衡成本。"
+    },
+    {
+      "origin_run_id": "38825336443",
+      "origin_report_date": "2026-10-16",
+      "source": "Seeking Alpha ETFs",
+      "title": "CALF: After A 20% Rally, Why SFLO Still Might Have The FCF Yield Edge",
+      "zh_title": "CALF上涨后与SFLO的自由现金流收益率比较",
+      "url": "https://seekingalpha.com/article/4954607-calf-after-20-percent-rally-why-sflo-still-might-have-fcf-yield-edge",
+      "published": "2026-10-15T20:55:12+00:00",
+      "summary": "The public publisher summary compares CALF and SFLO after CALF's 20.02% total return since February 2026. It discusses the 200-holding strategy update, a 12.57% free-cash-flow yield claim and slowing growth expectations; the full article was not verified.",
+      "zh_summary": "发布者公开摘要称CALF自2026年2月以来总回报20.02%，策略调整后持仓扩至200只；作者比较其12.57%的自由现金流收益率与SFLO，并担心中小盘盈利增长放缓。数值及预测均待独立复核，全文未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "用同日基金持仓、指数规则、估值口径和含费总回报核对，并检查调整前后风格漂移。"
+    },
+    {
+      "origin_run_id": "38825336443",
+      "origin_report_date": "2026-10-16",
+      "source": "Seeking Alpha ETFs",
+      "title": "MAGS: The Magnificent 7 Could Still Deliver 20% A Year",
+      "zh_title": "MAGS七巨头ETF的高收益预期与集中风险",
+      "url": "https://seekingalpha.com/article/4954599-mags-magnificent-7-could-still-deliver-20-percent-a-year",
+      "published": "2026-10-15T20:18:58+00:00",
+      "summary": "The public publisher summary describes MAGS as equal-weight Magnificent Seven exposure and projects annualized returns above 20%, while acknowledging valuation and AI-demand risks. This is the author's forecast, not observed performance; the full article was not verified.",
+      "zh_summary": "发布者公开摘要称MAGS等权持有七家大型科技公司，作者预测年化回报可能超过20%，同时承认估值、AI需求和个股风险。这是作者预测，且作者披露持有MAGS；全文未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对持仓与再平衡规则，以不同估值收缩和盈利增速情景测试含费总回报及集中度。"
+    },
+    {
+      "origin_run_id": "38825336443",
+      "origin_report_date": "2026-10-16",
+      "source": "Seeking Alpha ETFs",
+      "title": "Fuel Prices And The JETS ETF, Expect Volatility",
+      "zh_title": "燃油成本与JETS航空ETF的波动风险",
+      "url": "https://seekingalpha.com/article/4954567-fuel-prices-and-the-jet-etf-expect-volatility",
+      "published": "2026-10-15T18:35:19+00:00",
+      "summary": "The public publisher summary says more than 60% of JETS is allocated to nine US airlines and frames fuel costs and geopolitical events as risk drivers. Its price levels and tactical risk-reward ratio are author estimates; the full article was not verified.",
+      "zh_summary": "发布者公开摘要称JETS逾60%配置于九家美国航空公司，并把燃油成本与地缘事件列为波动来源。文中技术价位和风险收益比是作者判断，全文未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对当期持仓、油价与航空利润敏感度，并测试燃油对冲及客运需求变化的反例。"
+    },
+    {
+      "origin_run_id": "38825336443",
+      "origin_report_date": "2026-10-16",
+      "source": "Seeking Alpha ETFs",
+      "title": "DEM: Less AI, Less Volatility, Higher Yield Than EEM",
+      "zh_title": "DEM与EEM的新兴市场风格和科技敞口比较",
+      "url": "https://seekingalpha.com/article/4954562-dem-less-ai-less-volatility-higher-yield-than-eem",
+      "published": "2026-10-15T18:19:38+00:00",
+      "summary": "The public publisher summary describes DEM as a value-tilted emerging-market dividend portfolio with 4.02% yield, 9.8x P/E and less AI and technology exposure than EEM. Performance, yield and flow claims were not independently verified; the full article was not verified.",
+      "zh_summary": "发布者公开摘要将DEM描述为偏价值和高股息的新兴市场组合，称其收益率4.02%、市盈率9.8倍，科技与AI敞口低于EEM；业绩、资金流及估值口径尚未独立核验，全文未核验。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对同日基金持仓、国家与行业权重、分配率和含费总回报，检验货币与商品周期影响。"
+    },
+    {
+      "origin_run_id": "38825336443",
+      "origin_report_date": "2026-10-16",
+      "source": "Rational Reminder",
+      "title": "The Madness of Markets (Alex Edmans) | Rational Reminder 431",
+      "zh_title": "市场的疯狂：Alex Edmans谈行为偏差与套利限制",
+      "url": "https://www.youtube.com/watch?v=ufOJdfSdSiI",
+      "published": "2026-10-15T09:30:00+00:00",
+      "summary": "The publisher's episode 431 page confirms October 15 publication and provides a transcript on sentiment, overreaction, value, momentum, limits to arbitrage, diversification and costs. The timestamp is from the original run's YouTube capture; the audio was not independently played. Publisher transcript: https://rationalreminder.ca/podcast/431",
+      "zh_summary": "节目官网第431期页面及文字稿讨论情绪、过度反应、价值和动量、套利限制、分散与成本。发布日期为10月15日；精确时刻取自原run的YouTube快照，未另行收听音频。文字稿：https://rationalreminder.ca/podcast/431",
+      "evidence_level": "publisher_transcript",
+      "verify_next": "核对节目援引研究的原论文及样本外表现，区分行为机制与扣费后的可交易收益。"
     }
   ]
 }
