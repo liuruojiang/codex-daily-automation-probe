@@ -1,8 +1,7 @@
 {
   "date": "2026-10-16",
-  "mode": "realtime",
+  "mode": "close",
   "scope": "verified_research_handoff_no_send",
   "export_handoff": true,
-  "request_revision": "20261016_multi_agent_fear_audit_v3_shared_snapshot",
-  "requested_at": "2026-10-16T13:34:19.175159+08:00"
+  "requested_at": "2026-10-16T13:40:04.492021+08:00"
 }
