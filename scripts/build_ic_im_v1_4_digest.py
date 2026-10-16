@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import ic_im_v1_4_put_display as put_display
+import ic_im_option_maintenance_notice as maintenance_notice
 
 
 HOLD_ACTIONS = {"", "HOLD", "NONE", "NO_ACTION", "MAINTAIN", "WAIT_IV"}
@@ -802,6 +803,7 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
         raise ValueError("result must contain IC and IM signals")
     actions = {product: action_parts(signals[product], product) for product in ("IC", "IM")}
     actionable = any(actions.values())
+    notices = maintenance_notice.reminders(signals, signal_day=payload.get("market_date"))
     realtime = str(payload.get("publication_mode", "close_confirmed")) == "realtime"
     day = str(payload.get("market_date" if realtime else "completed_day", "未知日期"))
     mode_text = "盘中实时预估" if realtime else "收盘确认"
@@ -815,8 +817,15 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
         mode_text, headline = "历史模型补录", "参考差异" if actionable else "模型持仓维持"
         warning = (f"实际报告完成 {payload.get('report_generated_at', payload.get('generated_at', 'N/A'))}；retrospective_replay。"
                    "这是历史模型补录，不是原信号日已发布的前瞻调整目标或账户成交。")
-    accent = "#f79009" if actionable else "#12b76a"
-    banner_bg = "#fff7ed" if actionable else "#ecfdf3"
+    if notices:
+        headline = "月度Put维护日历需核对" if payload.get("signal_timing") == "retrospective_replay" else "月度Put需维护" + ("，另有常规目标调整" if actionable else "")
+    accent = "#f79009" if actionable or notices else "#12b76a"
+    banner_bg = "#fff7ed" if actionable or notices else "#ecfdf3"
+    notice_html = "".join(
+        '<div style="margin-bottom:16px;padding:16px;background:#fff7ed;border:2px solid #f79009;border-radius:12px;color:#7a2e0e;font-size:16px;line-height:1.7;">'
+        + escaped(notice.replace("**", "")).replace("\n\n", "<br><br>") + '</div>'
+        for notice in notices
+    )
     link = (
         f'<a href="{escaped(run_url)}" style="color:#175cd3;text-decoration:none;font-weight:650;">查看GitHub运行记录 →</a>'
         if run_url
@@ -840,7 +849,7 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
     <div style="margin-top:10px;color:#d0d5dd;font-size:14px;line-height:1.55;">信号日 {escaped(day)} · 下一交易日 {escaped(payload.get('next_trade_day', 'N/A'))}</div>
   </td></tr>
   <tr><td style="padding:18px 18px 2px;background:#f8fafc;">
-    <div style="margin-bottom:16px;padding:14px 15px;background:{banner_bg};border:1px solid {accent}33;border-radius:12px;color:#344054;font-size:14px;line-height:1.6;"><strong style="color:{accent};">{escaped(headline)}</strong><br>{escaped(warning)}</div>
+    {notice_html}<div style="margin-bottom:16px;padding:14px 15px;background:{banner_bg};border:1px solid {accent}33;border-radius:12px;color:#344054;font-size:14px;line-height:1.6;"><strong style="color:{accent};">{escaped(headline)}</strong><br>{escaped(warning)}</div>
     <div style="margin-bottom:16px;padding:14px 15px;background:#fffaeb;border:1px solid #fedf89;border-radius:12px;color:#7a2e0e;font-size:14px;line-height:1.6;"><strong>今日恐慌指数</strong><br>{escaped(fear_observation_text(payload))}</div>
     <div style="margin-bottom:16px;padding:14px 15px;background:#fffaeb;border:1px solid #fedf89;border-radius:12px;color:#7a2e0e;font-size:14px;line-height:1.6;"><strong>估值数据来源</strong><br>{escaped(valuation_banner(signals))}</div>
     <div style="margin-bottom:16px;font-size:14px;line-height:1.6;">{escaped(payload.get('grid_release_note', ''))}</div>
@@ -861,7 +870,39 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
 </body></html>'''
 
 
+def partial_calendar_notices(payload: dict[str, Any]) -> list[str]:
+    """Keep a partial grid warning while showing independently dated calendar facts."""
+    if payload.get("status") != "partial":
+        return []
+    try:
+        from ic_im_v1_4_delivery_contract import validate_session_dates
+        mode = payload["publication_mode"]
+        if mode not in {"realtime", "close_confirmed"}:
+            return []
+        days = {key: date.fromisoformat(payload[key]) for key in
+                ("market_date", "completed_day", "verified_day", "next_trade_day")}
+        if days["verified_day"] != days["completed_day"]:
+            return []
+        if mode == "close_confirmed" and days["market_date"] != days["completed_day"]:
+            return []
+        validate_session_dates(days, mode)
+        signals = payload["signals"]
+        if set(signals) != {"IC", "IM"}:
+            return []
+        for product, signal in signals.items():
+            if (signal.get("product") != product or signal.get("market_date") != payload["market_date"]
+                    or signal.get("next_trade_date") != payload["next_trade_day"]
+                    or signal.get("close_confirmed") is not (mode == "close_confirmed")):
+                return []
+        return maintenance_notice.reminders(signals, signal_day=payload["market_date"])
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return []
+
+
 def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
+    notices = partial_calendar_notices(payload)
+    notice_html = "".join('<p style="border:2px solid #f79009;padding:14px;">仅维护日历提醒；当日合约及数量尚未确认。<br>'
+                          + escaped(n.replace("**", "")).replace("\n\n", "<br><br>") + '</p>' for n in notices)
     realtime = str(payload.get("publication_mode", "close_confirmed")) == "realtime"
     mode_text = "盘中实时" if realtime else "收盘确认"
     link = (
@@ -873,7 +914,7 @@ def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
 <body style="margin:0;padding:24px 10px;background:#f2f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',Arial,sans-serif;color:#101828;">
 <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #fecdca;border-radius:16px;overflow:hidden;">
   <div style="padding:22px;background:#b54708;color:#ffffff;"><div style="font-size:12px;font-weight:700;">IC / IM 1.4-r1 · {escaped(mode_text)}</div><div style="margin-top:8px;font-size:24px;font-weight:760;">当日信号警告</div></div>
-  <div style="padding:20px;color:#344054;font-size:14px;line-height:1.7;"><strong>当日新目标尚未确认，请勿依据旧邮件调整。</strong><p>{escaped(fear_observation_text(payload))}</p><p>{escaped(payload.get('fear_warning', '恐慌读数仅供独立观察'))}</p><p>提示：{escaped(payload.get('error_type', 'RuntimeError'))}: {escaped(payload.get('error', '未知原因'))}</p><p>持久账本不会把未确认目标记为当日信号。</p>{link}</div>
+  <div style="padding:20px;color:#344054;font-size:14px;line-height:1.7;"><strong>当日新目标尚未确认，请勿依据旧邮件调整。</strong>{notice_html}<p>{escaped(fear_observation_text(payload))}</p><p>{escaped(payload.get('fear_warning', '恐慌读数仅供独立观察'))}</p><p>提示：{escaped(payload.get('error_type', 'RuntimeError'))}: {escaped(payload.get('error', '未知原因'))}</p><p>持久账本不会把未确认目标记为当日信号。</p>{link}</div>
 </div></body></html>'''
 
 
@@ -1022,6 +1063,7 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         raise ValueError("result must contain IC and IM signals")
     actions = {product: action_parts(signals[product], product) for product in ("IC", "IM")}
     actionable = any(actions.values())
+    notices = maintenance_notice.reminders(signals, signal_day=payload.get("market_date"))
     mode = str(payload.get("publication_mode", "close_confirmed"))
     realtime = mode == "realtime"
     tag = (
@@ -1033,6 +1075,8 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
     replay = payload.get("signal_timing") == "retrospective_replay"
     if replay:
         mode_tag, tag = "历史模型补录", "参考差异" if actionable else "模型持仓维持"
+    if notices:
+        tag = "月度维护日历复核" if replay else "月度Put需维护" + ("/需调整" if actionable else "")
     prefix = f"[{subject_prefix.strip().strip('[]')}]" if subject_prefix.strip() else ""
     day = str(
         payload.get("market_date" if realtime else "completed_day", "未知日期")
@@ -1046,6 +1090,8 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         (
             "**历史模型补录 retrospective_replay；以下差异仅供参考，不是原信号日已发布的前瞻调整目标。**"
             if replay else
+            "**月度Put需维护，请按下列日期在盘尾自行判断合约，并于维护日收盘完成换仓。常规仓位目标另见下表。**"
+            if notices else
             "**盘中预估存在下一交易日调整，请等待收盘确认。**"
             if actionable and realtime
             else "**盘中暂未出现下一交易日调整，收盘前仍可能变化。**"
@@ -1057,6 +1103,7 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         "",
         f"信号日：**{day}**｜下一交易日：**{payload.get('next_trade_day', 'N/A')}**",
         "",
+        *[notice + "\n" for notice in notices],
         "**估值数据来源：" + valuation_banner(signals) + "**",
         "",
         "**" + fear_observation_text(payload) + "**",
@@ -1118,7 +1165,9 @@ def build_failure(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
     prefix = f"[{subject_prefix.strip().strip('[]')}]" if subject_prefix.strip() else ""
     day = str(payload.get("market_date") or payload.get("generated_at", ""))[:10] or "未知日期"
     realtime = str(payload.get("publication_mode", "close_confirmed")) == "realtime"
-    subject = f"{prefix}[警告][{'盘中实时' if realtime else '收盘确认'}] IC/IM 1.4-r1 日报 - {day}"
+    notices = partial_calendar_notices(payload)
+    calendar_tag = "[月度Put维护日历]" if notices else ""
+    subject = f"{prefix}[警告][{'盘中实时' if realtime else '收盘确认'}]{calendar_tag} IC/IM 1.4-r1 日报 - {day}"
     body = "\n".join(
         [
             "## 今日结论",
@@ -1129,6 +1178,7 @@ def build_failure(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
                 else "**IC/IM收盘信号尚未确认，请勿依据旧邮件调整。**"
             ),
             "",
+            *(["仅维护日历提醒；当日合约及数量尚未确认。", "", *[n + "\n" for n in notices]] if notices else []),
             f"- {fear_observation_text(payload)}",
             f"- 恐慌数据提示：{payload.get('fear_warning', '读数仅供独立观察')}",
             f"- 构建：`{payload.get('build', 'N/A')}`",
@@ -1197,3 +1247,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
