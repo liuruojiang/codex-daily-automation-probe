@@ -1,0 +1,15 @@
+{
+  "kind": "real_saved_production_result",
+  "run_id": "38853603565",
+  "source": "handoff-38853603565/report/result.json",
+  "sha256": "c54e9048432cdce19de84645c71022a5f7bfeebe23b8f15461013224bade2434",
+  "market_date": "2026-10-16",
+  "completed_day": "2026-10-15",
+  "produced_at": "2026-10-16T13:03:37+08:00",
+  "scope": "Research signals only; no credentials or account execution evidence",
+  "oct09_render_sha256_before_patch": {
+    "subject": "83ac10169794288c490b74269a01f7f2bd4411b288b5714835430fece77b9e4e",
+    "plain": "91ad9a1f7b782eba5afab05150641a997f7ffceb504ec9d29414d7b7aab263d7",
+    "html": "84feb7e87780d5a2568d7e13121f4501119018df8b19b41a54886fefe1e4fc73"
+  }
+}

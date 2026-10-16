@@ -4,6 +4,8 @@ from __future__ import annotations
 import html
 import math
 import re
+import ic_im_option_maintenance_notice as maintenance_notice
+import ic_im_v1_4_delivery_contract as delivery_contract
 
 
 EFFECTIVE_DAY = '2026-10-09'
@@ -30,18 +32,27 @@ def contract_terms(contract):
     return f'20{match[1]}-{match[2]} / {strike:g}（按合约编码）'
 
 
+def monthly_candidate(signal):
+    """A dated ordinary monthly preview is separate from a lifecycle 3x plan."""
+    return signal.get('close_confirmed') is False and bool(maintenance_notice.reminder(
+        signal.get('product'), signal, is_session=delivery_contract.is_session))
+
+
 def ic_contract(signal, when, leg):
     """Read the producer's separate held/ordinary-target IC identities.
 
     The independent core target is also what the ordinary T+1 planner uses.
-    Monthly maintenance and confirmed 3x execution already update that field;
-    an unexecuted 3x replacement remains a separate lifecycle plan.
+    Confirmed lifecycle transitions update that field. Intraday monthly
+    candidates remain in the ordinary target field until close; an unexecuted
+    3x replacement remains a separate lifecycle plan.
     """
     if signal.get(f'put_{when}_{leg}_qty') == 0:
         return None
     if leg == 'core':
         if when == 'current':
             return signal.get('v14_core_put_current_contract')
+        if monthly_candidate(signal):
+            return signal.get('put_target_contract')
         return signal.get('v14_core_put_contract') or signal.get('put_target_contract')
     return signal.get(f'put_{when}_contract')
 
@@ -51,6 +62,8 @@ def evidence(product, signal):
     if str(signal.get('market_date', '')) < EFFECTIVE_DAY:
         return []  # Do not change previously delivered historical rendering.
     s = signal
+    monthly = monthly_candidate(s)
+    target_label = '当日维护候选' if monthly else '下一目标'
     names = {'core': '核心', 'momentum': '动量', 'grid': '网格', 'total': '合计'}
     if product == 'IC':
         tier = f"估值分{value(s.get('score'))}；{s.get('valuation_tier_label', 'N/A（估值档缺失）')}；估值Delta {pct(s.get('valuation_put_delta'))}"
@@ -71,11 +84,20 @@ def evidence(product, signal):
              f"{value(s.get(f'{leg}_units_target') if leg in ('core', 'momentum') else s.get('grid_target') if leg == 'grid' else s.get('total_units_target'))} / {value(qty('target', leg))}"]
             for leg in ('core', 'momentum', 'grid', 'total')]),
     ]
+    if monthly:
+        tables[1] = ('当前与分时点研究目标规范化数量',
+            ['袖', f"当前（账本来源{s.get('state_anchor_day', 'N/A')}）期货 / Put",
+             f"期货：下一交易日{s.get('next_trade_date', 'N/A')}研究目标",
+             f"Put：{s.get('market_date', 'N/A')}收盘维护候选（盘尾复核）"],
+            [[names[leg], tables[1][2][i][1],
+              value(s.get(f'{leg}_units_target') if leg in ('core', 'momentum') else s.get('grid_target') if leg == 'grid' else s.get('total_units_target')),
+              value(qty('target', leg))]
+             for i, leg in enumerate(('core', 'momentum', 'grid', 'total'))])
     ratios = []
     for when in ('current', 'target'):
         units, puts = s.get(f'total_units_{when}'), qty(when, 'total')
         ratio = puts / units if isinstance(units, (int, float)) and units > 0 and isinstance(puts, (int, float)) else None
-        ratios.append(['当前' if when == 'current' else '下一目标', value(ratio, f'张 / 每1张{product}（账本规范化数量之比）') if ratio is not None else 'N/A（期货为空仓或数量缺失）'])
+        ratios.append(['当前' if when == 'current' else target_label, value(ratio, f'张 / 每1张{product}（账本规范化数量之比）') if ratio is not None else 'N/A（期货为空仓或数量缺失）'])
     tables.append(('每1张期货对应Put', ['状态', '记录数量比例'], ratios))
     rows = []
     for when in ('current', 'target'):
@@ -86,6 +108,8 @@ def evidence(product, signal):
             pricing = s.get('put_pricing_evidence') or {}
             if product == 'IC':
                 field = ('v14_core_put_current_contract' if when == 'current' else 'v14_core_put_contract') if leg == 'core' else f'put_{when}_contract'
+                if monthly and when == 'target' and leg == 'core':
+                    field = 'put_target_contract'
             else:
                 field = 'put_current_contract' if when == 'current' and leg == 'core' else f'{leg}_put_{when}_contract'
             quote = pricing.get(field) or {}
@@ -94,11 +118,11 @@ def evidence(product, signal):
             raw = str(raw) if contract and f'`{contract}`' in str(raw) else 'N/A（result未保存该合约报价原文）'
             if '买/卖' not in raw:
                 raw += '；买/卖价N/A（result未保存）'
-            rows.append([f"{'当前' if when == 'current' else '下一目标'} {names[leg]}", value(q), str(contract or ('无（数量0）' if empty else 'N/A（result合约缺失）')),
+            rows.append([f"{'当前' if when == 'current' else target_label} {names[leg]}", value(q), str(contract or ('无（数量0）' if empty else 'N/A（result合约缺失）')),
                          '无（数量0）' if empty else contract_terms(contract),
                          '无（数量0）' if empty else raw,
                          '无（数量0）' if empty else 'N/A（result未保存该合约独立的报价日期、时间及来源字段；不借用IV参考合约）'])
-    tables.append(('当前Put与下一目标Put合约证据', ['状态 / 袖', '规范化张数', '完整合约', '到期月 / 行权价', '当次result报价原文（最新/买卖价）', '独立行情日 / 快照 / 来源'], rows))
+    tables.append(('当前Put与当日维护候选合约证据' if monthly else '当前Put与下一目标Put合约证据', ['状态 / 袖', '规范化张数', '完整合约', '到期月 / 行权价', '当次result报价原文（最新/买卖价）', '独立行情日 / 快照 / 来源'], rows))
     reference = (f"ETF价格{value(s.get('etf_price'))}；报价日{s.get('etf_quote_date', 'N/A')}；时间{s.get('etf_quote_time', 'N/A')}" if product == 'IC'
                  else f"参考期货{s.get('put_reference_future', 'N/A')}；价格{value(s.get('put_reference_price'))}；取价日{s.get('put_reference_price_date', 'N/A')}；指数{value(s.get('index_price'))}")
     notes = [ratio_note, reference,
@@ -125,3 +149,4 @@ def html_tables(product, signal):
         tr = lambda cells, tag: '<tr>' + ''.join(f'<{tag} style="padding:6px;border:1px solid #e4e7ec;vertical-align:top;">{html.escape(str(x))}</{tag}>' for x in cells) + '</tr>'
         parts.append(f'<h4>{html.escape(title)}</h4><table style="width:100%;border-collapse:collapse;font-size:12px;">{tr(headers, "th")}' + ''.join(tr(row, 'td') for row in rows) + '</table>')
     return ''.join(parts)
+

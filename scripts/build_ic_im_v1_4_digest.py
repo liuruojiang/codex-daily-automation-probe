@@ -371,6 +371,8 @@ def action_parts(signal: dict[str, Any], product: str = "") -> list[str]:
 
 def put_text(product: str, signal: dict[str, Any], target: bool) -> str:
     prefix = "target" if target else "current"
+    maintenance_prefix = (f"{signal.get('market_date')}收盘维护候选，盘尾复核："
+                          if target and put_display.monthly_candidate(signal) else "")
     contract = signal.get(f"put_{prefix}_contract") or "无"
     if product == "IC":
         qty = signal.get(f"put_{prefix}_total_qty", 0)
@@ -384,17 +386,17 @@ def put_text(product: str, signal: dict[str, Any], target: bool) -> str:
                     return "无"
                 return put_display.ic_contract(signal, prefix, leg) or "N/A（result合约缺失）"
             return (
-                f"合计{number(qty)}张（核心{number(core_qty)}张 {leg_contract('core', core_qty)}；"
+                maintenance_prefix + f"合计{number(qty)}张（核心{number(core_qty)}张 {leg_contract('core', core_qty)}；"
                 f"动量{number(momentum_qty)}张 {leg_contract('momentum', momentum_qty)}）"
             )
-        return f"{number(qty)}张 {contract}"
+        return maintenance_prefix + f"{number(qty)}张 {contract}"
     core_qty = signal.get(f"core_put_{prefix}_qty_normalized", 0)
     momentum_qty = signal.get(f"momentum_put_{prefix}_qty_normalized", 0)
     total_qty = signal.get(f"total_put_{prefix}_qty_normalized", 0)
     core_contract = signal.get(f"core_put_{prefix}_contract") or "无"
     momentum_contract = signal.get(f"momentum_put_{prefix}_contract") or "无"
     return (
-        f"合计{number(total_qty)}张（核心{number(core_qty)}张 {core_contract}；"
+        maintenance_prefix + f"合计{number(total_qty)}张（核心{number(core_qty)}张 {core_contract}；"
         f"动量{number(momentum_qty)}张 {momentum_contract}）"
     )
 
