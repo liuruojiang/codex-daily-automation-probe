@@ -1,7 +1,7 @@
 {
   "date": "2026-10-16",
-  "mode": "close",
+  "mode": "realtime",
   "scope": "verified_research_handoff_no_send",
   "export_handoff": true,
-  "requested_at": "2026-10-16T13:23:30+08:00"
+  "requested_at": "2026-10-16T13:26:47.165741+08:00"
 }
