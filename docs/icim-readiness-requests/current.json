@@ -1,7 +1,8 @@
 {
   "date": "2026-10-16",
-  "mode": "close",
+  "requested_at": "2026-10-16T14:51:56.212233+08:00",
+  "mode": "realtime",
   "scope": "verified_research_handoff_no_send",
   "export_handoff": true,
-  "requested_at": "2026-10-16T13:40:04.492021+08:00"
+  "request_id": "ic-im-daily-20261016-1417"
 }
