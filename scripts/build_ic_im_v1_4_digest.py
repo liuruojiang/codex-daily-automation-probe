@@ -11,6 +11,20 @@ from typing import Any
 
 import ic_im_v1_4_put_display as put_display
 import ic_im_option_maintenance_notice as maintenance_notice
+import ic_im_v1_4_delivery_contract as delivery_contract
+import ic_im_put_execution_contract as put_execution_contract
+
+
+def calendar_notices(payload: dict[str, Any]) -> list[str]:
+    return maintenance_notice.reminders(
+        payload.get("signals", {}), signal_day=payload.get("market_date"),
+        is_session=delivery_contract.is_session,
+        historical=payload.get("signal_timing") == "retrospective_replay")
+
+
+def execution_notices(payload: dict[str, Any]) -> list[str]:
+    return [line for product in ("IC", "IM")
+            for line in put_execution_contract.display_lines(product, payload["signals"][product])]
 
 
 HOLD_ACTIONS = {"", "HOLD", "NONE", "NO_ACTION", "MAINTAIN", "WAIT_IV"}
@@ -803,7 +817,9 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
         raise ValueError("result must contain IC and IM signals")
     actions = {product: action_parts(signals[product], product) for product in ("IC", "IM")}
     actionable = any(actions.values())
-    notices = maintenance_notice.reminders(signals, signal_day=payload.get("market_date"))
+    notices = calendar_notices(payload)
+    opening_notices = execution_notices(payload)
+    opening_attention = any(put_execution_contract.needs_attention(signal) for signal in signals.values())
     realtime = str(payload.get("publication_mode", "close_confirmed")) == "realtime"
     day = str(payload.get("market_date" if realtime else "completed_day", "未知日期"))
     mode_text = "盘中实时预估" if realtime else "收盘确认"
@@ -819,13 +835,17 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
                    "这是历史模型补录，不是原信号日已发布的前瞻调整目标或账户成交。")
     if notices:
         headline = "月度Put维护日历需核对" if payload.get("signal_timing") == "retrospective_replay" else "月度Put需维护" + ("，另有常规目标调整" if actionable else "")
-    accent = "#f79009" if actionable or notices else "#12b76a"
-    banner_bg = "#fff7ed" if actionable or notices else "#ecfdf3"
+    elif opening_attention:
+        headline = "Put开盘计划或成本待核验" + ("，另有常规目标调整" if actionable else "")
+    accent = "#f79009" if actionable or notices or opening_attention else "#12b76a"
+    banner_bg = "#fff7ed" if actionable or notices or opening_attention else "#ecfdf3"
     notice_html = "".join(
         '<div style="margin-bottom:16px;padding:16px;background:#fff7ed;border:2px solid #f79009;border-radius:12px;color:#7a2e0e;font-size:16px;line-height:1.7;">'
         + escaped(notice.replace("**", "")).replace("\n\n", "<br><br>") + '</div>'
         for notice in notices
     )
+    if opening_notices:
+        notice_html += '<div style="margin-bottom:16px;padding:16px;background:#fffaeb;border:2px solid #f79009;line-height:1.7;">' + "<br><br>".join(escaped(line) for line in opening_notices) + '</div>'
     link = (
         f'<a href="{escaped(run_url)}" style="color:#175cd3;text-decoration:none;font-weight:650;">查看GitHub运行记录 →</a>'
         if run_url
@@ -870,10 +890,54 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
 </body></html>'''
 
 
+def failed_calendar_notices(payload: dict[str, Any]) -> list[str]:
+    """Derive only dated calendar facts from this attempt's generation clock.
+
+    Failed output must never borrow a prior signal's date, prices or targets.
+    An absent, naive, stale or future generation clock gives no reminder.
+    """
+    try:
+        if payload.get("status") != "failed":
+            return []
+        from datetime import datetime, time, timedelta
+        from zoneinfo import ZoneInfo
+        mode = payload.get("publication_mode")
+        if mode not in {"realtime", "close_confirmed"} or payload.get("signal_timing") == "retrospective_replay":
+            return []
+        stamp = datetime.fromisoformat(str(payload.get("report_generated_at") or payload.get("generated_at")))
+        now = delivery_contract._validation_clock()
+        if stamp.tzinfo is None or now.tzinfo is None or stamp > now:
+            return []
+        clock = stamp.astimezone(ZoneInfo("Asia/Shanghai"))
+        day = clock.date()
+        if (day != now.astimezone(ZoneInfo("Asia/Shanghai")).date()
+                or day.isoformat() != payload.get("market_date") or not delivery_contract.is_session(day)):
+            return []
+        intraday = mode == "realtime"
+        if (intraday and not time(9, 30) <= clock.time() < time(15)) or (not intraday and clock.time() < time(15)):
+            return []
+        first = day.replace(day=1)
+        execution = first + timedelta(days=(4 - first.weekday()) % 7 + 14)
+        while not delivery_contract.is_session(execution):
+            execution += timedelta(days=1)
+        next_day = delivery_contract.adjacent_session(day)
+        signals = {product: dict(product=product, market_date=day.isoformat(),
+                                next_trade_date=next_day.isoformat(), close_confirmed=not intraday,
+                                option_monthly_reset_preview=not intraday,
+                                put_monthly_reset_preview=not intraday,
+                                option_monthly_reset_execution_date=execution.isoformat(),
+                                put_monthly_reset_execution_date=execution.isoformat())
+                   for product in ("IC", "IM")}
+        return maintenance_notice.reminders(signals, signal_day=day,
+                                            is_session=delivery_contract.is_session)
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return []
+
+
 def partial_calendar_notices(payload: dict[str, Any]) -> list[str]:
     """Keep a partial grid warning while showing independently dated calendar facts."""
     if payload.get("status") != "partial":
-        return []
+        return failed_calendar_notices(payload)
     try:
         from ic_im_v1_4_delivery_contract import validate_session_dates
         mode = payload["publication_mode"]
@@ -894,7 +958,7 @@ def partial_calendar_notices(payload: dict[str, Any]) -> list[str]:
                     or signal.get("next_trade_date") != payload["next_trade_day"]
                     or signal.get("close_confirmed") is not (mode == "close_confirmed")):
                 return []
-        return maintenance_notice.reminders(signals, signal_day=payload["market_date"])
+        return calendar_notices(payload)
     except (KeyError, TypeError, ValueError, AttributeError):
         return []
 
@@ -1041,6 +1105,8 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
             from ic_im_v1_4_delivery_contract import validate_pending_plans, validate_quantities
             validate_quantities(product, signal)
             validate_pending_plans(product, signal)
+            put_execution_contract.validate_execution(product, signal, is_session=delivery_contract.is_session,
+                                                       adjacent_session=delivery_contract.adjacent_session)
             if str(signal.get("market_date") or "")[:10] != str(days["market_date"]):
                 raise ValueError(f"{product} signal day must match digest day")
             if signal.get("v14_ordinary_put_plan_status") == "scheduled_t_plus_1_open":
@@ -1063,7 +1129,9 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         raise ValueError("result must contain IC and IM signals")
     actions = {product: action_parts(signals[product], product) for product in ("IC", "IM")}
     actionable = any(actions.values())
-    notices = maintenance_notice.reminders(signals, signal_day=payload.get("market_date"))
+    notices = calendar_notices(payload)
+    opening_notices = execution_notices(payload)
+    opening_attention = any(put_execution_contract.needs_attention(signal) for signal in signals.values())
     mode = str(payload.get("publication_mode", "close_confirmed"))
     realtime = mode == "realtime"
     tag = (
@@ -1077,6 +1145,10 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         mode_tag, tag = "历史模型补录", "参考差异" if actionable else "模型持仓维持"
     if notices:
         tag = "月度维护日历复核" if replay else "月度Put需维护" + ("/需调整" if actionable else "")
+    elif opening_attention:
+        tag = "Put开盘待核验" + ("/需调整" if actionable else "")
+    elif opening_notices:
+        tag += "/Put开盘已核验"
     prefix = f"[{subject_prefix.strip().strip('[]')}]" if subject_prefix.strip() else ""
     day = str(
         payload.get("market_date" if realtime else "completed_day", "未知日期")
@@ -1092,6 +1164,8 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
             if replay else
             "**月度Put需维护，请按下列日期在盘尾自行判断合约，并于维护日收盘完成换仓。常规仓位目标另见下表。**"
             if notices else
+            "**Put开盘计划或入场成本仍待核验，请先核对下列独立开盘事件；未核验不视为成交。**"
+            if opening_attention else
             "**盘中预估存在下一交易日调整，请等待收盘确认。**"
             if actionable and realtime
             else "**盘中暂未出现下一交易日调整，收盘前仍可能变化。**"
@@ -1104,6 +1178,7 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         f"信号日：**{day}**｜下一交易日：**{payload.get('next_trade_day', 'N/A')}**",
         "",
         *[notice + "\n" for notice in notices],
+        *[notice + "\n" for notice in opening_notices],
         "**估值数据来源：" + valuation_banner(signals) + "**",
         "",
         "**" + fear_observation_text(payload) + "**",
@@ -1247,4 +1322,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
