@@ -108,7 +108,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 94a34d7552f52fc06e58ad26ee560969097658d3
+          ref: be4173440daace20ee698103d05bc75838316a30
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -357,13 +357,14 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, "strategy")
           import poe_ic_im_v1_4_state as state
+          import run_ic_im_v1_4_github_digest as runner
           store = state.StateStore("state")
           latest = store.load_latest()
           state.anchors_from_record(latest)
           result = json.loads(Path("strategy-artifacts/result.json").read_text())
-          assert result["status"] == "ok" and result["publication_mode"] == "close_confirmed"
+          assert result["status"] in {"ok", "partial"} and result["publication_mode"] == "close_confirmed"
           assert all(result[key] == latest[key] for key in ("verified_day", "sequence", "digest"))
-          assert result["market_date"] == latest["verified_day"] and result["signals"] == latest["signals"]
+          assert result["market_date"] == latest["verified_day"] and result["signals"] == {p: runner.strategy.fear_grid.publication_view(s) for p, s in latest["signals"].items()}
           migration = json.loads(Path("state/migration_record.json").read_text())
           assert migration["new_ledger"]["digest"] == store.load_sequence(0)["digest"]
           before = json.loads(Path("strategy-artifacts/ledger-before.json").read_text())
@@ -434,4 +435,5 @@ jobs:
       - name: Fail when signal publication failed
         if: always() && steps.run_signal.outputs.exit_code != '' && steps.run_signal.outputs.exit_code != '0'
         run: exit 1
+
 

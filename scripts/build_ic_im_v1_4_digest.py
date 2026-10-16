@@ -29,6 +29,7 @@ def execution_notices(payload: dict[str, Any]) -> list[str]:
 
 HOLD_ACTIONS = {"", "HOLD", "NONE", "NO_ACTION", "MAINTAIN", "WAIT_IV"}
 ACTION_CN = {
+    "UNCONFIRMED": "未确认",
     "HOLD": "维持",
     "NONE": "无",
     "NO_ACTION": "无调整",
@@ -489,6 +490,8 @@ def momentum_reason(product: str, signal: dict[str, Any]) -> str:
 
 
 def grid_reason(product: str, signal: dict[str, Any]) -> str:
+    if signal.get("grid_action") == "UNCONFIRMED":
+        return "独立网格：百分位缺少合格读数，网格及合计目标未确认；其他模块照常展示。" + jiu_reference_text(signal)
     if str(signal.get("market_date", ""))[:10] >= "2026-10-08":
         fear = signal.get("fear_greed_index")
         fear_text = "缺失" if fear is None else decimal(fear)
@@ -500,6 +503,7 @@ def grid_reason(product: str, signal: dict[str, Any]) -> str:
             f"{signal.get('grid_entry_source_target', 'N/A')}，"
             f"原因{signal.get('grid_transition_reason', 'N/A')}。"
             "恐慌入场按≥50退出，估值入场按原估值线退出；网格不配Put或Call。"
+            + str(signal.get("fear_source_warning") or "") + jiu_reference_text(signal)
         )
     entry, exit_ = ((0.5, 1.0) if product == "IC" else (1.6, 2.0))
     score = signal.get("score")
@@ -746,7 +750,7 @@ def fear_observation_text(payload: dict[str, Any]) -> str:
     day = str(payload.get("market_date", "未知日期"))
     if day < "2026-10-08":
         return f"当日恐慌指数（{day}）：历史日报未接入该来源，未核验。"
-    if payload.get("status") == "ok":
+    if payload.get("status") in {"ok", "partial"} and payload.get("signals"):
         signal = (payload.get("signals") or {}).get("IC") or {}
         score = signal.get("fear_greed_index")
         status = signal.get("fear_data_status", "N/A")
@@ -760,7 +764,23 @@ def fear_observation_text(payload: dict[str, Any]) -> str:
         "intraday_previous_session", "close_previous_session"
     } else ""
     title = f"信号日{day}的恐慌输入" if basis else f"当日恐慌指数（{day}）"
-    return f"{title}：{value}；数据日 {data_day}；状态 {status}{basis}。"
+    signal = {**((payload.get("signals") or {}).get("IC") or payload), **payload.get("jiu_reference", {})}
+    warning = signal.get("fear_source_warning") or ("百分位CSV与网页已完成双侧验证。" if signal.get("fear_cross_validation") == "matched" else "")
+    reference = jiu_reference_text(signal)
+    extra = " ".join(x for x in (warning, reference) if x)
+    return f"{title}：{value}；数据日 {data_day}；状态 {status}{basis}。" + (" " + extra if extra else "")
+
+
+def jiu_reference_text(signal):
+    if "jiu_status" not in signal and "jiu_fear_greed_index" not in signal:
+        return ""
+    value = signal.get("jiu_fear_greed_index")
+    if value is None:
+        return "9圈恐慌贪婪指数：暂未取得；仅供参考，不参与网格信号。"
+    mismatch = "；与百分位数据日不同" if signal.get("jiu_data_date") != signal.get("fear_data_date") else ""
+    return (f"9圈恐慌贪婪指数：{decimal(value)}；数据日 {signal.get('jiu_data_date')}"
+            f"；采集 {signal.get('jiu_retrieved_at')}{mismatch}；仅供参考，不参与网格信号。"
+            "官网：https://jiucaishuo.com/indicators?tab=fg")
 
 
 def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
@@ -812,7 +832,7 @@ def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
 
 
 def build_success_html(payload: dict[str, Any], run_url: str) -> str:
-    signals = payload.get("signals", {})
+    signals = {p: {**s, **payload.get("jiu_reference", {})} for p, s in payload.get("signals", {}).items()}
     if set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
     actions = {product: action_parts(signals[product], product) for product in ("IC", "IM")}
@@ -833,6 +853,9 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
         mode_text, headline = "历史模型补录", "参考差异" if actionable else "模型持仓维持"
         warning = (f"实际报告完成 {payload.get('report_generated_at', payload.get('generated_at', 'N/A'))}；retrospective_replay。"
                    "这是历史模型补录，不是原信号日已发布的前瞻调整目标或账户成交。")
+    if payload.get("status") == "partial":
+        headline = "网格及合计目标未确认，其他模块照常展示"
+        warning = "百分位没有合格读数；日报继续发布。网格及合计目标以N/A表示，不代表零仓或维持仓位。"
     if notices:
         headline = "月度Put维护日历需核对" if payload.get("signal_timing") == "retrospective_replay" else "月度Put需维护" + ("，另有常规目标调整" if actionable else "")
     elif opening_attention:
@@ -992,6 +1015,19 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
         raise ValueError("digest build/revision does not match signal-day identity")
 
     marker_name(payload)
+    if payload.get("status") == "partial":
+        import copy
+        payload = copy.deepcopy(payload)
+        for signal in payload["signals"].values():
+            if signal.get("grid_action") != "UNCONFIRMED":
+                continue
+            if (not delivery_contract.flexible_source(signal) or signal.get("fear_greed_index") is not None
+                    or signal.get("grid_target") is not None or signal.get("total_units_target") is not None
+                    or signal.get("signal_completeness") != "partial"
+                    or signal.get("reference_grid_target") != signal.get("grid_current")):
+                raise ValueError("partial Fear report must hide targets and preserve grid state")
+            for field in ("grid_target", "grid_action", "grid_entry_source_target", "grid_transition_reason", "total_units_target", "total_units_change"):
+                signal[field] = signal.get("reference_" + field)
     days = {}
     for field in ("market_date", "completed_day", "verified_day", "next_trade_day"):
         value = payload.get(field)
@@ -1026,7 +1062,9 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
             raise ValueError("fix10 grid policy identity mismatch")
         shared = ("fear_greed_index", "fear_data_date", "fear_data_status", "fear_csv_sha256",
                   "fear_intraday_policy_revision", "fear_close_policy_revision", "fear_fallback_applied",
-                  "fear_previous_exchange_date", "fear_fallback_reason", "fear_fallback_timing")
+                  "fear_previous_exchange_date", "fear_fallback_reason", "fear_fallback_timing",
+                  "fear_source_policy_revision", "fear_available_sources", "fear_selected_source",
+                  "fear_cross_validation", "fear_page_sha256")
         if any(signals["IC"].get(field) != signals["IM"].get(field) for field in shared):
             raise ValueError("IC/IM Fear source snapshots disagree")
     for product, signal in signals.items():
@@ -1092,11 +1130,13 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
                                      (not lagged_fear and signal.get("fear_data_date") != days["market_date"].isoformat())):
                 raise ValueError(f"{product} fix10 Fear score/date invalid")
             if payload["publication_mode"] == "close_confirmed" and signal.get("fear_data_status") not in {
-                "same_day_post_close", "retrospective_replay", "missing_published_history", "close_previous_session"
+                "same_day_post_close", "retrospective_replay", "missing_published_history", "close_previous_session",
+                *({"same_day_unverified_close", "unavailable"} if delivery_contract.flexible_source(signal) else set())
             }:
                 raise ValueError(f"{product} fix10 Fear score not close-confirmed")
             if payload["publication_mode"] == "realtime" and signal.get("fear_data_status") not in {
-                "intraday_provisional", "intraday_unpublished", "intraday_previous_session"
+                "intraday_provisional", "intraday_unpublished", "intraday_previous_session",
+                *({"unavailable"} if delivery_contract.flexible_source(signal) else set())
             }:
                 raise ValueError(f"{product} fix10 Fear status is not a valid realtime observation")
             if signal.get("fear_fallback_timing") == "retrospective_replay" and payload.get("signal_timing") != "retrospective_replay":
@@ -1124,7 +1164,7 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
 
 def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) -> tuple[str, str, bool]:
     validate_success_payload(payload)
-    signals = payload.get("signals", {})
+    signals = {p: {**s, **payload.get("jiu_reference", {})} for p, s in payload.get("signals", {}).items()}
     if set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
     actions = {product: action_parts(signals[product], product) for product in ("IC", "IM")}
@@ -1149,6 +1189,8 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         tag = "Put开盘待核验" + ("/需调整" if actionable else "")
     elif opening_notices:
         tag += "/Put开盘已核验"
+    if payload.get("status") == "partial":
+        tag = "部分数据缺失/网格未确认"
     prefix = f"[{subject_prefix.strip().strip('[]')}]" if subject_prefix.strip() else ""
     day = str(
         payload.get("market_date" if realtime else "completed_day", "未知日期")
@@ -1162,6 +1204,8 @@ def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) ->
         (
             "**历史模型补录 retrospective_replay；以下差异仅供参考，不是原信号日已发布的前瞻调整目标。**"
             if replay else
+            "**百分位没有合格读数；网格及合计目标未确认，其他模块照常展示。**"
+            if payload.get("status") == "partial" else
             "**月度Put需维护，请按下列日期在盘尾自行判断合约，并于维护日收盘完成换仓。常规仓位目标另见下表。**"
             if notices else
             "**Put开盘计划或入场成本仍待核验，请先核对下列独立开盘事件；未核验不视为成交。**"
@@ -1291,7 +1335,7 @@ def main() -> int:
     if str(payload.get("build", "")) != expected_build or str(payload.get("delivery_revision", "")) != expected_delivery:
         raise ValueError("digest build/revision does not match signal-day identity")
     run_url = os.environ.get("GITHUB_RUN_URL", "")
-    if payload.get("status") == "ok":
+    if payload.get("status") in {"ok", "partial"} and payload.get("signals"):
         subject, body, _ = build_success(payload, run_url, args.subject_prefix)
         html_body = build_success_html(payload, run_url)
         attachment = required_success_report(Path(args.result), args.report, payload)
@@ -1322,5 +1366,6 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
 

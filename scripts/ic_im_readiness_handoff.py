@@ -25,7 +25,11 @@ def main():
     latest = store.load_latest()
     preflight = json.loads((artifacts/'preflight.json').read_text())
     result = json.loads((artifacts/'result.json').read_text())
-    assert result['status'] == 'ok' and args.source_artifact > 0
+    assert result['status'] in {'ok', 'partial'} and args.source_artifact > 0
+    if result['status'] == 'partial':
+        assert result.get('signal_completeness') == 'partial' and result.get('incomplete_components')
+        from build_ic_im_v1_4_digest import validate_success_payload
+        validate_success_payload(result)
     assert preflight['strategy_sha'] == args.strategy_sha
     assert latest['digest'] == preflight['restored_digest'], 'handoff must preserve the restored production ledger'
     assert latest['verified_day'] == preflight['completed_day']
@@ -58,7 +62,7 @@ def main():
     files = [(f'ledger/{p.relative_to(directory).as_posix()}', p)
              for p in [directory/'latest.json', directory/'migration_record.json', *journal_paths]]
     files += [(f'report/{name}', artifacts/name) for name in ('result.json', report_name, 'preflight.json')]
-    manifest = dict(strategy_sha=args.strategy_sha, source_artifact_id=args.source_artifact,
+    manifest = dict(signal_completeness=result.get('signal_completeness', 'complete'), status=result['status'], strategy_sha=args.strategy_sha, source_artifact_id=args.source_artifact,
                     verified_day=latest['verified_day'], sequence=latest['sequence'], digest=latest['digest'],
                     publication_mode=result['publication_mode'], market_date=result['market_date'],
                     files={name:hashlib.sha256(path.read_bytes()).hexdigest() for name,path in files})

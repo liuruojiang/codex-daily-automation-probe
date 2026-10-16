@@ -156,7 +156,7 @@ jobs:
           sys.path.insert(0, 'automation/scripts')
           import check_ic_im_v1_4_delivery as gate
           result = json.loads(Path('readiness-artifacts/result.json').read_text())
-          assert result['status'] == 'ok'
+          assert result['status'] in {'ok', 'partial'}
           assert result['build'] == gate.expected_identity_for_day(__import__('datetime').date.fromisoformat(result['market_date']))[0]
           metadata = json.loads(Path('readiness-mail/metadata.json').read_text())
           assert metadata['subject'] and metadata['body']
@@ -181,6 +181,39 @@ jobs:
           --strategy-root strategy --strategy-sha "${{ steps.pin.outputs.sha }}"
           --source-artifact "${{ steps.restore.outputs.artifact_id }}"
           --state-dir readiness-state --artifact-dir readiness-artifacts
+      - name: Observe public Fear feeds without sending
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, sys
+          from datetime import datetime
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+          sys.path.insert(0, 'strategy')
+          import ic_im_fear_grid_v1 as feed
+          day = datetime.now(ZoneInfo('Asia/Shanghai')).date()
+          original_get = feed._bounded_get
+          def archive_get(url, maximum):
+              raw = original_get(url, maximum)
+              name = 'jiu.json' if url == feed.JIU_URL else 'baifenwei.csv' if url == feed.CSV_URL else 'baifenwei.html'
+              Path('readiness-artifacts').mkdir(exist_ok=True)
+              Path('readiness-artifacts', name).write_bytes(raw)
+              if url == feed.JIU_URL:
+                  data = json.loads(raw)
+                  print('JIU schema:', list(data) if isinstance(data, dict) else type(data).__name__)
+                  history = data.get('history') if isinstance(data, dict) else None
+                  if isinstance(history, list) and history:
+                      print('JIU history sample:', history[0], history[-1])
+              return raw
+          feed._bounded_get = archive_get
+          ref = feed.fetch_jiu_reference(day)
+          fear = feed.fetch_score(day, 'intraday' if datetime.now(ZoneInfo('Asia/Shanghai')).hour < 15 else 'close')
+          Path('readiness-artifacts/fear-source-probe.json').write_text(json.dumps(fear, ensure_ascii=False, indent=2))
+          print(json.dumps(fear, ensure_ascii=False))
+          Path('readiness-artifacts').mkdir(exist_ok=True)
+          Path('readiness-artifacts/fear-reference-probe.json').write_text(json.dumps(ref, ensure_ascii=False, indent=2))
+          print(json.dumps(ref, ensure_ascii=False))
+          PY
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -190,4 +223,5 @@ jobs:
             readiness-mail/
           if-no-files-found: error
           retention-days: 30
+
 

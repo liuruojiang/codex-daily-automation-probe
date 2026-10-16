@@ -1,7 +1,1 @@
-{
-  "date": "2026-10-16",
-  "mode": "realtime",
-  "scope": "verified_research_handoff_no_send",
-  "export_handoff": true,
-  "request_revision": "20261016_verified_transport_v2"
-}
+{"date":"2026-10-16","mode":"close","scope":"verified_research_handoff_no_send","export_handoff":false,"request_revision":"20261016_fear_sources_reference_v1"}

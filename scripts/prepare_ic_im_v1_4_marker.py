@@ -15,8 +15,13 @@ from check_ic_im_v1_4_delivery import (
 
 
 def marker_name(payload: dict[str, object]) -> str:
-    if payload.get("status") != "ok":
+    if payload.get("status") not in {"ok", "partial"}:
         raise ValueError("delivery marker requires a successful signal result")
+    if payload.get("status") == "partial" and (
+        payload.get("signal_completeness") != "partial" or not payload.get("incomplete_components")
+        or not any(s.get("grid_action") == "UNCONFIRMED" and s.get("fear_source_policy_revision") == "baifenwei_either_source_20261016_v1"
+                   for s in payload.get("signals", {}).values())):
+        raise ValueError("partial delivery requires explicit bounded Fear warning")
     if str(payload.get("strategy_revision")) != EXPECTED_REVISION:
         raise ValueError("delivery marker requires strategy_revision=r1")
     market_date = str(payload.get("market_date", ""))
@@ -61,6 +66,7 @@ def main() -> int:
                 "publication_mode": payload["publication_mode"],
                 "market_date": payload["market_date"],
                 "digest": payload["digest"],
+                "signal_completeness": payload.get("signal_completeness", "complete"),
                 "github_run_url": os.environ.get("GITHUB_RUN_URL", ""),
             },
             ensure_ascii=False,
@@ -81,3 +87,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
