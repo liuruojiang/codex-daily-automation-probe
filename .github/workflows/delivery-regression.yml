@@ -188,6 +188,8 @@ jobs:
             test_ic_im_quarter_roll_v1_3.py \
             test_ic_im_ordinary_put_route_fix_20261013.py test_ic_im_quote_snapshot_guard_20261013.py \
             test_ic_im_split_put_summary_20261013.py \
+            test_ic_im_put_execution_repairs_20261016.py test_ic_im_option_maintenance_notice_20261016.py \
+            test_ic_im_put_delivery_completion_20261016.py \
             --junitxml=regression.xml
           python -B -X utf8 - <<'PY'
           import xml.etree.ElementTree as ET
@@ -204,3 +206,4 @@ jobs:
           path: |
             strategy/regression.xml
             strategy/tested-sha.txt
+

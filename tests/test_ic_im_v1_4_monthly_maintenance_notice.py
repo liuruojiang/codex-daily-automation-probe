@@ -93,9 +93,10 @@ def test_historical_reminder_does_not_claim_original_publication():
 
 def test_dates_as_objects_and_no_calendar_weekday_guess():
     item = payload()["signals"]["IC"]
-    item.update(market_date=date(2026, 10, 16), next_trade_date=date(2026, 10, 19),
-                option_monthly_reset_execution_date=date(2026, 10, 19))
-    assert "下一交易日（2026-10-19）" in notice.reminder("IC", item)
+    item.update(market_date=date(2026, 6, 18), next_trade_date=date(2026, 6, 22),
+                option_monthly_reset_execution_date=date(2026, 6, 22))
+    assert "下一交易日（2026-06-22）" in notice.reminder("IC", item, is_session=digest.delivery_contract.is_session)
+    assert not notice.reminder("IC", item)
 
 
 def test_partial_calendar_does_not_suppress_warning_or_expose_stale_targets():
