@@ -2263,6 +2263,84 @@
       "evidence_level": "publisher_rss_summary_only_direct_page_blocked",
       "verify_next": "补送时沿用摘要可见范围并标明全文403；ETF规则、持仓、成本、风险和数字须核验正式资料；不据此交易。",
       "origin_report_date": "2026-10-17"
+    },
+    {
+      "origin_run_id": "39078231302",
+      "origin_report_date": "2026-10-18",
+      "source": "Seeking Alpha ETFs",
+      "title": "EIDO: Indonesia Like Pakistan In 2008, With A Delisting Risk That Can't Be Ignored",
+      "zh_title": "EIDO：印尼与2008年的巴基斯坦相似，不容忽视的退市风险",
+      "url": "https://seekingalpha.com/article/4954997-eido-indonesia-like-pakistan-in-2008-with-a-delisting-risk-that-cant-be-ignored?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-17T15:31:09+00:00",
+      "summary": "The author discusses Indonesia index-classification risk, potential capital outflows and currency depreciation, and EIDO concentration in domestic banks. These are scenario claims, not a verified fund liquidation announcement. The public summary also describes a positive case conditional on market status and reforms.",
+      "zh_summary": "作者讨论MSCI可能将印尼降为独立市场所带来的指数资金流出和汇率风险，并指出EIDO集中持有印尼银行，可能放大冲击；作者同时列出保留新兴市场资格并推进流通股改革的正面情景。这些是作者的情景判断，尚未独立核验事件及估值数据。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "若进入研究，核对MSCI咨询原件、决定/实施日期、ETF存续条款、银行与汇率敞口；不能把标题中的退市风险直接解释为ETF已宣布清盘。"
+    },
+    {
+      "origin_run_id": "39078231302",
+      "origin_report_date": "2026-10-18",
+      "source": "Seeking Alpha ETFs",
+      "title": "FDIS: Consumer Discretionary Sector Dashboard For October",
+      "zh_title": "FDIS：十月可选消费行业观察面板",
+      "url": "https://seekingalpha.com/article/4954831-fdis-consumer-discretionary-sector-dashboard-for-october?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-17T14:10:00+00:00",
+      "summary": "The monthly dashboard compares value, quality and momentum within consumer discretionary industries and compares FDIS with XLY. Its public summary emphasizes concentration in Amazon and Tesla and the need to distinguish industry valuation from company-specific risk. The calculations and performance claims have not been independently reproduced.",
+      "zh_summary": "月度面板按价值、质量和动量评价可选消费行业；作者认为消费服务相对11年均值低估且质量较好。文章将FDIS与XLY比较，并强调市值加权行业ETF对Amazon和Tesla的个股集中风险，列出8只相对同业更便宜股票。未核验其历史收益或估值计算。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验估值与质量指标定义、样本时点、FDIS/XLY权重和分红费用口径，以及行业中性或集中度调整后的表现。"
+    },
+    {
+      "origin_run_id": "39078231302",
+      "origin_report_date": "2026-10-18",
+      "source": "Seeking Alpha ETFs",
+      "title": "TQQQ: The Tech Selloff Is Not Yet A Bear Market, But Leverage Requires Discipline",
+      "zh_title": "TQQQ：科技股抛售尚非熊市，但杠杆使用需要纪律",
+      "url": "https://seekingalpha.com/article/4954992-tqqq-the-tech-selloff-is-not-yet-a-bear-market-but-leverage-requires-discipline?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-17T14:04:47+00:00",
+      "summary": "The author proposes dynamically combining QQQ and TQQQ, rebalancing regularly and reducing leverage when economic conditions deteriorate. The public summary discusses drawdown control and a historical backtest. Full signal definitions, execution timing, financing costs and out-of-sample evidence remain unverified; leveraged product exclusion from mover lists is not a research exclusion.",
+      "zh_summary": "作者把当前科技弱势解释为牛市内调整，并提出QQQ与TQQQ动态配置、定期再平衡及经济恶化时减杠杆，以控制回撤。公开摘要声称十年回测的年化收益29.96%、最大回撤25.72%；这些为作者未复现的历史测试数字，不是当日行情或已验证策略绩效。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "需取得完整权重与宏观触发规则、信号可得时间、交易执行时点、样本区间、融资和再平衡成本，并测试样本外与危机反例；摘要不能支持策略晋级。"
+    },
+    {
+      "origin_run_id": "39078231302",
+      "origin_report_date": "2026-10-18",
+      "source": "Seeking Alpha ETFs",
+      "title": "Income-Covered Closed-End Fund Report, October 2026",
+      "zh_title": "2026年十月净投资收益覆盖分配的封闭式基金报告",
+      "url": "https://seekingalpha.com/article/4954991-income-covered-closed-end-fund-report-october-2026?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-17T14:04:37+00:00",
+      "summary": "This public report screens closed-end funds for net investment income coverage above one hundred percent and a discount to net asset value, using October 6 data. The summary reports twenty passing funds and a combined yield, discount and z-score ranking. Historical accounting data and leverage risks require verification.",
+      "zh_summary": "报告以2026年10月6日收盘资料筛选封闭式基金：净投资收益对分配覆盖率大于100%，同时相对净值折价。公开摘要称本月20只通过，采用收益率、折价和z分数综合排序，并说明原“Quality”报告改名是为了更准确反映分配覆盖主题。数据日早于文章发布日期，不能当作10月17日实时状态。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对覆盖率期间、会计定义、分配中资本返还占比、杠杆融资、折价结构，以及筛选后组合可交易性与税费。"
+    },
+    {
+      "origin_run_id": "39078231302",
+      "origin_report_date": "2026-10-18",
+      "source": "Seeking Alpha ETFs",
+      "title": "PDO: Why Retirees Should Consider This 12.8% Yielding Machine",
+      "zh_title": "PDO：退休者为何可考虑这只分配率12.8%的基金",
+      "url": "https://seekingalpha.com/article/4954957-pdo-retirees-should-consider-this-12_8-percent-yielding-machine?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-17T13:15:00+00:00",
+      "summary": "The author attributes PDO price weakness to higher yields and wider credit spreads rather than impaired fundamentals and argues that credit quality and distribution coverage remain sound. These are individual author claims from a public summary. The title distribution rate is not a verified expected total return.",
+      "zh_summary": "作者把PDO价格下降归因为收益率抬升及信用利差扩大，主张属于重定价而非基本面受损，并认为信用质量与分配覆盖仍稳健，讨论其退休收入配置用途。标题的12.8%是原题宣称的分配率，并非本轮核实的净收益或可持续回报。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核对基金财报、UNII和覆盖期、杠杆与融资成本、持仓信用质量、久期与净值折价；分配率不等于预期总回报。"
+    },
+    {
+      "origin_run_id": "39078231302",
+      "origin_report_date": "2026-10-18",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Tech Stock Sell-Off: 1 Unstoppable ETF to Buy on the Dip in 2026",
+      "zh_title": "科技股抛售：一只可在2026年回调时考虑的强势ETF",
+      "url": "https://www.fool.com/investing/2026/10/17/tech-stock-sell-off-1-unstoppable-etf-to-buy-on-th/?.tsrc=rss",
+      "published": "2026-10-17T16:37:00+00:00",
+      "summary": "The article describes the Nasdaq 100 construction and periodic adjustments behind QQQ and presents a long-term growth argument based on cloud computing and artificial intelligence. It compares diversified ETF exposure with picking one technology stock. The purchase opinion, growth forecasts and historical-return statements have not been independently validated.",
+      "zh_summary": "文章介绍QQQ跟踪纳斯达克100，并从指数筛选、定期调整、费用和云计算/AI长期增长逻辑论证长期持有。作者将ETF分散持有与押注单一科技股复苏作比较。可见正文包含持仓和历史表现陈述，本审计不将其中行情或涨跌数字引入当日摘要，也不独立背书作者的购买判断。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "若用于组合研究，核验指数纳入和再平衡规则、当前费用、行业与个股集中度、估值及增长预测来源，并测试利率上升和AI增长不达预期的反例。"
     }
   ]
 }
