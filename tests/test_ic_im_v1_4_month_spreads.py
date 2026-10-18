@@ -49,7 +49,7 @@ def test_archived_reasons_unchanged_and_new_missing_quotes_are_na():
     ("ratio", float("nan")), ("annualized", None), ("annualized", 1e300),
     ("source_date", "2026-10-14"), ("near_contract", "IM2610"),
     ("far_contract", "IC2612"), ("same_contract", True),
-    ("expiry_gap_days", 30), ("points", 999), ("near_expiry", "2026-09-18"),
+    ("expiry_gap_days", 30), ("points", 999), ("near_expiry", "2026-09-18"), ("source", None),
 ])
 def test_malformed_display_group_is_isolated_in_both_mail_formats(field, invalid):
     good = dict(status="ok", near_contract="IC2610", far_contract="IC2611",
@@ -67,3 +67,17 @@ def test_malformed_display_group_is_isolated_in_both_mail_formats(field, invalid
     assert "N/A" in lines[0] and "+100.00点" in lines[1]
     assert "N/A" in digest.reasons_html("IC", signal)
     assert signal == before
+
+
+@pytest.mark.parametrize("missing", ["source", "source_date", "near_contract", "far_contract", "near_price",
+    "far_price", "points", "ratio", "annualized", "same_contract", "near_expiry", "far_expiry", "expiry_gap_days"])
+def test_every_required_month_spread_key_missing_renders_na(missing):
+    value = dict(status="ok", near_contract="IC2610", far_contract="IC2611",
+                 near_price=6100., far_price=6075., points=25., ratio=25/6100,
+                 annualized=25/6100*365/35, same_contract=False,
+                 near_expiry="2026-10-16", far_expiry="2026-11-20", expiry_gap_days=35,
+                 source_date="2026-10-15", source="synthetic boundary test")
+    del value[missing]
+    signal = {"market_date": "2026-10-15", "month_next_spread": value}
+    assert "N/A" in digest.month_spread_reasons(signal, "IC")[0]
+    assert "N/A" in digest.reasons_html("IC", signal)

@@ -636,6 +636,12 @@ def _validated_month_spread(value, label, product=None, day=None):
     """Validate optional display metadata without mutating a persisted signal."""
     if not isinstance(value, dict) or value.get("status") != "ok":
         raise ValueError(str((value if isinstance(value, dict) else {}).get("reason", "未提供同日完整报价")))
+    required = {"source", "source_date", "near_contract", "far_contract", "near_price", "far_price",
+                "points", "ratio", "annualized", "same_contract", "near_expiry", "far_expiry", "expiry_gap_days"}
+    if required.difference(value):
+        raise ValueError("missing spread display fields: " + ",".join(sorted(required.difference(value))))
+    if not isinstance(value["source"], str) or not value["source"].strip():
+        raise ValueError("spread source must be nonempty text")
     near = re.fullmatch(r"(IC|IM)(\d{2})(\d{2})", str(value.get("near_contract", "")))
     far = re.fullmatch(r"(IC|IM)(\d{2})(\d{2})", str(value.get("far_contract", "")))
     if not near or not far or near[1] != far[1] or (product and near[1] != product):
@@ -681,7 +687,6 @@ def _validated_month_spread(value, label, product=None, day=None):
         if not math.isfinite(expected) or not math.isclose(annualized, expected, rel_tol=1e-10, abs_tol=1e-12):
             raise ValueError("spread annualized arithmetic mismatch")
     return value
-
 
 
 def month_spread_reasons(signal: dict[str, Any], product: str = "") -> list[str]:
