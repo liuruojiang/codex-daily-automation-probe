@@ -4,6 +4,8 @@ import argparse
 import html
 import json
 import math
+import re
+from numbers import Real
 import os
 from datetime import date
 from pathlib import Path
@@ -621,12 +623,80 @@ def quarter_spread_reason(signal: dict[str, Any]) -> str:
     )
 
 
-def month_spread_reasons(signal: dict[str, Any]) -> list[str]:
+def _spread_number(value, label):
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{label} must be a real number, not boolean/text")
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError(f"{label} must be finite")
+    return number
+
+
+def _validated_month_spread(value, label, product=None, day=None):
+    """Validate optional display metadata without mutating a persisted signal."""
+    if not isinstance(value, dict) or value.get("status") != "ok":
+        raise ValueError(str((value if isinstance(value, dict) else {}).get("reason", "未提供同日完整报价")))
+    required = {"source", "source_date", "near_contract", "far_contract", "near_price", "far_price",
+                "points", "ratio", "annualized", "same_contract", "near_expiry", "far_expiry", "expiry_gap_days"}
+    if required.difference(value):
+        raise ValueError("missing spread display fields: " + ",".join(sorted(required.difference(value))))
+    if not isinstance(value["source"], str) or not value["source"].strip():
+        raise ValueError("spread source must be nonempty text")
+    near = re.fullmatch(r"(IC|IM)(\d{2})(\d{2})", str(value.get("near_contract", "")))
+    far = re.fullmatch(r"(IC|IM)(\d{2})(\d{2})", str(value.get("far_contract", "")))
+    if not near or not far or near[1] != far[1] or (product and near[1] != product):
+        raise ValueError("spread contract product mismatch")
+    near_month = (2000 + int(near[2])) * 12 + int(near[3]) - 1
+    far_month = (2000 + int(far[2])) * 12 + int(far[3]) - 1
+    if not (1 <= int(near[3]) <= 12 and 1 <= int(far[3]) <= 12):
+        raise ValueError("invalid contract month")
+    expected_far = near_month + 1 if label == "当月－次月" else near_month + (3 - int(near[3]) % 3) % 3
+    if far_month != expected_far:
+        raise ValueError("spread tenor mismatch")
+    source_day = date.fromisoformat(str(value["source_date"]))
+    if day is not None and source_day != date.fromisoformat(str(day)[:10]):
+        raise ValueError("spread source date mismatch")
+    near_expiry = date.fromisoformat(str(value["near_expiry"]))
+    far_expiry = date.fromisoformat(str(value["far_expiry"]))
+    gap = (far_expiry - near_expiry).days
+    if (near_expiry < source_day or near_expiry.year * 12 + near_expiry.month - 1 != near_month
+            or far_expiry.year * 12 + far_expiry.month - 1 != far_month or gap < 0
+            or type(value.get("expiry_gap_days")) is not int or value["expiry_gap_days"] != gap):
+        raise ValueError("spread expiry interval mismatch")
+    numbers = {key: _spread_number(value[key], key)
+               for key in ("near_price", "far_price", "points", "ratio")}
+    if min(numbers["near_price"], numbers["far_price"]) <= 0:
+        raise ValueError("spread prices must be positive")
+    points = numbers["near_price"] - numbers["far_price"]
+    ratio = points / numbers["near_price"]
+    if (not math.isfinite(ratio)
+            or not math.isclose(numbers["points"], points, rel_tol=1e-10, abs_tol=1e-9)
+            or not math.isclose(numbers["ratio"], ratio, rel_tol=1e-10, abs_tol=1e-12)):
+        raise ValueError("spread arithmetic mismatch")
+    same = value["near_contract"] == value["far_contract"]
+    if type(value.get("same_contract")) is not bool or value["same_contract"] != same:
+        raise ValueError("spread same-contract flag mismatch")
+    if same:
+        if gap != 0 or value.get("annualized") is not None or points != 0:
+            raise ValueError("same contract cannot have an annualized spread")
+    else:
+        if gap <= 0:
+            raise ValueError("different contracts require a positive expiry interval")
+        annualized = _spread_number(value["annualized"], "annualized")
+        expected = ratio * 365 / gap
+        if not math.isfinite(expected) or not math.isclose(annualized, expected, rel_tol=1e-10, abs_tol=1e-12):
+            raise ValueError("spread annualized arithmetic mismatch")
+    return value
+
+
+def month_spread_reasons(signal: dict[str, Any], product: str = "") -> list[str]:
     lines = []
     for key, label in (("month_next_spread", "当月－次月"), ("month_quarter_spread", "当月－当季")):
         value = signal.get(key) or {}
-        if value.get("status") != "ok":
-            lines.append(f"月度价差（{label}）：N/A（" + str(value.get("reason", "缺少同日完整报价")) + "）")
+        try:
+            value = _validated_month_spread(value, label, product or signal.get("product"), signal.get("market_date"))
+        except (ValueError, TypeError, KeyError, AttributeError, OverflowError, ZeroDivisionError) as exc:
+            lines.append(f"月度价差（{label}）：N/A（{exc}）")
             continue
         annual = ("同一合约，年化不适用" if value.get("same_contract") else
                   f"按到期间隔折算{float(value['annualized']):+.2%}/年，非保证收益")
@@ -698,7 +768,7 @@ def product_reasons(product: str, signal: dict[str, Any]) -> list[str]:
         call_reason(product, signal),
         roll_reason(signal),
         quarter_spread_reason(signal),
-        *(month_spread_reasons(signal) if any(key in signal for key in ("month_next_spread", "month_quarter_spread"))
+        *(month_spread_reasons(signal, product) if any(key in signal for key in ("month_next_spread", "month_quarter_spread"))
           or str(signal.get("market_date", ""))[:10] >= "2026-10-18" else []),
         v14_route_reason(signal, product),
     ]
