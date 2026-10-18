@@ -698,7 +698,8 @@ def product_reasons(product: str, signal: dict[str, Any]) -> list[str]:
         call_reason(product, signal),
         roll_reason(signal),
         quarter_spread_reason(signal),
-        *month_spread_reasons(signal),
+        *(month_spread_reasons(signal) if any(key in signal for key in ("month_next_spread", "month_quarter_spread"))
+          or str(signal.get("market_date", ""))[:10] >= "2026-10-18" else []),
         v14_route_reason(signal, product),
     ]
 

@@ -31,3 +31,10 @@ def test_historical_missing_is_na_and_same_contract_has_no_annualized_rate():
     text = digest.month_spread_reasons(signal)[1]
     assert "+0.00点" in text and "同一合约，年化不适用" in text
     assert text in digest.reasons_html("IM", signal)
+
+
+def test_archived_reasons_unchanged_and_new_missing_quotes_are_na():
+    old = {"market_date": "2026-10-09"}
+    assert not any("月度价差" in line for line in digest.product_reasons("IC", old))
+    new = {"market_date": "2026-10-19"}
+    assert sum("月度价差" in line and "N/A" in line for line in digest.product_reasons("IC", new)) == 2
