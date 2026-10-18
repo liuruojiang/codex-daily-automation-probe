@@ -621,6 +621,23 @@ def quarter_spread_reason(signal: dict[str, Any]) -> str:
     )
 
 
+def month_spread_reasons(signal: dict[str, Any]) -> list[str]:
+    lines = []
+    for key, label in (("month_next_spread", "当月－次月"), ("month_quarter_spread", "当月－当季")):
+        value = signal.get(key) or {}
+        if value.get("status") != "ok":
+            lines.append(f"月度价差（{label}）：N/A（" + str(value.get("reason", "缺少同日完整报价")) + "）")
+            continue
+        annual = ("同一合约，年化不适用" if value.get("same_contract") else
+                  f"按到期间隔折算{float(value['annualized']):+.2%}/年，非保证收益")
+        lines.append(
+            f"月度价差（{label}）：{value['near_contract']} {decimal(value['near_price'], 2)}"
+            f" − {value['far_contract']} {decimal(value['far_price'], 2)} = {float(value['points']):+.2f}点"
+            f"（{float(value['ratio']):+.2%}；{annual}）；行情 {value['source_date']}，{value['source']}"
+        )
+    return lines
+
+
 def v14_route_reason(signal: dict[str, Any], product: str = "") -> str:
     scope = signal.get("v14_signal_scope", "research_model_signal_only")
     route = signal.get("v14_route_state", "future")
@@ -681,6 +698,7 @@ def product_reasons(product: str, signal: dict[str, Any]) -> list[str]:
         call_reason(product, signal),
         roll_reason(signal),
         quarter_spread_reason(signal),
+        *month_spread_reasons(signal),
         v14_route_reason(signal, product),
     ]
 
@@ -1369,6 +1387,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
 
 

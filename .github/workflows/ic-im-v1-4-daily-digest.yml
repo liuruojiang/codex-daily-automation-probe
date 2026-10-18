@@ -108,7 +108,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 36ef68aa1e96a1d352d67f60eeb36e3e622bd010
+          ref: 2bac737308718245d46093fee5ff4b1a0781541f
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -435,5 +435,6 @@ jobs:
       - name: Fail when signal publication failed
         if: always() && steps.run_signal.outputs.exit_code != '' && steps.run_signal.outputs.exit_code != '0'
         run: exit 1
+
 
 
