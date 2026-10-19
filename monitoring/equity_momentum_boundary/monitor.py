@@ -28,6 +28,8 @@ from urllib.request import Request, urlopen
 
 import pandas as pd
 
+from advisory import build_advisory, render_advisory_html, render_advisory_text
+
 
 MONITOR_NAME = "Weekly Equity Momentum Boundary Monitor"
 PAPER_URL = "https://onlinelibrary.wiley.com/doi/full/10.1111/fima.70055"
@@ -599,6 +601,8 @@ def render_text(report: dict[str, Any]) -> str:
         f"生成时间（UTC）：{report['generated_at_utc']}",
         "研究监控，不是交易信号；任何跨资产推广都需要单独验证。",
         "",
+        render_advisory_text(report.get("advisory") or build_advisory(report)),
+        "",
         "核心论文式指标（12个月均值；边界分数 0—2）",
         "指标 | 窗口 | 数据月 | 估值/股息率MA12 | 期限利差MA12 | 分数/极端组件/状态",
     ]
@@ -666,6 +670,7 @@ def render_html(report: dict[str, Any]) -> str:
 <h2>{escape(report['monitor'])} | {escape(report['overall_state'])}</h2>
 <p>生成时间（UTC）：{escape(report['generated_at_utc'])}<br>
 研究监控，不是交易信号；跨资产推广需要单独验证。</p>
+{render_advisory_html(report.get('advisory') or build_advisory(report))}
 <h3>核心论文式指标</h3>
 <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse">
 <thead><tr><th>指标</th><th>窗口</th><th>数据月</th><th>估值/股息率 MA12</th><th>期限利差 MA12</th><th>分数 / 极端组件 / 状态</th></tr></thead>
@@ -682,6 +687,7 @@ def render_html(report: dict[str, Any]) -> str:
 def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=MONITOR_NAME)
     parser.add_argument("--output-dir", type=Path, default=Path("artifacts/equity_momentum_boundary"))
+    parser.add_argument("--previous-report", type=Path, default=None)
     return parser.parse_args(argv)
 
 
@@ -692,6 +698,20 @@ def main(argv: Iterable[str] | None = None) -> int:
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     report = build_report()
+    previous = None
+    if args.previous_report and args.previous_report.exists():
+        try:
+            candidate = json.loads(args.previous_report.read_text(encoding="utf-8"))
+            prior_time = datetime.fromisoformat(candidate["generated_at_utc"])
+            current_time = datetime.fromisoformat(report["generated_at_utc"])
+            age_days = (current_time - prior_time).total_seconds() / 86400
+            if candidate.get("monitor") == MONITOR_NAME and 0 < age_days <= 14:
+                previous = candidate
+            else:
+                report["warnings"].append("Previous snapshot has wrong monitor/date or is older than 14 days; comparison omitted")
+        except (ValueError, TypeError, KeyError, OSError):
+            report["warnings"].append("Previous snapshot is unreadable; comparison omitted")
+    report["advisory"] = build_advisory(report, previous)
     text_body = render_text(report)
     html_body = render_html(report)
     (args.output_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -717,3 +737,4 @@ def main(argv: Iterable[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

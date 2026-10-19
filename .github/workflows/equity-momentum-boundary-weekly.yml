@@ -39,8 +39,15 @@ jobs:
         working-directory: monitoring/equity_momentum_boundary
         run: python -m unittest discover -p "test_*.py"
 
+      - name: Restore previous delivered report
+        uses: actions/cache/restore@v4
+        with:
+          path: .monitor-state/report.json
+          key: equity-boundary-report-v1-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: equity-boundary-report-v1-${{ github.ref_name }}-
+
       - name: Build weekly report metadata
-        run: python monitoring/equity_momentum_boundary/monitor.py --output-dir artifacts
+        run: python monitoring/equity_momentum_boundary/monitor.py --output-dir artifacts --previous-report .monitor-state/report.json
 
       - name: Send through the existing daily-report mailer
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
@@ -54,6 +61,19 @@ jobs:
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
         run: python scripts/send_report.py artifacts/metadata.json
 
+      - name: Prepare delivered snapshot
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
+        run: |
+          mkdir -p .monitor-state
+          cp artifacts/report.json .monitor-state/report.json
+
+      - name: Save delivered snapshot
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
+        uses: actions/cache/save@v4
+        with:
+          path: .monitor-state/report.json
+          key: equity-boundary-report-v1-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
       - name: Upload weekly report artifact
         if: always()
         uses: actions/upload-artifact@v7
@@ -62,3 +82,4 @@ jobs:
           path: artifacts/
           if-no-files-found: warn
           retention-days: 90
+
