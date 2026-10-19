@@ -1,6 +1,10 @@
 name: Weekly Equity Momentum Boundary Monitor
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - monitoring/equity_momentum_boundary/replay_request.json
   schedule:
     # 09:00 Asia/Shanghai every Monday. GitHub cron is UTC.
     - cron: "0 1 * * 1"
@@ -13,6 +17,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: equity-momentum-boundary-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   monitor:
@@ -47,7 +55,9 @@ jobs:
           restore-keys: equity-boundary-report-v1-${{ github.ref_name }}-
 
       - name: Build weekly report metadata
-        run: python monitoring/equity_momentum_boundary/monitor.py --output-dir artifacts --previous-report .monitor-state/report.json
+        env:
+          REPORT_LABEL: ${{ github.event_name == 'push' && '审计修订重发' || '' }}
+        run: python monitoring/equity_momentum_boundary/monitor.py --output-dir artifacts --previous-report .monitor-state/report.json --report-label "$REPORT_LABEL"
 
       - name: Send through the existing daily-report mailer
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
@@ -59,7 +69,7 @@ jobs:
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
-        run: python scripts/send_report.py artifacts/metadata.json
+        run: python scripts/send_report.py artifacts/metadata.json --receipt artifacts/delivery-receipt.json
 
       - name: Prepare delivered snapshot
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}

@@ -32,6 +32,7 @@ from advisory import build_advisory, render_advisory_html, render_advisory_text
 
 
 MONITOR_NAME = "Weekly Equity Momentum Boundary Monitor"
+METHOD_VERSION = "2026-10-19-monthly-v2"
 PAPER_URL = "https://onlinelibrary.wiley.com/doi/full/10.1111/fima.70055"
 SHILLER_PAGE_URL = "https://shillerdata.com/"
 FRED_GRAPH_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
@@ -83,7 +84,10 @@ def discover_shiller_url() -> str:
 
 
 def _parse_shiller_periods(values: pd.Series) -> pd.Series:
-    raw = values.astype(str).str.extract(r"(?P<year>\d{4})\.(?P<month>\d{1,2})")
+    # Shiller's numeric YYYY.MM convention loses October's trailing zero
+    # when Excel returns a float: 2026.10 becomes 2026.1, meaning October.
+    raw = values.astype(str).str.extract(r"^\s*(?P<year>\d{4})\.(?P<month>\d{1,2})\s*$")
+    raw["month"] = raw["month"].str.pad(2, side="right", fillchar="0")
     year = pd.to_numeric(raw["year"], errors="coerce")
     month = pd.to_numeric(raw["month"], errors="coerce")
     out = pd.Series(pd.NaT, index=values.index, dtype="period[M]")
@@ -113,7 +117,9 @@ def load_shiller_data() -> tuple[pd.DataFrame, SourceResult]:
             "cape": pd.to_numeric(frame["CAPE"], errors="coerce"),
         }
     )
-    out = out.dropna(subset=["period"]).sort_values("period").drop_duplicates("period", keep="last")
+    out = out.dropna(subset=["period"]).sort_values("period")
+    if out["period"].duplicated().any():
+        raise RuntimeError("Shiller data contains duplicate monthly observations")
     out["dividend_yield"] = out["dividend"] / out["price"]
     out.loc[~out["dividend_yield"].between(0, 1), "dividend_yield"] = float("nan")
     out = out.set_index("period")
@@ -235,6 +241,7 @@ def build_term_spread_proxy() -> tuple[pd.DataFrame, list[SourceResult], list[st
     """Monthly long-minus-short Treasury proxy matching the paper's structure."""
 
     warnings: list[str] = []
+    h15_fallback = False
     try:
         fred = load_fred_series_bulk(["GS10", "TB3MS"])
         long_rate, long_source = fred["GS10"]
@@ -243,17 +250,26 @@ def build_term_spread_proxy() -> tuple[pd.DataFrame, list[SourceResult], list[st
         sources = [long_source, short_source]
     except Exception as exc:  # noqa: BLE001 - use an official fallback, with disclosure
         h15, h15_sources = load_h15_treasury_rates()
+        h15_fallback = True
         long_rate = h15["ten_year"].dropna()
         short_rate = h15["three_month"].dropna()
         two_year_rate = h15["two_year"].dropna()
         sources = h15_sources
         warnings.append(f"FRED term-spread data unavailable; used official Federal Reserve H.15 fallback: {exc}")
-    long_month = long_rate.groupby(long_rate.index.to_period("M")).last()
-    short_month = short_rate.groupby(short_rate.index.to_period("M")).last()
+    # FRED GS10/TB3MS are monthly averages. Preserve that aggregation when
+    # falling back to daily H.15 observations; a month-end quote is not equivalent.
+    long_month = long_rate.groupby(long_rate.index.to_period("M")).mean()
+    short_month = short_rate.groupby(short_rate.index.to_period("M")).mean()
+    if h15_fallback:
+        warnings.append(
+            "H.15 fallback uses monthly average 10Y-minus-3M constant-maturity yields; "
+            "the 3M constant-maturity investment yield differs from FRED TB3MS's "
+            "Treasury-bill discount-rate basis, so fallback levels are not identical/comparable."
+        )
     frame = pd.concat({"long_rate": long_month, "short_rate": short_month}, axis=1).dropna()
     frame["term_spread"] = frame["long_rate"] - frame["short_rate"]
     if two_year_rate is not None:
-        two_year_month = two_year_rate.groupby(two_year_rate.index.to_period("M")).last()
+        two_year_month = two_year_rate.groupby(two_year_rate.index.to_period("M")).mean()
         frame["two_year_rate"] = two_year_month.reindex(frame.index)
         frame["term_spread_10y2y"] = frame["long_rate"] - frame["two_year_rate"]
     return frame, sources, warnings
@@ -284,6 +300,14 @@ def boundary_component(values: pd.Series, window: int) -> pd.DataFrame:
     """Return paper-like 12-month average, scaling, score, and tail flag."""
 
     values = pd.to_numeric(values, errors="coerce").sort_index()
+    if not isinstance(values.index, pd.PeriodIndex) or values.index.freqstr != "M":
+        raise ValueError("Boundary components require a monthly PeriodIndex")
+    if values.index.has_duplicates:
+        raise ValueError("Boundary components require unique monthly observations")
+    if not values.empty:
+        # A rolling count of 12 rows means 12 months only on a complete calendar.
+        # Leave missing months missing; never interpolate them into economic data.
+        values = values.reindex(pd.period_range(values.index.min(), values.index.max(), freq="M"))
     moving = values.rolling(12, min_periods=12).mean()
     low = moving.rolling(window, min_periods=window).min()
     high = moving.rolling(window, min_periods=window).max()
@@ -293,6 +317,8 @@ def boundary_component(values: pd.Series, window: int) -> pd.DataFrame:
         dtype=float,
     )
     percentile = rolling_percentile(moving, window)
+    extreme = (percentile.le(0.10) | percentile.ge(0.90)).astype("boolean")
+    extreme = extreme.mask(percentile.isna() | scaled.isna(), pd.NA)
     return pd.DataFrame(
         {
             "raw": values,
@@ -302,7 +328,7 @@ def boundary_component(values: pd.Series, window: int) -> pd.DataFrame:
             "scaled": scaled,
             "score": scaled.pow(2),
             "percentile": percentile,
-            "extreme": percentile.le(0.10) | percentile.ge(0.90),
+            "extreme": extreme,
         },
         index=values.index,
     )
@@ -352,7 +378,7 @@ def build_boundary_variant(
     result["extreme_count"] = result["valuation_extreme"].astype("Int64") + result["term_extreme"].astype("Int64")
     valid = result.dropna(subset=["boundary_score", "extreme_count"])
     if valid.empty:
-        return {"status": "warming", "detail": f"fewer than {window} years of valid history"}
+        return {"status": "warming", "detail": f"no valid boundary score: requires {window + 11} consecutive monthly observations and a nonconstant normalization range"}
     row = valid.iloc[-1]
     return {
         "status": "ok",
@@ -512,7 +538,7 @@ def build_report() -> dict[str, Any]:
                     years * 12,
                 )
         core["term_spread_proxy"] = {
-            "definition": "FRED GS10 minus TB3MS; monthly public proxy for the paper's long-bond minus short-Treasury term spread",
+            "definition": "FRED monthly GS10 minus TB3MS, or monthly-average H.15 10Y-minus-3M constant-maturity yields; H.15 3M investment-yield basis differs from TB3MS discount-rate basis",
             "latest_as_of": str(term.index.max()),
             "latest_value": _safe_float(term["term_spread"].iloc[-1]),
             "cape_latest_as_of": _period_string(cape_latest),
@@ -548,6 +574,7 @@ def build_report() -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     return {
         "monitor": MONITOR_NAME,
+        "method_version": METHOD_VERSION,
         "generated_at_utc": now.isoformat(),
         "overall_state": overall,
         "research_only": True,
@@ -688,6 +715,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=MONITOR_NAME)
     parser.add_argument("--output-dir", type=Path, default=Path("artifacts/equity_momentum_boundary"))
     parser.add_argument("--previous-report", type=Path, default=None)
+    parser.add_argument("--report-label", default="")
     return parser.parse_args(argv)
 
 
@@ -698,10 +726,23 @@ def main(argv: Iterable[str] | None = None) -> int:
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     report = build_report()
+    report.setdefault("method_version", METHOD_VERSION)
+    if args.report_label:
+        report["warnings"].append("审计修订重算：已修复Shiller十月日期解析和连续月历窗口；与此前旧算法读数的差异不应解释为本周市场变化。")
     previous = None
     if args.previous_report and args.previous_report.exists():
         try:
             candidate = json.loads(args.previous_report.read_text(encoding="utf-8"))
+            if not isinstance(candidate, dict):
+                raise ValueError("snapshot root must be an object")
+            if not isinstance(candidate.get("core"), dict) or not isinstance(candidate.get("supplemental"), dict):
+                raise ValueError("snapshot core/supplemental must be objects")
+            if not isinstance(candidate.get("sources"), list) or not all(isinstance(s, dict) for s in candidate["sources"]):
+                raise ValueError("snapshot sources must be objects")
+            if not all(isinstance(v, dict) for v in candidate["core"].values()):
+                raise ValueError("snapshot variants must be objects")
+            if candidate.get("method_version") != report["method_version"]:
+                raise ValueError("snapshot method version changed; rebuild baseline")
             prior_time = datetime.fromisoformat(candidate["generated_at_utc"])
             current_time = datetime.fromisoformat(report["generated_at_utc"])
             age_days = (current_time - prior_time).total_seconds() / 86400
@@ -712,6 +753,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         except (ValueError, TypeError, KeyError, OSError):
             report["warnings"].append("Previous snapshot is unreadable; comparison omitted")
     report["advisory"] = build_advisory(report, previous)
+    report["overall_state"] = report["advisory"]["current_core_state"]
     text_body = render_text(report)
     html_body = render_html(report)
     (args.output_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -720,7 +762,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     (args.output_dir / "metadata.json").write_text(
         json.dumps(
             {
-                "subject": f"每周股票动量边界监控 | {report['overall_state']} | {report['generated_at_utc'][:10]}",
+                "subject": f"每周股票动量边界监控 | {report['overall_state']} | {report['generated_at_utc'][:10]}" + (f" | {args.report_label}" if args.report_label else ""),
                 "body": text_body,
                 "html_body": html_body,
                 "attachment": None,
