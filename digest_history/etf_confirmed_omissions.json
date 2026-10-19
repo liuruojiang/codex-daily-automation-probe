@@ -2341,6 +2341,97 @@
       "zh_summary": "文章介绍QQQ跟踪纳斯达克100，并从指数筛选、定期调整、费用和云计算/AI长期增长逻辑论证长期持有。作者将ETF分散持有与押注单一科技股复苏作比较。可见正文包含持仓和历史表现陈述，本审计不将其中行情或涨跌数字引入当日摘要，也不独立背书作者的购买判断。",
       "evidence_level": "publisher_full_article",
       "verify_next": "若用于组合研究，核验指数纳入和再平衡规则、当前费用、行业与个股集中度、估值及增长预测来源，并测试利率上升和AI增长不达预期的反例。"
+    },
+    {
+      "origin_run_id": "39176396226",
+      "origin_report_date": "2026-10-19",
+      "source": "Meb Faber",
+      "title": "T-Bills and STILL Chillin’",
+      "zh_title": "短期国库券，依然从容持有",
+      "url": "https://mebfaber.com/2026/10/18/t-bills-and-still-chillin/",
+      "published": "2026-10-18T20:22:38+00:00",
+      "summary": "作者引用一篇债券配置研究：仅当信用利差足以补偿风险时才持有风险债券，并称该系统当时及目前均配置100%短期国库券。原博客短文可读；没有取得论文完整规则、阈值、样本或复现结果。这是作者的模型陈述，不是账户持仓或交易指令。",
+      "zh_summary": "作者引用一篇债券配置研究：仅当信用利差足以补偿风险时才持有风险债券，并称该系统当时及目前均配置100%短期国库券。原博客短文可读；没有取得论文完整规则、阈值、样本或复现结果。这是作者的模型陈述，不是账户持仓或交易指令。",
+      "evidence_level": "publisher_full_short_post",
+      "verify_next": "核验信用利差指标与阈值、发布时间、再平衡和执行时点、风险债券指数、成本以及样本外表现。"
+    },
+    {
+      "origin_run_id": "39176396226",
+      "origin_report_date": "2026-10-19",
+      "source": "Seeking Alpha ETFs",
+      "title": "SH: A Tactical Hedge, But Not Yet A Short Call",
+      "zh_title": "SH：可作战术对冲，但尚非方向性做空判断",
+      "url": "https://seekingalpha.com/article/4955077-sh-a-tactical-hedge-but-not-yet-a-short-call?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-18T20:01:22+00:00",
+      "summary": "公开摘要将SH定位为短期事件风险对冲工具，强调其标普500每日反向收益目标，并不支持长期方向性持有；作者评为持有。完整论证和风险参数不可读，不能将其对科技敞口的对冲表述当作已验证效果。",
+      "zh_summary": "公开摘要将SH定位为短期事件风险对冲工具，强调其标普500每日反向收益目标，并不支持长期方向性持有；作者评为持有。完整论证和风险参数不可读，不能将其对科技敞口的对冲表述当作已验证效果。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验每日反向重置、路径依赖、持有期成本、对冲比例、组合beta和科技行业基差风险。"
+    },
+    {
+      "origin_run_id": "39176396226",
+      "origin_report_date": "2026-10-19",
+      "source": "Seeking Alpha ETFs",
+      "title": "WCLD: Why Small Cloud Computing Stocks Are Breaking Out (Rating Upgrade)",
+      "zh_title": "WCLD：小型云计算股票为何突破上涨（评级上调）",
+      "url": "https://seekingalpha.com/article/4955076-wcld-why-small-cloud-computing-stocks-are-breaking-out-rating-upgrade?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-18T19:46:49+00:00",
+      "summary": "公开摘要以估值、长期盈利增长预期、技术形态及季节性为依据上调WCLD评级，并提及修正等权结构缓和单股风险。未读完整文章，预测估值和趋势信号均为作者观点，未独立复现。",
+      "zh_summary": "公开摘要以估值、长期盈利增长预期、技术形态及季节性为依据上调WCLD评级，并提及修正等权结构缓和单股风险。未读完整文章，预测估值和趋势信号均为作者观点，未独立复现。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验估值和盈利预测来源、样本时点、指数等权规则、200日均线信号、季节性样本外及成本。"
+    },
+    {
+      "origin_run_id": "39176396226",
+      "origin_report_date": "2026-10-19",
+      "source": "Seeking Alpha ETFs",
+      "title": "UTES Vs. UTG: Why I Prefer The ETF As Rates Rise.",
+      "zh_title": "UTES对比UTG：作者为何在利率上升时偏好ETF",
+      "url": "https://seekingalpha.com/article/4955075-utes-vs-utg-why-i-prefer-the-etf-as-rates-rise?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-18T19:31:55+00:00",
+      "summary": "公开摘要比较公用事业ETF UTES与封闭式基金UTG，强调费用、杠杆和利率敏感性差异，同时认为UTG月度分配对部分退休者具有吸引力；数据中心电力需求是作者的增长论据。不能将作者偏好当作独立绩效验证。",
+      "zh_summary": "公开摘要比较公用事业ETF UTES与封闭式基金UTG，强调费用、杠杆和利率敏感性差异，同时认为UTG月度分配对部分退休者具有吸引力；数据中心电力需求是作者的增长论据。不能将作者偏好当作独立绩效验证。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验两者持仓、费用与杠杆、融资成本、久期代理、分配税务、折溢价和同口径总回报。"
+    },
+    {
+      "origin_run_id": "39176396226",
+      "origin_report_date": "2026-10-19",
+      "source": "Seeking Alpha ETFs",
+      "title": "WEA: Attractive Monthly Pay With Discount Blowing Out",
+      "zh_title": "WEA：折价扩大下的月度分配吸引力",
+      "url": "https://seekingalpha.com/article/4955065-wea-attractive-monthly-pay-with-discount-blowing-out?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-18T14:54:32+00:00",
+      "summary": "公开摘要讨论Western Asset Premier Bond Fund的净值折价扩大、利率敏感性和杠杆风险；作者认为分配覆盖尚可，但较高短期利率会侵蚀覆盖。完整覆盖率数据、时点及持仓未取得。",
+      "zh_summary": "公开摘要讨论Western Asset Premier Bond Fund的净值折价扩大、利率敏感性和杠杆风险；作者认为分配覆盖尚可，但较高短期利率会侵蚀覆盖。完整覆盖率数据、时点及持仓未取得。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验分配覆盖期、UNII、杠杆融资成本、资产久期、信用风险及折价扩大能否补偿净值损失。"
+    },
+    {
+      "origin_run_id": "39176396226",
+      "origin_report_date": "2026-10-19",
+      "source": "Seeking Alpha ETFs",
+      "title": "BWG: Strengthening U.S. Dollar And Rising Bond Yields Likely To Be Headwind",
+      "zh_title": "BWG：美元走强与债券收益率上升或构成阻力",
+      "url": "https://seekingalpha.com/article/4955063-bwg-strengthening-us-dollar-rising-bond-yields-likely-to-be-headwind?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-18T14:40:45+00:00",
+      "summary": "公开摘要指出BWG持有较多新兴市场主权和公司债，具有非美元汇率敞口；净投资收益落后于分配，存在覆盖可持续性问题，并讨论相对净值折价。只取得公开摘要，未验证收益率或历史回报。",
+      "zh_summary": "公开摘要指出BWG持有较多新兴市场主权和公司债，具有非美元汇率敞口；净投资收益落后于分配，存在覆盖可持续性问题，并讨论相对净值折价。只取得公开摘要，未验证收益率或历史回报。",
+      "evidence_level": "publisher_public_summary_only",
+      "verify_next": "核验持仓币种、汇率对冲、久期、信用利差、杠杆、分配覆盖和折价的同日数据。"
+    },
+    {
+      "origin_run_id": "39176396226",
+      "origin_report_date": "2026-10-19",
+      "source": "Ben Felix",
+      "title": "Breaking Down My Investment Portfolio",
+      "zh_title": "拆解我的投资组合",
+      "url": "https://www.youtube.com/watch?v=h3ajVyC5vJc",
+      "published": "2026-10-18T10:00:22+00:00",
+      "summary": "Ben Felix的完整节目说明介绍其个人资产负债表：一只全球股票基金、收购PWL公司的私人股权、自住房，以及他认为可能偏多的现金；章节明确列出DFA607、私人股权、住房和现金。作者承认并非每项选择都完全理性。只读取发布者完整说明和章节，未听完音频或读取全部字幕，不推断各项权重和历史表现。",
+      "zh_summary": "Ben Felix的完整节目说明介绍其个人资产负债表：一只全球股票基金、收购PWL公司的私人股权、自住房，以及他认为可能偏多的现金；章节明确列出DFA607、私人股权、住房和现金。作者承认并非每项选择都完全理性。只读取发布者完整说明和章节，未听完音频或读取全部字幕，不推断各项权重和历史表现。",
+      "evidence_level": "publisher_episode_description_and_chapters",
+      "verify_next": "核验公开基金策略与费用、私人股权流动性和职业收入集中、住房与负债、现金需求，以及个人情境能否迁移。"
     }
   ]
 }
