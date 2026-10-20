@@ -62,6 +62,14 @@ jobs:
           --registry config/etf-shadow-reviewed-registry.json
           --audit config/etf-source-intake-audit.json
           --report artifacts-automatic-preview/source-intake-proof.json
+      - name: Rebuild separately reviewed supplement and preserve frozen mail refusal
+        run: >-
+          python -B scripts/etf_supplement_research.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --intake-audit config/etf-source-intake-audit.json
+          --record config/etf-supplement-research-record.json
+          --report artifacts-automatic-preview/supplement-research-proof.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -181,7 +189,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - run: python -m pip install 'pytest>=8,<9' 'PyYAML>=6,<7' 'hypothesis>=6,<7'
+      - run: python -m pip install 'pytest>=8,<9' 'PyYAML>=6,<7' 'hypothesis>=6,<7' 'beautifulsoup4==4.14.3'
       - name: Check delivery contracts and all automation regressions
         env:
           TEST_FAMILY: ${{ inputs.family || 'all' }}
