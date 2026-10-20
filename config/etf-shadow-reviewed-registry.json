@@ -1,0 +1,396 @@
+{
+  "version": "etf-reviewed-preview-registry-v1",
+  "snapshot": {
+    "run_id": "39347818936",
+    "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b",
+    "cutoff_utc": "2026-10-20T00:28:29.686191+00:00",
+    "body_sha256": "fb5d38afdea5fa1a0327852b9021254a520107b8e5d7a665315b6ea7a1e059b4",
+    "history_sha256": "b1f73b75cbc5e10ff7acf79a224f3156b886b64e91fb7ab7a550084b957a91ce"
+  },
+  "entries": [
+    {
+      "material_id": "c9ba65b38e31bb0ba581260f9b18c62d3c970bd2fe683d9aec7138c81e04baf4",
+      "url": "https://earlyretirementnow.com/2026/10/19/tips-swr-series-part-66/",
+      "card": {
+        "material_id": "c9ba65b38e31bb0ba581260f9b18c62d3c970bd2fe683d9aec7138c81e04baf4",
+        "title_zh": "配置TIPS能否提高我的安全提款率——安全提款率系列第六十六篇",
+        "questions": [
+          "当前仅取得节选，完整模拟结果及图表能否在原文中核对？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者指出，2024年的前作结论是混合的：对长期限的早退休者而言，在2024年的实际利率下TIPS并未提供多少保障，而年金则带有显著的通胀风险。",
+            "evidence_ids": [
+              "p1.s8",
+              "p1.s9"
+            ]
+          },
+          {
+            "text_zh": "作者指出，20年和30年期TIPS的实际利率目前超过3%，据Bloomberg，截至October 16, 2026，30年期TIPS实际利率为3.17%。",
+            "evidence_ids": [
+              "p1.s10",
+              "p1.s136"
+            ]
+          },
+          {
+            "text_zh": "作者以TIPSladder.com的数据估算，要锁定$100,000的平均年度实际收入，今天购买整个30年期债券阶梯的花费略低于$2,000,000；按每$1,000的30年保证阶梯收入需投入$19,800计算，相当于30年内5.05%的保证提款率。",
+            "evidence_ids": [
+              "p1.s138",
+              "p1.s140",
+              "p1.s141"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "作者指出，5.05%的提款率有一个主要缺点：没有任何上行空间；若活到第31年便会一无所有。",
+            "evidence_ids": [
+              "p1.s142",
+              "p1.s143"
+            ]
+          },
+          {
+            "text_zh": "作者的TIPS回报序列由两段拼接：2004年以来使用实际TIP ETF回报，2004年之前使用因子模型估算。",
+            "evidence_ids": [
+              "p1.s106"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "c9ba65b38e31bb0ba581260f9b18c62d3c970bd2fe683d9aec7138c81e04baf4",
+        "card_hash": "1553438c35f8c606723b78ee7f36ca313f4cc70b1278a7079433c1d31f607a8f",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文标题一致，符合 source_title。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出2024年时对长期早退休者而言TIPS在当时实际利率下未提供多少保障，且年金有显著通胀风险。",
+            "evidence_ids": [
+              "p1.s8",
+              "p1.s9"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文提及20-30年期TIPS实际利率已显著上升至超过3%，并引用Bloomberg数据指出30年期为3.17%（截至10月16日）。",
+            "evidence_ids": [
+              "p1.s10",
+              "p1.s136"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文通过TIPSladder.com截图说明购买30年期阶梯需花费略低于200万美金，以每1000美元收入对应19,800美元投入计算，得出5.05%的保证提款率。",
+            "evidence_ids": [
+              "p1.s138",
+              "p1.s140",
+              "p1.s141"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出5.05%提款率无上行空间，若活过31年将一无所有，且对比了传统模型存在大量盈余。",
+            "evidence_ids": [
+              "p1.s142",
+              "p1.s143"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "verdict": "supported",
+            "reason_zh": "原文清楚说明其TIPS回报序列由2004年后实际ETF数据和2004年前因子模型拼接而成。",
+            "evidence_ids": [
+              "p1.s106"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问节选内容是否足以核对完整模拟结果及图表，原文未提供完整图表或模拟数据，属于材料缺失但问题本身无前提错误。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "c9ba65b38e31bb0ba581260f9b18c62d3c970bd2fe683d9aec7138c81e04baf4",
+        "card_hash": "1553438c35f8c606723b78ee7f36ca313f4cc70b1278a7079433c1d31f607a8f",
+        "review_hash": "12326f08121eb3e37d4f6b487834b0c6af0105effd75fcdb0e9d49b1a0307334",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题对应TIPS与安全提款率的来源问题，未称已经得出适合用户的配置结论。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "2024年前作、早退休长期限及当时实际利率的条件均保留，年金通胀风险按作者看法归属。",
+            "evidence_ids": [
+              "p1.s8",
+              "p1.s9"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "超过3%及3.17%分别核对对应原句，保留截至2026年10月16日和作者引用Bloomberg的归属，不当作今日新报价。",
+            "evidence_ids": [
+              "p1.s10",
+              "p1.s136"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "10万美元、略低于200万美元、每1000美元收入需19800美元和5.05%均有原句。明确这是作者30年阶梯提款安排，不是5.05%的投资年化收益率。",
+            "evidence_ids": [
+              "p1.s138",
+              "p1.s140",
+              "p1.s141"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "保留30年阶梯无上行余地及超过期限的资金耗尽风险，与提款率条件共同呈现。",
+            "evidence_ids": [
+              "p1.s142",
+              "p1.s143"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "decision": "confirmed",
+            "reason_zh": "已逐字核对2004年以来实际TIP ETF数据与此前因子模型估算的拼接，不称为全期实际行情回测。",
+            "evidence_ids": [
+              "p1.s106"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "输入节选末尾截断且图表未载入，仅询问完整模拟和图表，不暗示作者全文没有回答。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "c9ba65b38e31bb0ba581260f9b18c62d3c970bd2fe683d9aec7138c81e04baf4",
+        "date_status": "captured",
+        "date_note_zh": "保留采集发布日期2026-10-19；文中统计和报价的各自日期不更新为报告日。",
+        "scope_note_zh": "保存输入为末尾截断的节选，未核对完整模拟图表及后续结果；30年阶梯提款安排不等于投资年化回报。"
+      }
+    },
+    {
+      "material_id": "b6f5f70fd8622ce974ae0010b6221e472b916b84a10f042790d9edbb55896f7e",
+      "url": "https://247wallst.com/investing/etf/2026/10/19/forget-gld-investors-sent-500-million-to-the-cheaper-spdr-gold-fund/?.tsrc=rss",
+      "card": {
+        "material_id": "b6f5f70fd8622ce974ae0010b6221e472b916b84a10f042790d9edbb55896f7e",
+        "title_zh": "忘掉GLD：投资者向费率更低的SPDR黄金基金投入五亿美元",
+        "questions": [
+          "文中引用的基金费率与回报数字，能否用对应日期的基金官方资料复核？",
+          "若用于我们的持仓比较，账户所在地及适用税务规则是否与文中的美国IRS语境一致？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者指出，截至October 14, 2026，GLD录得$181.5 million净流入，相当于其$139.59 billion资产的0.10%；同期GLDM净流入$499.8 million，占其$31.08 billion资产基础的1.60%。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "text_zh": "作者指出，GLD每年收费0.40%，GLDM每年收费0.10%（依据其September 2026 fact sheet），二者相差0.30个百分点，按每$10,000计算相当于每年$40对$10。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21",
+              "p1.s22"
+            ]
+          },
+          {
+            "text_zh": "作者指出，截至September 30, 2026，GLDM的五年年化NAV回报为18.96%，GLD为18.62%，GLDM领先0.34个百分点，与费率差一致。",
+            "evidence_ids": [
+              "p1.s27"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "作者指出，两只黄金信托是否被wash-sale规则视为substantially identical属于灰色地带，因此应谨慎记录交易。",
+            "evidence_ids": [
+              "p1.s44"
+            ]
+          },
+          {
+            "text_zh": "在文中的美国IRS税务语境下，作者称两只实物黄金信托的长期收益按collectibles处理，最高税率28%；切换基金不改变该处理，但在非税收庇护账户卖出GLD会实现已积累的利得。",
+            "evidence_ids": [
+              "p1.s35",
+              "p1.s36"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "b6f5f70fd8622ce974ae0010b6221e472b916b84a10f042790d9edbb55896f7e",
+        "card_hash": "d9c6a8d652509030ff2d8f428fe5c99a44d70d9ad23b4937892443dc69b50bb7",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题内容与原文首段一致，准确反映投资者向费率更低的SPDR黄金基金（GLDM）投入5亿美元的事实，且未添加未提及信息。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文p1.s5和p1.s6明确给出截至2026年10月14日，GLD净流入1.815亿美元（占其1395.9亿美元资产的0.10%），GLDM净流入4.998亿美元（占其310.8亿美元资产的1.60%），数据与陈述完全一致。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文p1.s20、p1.s21、p1.s22明确说明GLD年费0.40%，GLDM年费0.10%（依据2026年9月30日事实表），两者差距0.30个百分点，每1万美元对应年费差额为$40与$10，计算正确。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21",
+              "p1.s22"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文p1.s27明确指出，截至2026年9月30日，GLDM五年年化NAV回报为18.96%，GLD为18.62%，领先0.34个百分点，且该差异被作者解释为与费率差一致，与陈述相符。",
+            "evidence_ids": [
+              "p1.s27"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文p1.s44明确指出，wash-sale规则是否将两只黄金信托视为实质性相同存在灰色地带，因此建议谨慎记录交易，与陈述一致。",
+            "evidence_ids": [
+              "p1.s44"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "verdict": "supported",
+            "reason_zh": "原文p1.s35和p1.s36说明：两只基金均持有实物黄金，长期收益按收藏品征税，最高税率28%；切换不改变税务处理；在非税收庇护账户卖出GLD会实现已积累利得，与陈述一致。",
+            "evidence_ids": [
+              "p1.s35",
+              "p1.s36"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问文中引用的费率与回报数据能否用官方资料复核，原文虽未直接回答，但提供了具体日期（2026年9月30日）和文件来源（fact sheet），具备可验证性基础，故问题本身成立，应支持。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问持仓比较时账户所在地及税务规则是否与文中美国IRS语境一致，原文明确限定在美国内部税务框架下讨论，此问题旨在澄清适用条件，属于合理质疑，应支持。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "b6f5f70fd8622ce974ae0010b6221e472b916b84a10f042790d9edbb55896f7e",
+        "card_hash": "d9c6a8d652509030ff2d8f428fe5c99a44d70d9ad23b4937892443dc69b50bb7",
+        "review_hash": "43fc93a21aadd41a3be625839819d0cf5b3a247039850c20e89c5cc120b27ee6",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题是来源标题的译文，保留为作者主张，不作为我们要求更换持仓的指令。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "已对照GLD和GLDM两条原句核对资金流及资产比例，日期限定为作者所述2026年10月14日，未刷新成报告日资金流。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "费率、0.30个百分点及每万美元对应金额均有原句。卡片只写2026年9月fact sheet，不沿用模型理由擅加的9月30日。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21",
+              "p1.s22"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "18.96%、18.62%和0.34个百分点均来自作者截至2026年9月30日的五年NAV年化回报比较，不推广为未来收益。",
+            "evidence_ids": [
+              "p1.s27"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "灰色地带与谨慎记录交易是原文对wash-sale适用性的说法；这里只核对作者表达，不确认法律判断。",
+            "evidence_ids": [
+              "p1.s44"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "decision": "confirmed",
+            "reason_zh": "核对了税率与出售实现利得的两个连续原句，明确限于作者的美国IRS语境；未确认用户税务适用性。",
+            "evidence_ids": [
+              "p1.s35",
+              "p1.s36"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "保留官方资料复核问题；来源中的金融数字尚未由本次编辑另作外部事实认证。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "账户所在地和适用规则仍需另行核对，不从来源的美国税务语境直接推导用户操作。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "b6f5f70fd8622ce974ae0010b6221e472b916b84a10f042790d9edbb55896f7e",
+        "date_status": "captured",
+        "date_note_zh": "保留采集发布日期2026-10-19；文中统计和报价的各自日期不更新为报告日。",
+        "scope_note_zh": "保存的网页节选；费率、历史回报和税务说法均按作者表达核对，外部正确性及适用性未另行确认。"
+      }
+    }
+  ]
+}

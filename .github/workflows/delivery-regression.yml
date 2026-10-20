@@ -17,6 +17,45 @@ permissions:
   contents: read
 
 jobs:
+  etf-automatic-mail-preview:
+    if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Verify successful production snapshot for preview acceptance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: python -B scripts/etf_cloud_checkpoint_probe.py verify-source --out-dir automatic-source
+      - uses: actions/download-artifact@v8
+        with:
+          name: us-etf-allocation-digest
+          run-id: '39347818936'
+          github-token: ${{ github.token }}
+          path: automatic-source
+      - name: Exercise normal, stale, invalid, rejected and absent reviewed drafts offline
+        run: >-
+          python -B scripts/etf_automatic_preview_probe.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --out-dir artifacts-automatic-preview
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: etf-automatic-preview-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts-automatic-preview/
+          retention-days: 30
+          if-no-files-found: warn
+
   etf-checkpoint-cross-run-restore:
     if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
