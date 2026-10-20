@@ -57,6 +57,9 @@ class RepairTests(unittest.TestCase):
         changed = copy.deepcopy(card); changed["questions"] = ["新的问题是什么？"]
         with self.assertRaisesRegex(ValueError, "stale revision parent"):
             repair.revise(m, changed, plan, veto)
+        plan["issues"][0]["reason_zh"] = "替换成一个与原否决无关的问题。"
+        with self.assertRaisesRegex(ValueError, "veto must be represented"):
+            repair.revise(m, card, plan, veto)
 
     def test_changed_material_cannot_reuse_plan(self):
         m, card, veto, plan = fixture()
@@ -140,7 +143,7 @@ class RepairTests(unittest.TestCase):
             (p/"out/responses.json").unlink()
             self.assertEqual(repair.main(argv), 1)
             saved = (p/"out/revision-records.json").read_bytes()
-            plan["issues"][0]["reason_zh"] = "修改了待解决问题的描述。"
+            plan["edits"][0]["value"][0]["text_zh"] = "作者报告12%的历史收益，未扣除交易成本。"
             cards.write_json(p/"plans.json", {mid: plan})
             with self.assertRaises(SystemExit):repair.main(argv)
             self.assertEqual((p/"out/revision-records.json").read_bytes(), saved)

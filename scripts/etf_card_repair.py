@@ -33,6 +33,8 @@ def revise(material: dict, parent: dict, plan: dict, parent_veto: dict | None = 
         if not isinstance(issue, dict) or set(issue) != {"id", "reason_zh"} or not isinstance(issue["id"], str) or not issue["id"] or issue["id"] in issue_ids or not cards.chinese(issue["reason_zh"]):
             raise ValueError("invalid or duplicate issue")
         issue_ids.add(issue["id"])
+    if parent_veto is not None and not any(i["reason_zh"] == parent_veto["reason_zh"] for i in issues):
+        raise ValueError("parent editorial veto must be represented as an issue")
     edits = plan["edits"]
     if not isinstance(edits, list) or not edits:
         raise ValueError("revision needs explicit edits")

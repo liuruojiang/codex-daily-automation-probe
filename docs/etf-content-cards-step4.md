@@ -15,7 +15,8 @@ plans 按 material_id 索引，每条严格包含：
 - edits：非空数组，每项包含 field、value、issue_ids。
 
 仅允许替换 title_zh、facts、limitations、questions 四个字段。每个字段最多
-修改一次，每个问题必须对应修改，不接受空操作。事实与限制可用 evidence_ids
+修改一次，每个问题必须对应修改，不接受空操作。原编辑否决的完整理由必须
+作为一个待解决问题保留，不能用其他问题替代。事实与限制可用 evidence_ids
 选择原句，由程序复制引用；不可改 material_id 或提升材料完整程度。
 新卡仍执行引用、数字、术语和完整语义检查。修订操作本身不表示检查通过。
 
