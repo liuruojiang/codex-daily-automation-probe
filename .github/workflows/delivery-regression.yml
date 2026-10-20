@@ -17,6 +17,44 @@ permissions:
   contents: read
 
 jobs:
+  etf-checkpoint-cross-run-restore:
+    if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Verify pinned prior run, checkout commit and immutable artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -B scripts/etf_cloud_checkpoint_probe.py verify-resume --out-dir resume-source
+      - uses: actions/download-artifact@v8
+        with:
+          artifact-ids: '12269585268'
+          run-id: '39432084491'
+          github-token: ${{ github.token }}
+          digest-mismatch: error
+          path: artifacts-cross-run
+      - name: Restore prior-run checkpoints with original request budgets
+        run: python -B scripts/etf_cloud_checkpoint_probe.py restore --out-dir artifacts-cross-run --resume-metadata resume-source/resume.json --report cross-run-proof.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: etf-cross-run-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            cross-run-proof.json
+            resume-source/
+            artifacts-cross-run/
+          if-no-files-found: error
+          retention-days: 30
+
   etf-checkpoint-save:
     if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
     permissions:

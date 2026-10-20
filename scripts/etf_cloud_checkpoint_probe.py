@@ -17,6 +17,15 @@ import etf_shadow_run as shadow
 
 VERSION = "etf-cloud-checkpoint-probe-v1"
 SOURCE_RUN = "39347818936"
+RESUME_REPOSITORY = "liuruojiang/codex-daily-automation-probe"
+# Accepted stage-8 producer and immutable artifact, observed after successful completion.
+# Keep bundle v1 compatibility; these pins do not relax shadow context validation.
+RESUME_ORIGIN = {"GITHUB_RUN_ID": "39432084491", "GITHUB_RUN_ATTEMPT": "1",
+                 "GITHUB_SHA": "2b9feddb5ece6e1844e26451acbc3ef14b83c9f5"}
+RESUME_HEAD = "1664a7d3f19ae88c84acb2f7d1d249b01ff5372b"
+RESUME_BASE = "b69e296d21b63f40d5b6e46726c555a85b1cc5b0"
+RESUME_ARTIFACT = {"id": 12269585268, "name": "etf-checkpoint-seed-39432084491-1",
+                   "digest": "sha256:8b43513281f565ea4cf2e4bba48c486f610abf3f56ed7a8065891680400deba8"}
 TEXT = ("The study reports a 12% historical return before transaction costs and uses a limited sample of portfolio observations. "
         "The authors explain that these observations cannot establish future performance and that implementation costs have not been tested.")
 
@@ -62,6 +71,51 @@ def fetch_source(destination):
     cards.write_json(destination, {k: run[k] for k in ("id", "path", "head_sha", "head_branch", "event", "conclusion")})
 
 
+def resume_metadata():
+    return {"version": "etf-cross-run-provenance-v1", "repository": RESUME_REPOSITORY,
+            "producer_origin": dict(RESUME_ORIGIN), "artifact": dict(RESUME_ARTIFACT), "consumer_origin": origin()}
+
+
+def verify_resume(run, artifact, commit, repository):
+    current = origin()["GITHUB_RUN_ID"]
+    require(current.isdigit() and int(current) > 0 and current != RESUME_ORIGIN["GITHUB_RUN_ID"],
+            "cross-run restore requires a different positive consumer run ID")
+    require(repository == RESUME_REPOSITORY and str(run.get("id")) == RESUME_ORIGIN["GITHUB_RUN_ID"]
+            and run.get("run_attempt") == 1 and run.get("head_sha") == RESUME_HEAD
+            and run.get("repository", {}).get("full_name") == repository
+            and run.get("head_repository", {}).get("full_name") == repository
+            and run.get("path") == ".github/workflows/delivery-regression.yml"
+            and run.get("head_branch") == "codex/etf-evidence-cards-step1"
+            and run.get("event") == "pull_request" and run.get("status") == "completed"
+            and run.get("conclusion") == "success"
+            and any(pr.get("number") == 158 for pr in run.get("pull_requests", [])),
+            "unexpected checkpoint producer run")
+    require(commit.get("sha") == RESUME_ORIGIN["GITHUB_SHA"]
+            and {parent.get("sha") for parent in commit.get("parents", [])} == {RESUME_HEAD, RESUME_BASE},
+            "unexpected producer checkout commit")
+    require(all(artifact.get(k) == v for k, v in RESUME_ARTIFACT.items()) and artifact.get("expired") is False
+            and str(artifact.get("workflow_run", {}).get("id")) == RESUME_ORIGIN["GITHUB_RUN_ID"]
+            and artifact.get("workflow_run", {}).get("head_sha") == RESUME_HEAD
+            and artifact.get("workflow_run", {}).get("repository_id") == run.get("repository", {}).get("id")
+            and artifact.get("workflow_run", {}).get("head_repository_id") == run.get("repository", {}).get("id"),
+            "unexpected or expired checkpoint artifact")
+    return resume_metadata()
+
+
+def fetch_resume(destination):
+    repository = os.environ["GITHUB_REPOSITORY"]
+    def get(path):
+        request = urllib.request.Request("https://api.github.com/repos/" + repository + path,
+                                        headers={"Authorization": "Bearer " + os.environ["GH_TOKEN"],
+                                                 "Accept": "application/vnd.github+json"})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.load(response)
+    run = get("/actions/runs/" + RESUME_ORIGIN["GITHUB_RUN_ID"])
+    artifact = get("/actions/artifacts/" + str(RESUME_ARTIFACT["id"]))
+    commit = get("/git/commits/" + RESUME_ORIGIN["GITHUB_SHA"])
+    cards.write_json(destination, verify_resume(run, artifact, commit, repository))
+
+
 def child(case, folder):
     materials = cards.read_json(folder.parent / "synthetic-materials.json")
     def crash_before_receipt(*args, **kwargs):
@@ -87,7 +141,7 @@ def inventory(folder):
     result = {}
     for path in sorted(folder.rglob("*")):
         require(not path.is_symlink(), "symlink in checkpoint bundle")
-        if path.is_file() and path.name != "bundle.json":
+        if path.is_file() and path != folder / "bundle.json":
             result[path.relative_to(folder).as_posix()] = sha(path)
     return result
 
@@ -121,9 +175,15 @@ def seed(manifest, folder, source_metadata):
     print(json.dumps({"phase": "seed", "files": len(bundle["files"]), "provider_network_requests": 0}))
 
 
-def restore(folder, report_path):
+def restore(folder, report_path, verified_resume=None):
     bundle = cards.read_json(folder / "bundle.json")
-    require(bundle.get("version") == VERSION and bundle.get("origin") == origin() and bundle.get("source_run_id") == SOURCE_RUN,
+    expected_origin = origin()
+    if verified_resume is not None:
+        require(verified_resume == resume_metadata(), "cross-run verification metadata mismatch")
+        require(origin()["GITHUB_RUN_ID"].isdigit() and int(origin()["GITHUB_RUN_ID"]) > 0
+                and origin()["GITHUB_RUN_ID"] != RESUME_ORIGIN["GITHUB_RUN_ID"], "consumer must be a different run")
+        expected_origin = RESUME_ORIGIN
+    require(bundle.get("version") == VERSION and bundle.get("origin") == expected_origin and bundle.get("source_run_id") == SOURCE_RUN,
             "checkpoint provenance mismatch")
     require(bundle["files"] == inventory(folder), "checkpoint inventory/hash mismatch")
     materials = cards.read_json(folder / "real-materials.json")
@@ -154,28 +214,33 @@ def restore(folder, report_path):
             result[case] = {"state": attempt["state"], "budget": recovered["budget"], "repeated_replay_identical": True}
     require(not calls, "resume attempted a model request")
     report = {"version": VERSION, "origin": origin(), "source_run_id": SOURCE_RUN, "restored_files_verified": len(bundle["files"]),
+              "checkpoint_origin": bundle["origin"], "verified_resume": verified_resume,
               "real_materials": len(materials), "real_replay_identical": True, "provider_network_requests": 0,
               "synthetic_fault_results": result, "delivery_eligible": False,
-              "scope": "cross-runner artifact transfer within one workflow run; synthetic crash boundaries, no live provider outage"}
+              "scope": ("cross-workflow-run artifact restoration" if verified_resume is not None else "cross-runner artifact transfer within one workflow run")
+                       + "; synthetic crash boundaries, no live provider outage"}
     cards.write_json(report_path, report)
     print(json.dumps(report, ensure_ascii=False))
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("verify-source", "seed", "restore", "crash-child"))
+    parser.add_argument("mode", choices=("verify-source", "verify-resume", "seed", "restore", "crash-child"))
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--source-metadata", type=Path)
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--resume-metadata", type=Path)
     parser.add_argument("--case", choices=("completed", "unknown"))
     args = parser.parse_args()
     if args.mode == "verify-source":
         fetch_source(args.out_dir / "source.json")
+    elif args.mode == "verify-resume":
+        fetch_resume(args.out_dir / "resume.json")
     elif args.mode == "seed":
         seed(args.manifest, args.out_dir, args.source_metadata)
     elif args.mode == "restore":
-        restore(args.out_dir, args.report)
+        restore(args.out_dir, args.report, cards.read_json(args.resume_metadata) if args.resume_metadata else None)
     else:
         child(args.case, args.out_dir)
 
