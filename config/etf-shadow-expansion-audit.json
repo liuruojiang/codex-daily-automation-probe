@@ -1,0 +1,102 @@
+{
+  "version": "etf-shadow-expansion-audit-v1",
+  "snapshot": {
+    "run_id": "39347818936",
+    "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b",
+    "cutoff_utc": "2026-10-20T00:28:29.686191+00:00",
+    "body_sha256": "fb5d38afdea5fa1a0327852b9021254a520107b8e5d7a665315b6ea7a1e059b4",
+    "history_sha256": "b1f73b75cbc5e10ff7acf79a224f3156b886b64e91fb7ab7a550084b957a91ce"
+  },
+  "parent_registry_sha256": "17a0bb42ab6d3f2934eb77d42d2c4bfc9d0cc5aca9ea1603d2afd1a35ab7ffca",
+  "preserved_entry_sha256": [
+    "248565ff194b194e36cc232a23391e8d205667bf1ebf6821619ee47f83235fd3",
+    "e6902482f03beda49a7cdda26cfd887143ab8b68ba2711a703237daea89b0b18"
+  ],
+  "new_entries": [
+    {
+      "material_id": "a7494e38765cb77bf5d71e67dad62e0a57e2fc96079bbed7e498b42a167ca87e",
+      "card_hash": "0d7d38d48f82e081899008931205bb5faf8a077d54c22526734ce26687a435df",
+      "review_hash": "3ef1a252b15e48013e1dfd5d6a724188ca72dc50e3ae7205620e416ca2388b13",
+      "editor_hash": "0633bba2d82b2c9ae1ee3d45ccd36f62a484e08fb2f74501de498a9537450a57",
+      "editorial_claim_count": 9,
+      "model_record_reused": true
+    },
+    {
+      "material_id": "29363b1aaf53c35c3c46d56d28678a11be7a0f08b436b9eb455a84e90f64dd59",
+      "card_hash": "8ded02260f819c01c7611714bff73a923834fcd3097d8bc997ac45c1cb8f760e",
+      "review_hash": "4c672dcfd7f242d0ccdb15282cc58a117a9038b4484f8c5d14f3278d63ddda68",
+      "editor_hash": "3595abbd65a8edbf8ee16c821ccb06f1ac7305f67df0188b82ce2119d9eb43db",
+      "editorial_claim_count": 8,
+      "model_record_reused": true
+    },
+    {
+      "material_id": "681f08b2ad9ae021030cca7dd415c2b547447f33cdc7d10fc63639078f34def6",
+      "card_hash": "80bc5c3973f421985b52139091734c4c63c5505c9a33b297219abeacb6eb7d79",
+      "review_hash": "fac6d66b29e83925b13bde4dfe1c746dd63abcaddb01760840f2323517973480",
+      "editor_hash": "5ce1ce6c630f7b90c3ae5361c9738379866c068617e95e67e20fb6ba302156d4",
+      "editorial_claim_count": 9,
+      "model_record_reused": false
+    },
+    {
+      "material_id": "8323a166c83038012ae4fca17d6de806e4ea8ae78f974ef34cb836314b308b79",
+      "card_hash": "3355158f81fd3180ca17c4f1385f0d1cdf8e23b5660ea88241e28e25c7419557",
+      "review_hash": "47c8253e2d86f15ca02bf9fd3ec01399634a22bfa04a3fcb02e622a669b2867e",
+      "editor_hash": "c9b0b756b322ace8b10a4a15320cc602b3af4b46aa8a2074b0f6fb8cc9f931a7",
+      "editorial_claim_count": 7,
+      "model_record_reused": false
+    },
+    {
+      "material_id": "98ff80242847218b07a9803d34d494a6d25e205171b4df3ff1f94e34a66a612e",
+      "card_hash": "862f99f04ede9ed78f05e167bfb0c2db0cf414ae3721429bdc2345348a6c9b87",
+      "review_hash": "c64ce97070c4725202925bac84bb08c7c29293c543168e57bfd0fb1af8cb69b7",
+      "editor_hash": "bdf8c78b42e3675a4d5ae1359db126b10dd5bc66c35ff175e3f4703ea919ed77",
+      "editorial_claim_count": 7,
+      "model_record_reused": false
+    },
+    {
+      "material_id": "ec984da2ff190ecbd3990fa55123da90c04f21cb95fd984fa23f5aa5d8867da6",
+      "card_hash": "45aa7d0767c5186c52f516a7603514cfa75bc2a378863622206a141b632b1522",
+      "review_hash": "4158375ca0f715ecbc9bcc31eaf31da8d65e3f93d7b0bfc4ceecbac89ea8f408",
+      "editor_hash": "31eb85b278fffeb9e21ef8ee5f1d02a19fa5e4be7ccc325df7a35a17fa3a4ad4",
+      "editorial_claim_count": 10,
+      "model_record_reused": false
+    }
+  ],
+  "held": [
+    {
+      "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+      "card_hash": "b383ec6bf27724197a0ab54249d8f465eab288d96ee400abf2c66b5e474ce451",
+      "review_hash": "0145d22ce9b408734e466d5760e5e6bc2890f1eaf71f02f12870badded8a6e05",
+      "model_overall": "revise",
+      "editorial_decision": "needs_revision",
+      "claim_id": "facts.2",
+      "reason_zh": "原模型复核要求修订模拟套利收益表述；未重抽、复议或编辑覆盖模型拒绝，暂不登记。"
+    },
+    {
+      "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+      "card_hash": "3b6aab667d48407bb6a719c61cfa5dadfdbc9264e0c3e409d4f3a13804f83d86",
+      "review_hash": "d6f6ca974f39c703f1355f4bc528d324225dab914d2e360195d8da63769146e4",
+      "model_overall": "pass",
+      "editorial_decision": "needs_revision",
+      "claim_id": "title",
+      "reason_zh": "Mobility在本文是加密货币市值分布中的迁移，标题译成流动性失准，模型误判通过。编辑否决；复核理由另将seventy percent误写为七十个百分点，该理由未进入正文。"
+    }
+  ],
+  "new_batch_budget": {
+    "requests_reserved": 12,
+    "max_requests": 12,
+    "output_tokens_reserved": 33600,
+    "max_reserved_output_tokens": 33600,
+    "provider_reported_total_tokens": 30714,
+    "usage_missing_requests": 0,
+    "unknown_outcomes": 0,
+    "monetary_cap": "not_established"
+  },
+  "new_batch_model_counts": {
+    "model_review_passed": 5,
+    "semantic_revision_required": 1
+  },
+  "editorial_actor": "assistant; not user review",
+  "external_fact_check": "not_performed",
+  "delivery_eligible": false
+}

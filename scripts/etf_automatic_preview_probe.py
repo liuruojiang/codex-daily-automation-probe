@@ -20,6 +20,9 @@ def run(source, registry_path, out):
     inputs = [source / name for name in ("metadata.json", "collection_manifest.json", "history_before.json")]
     before = [hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs]
     registry = cards.read_json(registry_path)
+    reviewed = len(registry["entries"])
+    automatic.preview.require(1 <= reviewed <= 22, "probe requires one to22 reviewed entries")
+    uncovered = 22 - reviewed
     broken = copy.deepcopy(registry);broken["entries"][0]["editor"]["card_hash"] = "synthetic-stale-editor"
     stale = copy.deepcopy(registry);stale["snapshot"]["body_sha256"] = "0" * 64
     rejected = copy.deepcopy(registry)
@@ -27,11 +30,13 @@ def run(source, registry_path, out):
     first["review"]["overall"] = "revise"
     next(check for check in first["review"]["checks"] if check["claim_id"] == "facts.0")["verdict"] = "needs_revision"
     first["editor"]["review_hash"] = cards.digest(first["review"])
-    cases = {"normal": (registry, 2, {"replaced": 2, "no_reviewed_card": 20}),
-             "invalid_editor": (broken, 1, {"replaced": 1, "invalid_review_record": 1, "no_reviewed_card": 20}),
-             "old_snapshot": (stale, 0, {"registry_snapshot_mismatch": 2, "no_reviewed_card": 20}),
-             "model_rejection": (rejected, 1, {"replaced": 1, "review_not_complete": 1, "no_reviewed_card": 20}),
+    cases = {"normal": (registry, reviewed, {"replaced": reviewed, "no_reviewed_card": uncovered}),
+             "invalid_editor": (broken, reviewed-1, {"replaced": reviewed-1, "invalid_review_record": 1, "no_reviewed_card": uncovered}),
+             "old_snapshot": (stale, 0, {"registry_snapshot_mismatch": reviewed, "no_reviewed_card": uncovered}),
+             "model_rejection": (rejected, reviewed-1, {"replaced": reviewed-1, "review_not_complete": 1, "no_reviewed_card": uncovered}),
              "no_registry": (None, 0, {"no_reviewed_card": 22})}
+    cases = {name: (candidate, expected, {reason: count for reason, count in reasons.items() if count})
+             for name, (candidate, expected, reasons) in cases.items()}
     out.mkdir(parents=True)
     results, calls = {}, []
     def forbidden(*args, **kwargs):
