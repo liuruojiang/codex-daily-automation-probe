@@ -19,6 +19,7 @@ from pathlib import Path
 import daily_reports as dr
 
 VERSION = "etf-content-card-v3"
+VALIDATOR_VERSION = "etf-evidence-validation-v2"
 LEVELS = {
     "captured_excerpt": "已采集节选（不保证完整）",
     "publisher_abstract": "发布者论文摘要",
@@ -219,14 +220,20 @@ def validate_card(material: dict, card: object) -> list[str]:
             if not isinstance(refs, list) or not 1 <= len(refs) <= 4:
                 errors.append("missing_citations")
                 continue
+            long_context = any(isinstance(r, dict) and isinstance(r.get("paragraph_id"), str)
+                               and isinstance(r.get("quote"), str) and len(r["quote"].strip()) >= 20
+                               and r["quote"] in paragraphs.get(r["paragraph_id"], "") for r in refs)
+            exact_short_units = {(u["paragraph_id"], u["text"]) for u in evidence_units(material)}
             quoted = []
             for ref in refs:
                 if not isinstance(ref, dict) or set(ref) != {"paragraph_id", "quote"}:
                     errors.append("invalid_citation")
                     continue
                 quote = ref["quote"]
-                if not isinstance(ref["paragraph_id"], str) or not isinstance(quote, str) or len(quote.strip()) < 20 or quote not in paragraphs.get(ref["paragraph_id"], ""):
+                if not isinstance(ref["paragraph_id"], str) or not isinstance(quote, str) or not quote.strip() or quote not in paragraphs.get(ref["paragraph_id"], ""):
                     errors.append("quote_not_in_material")
+                elif len(quote.strip()) < 20 and not (long_context and (ref["paragraph_id"], quote) in exact_short_units and re.search(r"[.!?。！？]$", quote)):
+                    errors.append("short_quote_without_context")
                 else:
                     quoted.append(quote)
             if not numbers(claim["text_zh"]) <= numbers(" ".join(quoted)):
@@ -244,12 +251,18 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 def call_model(material: dict, receipt_dir: Path, *, endpoint: str, model: str,
                api_key: str, max_output_tokens: int, transport=None,
                thinking: str | None = None) -> dict:
+    payload = request_payload(material, model, max_output_tokens, thinking)
+    return call_json(payload, receipt_dir, endpoint=endpoint, api_key=api_key,
+                     namespace=VERSION, material_id=material["material_id"], transport=transport)
+
+
+def call_json(payload: dict, receipt_dir: Path, *, endpoint: str, api_key: str,
+              namespace: str, material_id: str, transport=None) -> dict:
     """One attempt per logical request. Unknown outcomes are never auto-retried."""
     url = urllib.parse.urlsplit(endpoint)
     if url.scheme != "https" or not url.netloc or url.username or url.password or url.query or url.fragment:
         raise ValueError("model endpoint must be an explicit HTTPS URL without credentials/query")
-    payload = request_payload(material, model, max_output_tokens, thinking)
-    key = digest({"version": VERSION, "endpoint": endpoint, "payload": payload})
+    key = digest({"version": namespace, "endpoint": endpoint, "payload": payload})
     path = receipt_dir / f"{key}.json"
     receipt_dir.mkdir(parents=True, exist_ok=True)
     if path.exists():
@@ -259,7 +272,7 @@ def call_model(material: dict, receipt_dir: Path, *, endpoint: str, model: str,
         raise RuntimeError("model outcome unknown; inspect receipt before retrying")
     # Exclusive reservation also prevents two workers spending on the same key.
     with path.open("x", encoding="utf-8") as f:
-        json.dump({"state": "in_flight", "request_key": key, "material_id": material["material_id"]}, f)
+        json.dump({"state": "in_flight", "request_key": key, "material_id": material_id}, f)
     request = urllib.request.Request(endpoint, data=json.dumps(payload).encode("utf-8"),
                                      headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"})
     try:
@@ -268,11 +281,11 @@ def call_model(material: dict, receipt_dir: Path, *, endpoint: str, model: str,
             raw = json.loads(response.read().decode("utf-8"))
         # Save the provider result before parsing model text. A malformed card
         # must not cause a second paid request on the next run.
-        write_json(path, {"state": "completed", "request_key": key, "material_id": material["material_id"], "response": raw})
+        write_json(path, {"state": "completed", "request_key": key, "material_id": material_id, "response": raw})
         return raw
     except Exception:
         # Never persist exception bodies/headers, which may expose credentials.
-        write_json(path, {"state": "unknown", "request_key": key, "material_id": material["material_id"]})
+        write_json(path, {"state": "unknown", "request_key": key, "material_id": material_id})
         raise RuntimeError("model request incomplete; outcome recorded as unknown") from None
 
 
@@ -308,7 +321,8 @@ def replay(materials: list[dict], responses: dict[str, object]) -> dict:
                 row["card"] = responses[mid]
                 row["card_hash"] = digest(responses[mid])
         results.append(row)
-    return {"schema_version": 1, "version": VERSION, "mode": "shadow_only", "semantic_review": "pending", "items": results}
+    return {"schema_version": 1, "version": VERSION, "validator_version": VALIDATOR_VERSION,
+            "mode": "shadow_only", "semantic_review": "pending", "items": results}
 
 
 def render_html(report: dict) -> str:

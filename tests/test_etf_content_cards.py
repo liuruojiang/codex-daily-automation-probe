@@ -38,6 +38,14 @@ def response(m):
 
 
 class ContentCardTests(unittest.TestCase):
+    def test_short_conclusion_needs_exact_source_unit_and_long_context(self):
+        text = TEXT + " It cannot."
+        m = cards.make_material(title="A methodological question", url="https://example.org/short", source="fixture", published="", paragraphs=[text])
+        r = response(m)
+        r["facts"] = [{"text_zh": "作者否定该结论。", "citations": [{"paragraph_id": "p1", "quote": TEXT.split('. ')[1]}, {"paragraph_id": "p1", "quote": "It cannot."}]}]
+        self.assertEqual(cards.validate_card(m, r), [])
+        r["facts"][0]["citations"] = [{"paragraph_id": "p1", "quote": "It cannot."}]
+        self.assertIn("short_quote_without_context", cards.validate_card(m, r))
     def test_linked_card_is_never_automatically_semantically_verified(self):
         m = material()
         self.assertEqual(cards.validate_card(m, response(m)), [])
