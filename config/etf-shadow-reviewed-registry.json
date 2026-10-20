@@ -1496,6 +1496,364 @@
         "date_note_zh": "沿用原采集发布时间2026-10-19T03:23:27+00:00；未把研究样本期或原报道相对日期刷新为今天。",
         "scope_note_zh": "当前保存节选没有完整图表；回报比较限作者文章中的回望区间，周期数量是作者概括。未独立核实历史数据，不能据此预测未来或补造十五年回报。"
       }
+    },
+    {
+      "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+      "url": "https://arxiv.org/abs/2610.23283",
+      "card": {
+        "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+        "title_zh": "资产群体变迁中的市场效率：加密货币全历史中的市值分布迁移、进入与存续",
+        "questions": [
+          "文中capacity的$293,000究竟按可承载资金、成交额还是其他定义计算？",
+          "纸面组合和有实际交易资产组合的构建、筛选与交易成本口径是什么？",
+          "不对称性下降七成对应哪项统计量、哪些起止时期及何种检验？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者称，检验覆盖其加密货币全体上市样本：8,970项资产、690个周度横截面，区间为2013至2026年；进入、退出与存续被直接观测，而非推断。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "text_zh": "作者报告，每个时期均拒绝对称性限制，但不对称性下降七成；收敛来自新资产进入驱动的构成更替，而非币种自身估值。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "text_zh": "作者称，最低十分位的纸面周收益为27.5%，但在有实际交易的资产中没有该收益；同一句将capacity列为$293,000。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "上述27.5%是纸面周收益；作者同时指出，在实际有交易的资产中并没有该收益。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+        "card_hash": "d741e4f2488f655ccf7365292b15a375b296d6d134802f4c7cb461d385a5bf9f",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文标题在语义上一致，准确反映了论文核心议题：加密货币全历史中的市值分布迁移、进入与存续。无引用必要。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出测试覆盖8,970项资产、690个周度横截面，时间区间为2013至2026年，且进入、退出与存续为直接观测而非推断。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文陈述对称性在每个时期均被拒绝，但不对称性下降了70%，且收敛的是由新资产进入驱动的构成更替，而非币种自身估值的变化。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文明确说明最低十分位的纸面周收益为27.5%，但在有实际交易的资产中该收益为零，并提及$293,000的capacity。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文已指出27.5%是纸面收益，而实际交易资产中并无此收益，因此该限制信息完整且准确。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问“capacity”定义，原文未明确其具体计算方式（如可承载资金、成交额等），属于材料未披露内容，应视为可接受的待核对问题。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题关于纸面组合与实际交易组合的构建、筛选及交易成本口径，原文未提供相关信息，属合理提问，材料缺失不影响支持状态。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "问题询问不对称性下降七成所对应的统计量、起止时期及检验方法，原文未详述，属于合理追问，材料未提供不足以否定支持。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+        "card_hash": "d741e4f2488f655ccf7365292b15a375b296d6d134802f4c7cb461d385a5bf9f",
+        "review_hash": "b3280657f9fb5fbaa5aef8fdeca91a025ea0e3a4ce252589ac0fba3bef6f7015",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "Mobility结合原摘要首句，明确为跨加密资产市值分布的迁移；已删除流动性误译。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "限定作者加密货币上市样本，逐项核对8,970资产、690周截面及2013至2026；没有把样本概括为所有金融资产。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "seventy percent是相对降幅七成，非七十个百分点；收敛对象为进入驱动的构成更替而非币种估值。旧模型错误解释未沿用。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "27.5%限最低十分位纸面周收益，与有实际交易资产没有该收益在同一条中成对说明；$293,000仅保留原capacity术语，不推断可投规模。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "以原句重申纸面与实际交易资产的区别，不把27.5%当可实现收益或年化收益。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "capacity的计算口径仍未由摘要提供，追问定义而不猜测资金容量或市值。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "组合筛选和成本处理需查全文，未把摘要未披露等同于全文没有检验。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "七成指相对降幅；统计量和起止时期留待全文核对，不补造基准数值。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+        "date_status": "captured",
+        "date_note_zh": "沿用原采集发布时间2026-10-19T04:00:00+00:00；未刷新摘要发布日期或研究样本期。",
+        "scope_note_zh": "仅为论文摘要节选。27.5%是作者所述纸面周收益，有实际交易的资产中并无该收益；七成是相对降幅，capacity口径待查。未核对全文或外部数据。"
+      }
+    },
+    {
+      "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+      "url": "https://arxiv.org/abs/2610.23517",
+      "card": {
+        "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+        "title_zh": "预测市场中的组合套利",
+        "questions": [
+          "上述2.2%与3.2%的统计口径、样本期、持有时长和资金规模是什么？摘要未展开，需查正文；不能据此计算年化或推断实盘可得收益。",
+          "执行回放如何处理延迟、部分成交、订单簿变化及机会同时争用？需查正文，当前摘要不足以判断。",
+          "原文所述guaranteed profit与profit at resolution的定义和归集方式有何区别？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者证明，位于可容许收益向量凸包之外的价格存在套利，并通过整数规划识别最优套利组合。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "text_zh": "作者利用交易场所元数据和对结算条件的语义分析，识别出一百九十万条逻辑关系，构建的约束系统覆盖超过255,000份合约。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "text_zh": "作者回放Polymarket全深度订单簿，模拟按已有挂单执行套利组合；摘要对其中已结算的组合报告：扣除买卖价差和费用后，guaranteed profit为投入资本的2.2%，到结算时利润为3.2%。这些数字属于该回放模拟所报告的结果。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "该研究使用Polymarket订单簿回放来模拟执行，摘要给出的利润数字针对其中已结算的组合。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+        "card_hash": "d0549e4be3f3cce56a6574d0474db8dd321f1d0aee1a1b7a137719a35ca1a968",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文摘要一致，符合 source_title。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出价格在可容许收益向量凸包外存在套利，并通过整数规划识别最优套利组合。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文提到利用交易场所元数据和语义分析恢复了190万条逻辑关系，并构建覆盖超过25.5万份合约的约束系统。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文说明回放了Polymarket全深度订单簿以模拟套利执行，并报告已结算组合在扣除价差和费用后的利润为2.2%，结算时利润达3.2%。该描述准确反映了摘要内容。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文指出研究基于对Polymarket订单簿的回放模拟，且利润数据仅针对已结算组合，因此该限制条件被准确反映。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理指出摘要未提供2.2%与3.2%的具体统计口径、样本期、持有时长和资金规模，需查阅正文，属于对材料缺失信息的正当追问。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题询问回放中如何处理延迟、部分成交、订单簿变化及机会争用等执行细节，而摘要未涵盖这些机制，需查正文，故应保留为待核对问题。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "问题询问guaranteed profit与profit at resolution的定义和归集方式差异，原文未明确定义二者，此为合理质疑，需进一步查证。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+        "card_hash": "d0549e4be3f3cce56a6574d0474db8dd321f1d0aee1a1b7a137719a35ca1a968",
+        "review_hash": "5a5e10b243e35940ee398c52e0454a95a79713ed2933f1febf7c5535165292fe",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题准确指预测市场的逻辑关联组合套利，未转成保证投资收益的承诺。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "凸包之外价格存在套利及整数规划识别最优组合，为作者框架中的数学陈述，按原句归属。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "一百九十万与1.9 million一致；超过255,000份合约的关系方向、计数单位和结算条件语义分析均核对。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "连读回放模拟与已结算组合两句；2.2%以投入资本为分母且扣除买卖价差及费用，3.2%为结算时利润。明确仅归属该模拟，不声称年化或实盘可获得。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "只把Polymarket订单簿回放模拟及已结算组合的原文范围列为限制，没有新增作者主动承认延迟未计入的说法。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "原复核要求的口径、区间、持有时长和资金规模列为待查，未编造平均值或年化换算。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "执行细节询问延迟、部分成交等如何处理；当前摘要不足以判断，不断言研究未考虑它们。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "两个利润术语保留英文并追问定义；未将guaranteed profit泛化为未来保证回报。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+        "date_status": "captured",
+        "date_note_zh": "沿用原采集发布时间2026-10-19T04:00:00+00:00；未刷新摘要发布日期或研究样本期。",
+        "scope_note_zh": "仅为论文摘要节选；2.2%与3.2%归属Polymarket订单簿回放模拟的已结算组合，不是年化收益或实盘保证。样本期、资金和执行口径待查全文，未作外部核验。"
+      }
     }
   ]
 }

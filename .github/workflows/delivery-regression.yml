@@ -48,6 +48,13 @@ jobs:
           --source-dir automatic-source
           --registry config/etf-shadow-reviewed-registry.json
           --out-dir artifacts-automatic-preview
+      - name: Rebuild repaired cards, original decisions and complete new reviews offline
+        run: >-
+          python -B scripts/etf_repair_preview_probe.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --audit config/etf-shadow-repair-audit.json
+          --report artifacts-automatic-preview/repair-ledger-proof.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:
