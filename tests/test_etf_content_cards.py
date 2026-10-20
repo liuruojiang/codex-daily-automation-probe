@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import copy
 import io
+import html
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -193,16 +195,84 @@ class ContentCardTests(unittest.TestCase):
             root = Path(temp)
             cards.write_json(root / "input.json", [material()])
             config = {"ETF_CARD_API_URL": "https://example.org/chat/completions", "ETF_CARD_MODEL": "test-model", "ETF_CARD_API_KEY": "test-secret"}
-            with patch.dict(cards.os.environ, config), patch.object(cards, "call_model") as call, patch("sys.stderr", new=io.StringIO()):
-                with self.assertRaises(SystemExit):
-                    cards.main(["generate", "--materials", str(root / "input.json"), "--out-dir", str(root / "out"), "--max-input-chars", "100"])
+            with patch.dict(cards.os.environ, config), patch.object(cards, "call_model") as call:
+                self.assertEqual(cards.main(["generate", "--materials", str(root / "input.json"), "--out-dir", str(root / "out"), "--max-input-chars", "100"]), 1)
                 call.assert_not_called()
+                row = cards.read_json(root / "out/cards.json")["items"][0]
+                self.assertEqual(row["status"], "generation_failed")
+                self.assertEqual(row["errors"], ["InputLimitExceeded"])
 
     def test_insecure_model_endpoint_is_refused_before_reservation(self):
         with tempfile.TemporaryDirectory() as temp:
             with self.assertRaisesRegex(ValueError, "HTTPS"):
                 cards.call_model(material(), Path(temp), endpoint="http://example.org/chat", model="model", api_key="secret", max_output_tokens=500)
             self.assertEqual(list(Path(temp).iterdir()), [])
+
+    def test_evidence_ids_copy_exact_source_without_model_quoting(self):
+        m = material()
+        units = cards.evidence_units(m)
+        self.assertEqual(len(units), 2)
+        for unit in units:
+            self.assertIn(unit["text"], TEXT)
+        card = {**response(m), "facts": [{"text_zh": "作者报告，历史样本收益为12%，尚未扣除交易成本。", "evidence_ids": [units[0]["id"]]}], "limitations": []}
+        expanded = cards.expand_evidence_ids(m, card)
+        self.assertEqual(cards.validate_card(m, expanded), [])
+        self.assertEqual(expanded["facts"][0]["citations"][0]["quote"], units[0]["text"])
+        card["facts"][0]["evidence_ids"] = ["p1.s9999"]
+        with self.assertRaisesRegex(ValueError, "invalid evidence id"):
+            cards.expand_evidence_ids(m, card)
+
+    def test_latex_percent_normalization_does_not_allow_numeric_or_unit_changes(self):
+        self.assertEqual(cards.numbers(r"95\\%"), cards.numbers("95%"))
+        self.assertNotEqual(cards.numbers("95%"), cards.numbers("95bp"))
+        self.assertNotEqual(cards.numbers("$499.8 million"), cards.numbers("4.998亿"))
+
+    def test_generation_resumes_next_article_without_explicit_responses_flag(self):
+        one = material()
+        two = cards.make_material(title="Second study", url="https://example.org/two", source="fixture", published="", paragraphs=[TEXT])
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            cards.write_json(root / "input.json", [one, two])
+            args = ["generate", "--materials", str(root / "input.json"), "--out-dir", str(root / "out"), "--max-calls", "1"]
+            config = {"ETF_CARD_API_URL": "https://example.org/chat", "ETF_CARD_MODEL": "model", "ETF_CARD_API_KEY": "secret"}
+            def fake(m, *a, **kw):
+                return {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(response(m))}}]}
+            with patch.dict(cards.os.environ, config), patch.object(cards, "call_model", side_effect=fake) as call:
+                self.assertEqual(cards.main(args), 0)
+                self.assertEqual(cards.main(args), 0)
+                self.assertEqual([x.args[0]["material_id"] for x in call.call_args_list], [one["material_id"], two["material_id"]])
+                self.assertEqual(cards.main(args), 0)
+                self.assertEqual(call.call_count, 2)
+                with patch("sys.stderr", new=io.StringIO()), self.assertRaises(SystemExit):
+                    cards.main(args + ["--thinking", "disabled"])
+                self.assertEqual(call.call_count, 2)
+
+    def test_generation_failure_is_visible_and_other_articles_continue(self):
+        one = material()
+        two = cards.make_material(title="Second study", url="https://example.org/two", source="fixture", published="", paragraphs=[TEXT])
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            cards.write_json(root / "input.json", [one, two])
+            args = ["generate", "--materials", str(root / "input.json"), "--out-dir", str(root / "out"), "--max-calls", "2"]
+            config = {"ETF_CARD_API_URL": "https://example.org/chat", "ETF_CARD_MODEL": "model", "ETF_CARD_API_KEY": "secret"}
+            good = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(response(two))}}]}
+            with patch.dict(cards.os.environ, config), patch.object(cards, "call_model", side_effect=[RuntimeError("private error"), good]) as call:
+                self.assertEqual(cards.main(args), 1)
+                report = cards.read_json(root / "out/cards.json")
+                self.assertEqual([i["status"] for i in report["items"]], ["generation_failed", "evidence_linked_pending_review"])
+                self.assertNotIn("private error", json.dumps(report))
+                self.assertEqual(cards.main(args), 1)
+                self.assertEqual(call.call_count, 2)
+
+    def test_thinking_mode_is_explicit_and_quoted_preview_is_bounded_per_source(self):
+        m = material()
+        self.assertNotIn("thinking", cards.request_payload(m, "model"))
+        self.assertEqual(cards.request_payload(m, "model", thinking="disabled")["thinking"], {"type": "disabled"})
+        report = cards.replay([m], {m["material_id"]: response(m)})
+        report["items"].append(report["items"][0])
+        text = cards.render_html(report)
+        quotations = re.findall(r"<blockquote>(.*?)</blockquote>", text)
+        self.assertLessEqual(sum(len(html.unescape(q).split()) for q in quotations), 25)
 
     def test_cli_prepare_and_replay_have_no_production_side_effects(self):
         m = material()
