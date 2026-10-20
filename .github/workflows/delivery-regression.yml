@@ -17,6 +17,69 @@ permissions:
   contents: read
 
 jobs:
+  etf-checkpoint-save:
+    if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Verify fixed successful production collection
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: python -B scripts/etf_cloud_checkpoint_probe.py verify-source --out-dir probe-source
+      - uses: actions/download-artifact@v8
+        with:
+          name: us-etf-allocation-digest
+          run-id: '39347818936'
+          github-token: ${{ github.token }}
+          path: probe-source
+      - name: Save real offline plan and synthetic interrupted checkpoints
+        run: python -B scripts/etf_cloud_checkpoint_probe.py seed --manifest probe-source/collection_manifest.json --source-metadata probe-source/source.json --out-dir artifacts-checkpoint
+      - uses: actions/upload-artifact@v7
+        with:
+          name: etf-checkpoint-seed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts-checkpoint/
+          if-no-files-found: error
+          retention-days: 30
+
+  etf-checkpoint-restore:
+    needs: etf-checkpoint-save
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v8
+        with:
+          name: etf-checkpoint-seed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts-checkpoint
+      - name: Verify hashes, recover receipts, retain budgets and refuse duplicate requests
+        run: python -B scripts/etf_cloud_checkpoint_probe.py restore --out-dir artifacts-checkpoint --report checkpoint-proof.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: etf-checkpoint-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            checkpoint-proof.json
+            artifacts-checkpoint/
+          retention-days: 30
+
   automation-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
