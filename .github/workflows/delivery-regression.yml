@@ -55,6 +55,13 @@ jobs:
           --registry config/etf-shadow-reviewed-registry.json
           --audit config/etf-shadow-repair-audit.json
           --report artifacts-automatic-preview/repair-ledger-proof.json
+      - name: Verify later public-source supplement without changing frozen mail
+        run: >-
+          python -B scripts/etf_source_intake.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --audit config/etf-source-intake-audit.json
+          --report artifacts-automatic-preview/source-intake-proof.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:

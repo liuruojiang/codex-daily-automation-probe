@@ -1,0 +1,438 @@
+{
+  "version": "etf-source-intake-audit-v1",
+  "snapshot": {
+    "run_id": "39347818936",
+    "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b",
+    "cutoff_utc": "2026-10-20T00:28:29.686191+00:00",
+    "body_sha256": "fb5d38afdea5fa1a0327852b9021254a520107b8e5d7a665315b6ea7a1e059b4",
+    "history_sha256": "b1f73b75cbc5e10ff7acf79a224f3156b886b64e91fb7ab7a550084b957a91ce"
+  },
+  "registry_sha256": "717709678405e2ca64ce8ec7a104057a9fe792d0de611dfa1a1e8bfedddcee9d",
+  "targets": [
+    {
+      "parent_material_id": "563f3202cf14d2cc1810f837b49975bcf8db5cfd068b73baa9a22da90185e65e",
+      "title": "Talk Your Book: The Case for Value and Momentum",
+      "url": "https://awealthofcommonsense.com/2026/10/talk-your-book-the-case-for-value-and-momentum/",
+      "source": "A Wealth of Common Sense",
+      "published": "2026-10-19T12:00:43+00:00"
+    },
+    {
+      "parent_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+      "title": "Recent Quant Links from Quantocracy as of 10/18/2026",
+      "url": "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-10182026/",
+      "source": "Quantocracy",
+      "published": "2026-10-19T05:15:04+00:00"
+    },
+    {
+      "parent_material_id": "0b5d36668cb7f78de42b2e5b469af0ab5323a532e539ecca1614d4f15fd5dfd0",
+      "title": "Inverse Learning of Latent Risk-Neutral Densities from Irregular Option Quotes",
+      "url": "https://arxiv.org/abs/2607.27188",
+      "source": "arXiv q-fin.ST",
+      "published": "2026-10-19T04:00:00+00:00"
+    },
+    {
+      "parent_material_id": "96d2d8aed1b355a437e4f8cd99256b22880fa11a5a1ce812e576f271a6a55ce4",
+      "title": "Building a Berkshire for the Middle Market - Capital Allocators with Ted Seides",
+      "url": "https://www.capitalallocators.com/podcast/building-a-berkshire-for-the-middle-market/",
+      "source": "Capital Allocators（条件页面）",
+      "published": "2026-10-19T09:00:50+00:00"
+    },
+    {
+      "parent_material_id": "9fba01ae02f36bfa2b0251169595948706378a724e734680cc7b1e7167df3fda",
+      "title": "Personal Investments • G Fund for bond allocation using TSP",
+      "url": "https://www.bogleheads.org/forum/viewtopic.php?p=8881258#p8881258",
+      "source": "Bogleheads.org Forum (comments/replies 28; views 1246)",
+      "published": "2026-10-19T23:59:11+00:00"
+    },
+    {
+      "parent_material_id": "dd01f3fdf736b6ea5cb28344a7c89ef6f3ae176696b32296fe9779d50a5ab567",
+      "title": "T-Bills and STILL Chillin’",
+      "url": "https://mebfaber.com/2026/10/18/t-bills-and-still-chillin/",
+      "source": "Meb Faber",
+      "published": "2026-10-18T20:22:38+00:00"
+    },
+    {
+      "parent_material_id": "e43c182767a6faef402a80d0951b2a0e50b996008d81a972aa043a5e3c240ba5",
+      "title": "SH: A Tactical Hedge, But Not Yet A Short Call",
+      "url": "https://seekingalpha.com/article/4955077-sh-a-tactical-hedge-but-not-yet-a-short-call?source=feed_tag_etf_portfolio_strategy",
+      "source": "Seeking Alpha ETFs",
+      "published": "2026-10-18T20:01:22+00:00"
+    },
+    {
+      "parent_material_id": "39e05f4a5bfbdb1aa849cc90fd5792f5a1bf3373bee244d14d3c5c0abff9d929",
+      "title": "WCLD: Why Small Cloud Computing Stocks Are Breaking Out (Rating Upgrade)",
+      "url": "https://seekingalpha.com/article/4955076-wcld-why-small-cloud-computing-stocks-are-breaking-out-rating-upgrade?source=feed_tag_etf_portfolio_strategy",
+      "source": "Seeking Alpha ETFs",
+      "published": "2026-10-18T19:46:49+00:00"
+    },
+    {
+      "parent_material_id": "44f643744489f90acd701f0211e4bfe56079c45371af0c14caf42b54b3f3c9b1",
+      "title": "UTES Vs. UTG: Why I Prefer The ETF As Rates Rise.",
+      "url": "https://seekingalpha.com/article/4955075-utes-vs-utg-why-i-prefer-the-etf-as-rates-rise?source=feed_tag_etf_portfolio_strategy",
+      "source": "Seeking Alpha ETFs",
+      "published": "2026-10-18T19:31:55+00:00"
+    },
+    {
+      "parent_material_id": "3e17fb14536e0ccad74bff10d1910e9e8a796e31b54f373cc3e44abe03e5499d",
+      "title": "WEA: Attractive Monthly Pay With Discount Blowing Out",
+      "url": "https://seekingalpha.com/article/4955065-wea-attractive-monthly-pay-with-discount-blowing-out?source=feed_tag_etf_portfolio_strategy",
+      "source": "Seeking Alpha ETFs",
+      "published": "2026-10-18T14:54:32+00:00"
+    },
+    {
+      "parent_material_id": "41762a1d61824c2c80831712013ae91ee168f7c1d208640614caa49c6c9a20cc",
+      "title": "BWG: Strengthening U.S. Dollar And Rising Bond Yields Likely To Be Headwind",
+      "url": "https://seekingalpha.com/article/4955063-bwg-strengthening-us-dollar-rising-bond-yields-likely-to-be-headwind?source=feed_tag_etf_portfolio_strategy",
+      "source": "Seeking Alpha ETFs",
+      "published": "2026-10-18T14:40:45+00:00"
+    },
+    {
+      "parent_material_id": "625a474626654b4bde5e817612fa701936e6aec1227ca26bbe57cc0d1e68c7d2",
+      "title": "Breaking Down My Investment Portfolio",
+      "url": "https://www.youtube.com/watch?v=h3ajVyC5vJc",
+      "source": "Ben Felix",
+      "published": "2026-10-18T10:00:22+00:00"
+    }
+  ],
+  "items": [
+    {
+      "parent_material_id": "563f3202cf14d2cc1810f837b49975bcf8db5cfd068b73baa9a22da90185e65e",
+      "requested_url": "https://awealthofcommonsense.com/2026/10/talk-your-book-the-case-for-value-and-momentum/",
+      "started_utc": "2026-10-20T15:20:52.541334+00:00",
+      "finished_utc": "2026-10-20T15:20:55.189054+00:00",
+      "response_status": 200,
+      "body_sha256": "eeda4299e6d1c95de4d0327c2b353d1244e3916948325b1fedb163b1149a6d6d",
+      "bytes": 105922,
+      "status": "outline_only",
+      "reason_zh": "已取得原博客页面，但内容是赞助说明、讨论提纲和图表入口，不是逐字稿；页面更新时刻晚于原采集截止。另查到的官方节目页也只呈现简介。",
+      "next_action_zh": "后续需取得公开文字稿，或对获授权的公开音频转写；保留说话人与节目日期，不能用提纲补造论证。"
+    },
+    {
+      "parent_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+      "requested_url": "https://quantocracy.com/recent-quant-links-from-quantocracy-as-of-10182026/",
+      "started_utc": "2026-10-20T15:20:52.541660+00:00",
+      "finished_utc": "2026-10-20T15:20:54.961139+00:00",
+      "response_status": 200,
+      "body_sha256": "7e8684bd69ae25706e19f0d901353399dd389754399e244929254577d48207d3",
+      "bytes": 120249,
+      "status": "aggregate_listing",
+      "reason_zh": "已取得目录页，提取8个原始研究入口；聚合页摘要不作为各原文的完整论证。",
+      "next_action_zh": "逐个建立独立来源身份、正文和日期，不继承目录页的发布日期或已核对状态。"
+    },
+    {
+      "parent_material_id": "0b5d36668cb7f78de42b2e5b469af0ab5323a532e539ecca1614d4f15fd5dfd0",
+      "requested_url": "https://arxiv.org/abs/2607.27188",
+      "started_utc": "2026-10-20T15:20:52.541889+00:00",
+      "finished_utc": "2026-10-20T15:20:53.929903+00:00",
+      "response_status": 200,
+      "body_sha256": "00636587eab884968723a45693d2d71c25d3108fd6c56000ccb04fab65fb3d6f",
+      "bytes": 44090,
+      "status": "body_supplement_pending",
+      "reason_zh": "取得版本锁定的公开论文HTML，抽取42个完整外层正文段落，公式使用来源MathML文字；未提取图表，尚未重新复核。",
+      "next_action_zh": "以新的材料版本进入研究复核；原RSS宣布日与版本修订日并列记录，本次后补内容不回填原邮件。"
+    },
+    {
+      "parent_material_id": "96d2d8aed1b355a437e4f8cd99256b22880fa11a5a1ce812e576f271a6a55ce4",
+      "requested_url": "https://www.capitalallocators.com/podcast/building-a-berkshire-for-the-middle-market/",
+      "started_utc": "2026-10-20T15:20:52.542536+00:00",
+      "finished_utc": "2026-10-20T15:20:55.291819+00:00",
+      "response_status": 403,
+      "body_sha256": "ac4f780358ba4326a07c3a9bb83dff5a70cbb95a22be0f4c9385efe182cd722f",
+      "bytes": 75193,
+      "status": "http_access_blocked",
+      "reason_zh": "本次直接请求返回403；另查看公开索引中的发布者页面，显示文字稿尚未提供，不能声称已取得访谈正文。",
+      "next_action_zh": "等发布者开放文字稿，或处理其公开音频；不把嘉宾简介当访谈观点。"
+    },
+    {
+      "parent_material_id": "9fba01ae02f36bfa2b0251169595948706378a724e734680cc7b1e7167df3fda",
+      "requested_url": "https://www.bogleheads.org/forum/viewtopic.php?p=8881258#p8881258",
+      "started_utc": "2026-10-20T15:20:53.962074+00:00",
+      "finished_utc": "2026-10-20T15:20:54.324068+00:00",
+      "response_status": 403,
+      "body_sha256": "6a7c3b480a060622328718a64c946c7ee8841d789d0e522b40089948ce802a85",
+      "bytes": 5635,
+      "status": "http_access_blocked",
+      "reason_zh": "本次论坛原链接返回403，未取得指定帖子的新正文或说话人上下文。",
+      "next_action_zh": "保留帖子原定位与日期；后续需正常访问到指定帖子，再区分发帖者、引用和回复。"
+    },
+    {
+      "parent_material_id": "dd01f3fdf736b6ea5cb28344a7c89ef6f3ae176696b32296fe9779d50a5ab567",
+      "requested_url": "https://mebfaber.com/2026/10/18/t-bills-and-still-chillin/",
+      "started_utc": "2026-10-20T15:20:54.544640+00:00",
+      "finished_utc": "2026-10-20T15:20:56.577759+00:00",
+      "response_status": 200,
+      "body_sha256": "462eb573b27d190d040a910c86d0ef5649d9580f02d673e56bd1ee6af7ac21b7",
+      "bytes": 291589,
+      "status": "short_source_post",
+      "reason_zh": "已确认公开原文自身很短；其链接论文SSRN本次也返回403。短文不包含完整模型、阈值或回测。",
+      "next_action_zh": "把链接论文作为独立研究来源取得正文后再核对；不拼接成Meb原文或推断当前组合建议。"
+    },
+    {
+      "parent_material_id": "e43c182767a6faef402a80d0951b2a0e50b996008d81a972aa043a5e3c240ba5",
+      "requested_url": "https://seekingalpha.com/article/4955077-sh-a-tactical-hedge-but-not-yet-a-short-call?source=feed_tag_etf_portfolio_strategy",
+      "started_utc": "2026-10-20T15:20:54.964837+00:00",
+      "finished_utc": "2026-10-20T15:20:55.795025+00:00",
+      "response_status": 403,
+      "body_sha256": "e0e8c0690f1f82bc4dd01bffcea1d265840ab45ad64b9f404ebb0d9e68cb458b",
+      "bytes": 4991,
+      "status": "http_access_blocked",
+      "reason_zh": "原文章本次HTTP403访问被拒，未取得新的完整正文。403本身不能证明具体是付费限制、反爬还是其他原因。",
+      "next_action_zh": "只保留已有公开摘要的范围限制；需正常取得作者完整论证后才进入新解读，不尝试绕过访问限制。"
+    },
+    {
+      "parent_material_id": "39e05f4a5bfbdb1aa849cc90fd5792f5a1bf3373bee244d14d3c5c0abff9d929",
+      "requested_url": "https://seekingalpha.com/article/4955076-wcld-why-small-cloud-computing-stocks-are-breaking-out-rating-upgrade?source=feed_tag_etf_portfolio_strategy",
+      "started_utc": "2026-10-20T15:20:55.547572+00:00",
+      "finished_utc": "2026-10-20T15:20:56.219148+00:00",
+      "response_status": 403,
+      "body_sha256": "f6c4263705d2706baee83bccf1edd2f92889ea271ec08b0bbcfb5345728551c5",
+      "bytes": 5055,
+      "status": "http_access_blocked",
+      "reason_zh": "原文章本次HTTP403访问被拒，未取得新的完整正文。403本身不能证明具体是付费限制、反爬还是其他原因。",
+      "next_action_zh": "只保留已有公开摘要的范围限制；需正常取得作者完整论证后才进入新解读，不尝试绕过访问限制。"
+    },
+    {
+      "parent_material_id": "44f643744489f90acd701f0211e4bfe56079c45371af0c14caf42b54b3f3c9b1",
+      "requested_url": "https://seekingalpha.com/article/4955075-utes-vs-utg-why-i-prefer-the-etf-as-rates-rise?source=feed_tag_etf_portfolio_strategy",
+      "started_utc": "2026-10-20T15:20:55.547706+00:00",
+      "finished_utc": "2026-10-20T15:20:56.390473+00:00",
+      "response_status": 403,
+      "body_sha256": "c890d4dcb11667862d2edccbfbec3b370655df2ed7d594e0de7c3bbeae744183",
+      "bytes": 4999,
+      "status": "http_access_blocked",
+      "reason_zh": "原文章本次HTTP403访问被拒，未取得新的完整正文。403本身不能证明具体是付费限制、反爬还是其他原因。",
+      "next_action_zh": "只保留已有公开摘要的范围限制；需正常取得作者完整论证后才进入新解读，不尝试绕过访问限制。"
+    },
+    {
+      "parent_material_id": "3e17fb14536e0ccad74bff10d1910e9e8a796e31b54f373cc3e44abe03e5499d",
+      "requested_url": "https://seekingalpha.com/article/4955065-wea-attractive-monthly-pay-with-discount-blowing-out?source=feed_tag_etf_portfolio_strategy",
+      "started_utc": "2026-10-20T15:20:55.797128+00:00",
+      "finished_utc": "2026-10-20T15:20:56.391212+00:00",
+      "response_status": 403,
+      "body_sha256": "47009e12399307b58acf1fda7d0d01ea20e54e83ddbdbe92c38289875531d267",
+      "bytes": 5015,
+      "status": "http_access_blocked",
+      "reason_zh": "原文章本次HTTP403访问被拒，未取得新的完整正文。403本身不能证明具体是付费限制、反爬还是其他原因。",
+      "next_action_zh": "只保留已有公开摘要的范围限制；需正常取得作者完整论证后才进入新解读，不尝试绕过访问限制。"
+    },
+    {
+      "parent_material_id": "41762a1d61824c2c80831712013ae91ee168f7c1d208640614caa49c6c9a20cc",
+      "requested_url": "https://seekingalpha.com/article/4955063-bwg-strengthening-us-dollar-rising-bond-yields-likely-to-be-headwind?source=feed_tag_etf_portfolio_strategy",
+      "started_utc": "2026-10-20T15:20:56.255298+00:00",
+      "finished_utc": "2026-10-20T15:20:56.895872+00:00",
+      "response_status": 403,
+      "body_sha256": "7edee7a406e2fd6b0554ad77a05138626d9f016e250502fe4ba20bbce65aba93",
+      "bytes": 5055,
+      "status": "http_access_blocked",
+      "reason_zh": "原文章本次HTTP403访问被拒，未取得新的完整正文。403本身不能证明具体是付费限制、反爬还是其他原因。",
+      "next_action_zh": "只保留已有公开摘要的范围限制；需正常取得作者完整论证后才进入新解读，不尝试绕过访问限制。"
+    },
+    {
+      "parent_material_id": "625a474626654b4bde5e817612fa701936e6aec1227ca26bbe57cc0d1e68c7d2",
+      "requested_url": "https://www.youtube.com/watch?v=h3ajVyC5vJc",
+      "started_utc": "2026-10-20T15:20:56.425671+00:00",
+      "finished_utc": "2026-10-20T15:20:58.066273+00:00",
+      "response_status": 200,
+      "body_sha256": "ea35d788b0fe2a9900b43be2b66bcbb7f323d203491160d379d1a4417ced507d",
+      "bytes": 1512082,
+      "status": "captions_empty",
+      "reason_zh": "视频页面和发布者身份可读，也列出字幕轨道；但本次官方字幕端点HTTP200返回0字节，未取得字幕正文。",
+      "next_action_zh": "保留空响应记录，后续取得实际字幕或转写后再核对；节目说明和章节不等于完整发言。"
+    }
+  ],
+  "supplements": [
+    {
+      "parent_material_id": "0b5d36668cb7f78de42b2e5b469af0ab5323a532e539ecca1614d4f15fd5dfd0",
+      "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+      "source_url": "https://arxiv.org/html/2607.27188v3",
+      "raw_sha256": "b868b61ad1ee863079af83f871ff4689dbd605f6a0bb48123867b20f872761bd",
+      "paragraph_ids": [
+        "S1.p1",
+        "S1.p2",
+        "S1.p3",
+        "S1.p4",
+        "S1.p5",
+        "S1.p6",
+        "S2.SS1.p1",
+        "S2.SS2.p1",
+        "S2.SS3.p1",
+        "S2.SS4.p1",
+        "S3.SS1.p1",
+        "S3.SS2.p1",
+        "S3.SS2.p2",
+        "S3.SS3.p1",
+        "S3.SS4.p1",
+        "S4.SS1.SSS0.Px1.p1",
+        "S4.SS1.SSS0.Px2.p1",
+        "S4.SS2.p1",
+        "S4.SS2.p2",
+        "S4.SS3.p1",
+        "S4.SS3.p2",
+        "S4.SS4.p1",
+        "S4.SS5.p1",
+        "S4.SS5.p2",
+        "S4.SS5.p3",
+        "S4.SS5.p4",
+        "S4.SS6.p1",
+        "S4.SS6.p2",
+        "S5.SS1.p1",
+        "S5.SS1.p2",
+        "S5.SS2.p1",
+        "S5.SS2.p2",
+        "S5.SS3.p1",
+        "S5.SS4.p1",
+        "S5.SS5.p1",
+        "S5.SS5.p2",
+        "S6.p1",
+        "S6.p2",
+        "S6.SS1.p1",
+        "S6.SS2.p1",
+        "S7.p1",
+        "S7.p2"
+      ],
+      "paragraph_text_sha256": "00486fb8e821bf3821fc40063788eefb3da4234093f92758c6aae9abee0895f4",
+      "paper_version": "3",
+      "available_paragraph_count": 42,
+      "selected_paragraph_count": 42,
+      "math_source": "MathML alttext",
+      "tables_and_figures_extracted": false,
+      "paragraph_scope": "outermost ltx_para including complete descendant text",
+      "complete_paper_claim": false,
+      "evidence_level": "captured_excerpt",
+      "original_published": "2026-10-19T04:00:00+00:00",
+      "delivery_eligible": false,
+      "review_status": "pending",
+      "frozen_mail_admission": "held_later_capture",
+      "source_date_observations": {
+        "captured_rss_announcement": "2026-10-19T04:00:00+00:00",
+        "page_first_submission_date": "2026-07-29",
+        "page_version_revision_date": "2026-10-15"
+      },
+      "date_note_zh": "分别保留RSS宣布日、首次提交日和版本修订日；不将它们改写为同一天，原选文日期口径仍须核对。"
+    }
+  ],
+  "source_leads": [
+    {
+      "url": "https://www.quantitativo.com/p/less-wrong",
+      "title": "Less Wrong [Quantitativo]",
+      "parent_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+      "publication_date": null,
+      "date_status": "unverified",
+      "status": "new_source_needs_capture_and_review",
+      "delivery_eligible": false
+    },
+    {
+      "url": "https://quanterlab.com/research/hedgefundie-s-excellent-adventure-tested-apart",
+      "title": "Hedgefundie’s Excellent Adventure (HFEA) tested 2010-2025 [Quanter Lab]",
+      "parent_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+      "publication_date": null,
+      "date_status": "unverified",
+      "status": "new_source_needs_capture_and_review",
+      "delivery_eligible": false
+    },
+    {
+      "url": "https://www.handelsmeisterei.de/the_messy_business_of_building_a_futures_security_master/",
+      "title": "The Messy Business of Building a Futures Security Master [Handelsmeisterei]",
+      "parent_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+      "publication_date": null,
+      "date_status": "unverified",
+      "status": "new_source_needs_capture_and_review",
+      "delivery_eligible": false
+    },
+    {
+      "url": "https://concretumgroup.substack.com/p/chasing-skew-in-trend-following",
+      "title": "Chasing Skew in Trend Following [Concretum Group]",
+      "parent_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+      "publication_date": null,
+      "date_status": "unverified",
+      "status": "new_source_needs_capture_and_review",
+      "delivery_eligible": false
+    },
+    {
+      "url": "https://quanterlab.com/research/hidden-markov-model-against-the-vix-on-a-regime-aware-factor-portfolio",
+      "title": "Hidden Markov model vs VIX regime detection [Quanter Lab]",
+      "parent_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+      "publication_date": null,
+      "date_status": "unverified",
+      "status": "new_source_needs_capture_and_review",
+      "delivery_eligible": false
+    },
+    {
+      "url": "https://aligrithm.com/the-real-is-oos-sharpe-haircut-closed-form-not-50/",
+      "title": "The Real IS OOS Sharpe Haircut (Closed Form, Not “50%”) [Aligrithm]",
+      "parent_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+      "publication_date": null,
+      "date_status": "unverified",
+      "status": "new_source_needs_capture_and_review",
+      "delivery_eligible": false
+    },
+    {
+      "url": "https://blog.harbourfronts.com/2026/10/18/the-role-of-liquidity-in-stock-returns-and-option-pricing/",
+      "title": "The Role of Liquidity in Stock Returns and Option Pricing [Relative Value Arbitrage]",
+      "parent_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+      "publication_date": null,
+      "date_status": "unverified",
+      "status": "new_source_needs_capture_and_review",
+      "delivery_eligible": false
+    },
+    {
+      "url": "https://aligrithm.com/a-trend-factor-for-the-crypto-cross-section-and-its-overfit-tell/",
+      "title": "A Trend Factor for the Crypto Cross-Section (and Its Overfit Tell) [Aligrithm]",
+      "parent_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+      "publication_date": null,
+      "date_status": "unverified",
+      "status": "new_source_needs_capture_and_review",
+      "delivery_eligible": false
+    }
+  ],
+  "linked_captures": [
+    {
+      "parent_material_id": "0b5d36668cb7f78de42b2e5b469af0ab5323a532e539ecca1614d4f15fd5dfd0",
+      "purpose": "arxiv-html",
+      "display_url": "https://arxiv.org/html/2607.27188v3",
+      "started_utc": "2026-10-20T15:22:56.824176+00:00",
+      "finished_utc": "2026-10-20T15:22:57.381342+00:00",
+      "response_status": 200,
+      "body_sha256": "b868b61ad1ee863079af83f871ff4689dbd605f6a0bb48123867b20f872761bd",
+      "bytes": 188596,
+      "error_type": null
+    },
+    {
+      "parent_material_id": "dd01f3fdf736b6ea5cb28344a7c89ef6f3ae176696b32296fe9779d50a5ab567",
+      "purpose": "linked-ssrn",
+      "display_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5271353",
+      "started_utc": "2026-10-20T15:22:57.386554+00:00",
+      "finished_utc": "2026-10-20T15:22:57.737128+00:00",
+      "response_status": 403,
+      "body_sha256": "8670b2fc844f01868151f3e7f2942dd50d6cd885b4cb191aff7c08b6cbcd7d69",
+      "bytes": 5668,
+      "error_type": null
+    },
+    {
+      "parent_material_id": "625a474626654b4bde5e817612fa701936e6aec1227ca26bbe57cc0d1e68c7d2",
+      "purpose": "youtube-captions",
+      "display_url": "https://www.youtube.com/api/timedtext?v=h3ajVyC5vJc&lang=en",
+      "started_utc": "2026-10-20T15:22:57.740040+00:00",
+      "finished_utc": "2026-10-20T15:22:58.060505+00:00",
+      "response_status": 200,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "error_type": null
+    }
+  ],
+  "status_counts": {
+    "outline_only": 1,
+    "aggregate_listing": 1,
+    "body_supplement_pending": 1,
+    "http_access_blocked": 7,
+    "short_source_post": 1,
+    "captions_empty": 1
+  },
+  "model_requests": 0,
+  "mail_approvals_added": 0,
+  "delivery_eligible": false,
+  "classification_actor": "assistant source inspection; not model or user approval",
+  "capture_scope": "one later public-source pass; 12 original requests plus3 explicitly followed source links; no access bypass",
+  "external_fact_check": "not_performed",
+  "complete_material_recovery": false
+}
