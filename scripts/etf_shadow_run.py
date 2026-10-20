@@ -12,8 +12,9 @@ import urllib.parse
 
 import etf_content_cards as cards
 import etf_semantic_review as semantic
+import etf_material_kind as material_kind
 
-VERSION = "etf-shadow-run-v1"
+VERSION = "etf-shadow-run-v2"
 
 
 @contextmanager
@@ -56,10 +57,10 @@ def select_materials(materials: list[dict], limit: int) -> list[dict]:
     unique = {}
     for material in sorted(materials, key=lambda m: m["material_id"]):
         url = cards.dr.canonical_url(material["url"])
-        score = (cards.ready(material), sum(len(p["text"]) for p in material["paragraphs"]))
+        score = (material_kind.classify(material)["eligible"], cards.basic_ready(material), sum(len(p["text"]) for p in material["paragraphs"]))
         if url not in unique or score > unique[url][0]:
             unique[url] = (score, material)
-    return sorted((v[1] for v in unique.values()), key=lambda m: (not cards.ready(m), m["material_id"]))[:limit]
+    return sorted((v[1] for v in unique.values()), key=lambda m: (not material_kind.classify(m)["eligible"], m["material_id"]))[:limit]
 
 
 def validate_config(config: dict) -> None:
@@ -110,7 +111,7 @@ def advance(materials: list[dict], config: dict, source_hash: str, out_dir: Path
     context = {"version": VERSION, "config": config, "source_sha256": source_hash,
                "materials": materials, "generation_prompt": cards.SYSTEM_PROMPT,
                "review_prompt": semantic.REVIEW_PROMPT, "validator": cards.VALIDATOR_VERSION,
-               "review_version": semantic.VERSION}
+               "review_version": semantic.VERSION, "material_policy": material_kind.VERSION}
     context_id = cards.digest(context)
     with run_lock(out_dir):
         checkpoint = out_dir / "run.json"
@@ -127,7 +128,7 @@ def advance(materials: list[dict], config: dict, source_hash: str, out_dir: Path
             cards.write_json(checkpoint, journal)
         used_now = 0
         for material in materials:
-            if not cards.ready(material):
+            if not material_kind.classify(material)["eligible"]:
                 continue
             mid = material["material_id"]
             for stage in ("generate", "review"):
@@ -195,10 +196,11 @@ def build_report(materials: list[dict], journal: dict) -> dict:
     for material in materials:
         mid = material["material_id"]
         row = {"material_id": mid, "title": material["title"], "url": material["url"], "errors": []}
+        row["material_profile"] = profile = material_kind.classify(material)
         gen = journal["attempts"].get("generate:" + mid)
         rev = journal["attempts"].get("review:" + mid)
-        if not cards.ready(material):
-            row["status"] = "insufficient_material"
+        if not profile["eligible"]:
+            row["status"] = "insufficient_material" if profile["kind"] == "insufficient_material" else "source_text_required"
         elif gen is None:
             row["status"] = "awaiting_generation"
         elif gen["state"] != "parsed":
@@ -229,7 +231,7 @@ def render_html(materials: list[dict], responses: dict, report: dict) -> str:
     labels = {"model_review_passed": "模型原文复核通过，待编辑审阅", "semantic_revision_required": "语义需修订",
               "blocked_by_evidence": "引用/数字拒绝", "blocked_by_terminology": "术语拒绝", "review_invalid": "复核协议无效",
               "review_failed": "复核未完成", "awaiting_semantic_review": "待模型复核", "generation_failed": "生成未完成",
-              "awaiting_generation": "待生成", "insufficient_material": "材料不足"}
+              "awaiting_generation": "待生成", "insufficient_material": "材料不足", "source_text_required": "疑似目录，需补正文"}
     budget = report["budget"]
     summary = '<section><h2>本批次执行记录</h2><p>累计请求预留：' + str(budget["requests_reserved"]) + '/' + str(budget["max_requests"]) + '；累计输出token预留：' + str(budget["output_tokens_reserved"]) + '/' + str(budget["max_reserved_output_tokens"]) + '。</p><p>未知结果不自动重试。上限限制请求数与配置的输出长度，不是精确美元预算；实际输入也计费，提供方用量可能缺失。所有稿件仍待编辑审阅及外部事实核验。</p><ul>'
     for row in report["items"]:

@@ -18,8 +18,8 @@ from pathlib import Path
 
 import daily_reports as dr
 
-VERSION = "etf-content-card-v3"
-VALIDATOR_VERSION = "etf-evidence-validation-v2"
+VERSION = "etf-content-card-v4"
+VALIDATOR_VERSION = "etf-evidence-validation-v3"
 LEVELS = {
     "captured_excerpt": "已采集节选（不保证完整）",
     "publisher_abstract": "发布者论文摘要",
@@ -92,12 +92,19 @@ def check_material(material: dict) -> None:
         raise ValueError("material identity mismatch")
 
 
-def ready(material: dict) -> bool:
+def basic_ready(material: dict) -> bool:
     if material["evidence_level"] in {"title_only", "aggregate_listing"}:
         return False
     item = dr.Item(material["source"], material["title"], material["url"],
                    material["published"], "\n\n".join(p["text"] for p in material["paragraphs"]))
     return dr.etf_has_enough_summary_evidence(item)
+
+
+def ready(material: dict) -> bool:
+    # Lazy import keeps the structure policy separate from material identity and
+    # makes the same gate apply to every shadow generation/review entry point.
+    import etf_material_kind
+    return etf_material_kind.classify(material)["eligible"]
 
 
 def prepare_manifest(manifest: dict) -> list[dict]:
@@ -165,6 +172,8 @@ def expand_evidence_ids(material: dict, card: dict) -> dict:
 def request_payload(material: dict, model: str, max_output_tokens: int = 1600,
                     thinking: str | None = None) -> dict:
     check_material(material)
+    if not ready(material):
+        raise ValueError("material needs substantive source text before generation")
     model_material = {k: v for k, v in material.items() if k != "paragraphs"}
     model_material["evidence_units"] = evidence_units(material)
     payload = {
