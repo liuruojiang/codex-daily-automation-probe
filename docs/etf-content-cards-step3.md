@@ -93,5 +93,5 @@ python scripts/etf_semantic_review.py replay --materials materials.json --respon
 放行等行为。沿用此前Windows临时目录兼容运行器，未绕过测试断言。
 真实编辑否决报告还在禁用模型调用的情况下完整离线重放，确认不需新请求。
 
-下一步应根据明确的拒绝原因受控修订旧卡片，重新执行机械与语义检查，
-再设计正式成刊接入。不能只靠增加评分或再问同一问题来清除警报。
+根据明确拒绝原因修订旧卡片并重新复查的流程和实际结果，见
+[第四步](etf-content-cards-step4.md)。不能只靠增加评分或再问同一问题来清除警报。
