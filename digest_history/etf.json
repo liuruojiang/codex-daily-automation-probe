@@ -6005,6 +6005,198 @@
       "source": "Ben Felix",
       "title": "Breaking Down My Investment Portfolio",
       "url": "https://www.youtube.com/watch?v=h3ajVyC5vJc"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.TR",
+      "title": "Probabilistic Limit Order Book Forecasting with Conditional Diffusion Models",
+      "url": "https://arxiv.org/abs/2610.25495"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.TR",
+      "title": "The Control Layer Behind Rule-Following Agents Trading Across Market Conditions",
+      "url": "https://arxiv.org/abs/2610.26324"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.TR",
+      "title": "Cooperative Multi-Agent Reinforcement Learning for Market Making on Prediction-Market Order Books",
+      "url": "https://arxiv.org/abs/2610.26789"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.ST",
+      "title": "Buy the Rumor, Sell the News: When Is News Priced In?",
+      "url": "https://arxiv.org/abs/2608.14014"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.RM",
+      "title": "Dynamic Programming for Value-at-risk Markov Decision Processes in Continuous Spaces",
+      "url": "https://arxiv.org/abs/2610.24439"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.RM",
+      "title": "Conditional Weight of Evidence for Gradient-Boosted Credit Models: Estimation, Additivity and Its Relation to Adverse Action Reasons",
+      "url": "https://arxiv.org/abs/2610.24586"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.PM",
+      "title": "Rachev-Ratio Portfolio Optimization with TimeGAN Scenarios: Replacement versus Supplementation",
+      "url": "https://arxiv.org/abs/2610.24544"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.PM",
+      "title": "On the utility problem in a market where price impact is transient",
+      "url": "https://arxiv.org/abs/2511.12093"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.PM",
+      "title": "When Values-Based Screens Disagree: Continuous Shariah Compliance and Classification Dynamics",
+      "url": "https://arxiv.org/abs/2512.22858"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "Alpha Architect",
+      "title": "Stock Price Bubble Dissection Requires a look at Fundamentals and Speculation",
+      "url": "https://alphaarchitect.com/stock-price-bubble/"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Energy ETFs: How to Play the Sector's Surge",
+      "url": "https://finance.yahoo.com/energy/articles/energy-etfs-play-sectors-surge-180900131.html?.tsrc=rss"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.ST",
+      "title": "Probability-Weighting Functions for Normal Tempered-Stable Laws: Orthogonal Channels and Information-Theoretic Indices",
+      "url": "https://arxiv.org/abs/2610.26746"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.TR",
+      "title": "Topological Compression of Prediction Market Belief States for Event Forecasting",
+      "url": "https://arxiv.org/abs/2610.25756"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.ST",
+      "title": "Amortized Neural Filtering for Calibrated Posteriors in Statistical Arbitrage",
+      "url": "https://arxiv.org/abs/2610.25802"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.ST",
+      "title": "Conditionally Identifiable Latent Representation for Multivariate Time Series with Structural Dynamics",
+      "url": "https://arxiv.org/abs/2603.22886"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.PM",
+      "title": "Regime-Aware Interpretable Ranking for Sector Rotation",
+      "url": "https://arxiv.org/abs/2610.26456"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "arXiv q-fin.PM",
+      "title": "Optimal Trading Filters and the Value of Predictive Signals",
+      "url": "https://arxiv.org/abs/2610.24558"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "Morningstar The Long View（播客页面）",
+      "title": "Mike Piper: Scammers Are Getting Smarter. Is Your Financial Security Keeping Up?",
+      "url": "https://www.morningstar.com/podcasts/the-long-view/mike-piper-scammers-are-getting-smarter-is-your-financial-security-keeping-up"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "Seeking Alpha ETFs",
+      "title": "RVT Beats 12%-Yielding RYLD On All Fronts",
+      "url": "https://seekingalpha.com/article/4955345-rvt-beats-12-percent-yielding-ryld-on-all-fronts?source=feed_tag_etf_portfolio_strategy"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "Seeking Alpha ETFs",
+      "title": "DES: Good Diversifier, But There Are Better Options",
+      "url": "https://seekingalpha.com/article/4955340-des-good-diversifier-but-there-are-better-options?source=feed_tag_etf_portfolio_strategy"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "Seeking Alpha ETFs",
+      "title": "COLO: El Nino And Earthquakes Are Bad Timing Amid Inflation Battle",
+      "url": "https://seekingalpha.com/article/4955321-colo-el-nino-and-earthquakes-are-bad-timing-amid-inflation-battle?source=feed_tag_etf_portfolio_strategy"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "Seeking Alpha ETFs",
+      "title": "Stagflation In Europe Could Drive VGK Lower Than It Is Now",
+      "url": "https://seekingalpha.com/article/4955299-stagflation-in-europe-could-drive-vgk-lower-than-it-is-now?source=feed_tag_etf_portfolio_strategy"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "Seeking Alpha ETFs",
+      "title": "XLV: Safe Haven, But That Cuts Both Ways",
+      "url": "https://seekingalpha.com/article/4955254-xlv-safe-haven-but-that-cuts-both-ways?source=feed_tag_etf_portfolio_strategy"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Vanguard's growth ETF turned terrible timing into $100K",
+      "url": "https://www.thestreet.com/investing/vanguard-growth-etf-vug-100k-worst-timing?.tsrc=rss"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "ETF Trends",
+      "title": "Webinar Recap: The Opportunity in the $686 Billion Space Economy",
+      "url": "https://www.etftrends.com/thematic-investing-content-hub/webinar-recap-opportunity-686-billion-space-economy/"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "ETF Trends",
+      "title": "Schwab Enters International Bond ETF Ring With 0.06% Fee",
+      "url": "https://www.etftrends.com/fixed-income-content-hub/schwab-enters-international-bond-etf-ring-with-0-06-fee/"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "ETF Trends",
+      "title": "High Oil Prices May Push Inflation Lower Over Time",
+      "url": "https://www.etftrends.com/portfolio-strategies-content-hub/high-oil-prices-may-push-inflation-lower-over-time/"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "ETF Trends",
+      "title": "Indonesia Stocks Tank on Fresh MSCI EM Downgrade Threat",
+      "url": "https://www.etftrends.com/indonesia-stocks-tank-fresh-msci-em-downgrade-threat/"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "ETF Trends",
+      "title": "How Equal-Weight ETF GSEW Beat Its Category Average YTD",
+      "url": "https://www.etftrends.com/future-etfs-content-hub/equal-weight-etf-gsew-beat-category-average-ytd-2026/"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "ETF Trends",
+      "title": "It Pays to Be Picky With TIPS ETFs",
+      "url": "https://www.etftrends.com/innovative-etfs-content-hub/be-picky-tips-etfs/"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "ETF Trends",
+      "title": "AI Bonds Could Push Treasury Yields Higher",
+      "url": "https://www.etftrends.com/active-etf-content-hub/ai-bonds-push-treasury-yields-higher/"
+    },
+    {
+      "sent_date": "2026-10-21",
+      "source": "ETF Trends",
+      "title": "Beyond the Tech Horizon: Real Diversification in Non-AI Thematic ETFs",
+      "url": "https://www.etftrends.com/thematic-investing-content-hub/beyond-tech-horizon-real-diversification-non-ai-thematic-etfs/"
     }
   ]
 }
