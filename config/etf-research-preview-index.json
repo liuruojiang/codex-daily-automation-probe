@@ -1,0 +1,77 @@
+{
+  "version": "etf-research-candidate-index-v1",
+  "record_sha256": {
+    "intake": "7ce5e150685b623e367f3df4a640eca5549e9a7d26d15bd3c7929b9f40f119bf",
+    "paper": "05ed8b84d665795503b688a209319fd58280962ed612ed51a52cb780621cd775",
+    "original": "bfdc7843dde788998ebd2f7709d13683da92d5c2e6dfe8f7eb00307d24704774",
+    "crypto_resolution": "13d06e98191f1665ac337b4d44af444b950dc5d974ba92fdd17f979bb64be0b7",
+    "sections": "ca218f03223461be4f4e8f9de59ebd0105c08e4648020ecdb2bba976ac81bfb5"
+  },
+  "registry_sha256": "717709678405e2ca64ce8ec7a104057a9fe792d0de611dfa1a1e8bfedddcee9d",
+  "snapshot": {
+    "run_id": "39347818936",
+    "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b",
+    "cutoff_utc": "2026-10-20T00:28:29.686191+00:00",
+    "body_sha256": "fb5d38afdea5fa1a0327852b9021254a520107b8e5d7a665315b6ea7a1e059b4",
+    "history_sha256": "b1f73b75cbc5e10ff7acf79a224f3156b886b64e91fb7ab7a550084b957a91ce"
+  },
+  "entries": [
+    {
+      "record": "paper",
+      "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+      "entry_sha256": "ca8f950f28efee2b0df40fc2d7ab866b83bb498d159fe3aa802e790a9c544da1",
+      "annotation": {
+        "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+        "date_status": "conflicting",
+        "date_note_zh": "保留RSS宣布日2026-10-19、首次提交2026-07-29与版本修订2026-10-15；选文日期口径待核，未刷新。",
+        "scope_note_zh": "后补42段正文节选，不含图表；仅供独立研究预览，不回填原邮件。524计数层级仍待数据或代码确认，价格RMSE不是投资收益。"
+      }
+    },
+    {
+      "record": "original",
+      "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+      "entry_sha256": "3df653801d7e62d75fc0d99f16f32b2a6b60d2ebafaf3be89e4828a84df36119",
+      "annotation": {
+        "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+        "date_status": "captured",
+        "date_note_zh": "保留原站发布日期与较晚捕获的区别；未刷新日期，研究核对不能回填原邮件采集版本。",
+        "scope_note_zh": "原站70个文字块的节选，未取图表；保留原文比例冲突，不自行合成为通用夏普折扣。"
+      }
+    },
+    {
+      "record": "original",
+      "material_id": "ee28284418b8c94057e1692d80a5f1d9b5b0398d124d30d7300ca2389dbe3912",
+      "entry_sha256": "7c3783e7fecda483da9559107c54e7da37a95e394bd91809f295c7d445505ef1",
+      "annotation": {
+        "material_id": "ee28284418b8c94057e1692d80a5f1d9b5b0398d124d30d7300ca2389dbe3912",
+        "date_status": "captured",
+        "date_note_zh": "保留原站发布日期与较晚捕获的区别；未刷新日期，研究核对不能回填原邮件采集版本。",
+        "scope_note_zh": "原站32个文字块，属于博客转述两项研究；未独立核对原论文、数据、样本和评价指标。"
+      }
+    },
+    {
+      "record": "crypto_resolution",
+      "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+      "entry_sha256": "4ddf7a3678f89e25e9bebafb967cf1ad366158b6b8bb891f0ea977a750a760f6",
+      "annotation": {
+        "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+        "date_status": "captured",
+        "date_note_zh": "保留原站发布日期与较晚捕获的区别；未刷新日期，研究核对不能回填原邮件采集版本。",
+        "scope_note_zh": "原站63个文字块，采用第18步实际修订稿；旧拒绝保留，联合条件复现及多重检验仍是后续任务。"
+      }
+    },
+    {
+      "record": "sections",
+      "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+      "entry_sha256": "6be1ece1bb199ffdd7f940a3156a8f9f2302471d2064872f1c87b045eba77f95",
+      "annotation": {
+        "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+        "date_status": "captured",
+        "date_note_zh": "保留原站发布日期与较晚捕获的区别；未刷新日期，研究核对不能回填原邮件采集版本。",
+        "scope_note_zh": "仅选Data sources与Process automation两章的61个文字块；不涵盖其他章节或图表，工作簿和代码未核验。"
+      }
+    }
+  ],
+  "external_fact_check": "not_performed",
+  "delivery_eligible": false
+}

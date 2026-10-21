@@ -99,6 +99,13 @@ jobs:
           --prior-record config/etf-crypto-research-resolution.json
           --record config/etf-futures-section-research.json
           --report artifacts-automatic-preview/section-research-proof.json
+      - name: Assemble exact current research versions and full candidate preview
+        run: >-
+          python -B scripts/etf_research_roundup.py
+          --source-dir automatic-source
+          --config-dir config
+          --index config/etf-research-preview-index.json
+          --out-dir artifacts-automatic-preview/research-roundup
       - uses: actions/upload-artifact@v7
         if: always()
         with:
