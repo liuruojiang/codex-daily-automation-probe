@@ -70,6 +70,17 @@ jobs:
           --intake-audit config/etf-source-intake-audit.json
           --record config/etf-supplement-research-record.json
           --report artifacts-automatic-preview/supplement-research-proof.json
+      - name: Rebuild original-source research and keep unresolved opinions held
+        # This job is separate from automation-tests and needs its own parser.
+        # The default production workflow does not install this dependency.
+        run: |
+          python -m pip install 'beautifulsoup4==4.14.3'
+          python -B scripts/etf_original_research.py \
+            --source-dir automatic-source \
+            --registry config/etf-shadow-reviewed-registry.json \
+            --parent-record config/etf-supplement-research-record.json \
+            --record config/etf-original-research-records.json \
+            --report artifacts-automatic-preview/original-research-proof.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:
