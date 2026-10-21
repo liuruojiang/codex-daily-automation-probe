@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 import etf_content_cards as cards
 import etf_shadow_run as shadow
+from github_metadata import get_json
 
 VERSION = "etf-cloud-checkpoint-probe-v1"
 SOURCE_RUN = "39347818936"
@@ -61,11 +62,7 @@ def verify_source(run, repository, default_branch):
 
 def fetch_source(destination):
     repository = os.environ["GITHUB_REPOSITORY"]
-    request = urllib.request.Request("https://api.github.com/repos/" + repository + "/actions/runs/" + SOURCE_RUN,
-                                    headers={"Authorization": "Bearer " + os.environ["GH_TOKEN"],
-                                             "Accept": "application/vnd.github+json"})
-    with urllib.request.urlopen(request, timeout=30) as response:
-        run = json.load(response)
+    run = get_json("https://api.github.com/repos/" + repository + "/actions/runs/" + SOURCE_RUN, os.environ["GH_TOKEN"])
     verify_source(run, repository, os.environ["DEFAULT_BRANCH"])
     # Persist selected public provenance only, never credentials or request headers.
     cards.write_json(destination, {k: run[k] for k in ("id", "path", "head_sha", "head_branch", "event", "conclusion")})
@@ -105,11 +102,7 @@ def verify_resume(run, artifact, commit, repository):
 def fetch_resume(destination):
     repository = os.environ["GITHUB_REPOSITORY"]
     def get(path):
-        request = urllib.request.Request("https://api.github.com/repos/" + repository + path,
-                                        headers={"Authorization": "Bearer " + os.environ["GH_TOKEN"],
-                                                 "Accept": "application/vnd.github+json"})
-        with urllib.request.urlopen(request, timeout=30) as response:
-            return json.load(response)
+        return get_json("https://api.github.com/repos/" + repository + path, os.environ["GH_TOKEN"])
     run = get("/actions/runs/" + RESUME_ORIGIN["GITHUB_RUN_ID"])
     artifact = get("/actions/artifacts/" + str(RESUME_ARTIFACT["id"]))
     commit = get("/git/commits/" + RESUME_ORIGIN["GITHUB_SHA"])

@@ -15,6 +15,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: etf-production-delivery
+  cancel-in-progress: false
+
 jobs:
   send:
     runs-on: ubuntu-latest
@@ -35,6 +39,8 @@ jobs:
       - name: Send Gmail
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
         env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
@@ -42,7 +48,9 @@ jobs:
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
-        run: python scripts/send_report.py artifacts/metadata.json
+        # A durable GitHub claim is committed before SMTP. Any existing claim,
+        # including uncertain/unfinished delivery, blocks automatic re-sending.
+        run: python scripts/send_report.py artifacts/metadata.json --receipt artifacts/delivery-receipt.json --durable-github-etf
       - name: Persist digest history
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
         run: |

@@ -50,16 +50,15 @@ jobs:
           RESUME_RUN_ID: ${{ inputs.resume_run_id }}
         run: |
           python - <<'PY'
-          import json, os, urllib.request
+          import json, os, sys
           from pathlib import Path
+          sys.path.insert(0, 'scripts')
+          from github_metadata import get_json
           def read_run(value, workflow):
               if not value.isdigit() or int(value) <= 0:
                   raise SystemExit('Expected a positive workflow run ID')
-              request = urllib.request.Request(
-                  'https://api.github.com/repos/' + os.environ['REPOSITORY'] + '/actions/runs/' + value,
-                  headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  run = json.load(response)
+              run = get_json('https://api.github.com/repos/' + os.environ['REPOSITORY'] + '/actions/runs/' + value,
+                             os.environ['GH_TOKEN'])
               if run['path'] != '.github/workflows/' + workflow or run['repository']['full_name'] != os.environ['REPOSITORY'] or run['status'] != 'completed':
                   raise SystemExit('Unexpected source workflow or incomplete run')
               return run

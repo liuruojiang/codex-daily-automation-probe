@@ -1,0 +1,137 @@
+{
+  "baseline": {
+    "run": {
+      "id": 39347818936,
+      "run_attempt": 1,
+      "path": ".github/workflows/etf-allocation-digest.yml",
+      "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b",
+      "head_branch": "main",
+      "event": "schedule",
+      "status": "completed",
+      "conclusion": "success",
+      "repository": {
+        "id": 1236131103,
+        "full_name": "liuruojiang/codex-daily-automation-probe"
+      },
+      "head_repository": {
+        "id": 1236131103,
+        "full_name": "liuruojiang/codex-daily-automation-probe"
+      },
+      "pull_requests": []
+    },
+    "artifact": {
+      "id": 12231389856,
+      "node_id": "MDg6QXJ0aWZhY3QxMjIzMTM4OTg1Ng==",
+      "name": "us-etf-allocation-digest",
+      "size_in_bytes": 259857,
+      "url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/12231389856",
+      "archive_download_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/12231389856/zip",
+      "expired": false,
+      "digest": "sha256:2a7f7b9c124aedb6a37647af7622784cf76eabf4d15968b3ac8786027b3f56b2",
+      "created_at": "2026-10-20T00:30:02Z",
+      "updated_at": "2026-10-20T00:30:02Z",
+      "expires_at": "2026-11-19T00:30:01Z",
+      "workflow_run": {
+        "id": 39347818936,
+        "repository_id": 1236131103,
+        "head_repository_id": 1236131103,
+        "head_branch": "main",
+        "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b"
+      }
+    }
+  },
+  "checkpoint": {
+    "run": {
+      "id": 39432084491,
+      "run_attempt": 1,
+      "path": ".github/workflows/delivery-regression.yml",
+      "head_sha": "1664a7d3f19ae88c84acb2f7d1d249b01ff5372b",
+      "head_branch": "codex/etf-evidence-cards-step1",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "repository": {
+        "id": 1236131103,
+        "full_name": "liuruojiang/codex-daily-automation-probe"
+      },
+      "head_repository": {
+        "id": 1236131103,
+        "full_name": "liuruojiang/codex-daily-automation-probe"
+      },
+      "pull_requests": [
+        {
+          "number": 158
+        }
+      ]
+    },
+    "artifact": {
+      "id": 12269585268,
+      "name": "etf-checkpoint-seed-39432084491-1",
+      "size_in_bytes": 164160,
+      "url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/12269585268",
+      "archive_download_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/12269585268/zip",
+      "expired": false,
+      "created_at": "2026-10-20T13:38:09Z",
+      "expires_at": "2026-11-19T13:38:08Z",
+      "updated_at": "2026-10-20T13:38:09Z",
+      "digest": "sha256:8b43513281f565ea4cf2e4bba48c486f610abf3f56ed7a8065891680400deba8",
+      "workflow_run": {
+        "id": 39432084491,
+        "repository_id": 1236131103,
+        "head_repository_id": 1236131103,
+        "head_branch": "codex/etf-evidence-cards-step1",
+        "head_sha": "1664a7d3f19ae88c84acb2f7d1d249b01ff5372b"
+      }
+    },
+    "commit": {
+      "sha": "2b9feddb5ece6e1844e26451acbc3ef14b83c9f5",
+      "parents": [
+        {
+          "sha": "b69e296d21b63f40d5b6e46726c555a85b1cc5b0"
+        },
+        {
+          "sha": "1664a7d3f19ae88c84acb2f7d1d249b01ff5372b"
+        }
+      ]
+    }
+  },
+  "fresh": {
+    "run": {
+      "id": 39518483125,
+      "run_attempt": 1,
+      "path": ".github/workflows/etf-allocation-digest.yml",
+      "head_sha": "b69e296d21b63f40d5b6e46726c555a85b1cc5b0",
+      "head_branch": "main",
+      "event": "schedule",
+      "status": "completed",
+      "conclusion": "success",
+      "repository": {
+        "id": 1236131103,
+        "full_name": "liuruojiang/codex-daily-automation-probe"
+      },
+      "head_repository": {
+        "id": 1236131103,
+        "full_name": "liuruojiang/codex-daily-automation-probe"
+      }
+    },
+    "artifact": {
+      "id": 12308593073,
+      "name": "us-etf-allocation-digest",
+      "size_in_bytes": 274337,
+      "url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/12308593073",
+      "archive_download_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/12308593073/zip",
+      "expired": false,
+      "created_at": "2026-10-21T00:00:46Z",
+      "expires_at": "2026-11-20T00:00:45Z",
+      "updated_at": "2026-10-21T00:00:46Z",
+      "digest": "sha256:380c653419854065e9a9c936adee355f7b9d9bc1aaf57ce42ee33d56cdcd818d",
+      "workflow_run": {
+        "id": 39518483125,
+        "repository_id": 1236131103,
+        "head_repository_id": 1236131103,
+        "head_branch": "main",
+        "head_sha": "b69e296d21b63f40d5b6e46726c555a85b1cc5b0"
+      }
+    }
+  }
+}

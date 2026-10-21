@@ -75,6 +75,69 @@ class ShadowTests(unittest.TestCase):
             self.assertEqual(report["budget"]["output_tokens_reserved"], 2400)
             self.assertEqual(report["budget"]["monetary_cap"], "not_established")
 
+    def test_corrupted_reservation_is_rejected_before_any_new_request(self):
+        for value in (0, -1, True, "2400", 3200, None):
+            calls = []
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as p:
+                conf = config(max_requests=1)
+                self.run_batch(p, calls, conf=conf, maximum=1)
+                checkpoint = Path(p)/"run.json";journal = cards.read_json(checkpoint)
+                next(iter(journal["attempts"].values()))["reserved_tokens"] = value
+                cards.write_json(checkpoint, journal)
+                for live in (False, True):
+                    with self.assertRaisesRegex(ValueError, "reservation"):
+                        self.run_batch(p, calls, conf=conf, live=live)
+                self.assertEqual(calls, ["generator"])
+
+    def test_invalid_checkpoint_states_slots_and_source_are_rejected_before_spending(self):
+        for which in ("state", "slot", "source", "fake_blocked_input", "attempts"):
+            calls = []
+            with self.subTest(which=which), tempfile.TemporaryDirectory() as p:
+                self.run_batch(p, calls, maximum=1)
+                checkpoint = Path(p)/"run.json";journal = cards.read_json(checkpoint)
+                attempt = next(iter(journal["attempts"].values()))
+                if which == "state":attempt["state"] = "unrecognized"
+                elif which == "slot":journal["attempts"]["generate:unknown-material"] = journal["attempts"].pop(next(iter(journal["attempts"])))
+                elif which == "source":journal["source_sha256"] = "different-source"
+                elif which == "fake_blocked_input":attempt.update(state="blocked_input", reserved_tokens=0)
+                else:journal["attempts"] = []
+                cards.write_json(checkpoint, journal)
+                with self.assertRaises(ValueError):self.run_batch(p, calls)
+                self.assertEqual(calls, ["generator"])
+
+    def test_completed_attempt_requires_a_matching_immutable_receipt(self):
+        for which in ("missing", "request_key", "material_id", "output"):
+            calls = []
+            with self.subTest(which=which), tempfile.TemporaryDirectory() as p:
+                self.run_batch(p, calls, maximum=1)
+                checkpoint = cards.read_json(Path(p)/"run.json")
+                key = next(iter(checkpoint["attempts"].values()))["request_key"]
+                path = Path(p)/"receipts"/(key + ".json")
+                if which == "missing":path.unlink()
+                else:
+                    receipt = cards.read_json(path)
+                    if which == "request_key":receipt["request_key"] = "another-request"
+                    elif which == "material_id":receipt["material_id"] = "another-material"
+                    else:
+                        output = json.loads(receipt["response"]["choices"][0]["message"]["content"])
+                        output["title_zh"] = "不同的来源绑定输出"
+                        receipt["response"]["choices"][0]["message"]["content"] = json.dumps(output)
+                    cards.write_json(path, receipt)
+                with self.assertRaisesRegex(ValueError, "cached request"):
+                    self.run_batch(p, calls)
+                self.assertEqual(calls, ["generator"])
+
+    def test_budget_report_refuses_an_over_budget_journal(self):
+        calls = []
+        with tempfile.TemporaryDirectory() as p:
+            self.run_batch(p, calls)
+            journal = cards.read_json(Path(p)/"run.json")
+            for changes in ({"max_requests": 3}, {"max_reserved_output_tokens": 11199}):
+                corrupted = copy.deepcopy(journal);corrupted["config"].update(changes)
+                with self.subTest(changes=changes), self.assertRaisesRegex(ValueError, "cumulative request budget"):
+                    shadow.build_report(materials(), corrupted)
+            self.assertEqual(len(calls), 4)
+
     def test_plan_and_replay_never_call_network(self):
         calls = []
         with tempfile.TemporaryDirectory() as p:

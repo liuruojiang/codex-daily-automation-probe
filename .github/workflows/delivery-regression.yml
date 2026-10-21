@@ -31,20 +31,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Verify exact newer production producer and artifact
-        env:
-          GH_TOKEN: ${{ github.token }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: >-
-          python -B scripts/etf_fresh_shadow.py verify-source
-          --record config/etf-fresh-shadow-record.json --out-dir fresh-source-proof
-      - uses: actions/download-artifact@v8
-        with:
-          artifact-ids: '12308593073'
-          run-id: '39518483125'
-          github-token: ${{ github.token }}
-          path: fresh-source
-          merge-multiple: true
+      - name: Restore pinned historical production archive offline
+        run: python -B scripts/etf_archived_source.py fresh --out-dir fresh-source
       - name: Replay fresh reviewed excerpts and reject old snapshot drafts offline
         run: >-
           python -B scripts/etf_fresh_shadow.py replay
@@ -56,7 +44,7 @@ jobs:
         with:
           name: etf-fresh-shadow-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            fresh-source-proof
+            fresh-source-provenance
             artifacts-fresh-shadow
           retention-days: 30
   etf-automatic-mail-preview:
@@ -73,17 +61,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Verify successful production snapshot for preview acceptance
-        env:
-          GH_TOKEN: ${{ github.token }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: python -B scripts/etf_cloud_checkpoint_probe.py verify-source --out-dir automatic-source
-      - uses: actions/download-artifact@v8
-        with:
-          name: us-etf-allocation-digest
-          run-id: '39347818936'
-          github-token: ${{ github.token }}
-          path: automatic-source
+      - name: Restore pinned historical baseline archive offline
+        run: python -B scripts/etf_archived_source.py baseline --out-dir automatic-source
       - name: Exercise normal, stale, invalid, rejected and absent reviewed drafts offline
         run: >-
           python -B scripts/etf_automatic_preview_probe.py
@@ -170,26 +149,17 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Verify pinned prior run, checkout commit and immutable artifact
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python -B scripts/etf_cloud_checkpoint_probe.py verify-resume --out-dir resume-source
-      - uses: actions/download-artifact@v8
-        with:
-          artifact-ids: '12269585268'
-          run-id: '39432084491'
-          github-token: ${{ github.token }}
-          digest-mismatch: error
-          path: artifacts-cross-run
+      - name: Restore pinned prior-run checkpoint archive offline
+        run: python -B scripts/etf_archived_source.py checkpoint --out-dir artifacts-cross-run
       - name: Restore prior-run checkpoints with original request budgets
-        run: python -B scripts/etf_cloud_checkpoint_probe.py restore --out-dir artifacts-cross-run --resume-metadata resume-source/resume.json --report cross-run-proof.json
+        run: python -B scripts/etf_cloud_checkpoint_probe.py restore --out-dir artifacts-cross-run --resume-metadata artifacts-cross-run-provenance/resume.json --report cross-run-proof.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: etf-cross-run-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             cross-run-proof.json
-            resume-source/
+            artifacts-cross-run-provenance/
             artifacts-cross-run/
           if-no-files-found: error
           retention-days: 30
@@ -208,17 +178,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Verify fixed successful production collection
-        env:
-          GH_TOKEN: ${{ github.token }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: python -B scripts/etf_cloud_checkpoint_probe.py verify-source --out-dir probe-source
-      - uses: actions/download-artifact@v8
-        with:
-          name: us-etf-allocation-digest
-          run-id: '39347818936'
-          github-token: ${{ github.token }}
-          path: probe-source
+      - name: Restore exact historical production seed inputs offline
+        run: python -B scripts/etf_archived_source.py baseline --out-dir probe-source
       - name: Save real offline plan and synthetic interrupted checkpoints
         run: python -B scripts/etf_cloud_checkpoint_probe.py seed --manifest probe-source/collection_manifest.json --source-metadata probe-source/source.json --out-dir artifacts-checkpoint
       - uses: actions/upload-artifact@v7

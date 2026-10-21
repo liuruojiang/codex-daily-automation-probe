@@ -17,6 +17,7 @@ from etf_preflight import canonical, rendered_urls, utc
 from validate_etf_delivery import validate as validate_delivery
 
 VERSION = "etf-mail-replace-preview-v1"
+EXPLANATIONS = Path(__file__).resolve().parents[1] / "config" / "etf-reading-explanations.json"
 
 
 def text_hash(value):
@@ -48,12 +49,32 @@ def replacement_block(row, original):
     # Cards remain unchanged; rendering must not permit new structural lines.
     prefix = re.match(r"^### (\d+\.\s*)", original)
     heading = "### " + (prefix.group(1) if prefix else "") + single_line(card["title_zh"])
-    lines = [heading, "- 来源：" + single_line(row["source"]), "- 发布时间（保存字段）：" + single_line(row["published"]),
-             "- 链接：" + preview.safe_link(row["url"]), "", "**原文观点与研究结果（来源范围核对）**："]
-    for claim in card["facts"]:lines.append("- " + single_line(claim["text_zh"]))
+    lines = [heading, "- 原标题：" + single_line(row["title"]), "- 来源：" + single_line(row["source"]), "- 发布时间（保存字段）：" + single_line(row["published"]),
+             "- 链接：" + preview.safe_link(row["url"])]
+    explanation = reading_explanation(row)
+    if explanation:
+        lines += ["", "**通俗解释（编辑解读，非作者新增结论）**："]
+        lines += ["- " + single_line(item) for item in explanation["points_zh"]]
+    lines += ["", "**原文观点与研究结果（来源范围核对）**："]
+    shown_quotes = {}
+    def add_claim(claim):
+        lines.append("- " + single_line(claim["text_zh"]))
+        refs = []
+        for ref in claim["citations"]:
+            quote = single_line(ref["quote"])
+            paragraph = single_line(ref["paragraph_id"])
+            quote_id = shown_quotes.get(quote, "Q" + str(len(shown_quotes) + 1))
+            refs.append(quote_id + " / " + paragraph)
+            if quote not in shown_quotes:
+                # The renderer treats this prefixed quote as literal escaped text.
+                lines.extend(["", "> 原文引句（" + quote_id + " / " + paragraph + "）：" + quote, ""])
+                shown_quotes[quote] = quote_id
+        if refs:
+            lines.append("- 对应原文引句：" + "、".join(dict.fromkeys(refs)) + "（同句重复出现时只展示一次）")
+    for claim in card["facts"]:add_claim(claim)
     if card["limitations"]:
         lines += ["", "**原文限定条件**："]
-        for claim in card["limitations"]:lines.append("- " + single_line(claim["text_zh"]))
+        for claim in card["limitations"]:add_claim(claim)
     if card["questions"]:
         lines += ["", "**后续核对问题**："]
         for question in card["questions"]:lines.append("- " + single_line(question))
@@ -62,6 +83,20 @@ def replacement_block(row, original):
               "", "本条为来源范围核对后的研究解读；外部事实未独立核查。"]
     trailing = re.search(r"\n*\Z", original).group()
     return "\n".join(lines) + trailing
+
+
+def reading_explanation(row):
+    """Separate editorial prose is usable only for its reviewed card revision."""
+    record = cards.read_json(EXPLANATIONS)
+    preview.require(record["version"] == "etf-reading-explanations-v1", "unknown explanation version")
+    matches = [item for item in record["entries"] if item["material_id"] == row["material_id"]]
+    preview.require(len(matches) <= 1, "ambiguous reading explanation")
+    if not matches:
+        return None
+    item = matches[0]
+    preview.require(item["card_hash"] == row["card_hash"], "reading explanation card hash mismatch")
+    preview.require(item["points_zh"] and all(single_line(p) for p in item["points_zh"]), "empty reading explanation")
+    return item
 
 
 def build(bundle, metadata, manifest, history):
@@ -109,7 +144,7 @@ def build(bundle, metadata, manifest, history):
     new_manifest = copy.deepcopy(manifest)
     new_manifest["body_sha256"] = text_hash(new_body)
     new_metadata = {**copy.deepcopy(metadata), "body": new_body,
-                    "html_body": daily.markdown_to_email_html(new_body, "未发送正文替换样稿；保留原采集截点")}
+                    "html_body": daily.compact_email_html_classes(daily.markdown_to_email_html(new_body, "未发送正文替换样稿；保留原采集截点"))}
     errors = validate_delivery(new_metadata, new_manifest, history, require_candidate_audit=True)
     preview.require(not errors, "replacement delivery integrity failed: " + "; ".join(errors))
     prior_audit, after_audit = audit_candidates(manifest, history), audit_candidates(new_manifest, history)
@@ -147,7 +182,7 @@ def render_comparison(report, replaced_html):
         compare += '</div><div class="comparison-after"><p class="comparison-label">改造后 · 来源核对稿</p>' + after + '</div></div></section>'
     compare += '</section><div class="report-rule"></div><h2 class="report-h2">完整替换样稿（未发送）</h2>'
     css = '<style>.preview-banner{background:#edf3fc;border:1px solid #cad8ef;padding:20px;border-radius:12px;font-size:14px;line-height:1.8}.preview-banner h1{font-size:24px;line-height:1.5}.comparison-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}.comparison-before,.comparison-after{padding:16px;background:#f7f8fb;border:1px solid #e4e7ec;border-radius:8px;min-width:0;overflow-wrap:anywhere}.comparison-after{background:#f2f8f4}.comparison-label{font-weight:700;color:#27306b}.comparison .report-h3{font-size:16px}@media(max-width:700px){.comparison-grid{grid-template-columns:1fr}}</style>'
-    return replaced_html.replace('</head>', css + '</head>').replace('<main class="email-main">', '<main class="email-main">' + banner + compare)
+    return daily.compact_email_html_classes(replaced_html.replace('</head>', css + '</head>').replace('<main class="email-main">', '<main class="email-main">' + banner + compare))
 
 
 def main(argv=None):

@@ -58,9 +58,10 @@ class OmissionAdversarialTests(unittest.TestCase):
 
     def test_disclosed_omission_sends_without_changing_failed_audit(self):
         from validate_etf_delivery import validate
+        from daily_reports import markdown_to_email_html
         body = f"发送前缺漏检查：FAILED\n- 待核验：{self.item['url']}"
         metadata = {"body": body, "attachment": None,
-                    "html_body": f'<p>发送前缺漏检查：FAILED</p><a href="{self.item["url"]}">待核验</a>'}
+                    "html_body": markdown_to_email_html(body, "")}
         self.manifest["body_sha256"] = hashlib.sha256(body.encode()).hexdigest()
         self.assertEqual(self.check()["status"], "FAILED")
         self.assertEqual(validate(metadata, self.manifest, self.history), [])

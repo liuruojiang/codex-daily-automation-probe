@@ -141,21 +141,19 @@ class CloudCheckpointProbeTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "inventory/hash"):
                 probe.restore(seed, root / "proof.json")
 
-    def test_cross_run_workflow_has_pinned_download_after_source_verification(self):
+    def test_cross_run_workflow_verifies_pinned_archive_before_restore(self):
         path = Path(__file__).resolve().parents[1] / ".github/workflows/delivery-regression.yml"
         workflow = yaml.load(path.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
         job = workflow["jobs"]["etf-checkpoint-cross-run-restore"]
         self.assertEqual(job["permissions"], {"contents": "read", "actions": "read"})
         self.assertIn("head.repo.full_name == github.repository", job["if"])
         steps = job["steps"]
-        verify = next(i for i, step in enumerate(steps) if "verify-resume" in step.get("run", ""))
-        download = next(i for i, step in enumerate(steps) if "download-artifact" in step.get("uses", ""))
-        self.assertLess(verify, download)
-        self.assertEqual(steps[download]["with"]["artifact-ids"], str(probe.RESUME_ARTIFACT["id"]))
-        self.assertEqual(steps[download]["with"]["run-id"], probe.RESUME_ORIGIN["GITHUB_RUN_ID"])
-        self.assertEqual(steps[download]["with"]["digest-mismatch"], "error")
+        verify = next(i for i, step in enumerate(steps) if "etf_archived_source.py checkpoint" in step.get("run", ""))
+        restore_index = next(i for i, step in enumerate(steps) if " restore " in step.get("run", ""))
+        self.assertLess(verify, restore_index)
+        self.assertFalse(any("download-artifact" in step.get("uses", "") for step in steps))
         restore = next(step for step in steps if " restore " in step.get("run", ""))
-        self.assertIn("--resume-metadata resume-source/resume.json", restore["run"])
+        self.assertIn("--resume-metadata artifacts-cross-run-provenance/resume.json", restore["run"])
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from validate_etf_delivery import validate
+from daily_reports import markdown_to_email_html
 
 
 class DeliveryGateTests(unittest.TestCase):
@@ -16,6 +17,10 @@ class DeliveryGateTests(unittest.TestCase):
         self.url = "https://example.com/research?a=1&b=2"
         self.metadata = {"body": f"# 完整日报\n\n- 链接：{self.url}\n\n**事实层**：来源事实。\n", "attachment": None, "html_body": '<html><body><a href="https://example.com/research?a=1&amp;b=2">完整文章</a></body></html>'}
         self.manifest = {"body_sha256": hashlib.sha256(self.metadata["body"].encode()).hexdigest(), "selected_items": [{"url": self.url}], "history_added_items": [{"url": self.url}]}
+        self.refresh_html()
+
+    def refresh_html(self):
+        self.metadata["html_body"] = markdown_to_email_html(self.metadata["body"], "fixture preview")
 
     def test_valid_full_email_passes(self):
         self.assertEqual(validate(self.metadata, self.manifest), [])
@@ -80,6 +85,7 @@ class DeliveryGateTests(unittest.TestCase):
     def test_source_audit_link_is_not_counted_as_rendered_item(self):
         self.metadata["body"] += "| 未确认来源 | https://example.com/another |\n"
         self.manifest["body_sha256"] = hashlib.sha256(self.metadata["body"].encode()).hexdigest()
+        self.refresh_html()
         self.assertEqual(validate(self.metadata, self.manifest), [])
 
     def test_disclosed_stale_candidate_is_advisory(self):
@@ -107,6 +113,7 @@ class DeliveryGateTests(unittest.TestCase):
             }],
         )
         self.manifest["body_sha256"] = hashlib.sha256(self.metadata["body"].encode()).hexdigest()
+        self.refresh_html()
         self.assertEqual(validate(self.metadata, self.manifest, {"items": []}), [])
 
     def test_cli_failure_really_returns_nonzero_before_send(self):

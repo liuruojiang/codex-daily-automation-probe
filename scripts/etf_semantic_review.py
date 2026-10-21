@@ -103,7 +103,7 @@ def validate_review(material: dict, card: dict, review: object) -> list[str]:
         return errors + ["invalid_checks"]
     expected = claim_map(card)
     seen = set()
-    units = {u["id"] for u in cards.evidence_units(material)}
+    units = {u["id"]: u for u in cards.evidence_units(material)}
     for check in checks:
         if not isinstance(check, dict) or set(check) != {"claim_id", "verdict", "reason_zh", "evidence_ids"}:
             errors.append("invalid_check_schema")
@@ -121,6 +121,16 @@ def validate_review(material: dict, card: dict, review: object) -> list[str]:
             errors.append("invalid_review_evidence")
         elif verdict == "supported" and cid.startswith(("facts.", "limitations.")) and not ids:
             errors.append("supported_claim_has_no_evidence")
+        elif verdict == "supported" and cid.startswith(("facts.", "limitations.")):
+            # A valid sentence elsewhere in the source does not establish that
+            # the reviewer checked this claim's own quotations. Legacy explicit
+            # quotes may span sentences, so allow either containment direction
+            # but keep the paragraph identity as well as the exact source text.
+            refs = expected[cid]["citations"]
+            if any(not any(units[uid]["paragraph_id"] == ref["paragraph_id"]
+                           and (units[uid]["text"] in ref["quote"] or ref["quote"] in units[uid]["text"])
+                           for ref in refs) for uid in ids):
+                errors.append("review_evidence_not_in_claim_citations")
     if seen != set(expected):
         errors.append("incomplete_claim_coverage")
     computed = "pass" if all(isinstance(c, dict) and c.get("verdict") == "supported" for c in checks) else "revise"

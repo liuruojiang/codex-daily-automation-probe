@@ -142,7 +142,7 @@ def render(report, rendered_email):
     header += '</tbody></table></div></section><div class="report-rule"></div><h2 class="report-h2">完整影子样稿（未发送）</h2>'
     css = '<style>.automatic-summary{padding:20px;background:#edf3fc;border:1px solid #cad8ef;border-radius:12px;font-size:14px;line-height:1.8}.automatic-summary h1{font-size:24px;line-height:1.5}</style>'
     replacement.main_content(rendered_email)
-    return rendered_email.replace('</head>', css + '</head>').replace('<main class="email-main">', '<main class="email-main">' + header)
+    return daily.compact_email_html_classes(rendered_email.replace('</head>', css + '</head>').replace('<main class="email-main">', '<main class="email-main">' + header))
 
 
 def main(argv=None):

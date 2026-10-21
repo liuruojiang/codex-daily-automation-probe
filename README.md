@@ -29,7 +29,13 @@ which the workflow persists after successful Gmail delivery.
 `python scripts/validate_etf_delivery.py artifacts/metadata.json` is a mandatory pre-send gate.
 It rejects body-hash, rendered-link, HTML-link and history mismatches. A manual ETF workflow
 with `send_email=false` exercises the same build/gate/artifact path without sending or persisting
-history; scheduled and default manual runs retain normal delivery.
+history. Sending runs require a verified activation record and commit a durable
+same-day delivery intent before SMTP. Missing activation, an existing intent or
+an uncertain send blocks automatic delivery/retry. A later workflow failure does
+not undo confirmed SMTP acceptance. Before deployment, stop/reconcile the old
+sender, review legacy evidence and choose a future first guarded report date as
+described in [ETF delivery and recovery](docs/ETF_DELIVERY_STATE.md). No activation
+record or production cutover is supplied by this change.
 
 The local 08:00 reader runs `scripts/etf_preflight.py` against the original run's artifacts,
 GitHub step evidence and independently recovered source inventory. It preserves same-day

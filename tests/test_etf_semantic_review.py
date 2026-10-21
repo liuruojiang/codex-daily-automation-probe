@@ -77,6 +77,31 @@ class SemanticReviewTests(unittest.TestCase):
         fact["evidence_ids"] = []
         self.assertIn("supported_claim_has_no_evidence", sr.validate_review(m, card, review))
 
+    def test_supported_review_must_use_the_claims_own_quotation(self):
+        m, card, review = fixture()
+        fact = next(c for c in review["checks"] if c["claim_id"] == "facts.0")
+        for ids in (["p1.s2"], ["p1.s1", "p1.s2"]):
+            fact["evidence_ids"] = ids
+            with self.subTest(ids=ids):
+                self.assertIn("review_evidence_not_in_claim_citations", sr.validate_review(m, card, review))
+                self.assertEqual(sr.evaluate(m, card, review)["status"], "review_invalid")
+        fact["verdict"] = "needs_revision";review["overall"] = "revise"
+        self.assertEqual(sr.validate_review(m, card, review), [])
+
+    def test_identical_text_in_a_different_paragraph_does_not_change_quote_ownership(self):
+        m, card, review = fixture()
+        m = cards.make_material(title=m["title"], url=m["url"], source=m["source"], published=m["published"], paragraphs=[TEXT, TEXT])
+        card["material_id"] = m["material_id"];review.update(material_id=m["material_id"], card_hash=cards.digest(card))
+        next(c for c in review["checks"] if c["claim_id"] == "facts.0")["evidence_ids"] = ["p2.s1"]
+        self.assertIn("review_evidence_not_in_claim_citations", sr.validate_review(m, card, review))
+
+    def test_legacy_partial_quote_and_multi_sentence_quote_still_resolve_to_own_source_unit(self):
+        for quote in (TEXT.split(". ")[0] + ".", "reports a 12% historical return before transaction costs", TEXT):
+            m, card, review = fixture()
+            card["facts"][0]["citations"][0]["quote"] = quote
+            review["card_hash"] = cards.digest(card)
+            with self.subTest(quote=quote):self.assertEqual(sr.validate_review(m, card, review), [])
+
     def test_malformed_review_is_not_accepted_or_crashed(self):
         m, card, review = fixture()
         for value in (None, [], "pass"):

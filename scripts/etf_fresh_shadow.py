@@ -5,6 +5,7 @@ import argparse
 import copy
 from datetime import datetime
 import hashlib
+import html
 import json
 import os
 from pathlib import Path
@@ -92,16 +93,31 @@ def build(metadata, manifest, history, record, old_registry, old_index):
               "historical_inputs_unchanged": True, "replay_model_calls": 0,
               "initial_model_usage": record["initial_model_usage"], "delivery_eligible": False, "sent": False}
     page = automatic.render(fresh, email)
-    note = ('<section class="automatic-summary"><h1>第21步：新快照小批量验收</h1>'
-            '<p>2026-10-21 日报 · 32条选文中核对2篇摘要、保留其余30条原文。旧10篇稿在此快照复用0篇。</p>'
-            '<p>来源为已完成的正式采集记录39518483125；本页是未发送的影子候选邮件。'
-            '原始采集审计仍为 FAILED：16项警报、132项缺口，不代表整封日报已验收。</p>'
-            '<p>两篇均仅依据本轮捕获摘要，日期沿用RSS交叉收录公告字段，未认证首次发表日期。'
-            '捕获文本中重复的摘要与引句不是独立证据。实验结论为作者报告，尚未核验全文、数据或回测。</p>'
-            '<p>已逐项核对16项标题、事实、限制与追问；4次模型请求，供应商报告9741总token。'
-            '本页回放不调用模型。仅完成静态结构与链接检查，尚未做邮件客户端视觉验收。</p></section>')
+    note = render_summary(report, identity, entries, len(old_registry["entries"]))
     page = page.replace('<main class="email-main">', '<main class="email-main">' + note)
     return report, page
+
+
+def render_summary(report, identity, entries, old_entry_count):
+    """Describe this replay from verified inputs, never from a previous run."""
+    esc = lambda value: html.escape(str(value))
+    coverage, audit = report["coverage"], report["coverage"]["original_content_audit"]
+    usage = report["initial_model_usage"]
+    request_text = str(usage["requests"]) + "次模型请求" if "requests" in usage else "模型请求次数未记录"
+    token_text = ("供应商报告" + str(usage["provider_reported_total_tokens"]) + "个token"
+                  if "provider_reported_total_tokens" in usage else "供应商token总量未记录")
+    note = '<section class="automatic-summary"><h1>新快照小样本验收</h1>'
+    note += '<p>快照截止 ' + esc(identity["cutoff_utc"]) + ' · ' + esc(coverage["selected_count"]) + '条选中，替换' + esc(coverage["replaced_count"])
+    note += '篇，保留' + esc(coverage["retained_count"]) + '条原文。旧登记' + esc(old_entry_count) + '篇在此快照替换' + esc(report["actual_old_registry"]["replaced_count"]) + '篇。</p>'
+    note += '<p>正式采集记录' + esc(report["source"]["run_id"]) + '；本页是未发送的影子候选邮件。原始采集审计为 ' + esc(audit["status"])
+    note += '：' + esc(audit["failures"]) + '项警报、' + esc(audit["gaps"]) + '处缺口。采集审计与文章解读验收分别报告。</p>'
+    note += '<p>人工逐条核对' + esc(report["editorial_claim_count"]) + '项标题、事实、限制与追问；' + esc(request_text) + '，' + esc(token_text)
+    note += '。本页重放模型调用' + esc(report["replay_model_calls"]) + '次。尚未做邮件客户端视觉验收。</p>'
+    note += '<p>各篇阅读范围和日期口径：</p><ul>'
+    for entry in entries:
+        annotation = entry["annotation"]
+        note += '<li>' + esc(entry["card"]["title_zh"]) + '：' + esc(annotation["scope_note_zh"]) + ' ' + esc(annotation["date_note_zh"]) + '</li>'
+    return note + '</ul></section>'
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):

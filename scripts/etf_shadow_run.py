@@ -99,6 +99,77 @@ def accept_response(attempt: dict, raw: dict, material: dict, stage: str, journa
         attempt.update(state="failed", error_type=type(exc).__name__)
 
 
+def validate_journal(materials: list[dict], journal: dict, out_dir: Path | None = None) -> None:
+    """Fail closed on corrupted reservations before reporting or spending more.
+
+    Missing/unreadable receipts for a reserved/unknown request still mean an
+    unknown outcome; its full reservation must remain charged. Parsed/failed
+    outputs, however, require their completed source-bound receipt on resume.
+    """
+    if (not isinstance(journal, dict) or journal.get("version") != VERSION
+            or not isinstance(journal.get("config"), dict) or not isinstance(journal.get("attempts"), dict)):
+        raise ValueError("invalid shadow checkpoint")
+    config = journal["config"]
+    validate_config(config)
+    by_id = {m["material_id"]: m for m in materials}
+    count = total = 0
+    for slot, attempt in journal["attempts"].items():
+        if not isinstance(slot, str) or not isinstance(attempt, dict):
+            raise ValueError("invalid shadow checkpoint attempt")
+        stage, separator, mid = slot.partition(":")
+        if not separator or stage not in ("generate", "review") or mid not in by_id:
+            raise ValueError("invalid shadow checkpoint request slot")
+        material = by_id[mid]
+        if not material_kind.classify(material)["eligible"]:
+            raise ValueError("shadow checkpoint request has ineligible material")
+        state = attempt.get("state")
+        if state not in ("blocked_input", "reserved", "unknown", "failed", "parsed"):
+            raise ValueError("invalid shadow checkpoint request state")
+        if stage == "review":
+            generation = journal["attempts"].get("generate:" + mid, {})
+            if generation.get("state") != "parsed" or cards.validate_card(material, generation.get("output")) or semantic.terminology_issues(generation["output"]):
+                raise ValueError("invalid shadow checkpoint review prerequisite")
+        payload = payload_for(stage, material, journal)
+        key = request_key(payload, config)
+        if attempt.get("request_key") != key:
+            raise ValueError("cached request no longer matches its source/card")
+        tokens = attempt.get("reserved_tokens")
+        expected_tokens = 0 if state == "blocked_input" else payload["max_completion_tokens"]
+        if type(tokens) is not int or tokens != expected_tokens:
+            raise ValueError("shadow checkpoint reservation does not match request payload")
+        if state == "blocked_input":
+            if len(json.dumps(payload, ensure_ascii=False)) <= config["max_input_chars"]:
+                raise ValueError("shadow checkpoint blocked-input reservation is inconsistent")
+        else:
+            count += 1;total += tokens
+        if state == "parsed" and ("output" not in attempt or not isinstance(attempt.get("validation_errors"), list)
+                                  or any(not isinstance(error, str) for error in attempt["validation_errors"])):
+            raise ValueError("invalid shadow checkpoint parsed response")
+        if out_dir is None:
+            continue
+        path = out_dir / "receipts" / (key + ".json")
+        try:
+            receipt = cards.read_json(path) if path.exists() else None
+        except (OSError, ValueError):
+            receipt = None
+        if state == "blocked_input" and path.exists():
+            raise ValueError("shadow checkpoint blocked-input request has a receipt")
+        if isinstance(receipt, dict) and (receipt.get("request_key") != key or receipt.get("material_id") != mid):
+            raise ValueError("cached request receipt identity mismatch")
+        if state in ("parsed", "failed"):
+            if not isinstance(receipt, dict) or receipt.get("state") != "completed" or not isinstance(receipt.get("response"), dict):
+                raise ValueError("cached request lacks its completed receipt")
+            if state == "parsed":
+                try:
+                    output = cards.model_card(receipt["response"], material if stage == "generate" else None)
+                except Exception:
+                    raise ValueError("cached request receipt output is invalid") from None
+                if output != attempt["output"]:
+                    raise ValueError("cached request receipt output changed")
+    if count > config["max_requests"] or total > config["max_reserved_output_tokens"]:
+        raise ValueError("shadow checkpoint exceeds cumulative request budget")
+
+
 def advance(materials: list[dict], config: dict, source_hash: str, out_dir: Path, *,
             live: bool, max_new_requests: int, api_key: str = "", transport=None) -> dict:
     """All reservations survive resume; unknown requests retain their budget."""
@@ -117,8 +188,11 @@ def advance(materials: list[dict], config: dict, source_hash: str, out_dir: Path
         checkpoint = out_dir / "run.json"
         if checkpoint.exists():
             journal = cards.read_json(checkpoint)
-            if journal.get("context_id") != context_id or journal.get("config") != config:
+            if not isinstance(journal, dict) or journal.get("context_id") != context_id or journal.get("config") != config:
                 raise ValueError("shadow context changed; use a separate directory")
+            if journal.get("source_sha256") != source_hash:
+                raise ValueError("shadow checkpoint source fingerprint changed")
+            validate_journal(materials, journal, out_dir)
         else:
             if any(p.name != "run.lock" for p in out_dir.iterdir()):
                 raise ValueError("nonempty shadow directory has no checkpoint")
@@ -192,6 +266,7 @@ def advance(materials: list[dict], config: dict, source_hash: str, out_dir: Path
 
 
 def build_report(materials: list[dict], journal: dict) -> dict:
+    validate_journal(materials, journal)
     rows = []
     for material in materials:
         mid = material["material_id"]
