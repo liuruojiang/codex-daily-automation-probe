@@ -16,6 +16,7 @@ import etf_content_cards as cards
 import etf_editorial_packet as editorial
 import etf_semantic_review as semantic
 import etf_source_intake as intake
+import etf_research_history as research_history
 
 VERSION = "etf-supplement-research-v1"
 
@@ -35,8 +36,8 @@ def build(material, record, intake_audit, registry):
     require(not semantic.validate_review(material, parent, ledger["parent_review"]), "invalid original supplement review")
     rebuilt = repair.revise(material, parent, ledger["plan"], ledger["parent_veto"])
     require(rebuilt["revision_id"] == ledger["revision_id"] and rebuilt["card"] == card, "supplement revision mismatch")
-    require(repair.evaluate(rebuilt, material, entry["review"], ledger["disposition"])["status"] == "shadow_review_passed", "supplement repair gates incomplete")
-    packet = editorial.evaluate(material, card, entry["review"], entry["editor"])
+    require(research_history.historical_repair_passed(repair.evaluate(rebuilt, material, entry["review"], ledger["disposition"])), "supplement repair gates incomplete")
+    packet = research_history.historical_packet(material, card, entry["review"], entry["editor"])
     require(packet["status"] == automatic.preview.COMPLETE, "supplement source editing incomplete")
     leads, captured = intake_audit["source_leads"], record["original_sources"]
     require(len(captured) == len(leads), "original source coverage mismatch")
@@ -55,7 +56,7 @@ def build(material, record, intake_audit, registry):
         else:
             require(isinstance(source["material_id"], str) and source["paragraph_count"] > 0 and source["complete_article_claim"] is False, "invalid public excerpt")
     return {"version": "etf-supplement-research-proof-v1", "material_id": mid, "card_hash": cards.digest(card),
-            "status": packet["status"], "editorial_claim_count": len(entry["editor"]["checks"]),
+            **research_history.current_fields(packet), "editorial_claim_count": len(entry["editor"]["checks"]),
             "resolved_writing_issues": len(ledger["disposition"]["checks"]), "original_model_overall": ledger["parent_review"]["overall"],
             "original_editor_veto_preserved": ledger["parent_veto"] is not None,
             "original_sources_captured": len(captured), "public_excerpts_prepared": sum(s["extraction"]["material_id"] is not None for s in captured),

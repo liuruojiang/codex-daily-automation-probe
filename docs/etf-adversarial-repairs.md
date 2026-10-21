@@ -33,6 +33,15 @@ candidate HTML is 97,045 UTF-8 bytes after reversible class-token compression;
 the report text, exact quotes, links and structure are unchanged by compression.
 This size check is not a real mail-client visual or delivery acceptance test.
 
+The stricter review ownership gate also found five affected historical review
+objects, including the superseded crypto parent. Of the five current independent
+research versions, four are now held and one still passes. The original reviews,
+edits, refusals, record hashes and exact index remain unchanged. Historical
+replay reports original decisions separately from current gate status, and shows
+held claim text only inside a clearly labeled historical disclosure. This is not
+a new model approval or a completed re-review of those four manuscripts. Other
+source/card/review/editor integrity failures still raise errors.
+
 The original D-drive task and memory are not modified by this PR. The prepared
 local task requires the reviewed helper installed in its actual environment and
 the scheduler's next-run checked before any activation claim. No activation file

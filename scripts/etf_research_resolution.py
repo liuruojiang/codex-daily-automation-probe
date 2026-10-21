@@ -15,6 +15,7 @@ import etf_original_research as previous
 import etf_original_sources as original
 import etf_semantic_review as semantic
 import etf_source_intake as intake
+import etf_research_history as research_history
 
 VERSION = "etf-research-resolution-v1"
 require = original.require
@@ -39,9 +40,9 @@ def build(material, record, prior, source_record, registry):
     matches = [e for e in prior["entries"] if e["material_id"] == mid]
     require(len(matches) == 1, "resolution needs one exact prior entry")
     parent_entry = matches[0];parent = automatic.decode_entry(parent_entry, material)["cards"][mid]
-    require(not semantic.validate_review(material, parent, parent_entry["review"])
-            and parent_entry["review"]["overall"] == "revise", "resolution must preserve a valid original rejection")
-    old_packet = editorial.evaluate(material, parent, parent_entry["review"], parent_entry["editor"])
+    research_history.classify_legacy_review(material, parent, parent_entry["review"])
+    require(parent_entry["review"]["overall"] == "revise", "resolution must preserve a valid original rejection")
+    old_packet = research_history.historical_packet(material, parent, parent_entry["review"], parent_entry["editor"])
     require(old_packet["status"] in ("editorial_revision_required", "semantic_resolution_required")
             and old_packet["status"] == prior["source_review_status"][mid], "prior held status changed")
     entry, ledger = record["entry"], record["repair"]
@@ -63,19 +64,21 @@ def build(material, record, prior, source_record, registry):
     old_claims, new_claims = semantic.claim_map(parent), semantic.claim_map(current)
     require(all(cid in new_claims and new_claims[cid] != old_claims[cid] for cid in failed),
             "rejected claims must actually change before a fresh review")
-    require(repair.evaluate(rebuilt, material, entry["review"], ledger["disposition"])["status"] == "shadow_review_passed",
+    require(research_history.historical_repair_passed(repair.evaluate(rebuilt, material, entry["review"], ledger["disposition"])),
             "resolution issue/model gates incomplete")
-    packet = editorial.evaluate(material, current, entry["review"], entry["editor"])
+    packet = research_history.historical_packet(material, current, entry["review"], entry["editor"])
     require(packet["status"] == automatic.preview.COMPLETE, "resolution source editing incomplete")
     effective_complete = 1 + sum(status == automatic.preview.COMPLETE for other, status in prior["source_review_status"].items() if other != mid)
     return {"version": "etf-research-resolution-proof-v1", "material_id": mid,
             "parent_card_hash": cards.digest(parent), "card_hash": cards.digest(current),
             "original_model_overall": parent_entry["review"]["overall"], "original_held_status": old_packet["status"],
             "original_refused_claims": sorted(failed), "resolved_writing_issues": len(issue_ids),
-            "current_model_overall": entry["review"]["overall"], "status": packet["status"],
+            "current_model_overall": entry["review"]["overall"], **research_history.current_fields(packet),
             "editorial_claim_count": len(entry["editor"]["checks"]), "original_registry_entries_preserved": len(registry["entries"]),
-            "effective_original_research_complete": effective_complete,
-            "effective_original_research_held": len(prior["source_review_status"]) - effective_complete,
+            "historical_effective_original_research_complete": effective_complete,
+            "historical_effective_original_research_held": len(prior["source_review_status"]) - effective_complete,
+            "original_current_gate_status": old_packet["current_gate_status"],
+            "original_current_gate_reasons": old_packet["current_gate_reasons"],
             "prior_record_unchanged": True, "previous_paper_research_preserved": True,
             "external_fact_check": "not_performed", "delivery_eligible": False, "mail_approvals_added": 0}
 

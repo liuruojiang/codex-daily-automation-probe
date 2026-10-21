@@ -1,4 +1,5 @@
 import copy
+import json
 from pathlib import Path
 import sys
 import unittest
@@ -110,6 +111,47 @@ class RoundupTests(unittest.TestCase):
         self.assertIn('&lt;b&gt;原文陈述&lt;/b&gt;', rendered)
         self.assertEqual(rendered.count('UNCHANGED_EMAIL_WARNING'), 1)
         self.assertIn('1份独立研究', rendered);self.assertIn('字段位于36小时内', rendered)
+
+    def test_held_historical_card_is_explicitly_separate_from_current_passed_research(self):
+        baseline = '<html><head></head><body><main class="email-main"><p>ORIGINAL</p></main></body></html>'
+        item = {"historical_card": {"title_zh": "历史稿标题", "facts": [{"text_zh": "历史论断保留。"}],
+                "limitations": [], "questions": []}, "source": "fixture", "published": "2026-10-18", "editorial_claim_count": 4,
+                "current_gate_status": "held", "historical_review_hash": "preserved-review-hash",
+                "date_gate": {"window": "primary_window"}, "frozen_mail_reason": "not_selected", "url": "https://example.org/source",
+                "annotation": {"scope_note_zh": "节选。", "date_note_zh": "保留日期。"}}
+        report = {"research_count": 1, "mail_selected_count": 22, "mail_replacements_remain": 10, "mail_retained_count": 12,
+                  "snapshot_report_date": "2026-10-20", "research_items": [item],
+                  "current_gate_held_count": 1, "current_gate_passed_count": 0}
+        rendered = roundup.render(report, baseline)
+        self.assertIn("当前校验通过0份，待重新复核1份", rendered)
+        self.assertIn("历史内容不计入当前通过稿", rendered)
+        self.assertIn("preserved-review-hash", rendered)
+        self.assertIn("历史论断保留。", rendered)
+        self.assertEqual(rendered.count("ORIGINAL"), 1)
+
+    def test_real_five_versions_keep_four_new_holds_and_one_pass_without_rewriting_history(self):
+        from etf_archived_source import verified_archive
+        root = Path(__file__).resolve().parents[1]
+        records = {role:cards.read_json(root/"config"/name) for role,name in roundup.FILES.items()}
+        registry = cards.read_json(root/"config/etf-shadow-reviewed-registry.json")
+        index = cards.read_json(root/"config/etf-research-preview-index.json")
+        all_materials = cards.read_json(root/"tests/fixtures/etf_research_materials.json")
+        by_id = {m["material_id"]:m for m in all_materials}
+        wanted = [e["material_id"] for _,e in roundup.current_entries(records)]
+        parent = by_id[records["sections"]["selection"]["parent_material_id"]]
+        archive, _ = verified_archive("baseline")
+        metadata,manifest,history = [json.loads(archive.read(n)) for n in
+            ("metadata.json","collection_manifest.json","history_before.json")]
+        before = cards.digest([records,registry,index,all_materials])
+        report, baseline = roundup.build([by_id[mid] for mid in wanted], parent, records, registry,index,metadata,manifest,history)
+        self.assertEqual((report["research_count"],report["current_gate_held_count"],report["current_gate_passed_count"]),(5,4,1))
+        self.assertEqual((report["mail_selected_count"],report["mail_replacements_remain"],report["mail_retained_count"]),(22,10,12))
+        self.assertTrue(all(not row["delivery_eligible"] and row["historical_review_preserved"] for row in report["research_items"]))
+        self.assertEqual(sum("historical_card" in row and "card" not in row for row in report["research_items"]),4)
+        self.assertEqual(cards.digest([records,registry,index,all_materials]),before)
+        rendered = roundup.render(report,baseline)
+        self.assertIn("当前校验通过1份，待重新复核4份",rendered)
+        self.assertEqual(rendered.count("以下历史内容不计入当前通过稿"),4)
 
 
 if __name__ == "__main__":unittest.main()

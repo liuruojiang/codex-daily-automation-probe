@@ -45,8 +45,8 @@ class ResearchResolutionTests(unittest.TestCase):
         self.assertEqual(first["original_model_overall"], "revise")
         self.assertEqual(first["current_model_overall"], "pass")
         self.assertEqual(first["original_refused_claims"], ["facts.0"])
-        self.assertEqual(first["effective_original_research_complete"], 1)
-        self.assertEqual(first["effective_original_research_held"], 0)
+        self.assertEqual(first["historical_effective_original_research_complete"], 1)
+        self.assertEqual(first["historical_effective_original_research_held"], 0)
         self.assertFalse(first["delivery_eligible"]);self.assertEqual(first["mail_approvals_added"], 0)
 
     def test_old_record_source_or_registry_drift_is_rejected(self):

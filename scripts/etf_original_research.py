@@ -16,6 +16,7 @@ import etf_editorial_packet as editorial
 import etf_original_sources as original
 import etf_semantic_review as semantic
 import etf_source_intake as intake
+import etf_research_history as research_history
 
 VERSION = "etf-original-research-v1"
 require = original.require
@@ -62,17 +63,18 @@ def build(materials, record, parent, registry):
             rebuilt = repair.revise(material, previous, ledger["plan"], ledger["parent_veto"])
             require(rebuilt["card"] == card and rebuilt["revision_id"] == ledger["revision_id"], "original research revision changed")
             repair_result = repair.evaluate(rebuilt, material, entry["review"], ledger["disposition"])
-            require(repair_result["status"] in ("shadow_review_passed", "semantic_revision_required", "editorial_revision_required"),
+            require(repair_result["status"] in ("shadow_review_passed", "semantic_revision_required", "editorial_revision_required")
+                    or research_history.historical_repair_passed(repair_result),
                     "original research issue/model gates incomplete")
         else:
             require(cards.digest(card) == record["initial_card_sha256"][mid], "changed card lost its repair history")
-        packet = editorial.evaluate(material, card, entry["review"], entry["editor"])
+        packet = research_history.historical_packet(material, card, entry["review"], entry["editor"])
         if ledger is not None and packet["status"] == automatic.preview.COMPLETE:
-            require(repair_result["status"] == "shadow_review_passed", "original research issue/model gates incomplete")
+            require(research_history.historical_repair_passed(repair_result), "original research issue/model gates incomplete")
         require(packet["status"] in (automatic.preview.COMPLETE, "semantic_resolution_required", "editorial_revision_required")
                 and packet["status"] == record["source_review_status"][mid], "original research source editing incomplete or status inflated")
         rows.append({"material_id": mid, "url": material["url"], "published": material["published"],
-                     "card_hash": cards.digest(card), "status": packet["status"],
+                     "card_hash": cards.digest(card), **research_history.current_fields(packet),
                      "editorial_claim_count": len(entry["editor"]["checks"]),
                      "repaired": ledger is not None,
                      "model_overall": entry["review"]["overall"],

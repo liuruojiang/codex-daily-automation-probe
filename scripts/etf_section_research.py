@@ -18,6 +18,7 @@ import etf_original_research as original_research
 import etf_original_sources as original
 import etf_semantic_review as semantic
 import etf_source_intake as intake
+import etf_research_history as research_history
 
 VERSION = "etf-section-research-v1"
 SELECTION_VERSION = "etf-whole-section-selection-v1"
@@ -110,14 +111,14 @@ def build(parent, material, record, source_record, prior_resolution, registry):
         require(ledger["parent_veto"] is not None, "whole-section original editor veto removed")
         rebuilt = repair.revise(material, previous, ledger["plan"], ledger["parent_veto"])
         require(rebuilt["revision_id"] == ledger["revision_id"] and rebuilt["card"] == card, "whole-section repair changed")
-        require(repair.evaluate(rebuilt, material, entry["review"], ledger["disposition"])["status"] == "shadow_review_passed",
+        require(research_history.historical_repair_passed(repair.evaluate(rebuilt, material, entry["review"], ledger["disposition"])),
                 "whole-section repair/model gates incomplete")
     else:require(cards.digest(card) == record["initial_card_sha256"], "whole-section changed card lost repair history")
-    packet = editorial.evaluate(material, card, entry["review"], entry["editor"])
+    packet = research_history.historical_packet(material, card, entry["review"], entry["editor"])
     require(packet["status"] == automatic.preview.COMPLETE, "whole-section source editing incomplete")
     return {"version": "etf-section-research-proof-v1", "material_id": mid, "parent_material_id": parent["material_id"],
             "selected_sections": selection["selected_titles"], "selected_paragraph_count": len(material["paragraphs"]),
-            "card_hash": cards.digest(card), "status": packet["status"], "editorial_claim_count": len(entry["editor"]["checks"]),
+            "card_hash": cards.digest(card), **research_history.current_fields(packet), "editorial_claim_count": len(entry["editor"]["checks"]),
             "original_registry_entries_preserved": len(registry["entries"]), "automatic_truncation": False,
             "complete_article_claim": False, "external_fact_check": "not_performed", "delivery_eligible": False, "mail_approvals_added": 0}
 

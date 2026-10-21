@@ -18,6 +18,7 @@ import etf_research_resolution as resolution
 import etf_section_research as sections
 import etf_source_intake as intake
 import etf_supplement_research as paper
+import etf_research_history as legacy
 
 VERSION = "etf-research-candidate-index-v1"
 FILES = {"intake": "etf-source-intake-audit.json", "paper": "etf-supplement-research-record.json",
@@ -74,12 +75,26 @@ def build(materials, futures_parent, records, registry, index, metadata, manifes
               "crypto_resolution": resolution.build(by_id[crypto["entry"]["material_id"]], crypto, old, p, registry),
               "sections": sections.build(futures_parent, by_id[selected["entry"]["material_id"]], selected, p, crypto, registry)}
     bundle = automatic.empty_bundle()
+    gate_by_id = {}
+    expanded_by_id = {}
+    entries_by_id = {entry["material_id"]: entry for _, entry in entries}
     for row, (_, entry) in zip(index["entries"], entries):
-        mid = entry["material_id"];one = automatic.decode_entry(entry, by_id[mid]);bundle["materials"].append(by_id[mid])
-        for field in ("cards", "reviews", "editors"):bundle[field].update(one[field])
+        mid = entry["material_id"];bundle["materials"].append(by_id[mid])
+        one = automatic.decode_entry(entry, by_id[mid])
+        expanded_by_id[mid] = one["cards"][mid]
+        historical = legacy.historical_packet(by_id[mid], expanded_by_id[mid], entry["review"], entry["editor"])
+        gate = {k:v for k,v in historical.items() if k != "status"}
+        gate["historical_recorded_status"] = historical["status"]
+        gate_by_id[mid] = gate
+        if gate["current_gate_status"] == "held":
+            bundle["pending"][mid] = "审稿证据定位未通过当前归属校验；保留历史原稿，等待独立重新复核。"
+        else:
+            for field in ("cards", "reviews", "editors"):bundle[field].update(one[field])
         bundle["annotations"][mid] = copy.deepcopy(row["annotation"])
     research = mail.build(bundle, metadata, manifest, history)
-    require(research["appendix_count"] == len(entries) and research["pending_count"] == 0, "roundup includes incomplete research")
+    held_count = sum(g["current_gate_status"] == "held" for g in gate_by_id.values())
+    require(research["appendix_count"] == len(entries) - held_count and research["pending_count"] == held_count,
+            "roundup includes unexpected incomplete research")
     baseline, email = automatic.build(metadata, manifest, history, registry)
     injected = copy.deepcopy(registry);injected["entries"].extend(copy.deepcopy(e) for _, e in entries)
     test, injected_email = automatic.build(metadata, manifest, history, injected)
@@ -89,10 +104,17 @@ def build(materials, futures_parent, records, registry, index, metadata, manifes
             and all(row["status"] != "used" for row in outcomes), "roundup research changed frozen email")
     for row, outcome in zip(research["items"], outcomes):
         row["frozen_mail_reason"] = outcome["reason"]
-        row["editorial_claim_count"] = len(bundle["editors"][row["material_id"]]["checks"])
+        entry = entries_by_id[row["material_id"]]
+        row["editorial_claim_count"] = len(entry["editor"]["checks"])
+        row.update(gate_by_id[row["material_id"]])
+        row["historical_review_preserved"] = True
+        row["historical_review_hash"] = cards.digest(entry["review"])
+        if row["current_gate_status"] == "held":
+            row["historical_card"] = copy.deepcopy(expanded_by_id[row["material_id"]])
     report = {"version": "etf-research-roundup-proof-v1", "index_sha256": cards.digest(index),
               "snapshot_report_date": research["snapshot_report_date"],
               "research_count": len(entries), "editorial_claim_count": sum(r["editorial_claim_count"] for r in research["items"]),
+              "current_gate_held_count": held_count, "current_gate_passed_count": len(entries) - held_count,
               "superseded_versions_shown": 0, "explicit_replacements": 1, "source_proofs": proofs,
               "research_items": research["items"], "baseline": baseline, "frozen_gate_counts": {
                   reason: sum(row["reason"] == reason for row in outcomes) for reason in sorted({row["reason"] for row in outcomes})},
@@ -109,22 +131,31 @@ def render(report, baseline_html):
     esc = html.escape;require(baseline_html.count('<main class="email-main">') == 1, "roundup email structure changed")
     items = report["research_items"]
     intro = '<section class="research-roundup" id="research-candidate-index"><p>第20步 · 未发送候选总览</p><h1>'+str(report['research_count'])+'份独立研究与'+str(report['mail_selected_count'])+'篇邮件候选正文</h1>'
-    intro += '<p>保留来源日期字段及各事件口径，不将后补研读刷新为今天的资讯。前半部分展示当前已完成来源核对的研究稿；后半部分展示原'+str(report['mail_selected_count'])+'篇候选正文，其中'+str(report['mail_replacements_remain'])+'篇使用核对稿、'+str(report['mail_retained_count'])+'篇保留。原FAILED警报继续保留。</p>'
+    intro += '<p>保留来源日期字段及各事件口径，不将后补研读刷新为今天的资讯。当前校验通过'+str(report.get('current_gate_passed_count',len(items)))+'份，待重新复核'+str(report.get('current_gate_held_count',0))+'份；历史原稿和原判定保留。后半部分展示原'+str(report['mail_selected_count'])+'篇候选正文，其中'+str(report['mail_replacements_remain'])+'篇使用核对稿、'+str(report['mail_retained_count'])+'篇保留。原FAILED警报继续保留。</p>'
     intro += '<p>加密篇采用明确修订后的版本，旧拒绝仍在审核记录中。来源核对只表示忠实转述，外部论文、数据、代码及策略效果没有独立验证；本页无发送资格。</p><div class="roundup-scroll"><table class="roundup-table"><thead><tr><th>研究材料</th><th>保留的日期字段</th><th>原快照日期窗口</th><th>原邮件准入</th></tr></thead><tbody>'
     windows = {"primary_window": "字段位于36小时内", "research_backfill": "符合14天研究回溯", "outside_window": "不在原适用窗口内", "after_cutoff": "晚于原截止", "publication_unconfirmed": "日期未确认"}
     for row in items:
         reason = '原选文URL的后补捕获，版本不符' if row["frozen_mail_reason"] == "stale_material" else '不属于原22条选文'
-        intro += '<tr><td>'+esc(row['card']['title_zh'])+'</td><td>'+esc(row['published'] or '未知')+'</td><td>'+windows[row['date_gate']['window']]+'</td><td>'+reason+'</td></tr>'
+        display_card = row.get('card',row.get('historical_card'))
+        gate_label = '待重新复核；历史原稿' if row.get('current_gate_status') == 'held' else '当前校验通过'
+        intro += '<tr><td>'+esc(display_card['title_zh'])+' · '+gate_label+'</td><td>'+esc(row['published'] or '未知')+'</td><td>'+windows[row['date_gate']['window']]+'</td><td>'+reason+'</td></tr>'
     intro += '</tbody></table></div><p class="roundup-meta">日期门槛按'+esc(report['snapshot_report_date'])+'原快照核对。位于时间窗口内也不代表通过原始捕获、来源身份或历史门槛。论文日期保留RSS宣布字段；首次提交与版本修订日期分别写于下方注释，不混为首次发表日。</p>'
     for row in items:
-        card = row['card'];intro += '<article class="roundup-card"><h2 class="report-h2">'+esc(card['title_zh'])+'</h2>'
+        card = row.get('card',row.get('historical_card'));held = row.get('current_gate_status') == 'held'
+        intro += '<article class="roundup-card"><h2 class="report-h2">'+esc(card['title_zh'])+'</h2>'
+        if held:
+            intro += '<p><strong>待重新复核：审稿证据定位不属于对应论断自己的引句。以下历史内容不计入当前通过稿。</strong></p>'
+            intro += '<details><summary>查看保留的历史原稿及原判定</summary><p>原审稿记录保持原样；没有新模型复核，也没有发送资格。</p>'
+            intro += '<p>原记录摘要：'+esc(row.get('historical_review_hash',''))+'</p>'
         intro += '<p class="roundup-meta">'+esc(row['source'])+' · '+esc(row['published'] or '未知')+' · '+str(row['editorial_claim_count'])+'项编辑核对</p>'
         intro += '<p class="roundup-meta">'+esc(row['annotation']['scope_note_zh'])+'</p><p class="roundup-meta">'+esc(row['annotation']['date_note_zh'])+'</p>'
         intro += '<ul class="report-list">'+''.join('<li class="report-li">'+esc(c['text_zh'])+'</li>' for c in card['facts'])+'</ul>'
         intro += '<details><summary>原文限制与后续核对问题</summary>'
         for field, label in (("limitations", "原文限制"), ("questions", "后续核对问题")):
             if card[field]:intro += '<p><strong>'+label+'</strong></p><ul>'+''.join('<li>'+esc(c['text_zh'] if isinstance(c, dict) else c)+'</li>' for c in card[field])+'</ul>'
-        intro += '</details><p><a class="email-link" href="'+esc(mail.safe_link(row['url']),quote=True)+'">阅读原文</a></p></article>'
+        intro += '</details><p><a class="email-link" href="'+esc(mail.safe_link(row['url']),quote=True)+'">阅读原文</a></p>'
+        if held:intro += '</details>'
+        intro += '</article>'
     intro += '<p class="roundup-meta">以下候选正文复用原邮件渲染结果；没有把上面的研究稿加入发送列表。页面仅完成静态内容/链接/结构检查，视觉及邮件客户端兼容性未验收。</p></section>'
     rendered = baseline_html.replace('</head>', CSS+'</head>').replace('<main class="email-main">', '<main class="email-main">'+intro)
     require(rendered.replace(CSS, '', 1).replace(intro, '', 1) == baseline_html, "roundup changed existing candidate preview")
