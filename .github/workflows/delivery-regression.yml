@@ -90,6 +90,15 @@ jobs:
           --prior-record config/etf-original-research-records.json
           --record config/etf-crypto-research-resolution.json
           --report artifacts-automatic-preview/research-resolution-proof.json
+      - name: Rebuild explicitly selected whole sections without silent truncation
+        run: >-
+          python -B scripts/etf_section_research.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --source-record config/etf-supplement-research-record.json
+          --prior-record config/etf-crypto-research-resolution.json
+          --record config/etf-futures-section-research.json
+          --report artifacts-automatic-preview/section-research-proof.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:
