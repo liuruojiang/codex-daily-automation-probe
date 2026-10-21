@@ -17,6 +17,48 @@ permissions:
   contents: read
 
 jobs:
+  etf-fresh-shadow-preview:
+    if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Verify exact newer production producer and artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: >-
+          python -B scripts/etf_fresh_shadow.py verify-source
+          --record config/etf-fresh-shadow-record.json --out-dir fresh-source-proof
+      - uses: actions/download-artifact@v8
+        with:
+          artifact-ids: '12308593073'
+          run-id: '39518483125'
+          github-token: ${{ github.token }}
+          path: fresh-source
+          merge-multiple: true
+      - name: Replay fresh reviewed excerpts and reject old snapshot drafts offline
+        run: >-
+          python -B scripts/etf_fresh_shadow.py replay
+          --record config/etf-fresh-shadow-record.json --source-dir fresh-source
+          --old-registry config/etf-shadow-reviewed-registry.json
+          --old-index config/etf-research-preview-index.json --out-dir artifacts-fresh-shadow
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: etf-fresh-shadow-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            fresh-source-proof
+            artifacts-fresh-shadow
+          retention-days: 30
   etf-automatic-mail-preview:
     if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
