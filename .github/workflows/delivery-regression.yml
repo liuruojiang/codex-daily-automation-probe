@@ -81,6 +81,15 @@ jobs:
             --parent-record config/etf-supplement-research-record.json \
             --record config/etf-original-research-records.json \
             --report artifacts-automatic-preview/original-research-proof.json
+      - name: Rebuild changed crypto card while preserving its original rejection
+        run: >-
+          python -B scripts/etf_research_resolution.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --source-record config/etf-supplement-research-record.json
+          --prior-record config/etf-original-research-records.json
+          --record config/etf-crypto-research-resolution.json
+          --report artifacts-automatic-preview/research-resolution-proof.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:
