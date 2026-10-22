@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import json
+from dataclasses import asdict
 from pathlib import Path
 import sys
 import unittest
@@ -10,6 +11,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import daily_reports as dr
+from etf_candidate_audit import audit_candidates
 
 
 class UpstreamCoverageTests(unittest.TestCase):
@@ -88,6 +90,48 @@ class UpstreamCoverageTests(unittest.TestCase):
         marketing = dr.Item(item.source, "YieldMax single-stock weeklypay launch", item.url, item.published, item.summary)
         self.assertIsNone(dr.score_etf_research_item(marketing))
 
+    def research_audit(self, title, summary, shown=False):
+        item = dr.Item("Seeking Alpha ETFs", title, "https://example.com/risk-study",
+                       "2026-10-21T12:00:00Z", summary)
+        sid = "research|Seeking Alpha ETFs|https://example.com/feed"
+        row = asdict(item) | {"source_id": sid, "pipeline_decision": {"reason": "editorial_capacity"}}
+        manifest = {
+            "schema_version": 2, "decision_policy": "etf-candidates-v1",
+            "cutoff_utc": self.cutoff.isoformat(), "head_sha": "fixture",
+            "configured_sources": [sid],
+            "source_audit": [{"source_id": sid, "coverage": "complete", "evidence": {"captured_count": 1}}],
+            "candidates": [row], "selected_items": [asdict(item)] if shown else [],
+        }
+        history = {"phase": "before_build", "head_sha": "fixture", "items": []}
+        return item, audit_candidates(manifest, history)
+
+    def test_exposure_risk_research_omissions_cannot_pass_independent_audit(self):
+        body = (
+            "The portfolio model compares financing costs across different market environments and measures how investors can experience losses during prolonged volatile conditions. "
+            "Researchers evaluate daily compounding against a diversified benchmark because concentrated exposure creates additional uncertainty in the distribution of future outcomes."
+        )
+        for exposure in ("Leveraged ETF", "Inverse ETF", "ETF"):
+            with self.subTest(exposure=exposure):
+                title = exposure + " portfolio risks and financing costs"
+                item, audit = self.research_audit(title, body)
+                self.assertTrue(dr.etf_research_relevant(item))
+                self.assertIsNotNone(dr.score_etf_research_item(item))
+                self.assertTrue(dr.etf_has_enough_summary_evidence(item))
+                self.assertEqual(audit["status"], "FAILED")
+                self.assertIn("unexplained_priority_omission", {r["reason"] for r in audit["failures"]})
+                self.assertEqual(self.research_audit(title, body, shown=True)[1]["status"], "PASS")
+
+    def test_exposure_titles_do_not_supply_missing_body_evidence(self):
+        for title in ("Leveraged ETF portfolio risks", "Inverse ETF portfolio risks"):
+            with self.subTest(title=title):
+                _, audit = self.research_audit(title, "")
+                self.assertEqual(audit["status"], "PARTIAL")
+                self.assertIn("candidate_needs_independent_review", {r["reason"] for r in audit["gaps"]})
+                _, shown_audit = self.research_audit(title, "", shown=True)
+                self.assertEqual(shown_audit["status"], "FAILED")
+        _, excluded = self.research_audit("YieldMax single-stock weeklypay launch", "")
+        self.assertEqual(excluded["decisions"][0]["decision"], "excluded_product_subject")
+
     def test_freshness_and_sent_history_still_control_selection(self):
         row = self.rows[0]
         items = [dr.Item(row["source"], row["title"], row["url"], row["published"], ""),
@@ -125,6 +169,40 @@ class UpstreamCoverageTests(unittest.TestCase):
         # A discovery timestamp or copyright date is never publication evidence.
         with patch.object(dr, "fetch_bytes", side_effect=lambda url, **kw: landing if url == monitor.url else article.replace(b'article:published_time', b'crawl_time')):
             self.assertEqual(dr.fixed_page_items(monitor), [])
+
+    def test_etfcom_external_links_are_rejected_before_fetch(self):
+        monitor = next(m for m in dr.ETF_FIXED_PAGE_MONITORS if m.source == "ETF.com Conferences")
+        invalid = (
+            "https://other.example/sections/conferences/growing-tomatoes",
+            "https://www.etf.com.evil.example/sections/conferences/portfolio",
+            "https://www.etf.com@evil.example/sections/conferences/portfolio",
+            "https://user@www.etf.com/sections/conferences/portfolio",
+            "ftp://www.etf.com/sections/conferences/portfolio",
+            "https://www.etf.com:8443/sections/conferences/portfolio",
+            "https://www.etf.com:bad/sections/conferences/portfolio",
+            "https://www.etf.com/sections/conferences/nested/portfolio",
+        )
+        landing = "".join(f'<a href="{url}">ETF portfolio study</a>' for url in invalid).encode()
+        with patch.object(dr, "fetch_bytes", return_value=landing) as fetch:
+            self.assertEqual(dr.fixed_page_items(monitor), [])
+        self.assertEqual([c.args[0] for c in fetch.call_args_list], [monitor.url])
+        for url in invalid:
+            with self.subTest(url=url):
+                item = dr.Item("ETF.com Conferences", "ETF portfolio study", url, "2026-10-21T12:00:00Z", "")
+                self.assertFalse(dr.fixed_monitor_title_relevant(item))
+
+    def test_etfcom_relative_links_and_publisher_alias_remain_supported(self):
+        monitor = next(m for m in dr.ETF_FIXED_PAGE_MONITORS if m.source == "ETF.com Conferences")
+        article = (b'<meta property="article:published_time" content="2026-10-21T17:11:46Z">'
+                   b'<article><h1>An interview with an engineer</h1><p>The speakers compare software business models with investment in computing hardware and describe the resulting capital spending risks.</p></article>')
+        for href in ("/sections/conferences/interview", "https://etf.com/sections/conferences/interview",
+                     "https://www.etf.com:443/sections/conferences/interview"):
+            with self.subTest(href=href):
+                landing = f'<a href="{href}">Interview</a>'.encode()
+                with patch.object(dr, "fetch_bytes", side_effect=lambda url, **kw: landing if url == monitor.url else article):
+                    items = dr.fixed_page_items(monitor)
+                self.assertEqual(len(items), 1)
+                self.assertTrue(dr.fixed_monitor_title_relevant(items[0]))
 
 
 if __name__ == "__main__":

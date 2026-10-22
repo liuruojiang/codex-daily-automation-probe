@@ -15,7 +15,8 @@ from etf_preflight import canonical, utc
 POLICY = "etf-candidates-v1"
 TOPIC = re.compile(r"\b(?:portfolio|allocation|diversification|concentration|trend|momentum|factor|duration|cvar|kelly|backtest|look.ahead|trading strateg|capacity|crowding|covariance|correlation|etfs?|rebalancing|managed futures|retirement|withdrawal)\w*\b|资产配置|量化|趋势|分散|回测|养老金", re.I)
 NOISE = re.compile(r"subscribe (?:now|today|to)|sign (?:up|in)|log in|accept (?:all )?cookies|privacy policy|all rights reserved|buy now|limited.time offer|sponsored content|click here|javascript (?:is )?required", re.I)
-EXCLUDED_PRODUCT = re.compile(r"\b(?:single.stock|leveraged|inverse etf|yieldmax|weeklypay|incomemax|kurv|meme stock)\b", re.I)
+# Exposure type alone does not exclude research about its risks or mechanics.
+EXCLUDED_PRODUCT = re.compile(r"\b(?:single.stock|yieldmax|weeklypay|incomemax|kurv|meme stock)\b", re.I)
 
 
 def prose_evidence(value: str) -> bool:
