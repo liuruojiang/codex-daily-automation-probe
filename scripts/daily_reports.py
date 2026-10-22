@@ -3548,6 +3548,21 @@ def fixed_page_article_summary(page: str) -> str:
     return clean_text(" ".join(article_evidence_paragraphs(page, limit=8)), 12000)
 
 
+def is_etfcom_conference_url(url: str) -> bool:
+    """Only the publisher's own conference articles get its source allowance."""
+    try:
+        parts = urllib.parse.urlsplit(url)
+        return bool(
+            parts.scheme in {"http", "https"}
+            and parts.hostname in {"etf.com", "www.etf.com"}
+            and parts.username is None and parts.password is None
+            and parts.port in {None, 443 if parts.scheme == "https" else 80}
+            and re.fullmatch(r"/sections/conferences/[^/]+/?", parts.path)
+        )
+    except ValueError:
+        return False
+
+
 def fixed_page_items(monitor: FixedPageMonitor) -> list[Item]:
     try:
         page = fetch_bytes(monitor.url, timeout=12).decode("utf-8", "ignore")
@@ -3563,6 +3578,8 @@ def fixed_page_items(monitor: FixedPageMonitor) -> list[Item]:
     for raw_href, anchor_text in fixed_page_anchors(page):
         href = html.unescape(raw_href).rstrip("\\")
         url = urllib.parse.urljoin(monitor.url, href)
+        if monitor.source == "ETF.com Conferences" and not is_etfcom_conference_url(url):
+            continue
         if not href_re.search(urllib.parse.urlsplit(url).path):
             continue
         key = canonical_url(url)
@@ -3614,10 +3631,8 @@ def fixed_monitor_title_relevant(item: Item) -> bool:
     )
     if any(marker in text for marker in off_topic):
         return False
-    if item.source.startswith("ETF.com Conferences") and re.fullmatch(
-        r"/sections/conferences/[^/]+/?", urllib.parse.urlsplit(item.url).path
-    ):
-        return True
+    if item.source.startswith("ETF.com Conferences"):
+        return is_etfcom_conference_url(item.url)
     title_markers = (
         "allocation",
         "asset",

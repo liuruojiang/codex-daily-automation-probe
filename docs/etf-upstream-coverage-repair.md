@@ -41,3 +41,26 @@ Public metadata for all 20 omissions is retained as a regression fixture;
 test RSS XML and HTML are explicitly reconstructed. The already confirmed
 20-item supplement queue is preserved. Mail delivery code, activation state,
 historical artifacts and original task memory are outside this patch.
+
+## Adversarial follow-up audit
+
+Four independent reviews checked feed capture, relevance/evidence, fixed-page
+discovery and production delivery contracts. Two reproducible gaps were fixed:
+
+- The independent omission checker still excluded leveraged/inverse ETF
+  subjects after the producer stopped doing so. Such readable research now
+  produces an omission failure when absent; missing body evidence still stays
+  in review. Explicit promotional/single-stock exclusions remain.
+- The new ETF.com allowance matched a URL path without checking the publisher.
+  Conference capture and relevance now require the ETF.com/www.etf.com host,
+  HTTP(S), its default port, no credentials and a single article path segment.
+  External links cannot consume the monitor's fetch budget or inherit its
+  source allowance. Relative links and the publisher's www alias still work.
+
+Regression tests cover both failures, their positive controls and unreadable
+evidence. Independent frozen-feed replay also captured all 572 entries from
+32 parsable RSS/Atom responses. The monitor's bounded listing remains PARTIAL;
+these tests do not establish live endpoint availability or historical ETF.com
+listing completeness. A retained performance limit is serial body enrichment:
+blocked candidates may be retried during backfill, so larger returned feeds can
+increase build time even though old items are filtered before body retrieval.
