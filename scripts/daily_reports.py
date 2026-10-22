@@ -191,6 +191,7 @@ ETF_FIXED_MONITOR_FEEDS: tuple[FixedMonitorFeed, ...] = (
 
 
 ETF_FIXED_PAGE_MONITORS: tuple[FixedPageMonitor, ...] = (
+    FixedPageMonitor("ETF.com Conferences", "https://www.etf.com/sections/conferences", r"/sections/conferences/[^\\\"\'<>#? ]+", "访谈页面", 24),
     FixedPageMonitor("AQR Perspectives", "https://www.aqr.com/Insights/Perspectives", r"/Insights/Perspectives/[^\\\"'<>#? ]+", "页面", 5),
     FixedPageMonitor("AQR Research", "https://www.aqr.com/Insights/Research", r"/Insights/Research/(?:Working-Paper|Tax-Aware-Investing|Alternative-Thinking|Journal-Article|White-Papers)/[^\\\"'<>#? ]+", "页面", 5),
     FixedPageMonitor("AQR Data Library", "https://www.aqr.com/insights/datasets/about-the-aqr-data-library", r"/insights/datasets/[^\\\"'<>#? ]+", "页面", 5),
@@ -316,12 +317,12 @@ def reddit_hot_rss_ranked_items(items: list[Item]) -> list[Item]:
     return out
 
 
-def parse_feed(source: str, url: str, limit: int = 12) -> list[Item]:
+def parse_feed(source: str, url: str, limit: int | None = 12) -> list[Item]:
     try:
         root = ET.fromstring(fetch_bytes(url))
     except Exception:
         return []
-    ns = {"atom": "http://www.w3.org/2005/Atom", "content": "http://purl.org/rss/1.0/modules/content/"}
+    ns = {"atom": "http://www.w3.org/2005/Atom", "content": "http://purl.org/rss/1.0/modules/content/", "dc": "http://purl.org/dc/elements/1.1/"}
     nodes = root.findall(".//item")
     atom = False
     if not nodes:
@@ -342,14 +343,25 @@ def parse_feed(source: str, url: str, limit: int = 12) -> list[Item]:
         else:
             title = clean_text(node.findtext("title", default=""), 180)
             link = clean_text(node.findtext("link", default=""), 500)
-            published = node.findtext("pubDate", default="") or node.findtext("dc:date", default="")
+            published = node.findtext("pubDate", default="") or node.findtext("dc:date", default="", namespaces=ns)
             summary = node.findtext("description", default="") or node.findtext("content:encoded", default="", namespaces=ns)
         if title and link:
             dt = parse_date(published)
             engagement = feed_forum_engagement_text(summary)
             item_source = source
             # Keep official abstract conclusions and limitations past 700 chars.
-            item_summary = clean_text(strip_noncontent_html(summary), 20000 if source.startswith("arXiv") else 700)
+            is_etf_feed = source.startswith("arXiv") or any(
+                feed.source == source for feed in (*ETF_RESEARCH_FEEDS, *ETF_FIXED_MONITOR_FEEDS)
+            )
+            visible_summary = strip_noncontent_html(summary)
+            if is_etf_feed:
+                # HTML bullets and paragraphs are distinct evidence blocks;
+                # whitespace-only flattening used to concatenate their claims.
+                visible_summary = re.sub(
+                    r"</(?:p|li|blockquote)\s*>|<br\s*/?>", ". ",
+                    visible_summary, flags=re.I,
+                )
+            item_summary = clean_text(visible_summary, 20000 if is_etf_feed else 700)
             if engagement and "comments/replies" not in item_source.lower():
                 item_source = f"{item_source} ({engagement})"
                 item_summary = clean_text(f"{item_summary} Engagement: {engagement}.", 1200)
@@ -682,7 +694,7 @@ def enrich_article_item(item: Item) -> Item:
     is_reddit = item.source.startswith("r/") or "reddit" in item.source.lower() or "reddit.com" in host
     forum_paras = reddit_thread_paragraphs(item.url, limit=20) if is_reddit else []
     paras = forum_paras or article_paragraphs(item.url, limit=60)
-    base = clean_text(strip_noncontent_html(" ".join([item.summary, *paras])), 20000)
+    base = clean_text(strip_noncontent_html(". ".join([item.summary, *paras])), 20000)
     summary = enrich_aggregator_item(item, base)
     source = reddit_source_with_engagement(item.source, item.url) if is_reddit else item.source
     snapshot = ETF_COLLECTION_SNAPSHOT.get()
@@ -2879,8 +2891,6 @@ def score_etf_research_item(item: Item) -> ScoredResearchItem | None:
     hard_exclusions = [
         "single-stock",
         "single stock",
-        "leveraged",
-        "inverse etf",
         "yieldmax",
         "weeklypay",
         "incomemax",
@@ -2940,7 +2950,9 @@ def score_etf_research_item(item: Item) -> ScoredResearchItem | None:
         score -= 10
 
     sections = etf_item_sections(item)
-    if score < 55:
+    # Importance orders research; it must not erase relevant evidence before
+    # source retrieval. Product suitability is separate from research coverage.
+    if score < 55 and not etf_research_relevant(item):
         return None
     return ScoredResearchItem(item=item, score=min(score, 100), tier=tier, role=role, sections=sections, reasons=tuple(dict.fromkeys(reasons)))
 
@@ -3562,7 +3574,7 @@ def fixed_page_items(monitor: FixedPageMonitor) -> list[Item]:
         if not title or url.rstrip("/") == monitor.url.rstrip("/"):
             continue
         attempted += 1
-        if attempted > min(monitor.limit * 3, 12):
+        if attempted > max(12, monitor.limit):
             break
         try:
             article_page = fetch_bytes(url, timeout=8).decode("utf-8", "ignore")
@@ -3602,6 +3614,10 @@ def fixed_monitor_title_relevant(item: Item) -> bool:
     )
     if any(marker in text for marker in off_topic):
         return False
+    if item.source.startswith("ETF.com Conferences") and re.fullmatch(
+        r"/sections/conferences/[^/]+/?", urllib.parse.urlsplit(item.url).path
+    ):
+        return True
     title_markers = (
         "allocation",
         "asset",
@@ -3664,7 +3680,7 @@ def collect_etf_fixed_monitor_updates_with_audit(
     feed_results: dict[str, list[Item]] = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         future_to_feed = {
-            executor.submit(parse_feed, feed.source, feed.url, feed.limit): feed
+            executor.submit(parse_feed, feed.source, feed.url, None): feed
             for feed in ETF_FIXED_MONITOR_FEEDS
         }
         for future in concurrent.futures.as_completed(future_to_feed):
@@ -5969,6 +5985,35 @@ def build_etf(out_dir: Path) -> None:
         ETF_BUILD_CUTOFF.reset(token)
 
 
+def collect_etf_research_sources() -> tuple[list[Item], list[tuple[str, str, int]]]:
+    """Capture the entire returned feed before freshness, history or ranking.
+
+    A source's presentation limit must not truncate the collection manifest.
+    The returned RSS/Atom document is still a bounded listing, not a proof of
+    complete publisher coverage. Empty summaries remain empty for review.
+    """
+    items: list[Item] = []
+    audit: list[tuple[str, str, int]] = []
+    results: dict[str, list[Item]] = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        futures = {executor.submit(parse_feed, feed.source, feed.url, None): feed
+                   for feed in ETF_RESEARCH_FEEDS}
+        for future in concurrent.futures.as_completed(futures):
+            feed = futures[future]
+            try:
+                results[feed.source] = future.result()
+            except Exception:
+                results[feed.source] = []
+    for feed in ETF_RESEARCH_FEEDS:
+        parsed = results.get(feed.source, [])
+        record_etf_source("research", feed.source, feed.url, parsed)
+        items.extend(parsed)
+        recent_count = len(filter_recent_published(parsed, ETF_ARTICLE_MAX_AGE_HOURS))
+        status = "已读取" if parsed else "无可读条目或解析不足"
+        audit.append((feed.source, status, recent_count))
+    return items, audit
+
+
 def _build_etf(out_dir: Path) -> None:
     started = ETF_BUILD_CUTOFF.get() or now_bj()
     # Beijing Sunday and Monday correspond to weekend US sessions. Those two
@@ -6089,27 +6134,7 @@ def _build_etf(out_dir: Path) -> None:
             )
     mover_rows = top_rows + bottom_rows
 
-    items: list[Item] = []
-    research_feed_audit: list[tuple[str, str, int]] = []
-    research_results: dict[str, list[Item]] = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        future_to_feed = {
-            executor.submit(parse_feed, feed.source, feed.url, feed.limit): feed
-            for feed in ETF_RESEARCH_FEEDS
-        }
-        for future in concurrent.futures.as_completed(future_to_feed):
-            feed = future_to_feed[future]
-            try:
-                research_results[feed.source] = future.result()
-            except Exception:
-                research_results[feed.source] = []
-    for feed in ETF_RESEARCH_FEEDS:
-        parsed = research_results.get(feed.source, [])
-        record_etf_source("research", feed.source, feed.url, parsed)
-        items.extend(parsed)
-        recent_count = len(filter_recent_published(parsed, ETF_ARTICLE_MAX_AGE_HOURS))
-        status = "已读取" if parsed else "无可读条目或解析不足"
-        research_feed_audit.append((feed.source, status, recent_count))
+    items, research_feed_audit = collect_etf_research_sources()
     history_before = json.loads((out_dir / "history_before.json").read_text(encoding="utf-8"))
     confirmed_omissions = load_etf_confirmed_omissions(history_before)
     confirmed_urls = {canonical_url(item.url) for item, _row in confirmed_omissions}
