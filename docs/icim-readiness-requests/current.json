@@ -1,8 +1,7 @@
 {
-  "date": "2026-10-16",
-  "requested_at": "2026-10-16T14:51:56.212233+08:00",
-  "mode": "realtime",
+  "date": "2026-10-23",
+  "mode": "close",
   "scope": "verified_research_handoff_no_send",
   "export_handoff": true,
-  "request_id": "ic-im-daily-20261016-1417"
+  "request_id": "icim-audited-release-takeover-20261023"
 }
