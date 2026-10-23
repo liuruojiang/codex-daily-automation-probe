@@ -17,6 +17,20 @@ import ic_im_v1_4_delivery_contract as delivery_contract
 import ic_im_put_execution_contract as put_execution_contract
 
 
+JIU_REFERENCE_FIELDS = frozenset({
+    "jiu_fear_greed_index", "jiu_data_date", "jiu_reference_only", "jiu_source_url",
+    "jiu_page_url", "jiu_sha256", "jiu_status", "jiu_warning", "jiu_retrieved_at",
+})
+
+
+def jiu_reference_fields(payload: dict[str, Any]) -> dict[str, Any]:
+    """Reference observations cannot replace validated trading signal fields."""
+    reference = payload.get("jiu_reference")
+    if not isinstance(reference, dict):
+        return {}
+    return {key: value for key, value in reference.items() if key in JIU_REFERENCE_FIELDS}
+
+
 def calendar_notices(payload: dict[str, Any]) -> list[str]:
     return maintenance_notice.reminders(
         payload.get("signals", {}), signal_day=payload.get("market_date"),
@@ -855,7 +869,7 @@ def fear_observation_text(payload: dict[str, Any]) -> str:
         "intraday_previous_session", "close_previous_session"
     } else ""
     title = f"信号日{day}的恐慌输入" if basis else f"当日恐慌指数（{day}）"
-    signal = {**((payload.get("signals") or {}).get("IC") or payload), **payload.get("jiu_reference", {})}
+    signal = {**((payload.get("signals") or {}).get("IC") or payload), **jiu_reference_fields(payload)}
     warning = signal.get("fear_source_warning") or ("百分位CSV与网页已完成双侧验证。" if signal.get("fear_cross_validation") == "matched" else "")
     reference = jiu_reference_text(signal)
     extra = " ".join(x for x in (warning, reference) if x)
@@ -923,7 +937,7 @@ def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
 
 
 def build_success_html(payload: dict[str, Any], run_url: str) -> str:
-    signals = {p: {**s, **payload.get("jiu_reference", {})} for p, s in payload.get("signals", {}).items()}
+    signals = {p: {**s, **jiu_reference_fields(payload)} for p, s in payload.get("signals", {}).items()}
     if set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
     actions = {product: action_parts(signals[product], product) for product in ("IC", "IM")}
@@ -1256,7 +1270,7 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
 
 def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) -> tuple[str, str, bool]:
     validate_success_payload(payload)
-    signals = {p: {**s, **payload.get("jiu_reference", {})} for p, s in payload.get("signals", {}).items()}
+    signals = {p: {**s, **jiu_reference_fields(payload)} for p, s in payload.get("signals", {}).items()}
     if set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
     actions = {product: action_parts(signals[product], product) for product in ("IC", "IM")}
