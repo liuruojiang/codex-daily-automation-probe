@@ -2,7 +2,7 @@
 
 The calendar below is the published common CFFEX/SSE 2022–2026 calendars already
 used by the official strategy.  Its source is
-liuruojiang/ic-im-rolling-arbitrage@8038980de86251b2c5133da04e788dc2c49c84ff,
+liuruojiang/ic-im-rolling-arbitrage@e3f26824a8ff0a89b6125d4385f75e0a6cfa2a7e,
 poe_ic_im_mainline_v1_4_bot.py::_EXCHANGE_CLOSURES and
 _OFFICIAL_EXCHANGE_CALENDAR_YEARS.  This is an explicit covered-year snapshot,
 never a NAV-derived or weekday-only calendar.  New years fail closed until
@@ -15,7 +15,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 
-CALENDAR_SOURCE_REVISION = "8038980de86251b2c5133da04e788dc2c49c84ff"
+CALENDAR_SOURCE_REVISION = "e3f26824a8ff0a89b6125d4385f75e0a6cfa2a7e"
 CALENDAR_YEARS = frozenset({2022, 2023, 2024, 2025, 2026})
 EXCHANGE_CLOSURES = frozenset(
     {

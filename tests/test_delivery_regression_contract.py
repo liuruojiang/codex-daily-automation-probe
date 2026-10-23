@@ -19,7 +19,7 @@ def read(name):
 
 
 def icim_inventory():
-    return json.loads((ROOT / 'docs/ic_im_daily_release_20261023_manifest.json').read_text(encoding='utf-8'))
+    return json.loads((ROOT / 'docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json').read_text(encoding='utf-8'))
 
 
 @pytest.mark.parametrize('name', ['microcap-realtime-digest.yml', 'ic-im-v1-4-daily-digest.yml'])
@@ -83,7 +83,7 @@ def test_icim_regression_preserves_isolation_cache_and_hard_timeout_contract():
     assert step['env']['ICIM_STATE_DIR'].startswith('${{ runner.temp }}/')
     assert 'timeout --foreground 65s python -B -X utf8 run_ic_im_v1_4_delivery_tests.py' in step['run']
     assert icim_inventory()['daily_gate_outer_timeout_seconds'] == 60
-    assert len(icim_inventory()['required_local_tests']) == 43
+    assert len(icim_inventory()['required_local_tests']) == 47
     registry = icim_inventory()['historical_exclusion_registry']
     assert len(registry) == 22
     assert set(icim_inventory()['daily_gate_deselections']) <= set(registry)

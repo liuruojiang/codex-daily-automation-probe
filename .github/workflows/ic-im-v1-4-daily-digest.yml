@@ -108,7 +108,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/ic-im-rolling-arbitrage
-          ref: 8038980de86251b2c5133da04e788dc2c49c84ff
+          ref: e3f26824a8ff0a89b6125d4385f75e0a6cfa2a7e
           path: strategy
 
       - name: Record exact ICIM strategy revision
@@ -123,7 +123,7 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true'
         run: >-
           python automation/scripts/verify_icim_source_release.py
-          --strategy-root strategy --expected-strategy-sha 8038980de86251b2c5133da04e788dc2c49c84ff
+          --strategy-root strategy --expected-strategy-sha e3f26824a8ff0a89b6125d4385f75e0a6cfa2a7e
           --output strategy-artifacts/program-source.json
 
       - name: Install strategy dependencies
@@ -301,7 +301,7 @@ jobs:
         run: |
           python automation/scripts/build_ic_im_v1_4_digest.py \
             --result strategy-artifacts/result.json \
-            --source-provenance strategy-artifacts/program-source.json --expected-source-sha 8038980de86251b2c5133da04e788dc2c49c84ff \
+            --source-provenance strategy-artifacts/program-source.json --expected-source-sha e3f26824a8ff0a89b6125d4385f75e0a6cfa2a7e \
             --out-dir mail-artifacts \
             --subject-prefix "${{ steps.delivery_gate.outputs.subject_prefix }}"
 
