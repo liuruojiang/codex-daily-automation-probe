@@ -132,6 +132,11 @@ jobs:
               env.write('COMPLETED_DAY=' + completed.isoformat() + '\n')
               env.write('EXPECTED_MARKET_DAY=' + expected_market.isoformat() + '\n')
           PY
+      - name: Verify audited execution source inventory
+        run: >-
+          python automation/scripts/verify_icim_source_release.py
+          --strategy-root strategy --expected-strategy-sha "${{ steps.pin.outputs.sha }}"
+          --output readiness-artifacts/program-source.json
       - name: Run the official close producer on the isolated ledger
         env:
           ICIM_STATE_DIR: readiness-state
@@ -148,7 +153,7 @@ jobs:
             --max-sessions 20 --network-budget-per-product 180 --expected-market-date "$EXPECTED_MARKET_DAY"
       - name: Validate the normal digest and dated marker without publishing
         run: |
-          python automation/scripts/build_ic_im_v1_4_digest.py --result readiness-artifacts/result.json --out-dir readiness-mail
+          python automation/scripts/build_ic_im_v1_4_digest.py --result readiness-artifacts/result.json --source-provenance readiness-artifacts/program-source.json --expected-source-sha ${{ steps.pin.outputs.sha }} --out-dir readiness-mail
           python automation/scripts/prepare_ic_im_v1_4_marker.py --result readiness-artifacts/result.json --marker-dir readiness-marker
           python - <<'PY'
           import sys, json
@@ -223,5 +228,6 @@ jobs:
             readiness-mail/
           if-no-files-found: error
           retention-days: 30
+
 
 
