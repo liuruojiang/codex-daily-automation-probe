@@ -1,8 +1,8 @@
 """Independent offline date and quantity checks for modern IC/IM delivery.
 
-The calendar below is the published common CFFEX/SSE 2026 calendar already
+The calendar below is the published common CFFEX/SSE 2022–2026 calendars already
 used by the official strategy.  Its source is
-liuruojiang/ic-im-rolling-arbitrage@739071a201506dd869b9a156e490c3bafd95a334,
+liuruojiang/ic-im-rolling-arbitrage@8038980de86251b2c5133da04e788dc2c49c84ff,
 poe_ic_im_mainline_v1_4_bot.py::_EXCHANGE_CLOSURES and
 _OFFICIAL_EXCHANGE_CALENDAR_YEARS.  This is an explicit covered-year snapshot,
 never a NAV-derived or weekday-only calendar.  New years fail closed until
@@ -15,15 +15,61 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 
-CALENDAR_SOURCE_REVISION = "739071a201506dd869b9a156e490c3bafd95a334"
-CALENDAR_YEARS = frozenset({2026})
-EXCHANGE_CLOSURES = frozenset({
-    date(2026, 1, 1), date(2026, 1, 2),
-    *[date(2026, 2, day) for day in range(16, 24)],
-    date(2026, 4, 6), date(2026, 5, 1), date(2026, 5, 4), date(2026, 5, 5),
-    date(2026, 6, 19), date(2026, 9, 25),
-    *[date(2026, 10, day) for day in range(1, 8)],
-})
+CALENDAR_SOURCE_REVISION = "8038980de86251b2c5133da04e788dc2c49c84ff"
+CALENDAR_YEARS = frozenset({2022, 2023, 2024, 2025, 2026})
+EXCHANGE_CLOSURES = frozenset(
+    {
+        date(2022, 1, 3),
+        date(2022, 1, 31),
+        *[date(2022, 2, day) for day in range(1, 5)],
+        date(2022, 4, 4),
+        date(2022, 4, 5),
+        *[date(2022, 5, day) for day in range(2, 5)],
+        date(2022, 6, 3),
+        date(2022, 9, 12),
+        *[date(2022, 10, day) for day in range(3, 8)],
+        date(2023, 1, 2),
+        *[date(2023, 1, day) for day in range(23, 28)],
+        date(2023, 4, 5),
+        *[date(2023, 5, day) for day in range(1, 4)],
+        date(2023, 6, 22),
+        date(2023, 6, 23),
+        date(2023, 9, 29),
+        *[date(2023, 10, day) for day in range(2, 7)],
+        date(2024, 1, 1),
+        date(2024, 2, 9),
+        *[date(2024, 2, day) for day in range(12, 17)],
+        date(2024, 4, 4),
+        date(2024, 4, 5),
+        *[date(2024, 5, day) for day in range(1, 4)],
+        date(2024, 6, 10),
+        date(2024, 9, 16),
+        date(2024, 9, 17),
+        *[date(2024, 10, day) for day in range(1, 5)],
+        date(2024, 10, 7),
+        date(2025, 1, 1),
+        *[date(2025, 1, day) for day in range(28, 32)],
+        date(2025, 2, 3),
+        date(2025, 2, 4),
+        date(2025, 4, 4),
+        date(2025, 5, 1),
+        date(2025, 5, 2),
+        date(2025, 5, 5),
+        date(2025, 6, 2),
+        *[date(2025, 10, day) for day in range(1, 4)],
+        *[date(2025, 10, day) for day in range(6, 9)],
+        date(2026, 1, 1),
+        date(2026, 1, 2),
+        *[date(2026, 2, day) for day in range(16, 24)],
+        date(2026, 4, 6),
+        date(2026, 5, 1),
+        date(2026, 5, 4),
+        date(2026, 5, 5),
+        date(2026, 6, 19),
+        date(2026, 9, 25),
+        *[date(2026, 10, day) for day in range(1, 8)],
+    }
+)
 
 
 def is_session(day: date) -> bool:
@@ -507,3 +553,4 @@ def validate_fear_publication(payload: dict[str, Any]) -> None:
     if missing and (payload.get("status") != "partial" or payload.get("signal_completeness") != "partial"
                     or set(payload.get("incomplete_components") or []) != set(missing)):
         raise ValueError("missing Fear requires an exact partial publication manifest")
+

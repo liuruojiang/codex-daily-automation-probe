@@ -1410,13 +1410,42 @@ def required_success_report(result_path: Path, report_arg: str, payload: dict[st
     return report
 
 
+def source_provenance(path: str, expected_sha: str) -> dict[str, Any] | None:
+    """Bind the displayed program version to this run's independently checked source."""
+    if not path and not expected_sha:
+        return None  # Read-only historical renderer compatibility.
+    if not path or not re.fullmatch(r"[0-9a-f]{40}", expected_sha):
+        raise ValueError("source provenance requires an immutable expected SHA")
+    proof = json.loads(Path(path).read_text(encoding="utf-8"))
+    files = proof.get("source_sha256")
+    from hashlib import sha256
+    expected_raw = (Path(__file__).resolve().parents[1] / "docs/ic_im_daily_release_20261023_manifest.json").read_bytes()
+    expected_files = json.loads(expected_raw)["files"]
+    if (proof.get("status") != "verified" or proof.get("strategy_sha") != expected_sha
+            or proof.get("release") != "20261023-audited-inputs-v1"
+            or not re.fullmatch(r"[0-9a-f]{64}", str(proof.get("manifest_sha256", "")))
+            or not isinstance(files, dict) or len(files) != 29
+            or "run_ic_im_v1_4_github_digest.py" not in files
+            or files != expected_files or proof.get("manifest_sha256") != sha256(expected_raw).hexdigest()
+            or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in files.values())):
+        raise ValueError("source provenance does not match this run's execution inventory")
+    from datetime import datetime, timezone
+    verified = datetime.fromisoformat(str(proof.get("verified_at")))
+    if verified.tzinfo is None or verified > datetime.now(timezone.utc):
+        raise ValueError("source verification time is unverified or in the future")
+    return proof
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--result", required=True)
     parser.add_argument("--report", default="")
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--subject-prefix", default="")
+    parser.add_argument("--source-provenance", default="")
+    parser.add_argument("--expected-source-sha", default="")
     args = parser.parse_args()
+    proof = source_provenance(args.source_provenance, args.expected_source_sha)
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
     if str(payload.get("strategy_revision")) != "r1":
@@ -1435,6 +1464,14 @@ def main() -> int:
         subject, body = build_failure(payload, run_url, args.subject_prefix)
         html_body = build_failure_html(payload, run_url)
         attachment = None
+    if proof is not None:
+        label = f"运行程序版本：{proof['release']}（源码 {proof['strategy_sha'][:12]}）；历史信号保留原日生成记录。"
+        body = label + "\n\n" + body
+        version_html = "<p>" + html.escape(label) + "</p>\n"
+        if re.search(r"<body\b[^>]*>", html_body, re.I):
+            html_body = re.sub(r"(<body\b[^>]*>)", lambda m: m[1] + version_html, html_body, count=1, flags=re.I)
+        else:
+            html_body = version_html + html_body
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "ic_im_v1_4_digest.md").write_text(body, encoding="utf-8")
@@ -1446,6 +1483,7 @@ def main() -> int:
                 "body": body,
                 "html_body": html_body,
                 "attachment": attachment,
+                **({"runtime_source_provenance": proof} if proof is not None else {}),
             },
             ensure_ascii=False,
             indent=2,
@@ -1458,6 +1496,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
 
 
