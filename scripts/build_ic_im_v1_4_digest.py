@@ -1433,10 +1433,10 @@ def source_provenance(path: str, expected_sha: str) -> dict[str, Any] | None:
     proof = json.loads(Path(path).read_text(encoding="utf-8"))
     files = proof.get("source_sha256")
     from hashlib import sha256
-    expected_raw = (Path(__file__).resolve().parents[1] / "docs/ic_im_daily_release_20261023_manifest.json").read_bytes()
+    expected_raw = (Path(__file__).resolve().parents[1] / "docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json").read_bytes()
     expected_files = json.loads(expected_raw)["files"]
     if (proof.get("status") != "verified" or proof.get("strategy_sha") != expected_sha
-            or proof.get("release") != "20261023-audited-inputs-v1"
+            or proof.get("release") != "20261023-redteam-repairs-v3-r3"
             or not re.fullmatch(r"[0-9a-f]{64}", str(proof.get("manifest_sha256", "")))
             or not isinstance(files, dict) or len(files) != 29
             or "run_ic_im_v1_4_github_digest.py" not in files
