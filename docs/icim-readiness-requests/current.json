@@ -2,6 +2,6 @@
   "date": "2026-10-23",
   "mode": "close",
   "scope": "verified_research_handoff_no_send",
-  "export_handoff": true,
-  "request_id": "icim-v3-r3-postmerge-resume-audit-v4-20261023"
+  "export_handoff": false,
+  "request_id": "icim-v3-r3-postmerge-close-readiness-v4-20261023"
 }
