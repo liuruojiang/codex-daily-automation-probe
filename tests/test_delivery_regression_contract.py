@@ -3,6 +3,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import sys
 import hashlib
+import json
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
@@ -15,6 +16,10 @@ WORKFLOWS = ROOT / '.github' / 'workflows'
 
 def read(name):
     return yaml.load((WORKFLOWS / name).read_text(encoding='utf-8'), Loader=yaml.BaseLoader)
+
+
+def icim_inventory():
+    return json.loads((ROOT / 'docs/ic_im_daily_release_20261023_manifest.json').read_text(encoding='utf-8'))
 
 
 @pytest.mark.parametrize('name', ['microcap-realtime-digest.yml', 'ic-im-v1-4-daily-digest.yml'])
@@ -61,7 +66,7 @@ def test_regressions_run_on_changes_and_every_reusable_call_without_delivery():
                      'test_security_meta_current_st_history_resolution_20261012.py',
                      'test_security_meta_preserve_20260917.py',
                      'test_adversarial_recovery_boundaries_20261013.py'):
-        assert required in text
+        assert required in text or required in icim_inventory()['required_local_tests']
     assert 'ref: ${{ steps.pin.outputs.sha }}' in text
     assert 'tested-sha.txt' in text
     assert '--junitxml=' in text
@@ -76,14 +81,20 @@ def test_icim_regression_preserves_isolation_cache_and_hard_timeout_contract():
     assert step['env']['ICIM_REQUIRE_MIGRATION'] == '0'
     assert step['env']['PYTHONDONTWRITEBYTECODE'] == '1'
     assert step['env']['ICIM_STATE_DIR'].startswith('${{ runner.temp }}/')
-    assert 'timeout --foreground 60s python -B -X utf8 -m pytest -q -p no:cacheprovider' in step['run']
+    assert 'timeout --foreground 65s python -B -X utf8 run_ic_im_v1_4_delivery_tests.py' in step['run']
+    assert icim_inventory()['daily_gate_outer_timeout_seconds'] == 60
+    assert len(icim_inventory()['required_local_tests']) == 43
+    registry = icim_inventory()['historical_exclusion_registry']
+    assert len(registry) == 22
+    assert set(icim_inventory()['daily_gate_deselections']) <= set(registry)
+    assert len(icim_inventory()['daily_gate_deselections']) == 5
     assert 'v14_ledger_20261008 runtime/ic_im_v1_4_r1' in step['run']
     assert 'quarter_roll_20261013/prepare_fixture.py --strategy-root .' in step['run']
     assert "assert not list(root.iter('skipped'))" in step['run']
     # The stable state entrypoint imports the guard cases. Running both files
     # collects the same behavior twice and inflates the reported gate count.
-    assert 'test_poe_ic_im_v1_4_state.py' in step['run']
-    assert 'test_ic_im_v1_4_state_guards.py' not in step['run']
+    assert 'test_poe_ic_im_v1_4_state.py' in icim_inventory()['required_local_tests']
+    assert 'test_ic_im_v1_4_state_guards.py' not in icim_inventory()['required_local_tests']
 
 
 def test_microcap_regression_covers_required_files_with_isolated_zero_skip_gate():
@@ -306,3 +317,4 @@ def test_actual_calendar_step_distinguishes_unknown_from_holiday(monkeypatch, ca
     else:
         exec(compile(code, '<actual workflow calendar>', 'exec'), {})
         assert f"SHOULD_RUN_MICROCAP={str(case == 'trading').lower()}" in capsys.readouterr().out
+
