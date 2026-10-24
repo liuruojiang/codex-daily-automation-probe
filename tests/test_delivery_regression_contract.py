@@ -123,12 +123,21 @@ def test_microcap_regression_covers_required_files_with_isolated_zero_skip_gate(
         'test_exchange_session_completeness_20261015.py',
         'test_return_integrity_20261015.py',
         'test_security_meta_fail_closed_20261015.py',
+        'test_close_confirmation_1500_20261023.py',
+        'test_realtime_quote_integrity_20261024.py',
+        'test_st_notice_state_machine_20261024.py',
+        'test_st_notice_release_audit_20261024.py',
+        'test_realtime_commit_guard_20261024.py',
+        'test_whole_delivery_member_cache_gate_20261024.py',
     )
     assert step['env']['MICROCAP_DIGEST_SOURCE'] == '${{ github.workspace }}/automation/scripts/build_microcap_realtime_digest.py'
     assert step['env']['PYTHONDONTWRITEBYTECODE'] == '1'
     assert 'working-directory' not in step or step['working-directory'] == 'strategy'
-    assert 'timeout --foreground 120s python -B -X utf8 -m pytest -q -p no:cacheprovider' in step['run']
-    assert '--junitxml=regression.xml' in step['run']
+    assert step['run'].count('timeout --foreground 180s python -B -X utf8 -m pytest -q -p no:cacheprovider') == 2
+    assert '--junitxml=regression-core.xml' in step['run']
+    assert '--junitxml=regression-release.xml' in step['run']
+    assert "ET.ElementTree(root).write('regression.xml'" in step['run']
+    assert 'mandatory group has no test cases' in step['run']
     assert 'assert not list(root.iter(\'skipped\'))' in step['run'] or "root.iter('skipped')" in step['run']
     assert "Path('../automation')" in step['run']
     assert "tests/fixtures/microcap/v23_identity_20261009" in step['run']

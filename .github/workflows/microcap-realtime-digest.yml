@@ -183,7 +183,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 35327072c1872f964bba3e74d84036090ec0e68d
+          ref: e63d7bfa10a9d516494ba55076f47269ba3af86c
           path: microcap
 
       - name: Check out isolated v2.3 close-confirmed workspace
@@ -191,7 +191,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 35327072c1872f964bba3e74d84036090ec0e68d
+          ref: e63d7bfa10a9d516494ba55076f47269ba3af86c
           path: microcap-v23
 
       - name: Check out isolated v2.5 close-confirmed workspace
@@ -199,7 +199,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 35327072c1872f964bba3e74d84036090ec0e68d
+          ref: e63d7bfa10a9d516494ba55076f47269ba3af86c
           path: microcap-v25
 
       - name: Record microcap strategy SHA

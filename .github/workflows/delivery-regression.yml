@@ -122,7 +122,8 @@ jobs:
               destination.parent.mkdir(parents=True, exist_ok=True)
               destination.write_bytes(raw)
           PY
-          timeout --foreground 120s python -B -X utf8 -m pytest -q -p no:cacheprovider \
+          # Keep the complete existing delivery group; bound each independent group.
+          timeout --foreground 180s python -B -X utf8 -m pytest -q -p no:cacheprovider \
             tests/test_realtime_preflight.py tests/test_realtime_state_guard_20260915.py \
             tests/test_top100_delivery.py tests/test_top100_cloud_delivery.py \
             tests/test_full_rebalance_cache_bundle.py tests/test_top100_data_guards.py \
@@ -141,10 +142,24 @@ jobs:
             tests/test_exchange_session_completeness_20261015.py \
             tests/test_return_integrity_20261015.py \
             tests/test_security_meta_fail_closed_20261015.py \
-            tests/test_v25_realtime_artifact_invalidation.py --junitxml=regression.xml
+            tests/test_v25_realtime_artifact_invalidation.py --junitxml=regression-core.xml
+          timeout --foreground 180s python -B -X utf8 -m pytest -q -p no:cacheprovider \
+            tests/test_close_confirmation_1500_20261023.py \
+            tests/test_realtime_quote_integrity_20261024.py \
+            tests/test_st_notice_state_machine_20261024.py \
+            tests/test_st_notice_release_audit_20261024.py \
+            tests/test_realtime_commit_guard_20261024.py \
+            tests/test_whole_delivery_member_cache_gate_20261024.py --junitxml=regression-release.xml
           python -B -X utf8 - <<'PY'
           import xml.etree.ElementTree as ET
-          root = ET.parse('regression.xml').getroot()
+          root = ET.Element('testsuites')
+          for name in ('regression-core.xml', 'regression-release.xml'):
+              part = ET.parse(name).getroot()
+              suites = [part] if part.tag == 'testsuite' else list(part)
+              if not suites or not list(part.iter('testcase')):
+                  raise SystemExit(f'Microcap mandatory group has no test cases: {name}')
+              root.extend(suites)
+          ET.ElementTree(root).write('regression.xml', encoding='utf-8', xml_declaration=True)
           skipped = list(root.iter('skipped'))
           if skipped:
               raise SystemExit(f'Microcap mandatory regression must have zero skips: {len(skipped)}')
