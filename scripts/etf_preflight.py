@@ -14,6 +14,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+from etf_delivery_state import receipt_matches
+
 
 def utc(value: str) -> datetime:
     stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
@@ -68,7 +70,13 @@ def audit(manifest: dict, metadata: dict, history_before: dict, run: dict) -> di
         gap("cutoff_mismatch_without_build_interval")
     if not run.get("run_id") or not run.get("head_sha") or str(manifest.get("run_id")) != str(run.get("run_id")) or manifest.get("head_sha") != run.get("head_sha"):
         gap("run_provenance_mismatch")
-    if run.get("conclusion") != "success" or run.get("send_gmail") != "success":
+    # send_gmail is the independently extracted GitHub Send Gmail step result,
+    # not a caller's delivery-eligible boolean. A later git-history/upload error
+    # can fail the workflow without undoing an already successful send step.
+    accepted_receipt = receipt_matches(run.get("run_id"), run.get("head_sha"), run.get("delivery_receipt"),
+        body_sha256=manifest.get("body_sha256"),
+        subject_sha256=hashlib.sha256(str(metadata.get("subject", "")).encode()).hexdigest())
+    if run.get("send_gmail") != "success" and not accepted_receipt:
         gap("send_not_confirmed")
     body = metadata.get("body", "")
     if not isinstance(body, str):

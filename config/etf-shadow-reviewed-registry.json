@@ -1,0 +1,1859 @@
+{
+  "version": "etf-reviewed-preview-registry-v1",
+  "snapshot": {
+    "run_id": "39347818936",
+    "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b",
+    "cutoff_utc": "2026-10-20T00:28:29.686191+00:00",
+    "body_sha256": "fb5d38afdea5fa1a0327852b9021254a520107b8e5d7a665315b6ea7a1e059b4",
+    "history_sha256": "b1f73b75cbc5e10ff7acf79a224f3156b886b64e91fb7ab7a550084b957a91ce"
+  },
+  "entries": [
+    {
+      "material_id": "c9ba65b38e31bb0ba581260f9b18c62d3c970bd2fe683d9aec7138c81e04baf4",
+      "url": "https://earlyretirementnow.com/2026/10/19/tips-swr-series-part-66/",
+      "card": {
+        "material_id": "c9ba65b38e31bb0ba581260f9b18c62d3c970bd2fe683d9aec7138c81e04baf4",
+        "title_zh": "配置TIPS能否提高我的安全提款率——安全提款率系列第六十六篇",
+        "questions": [
+          "当前仅取得节选，完整模拟结果及图表能否在原文中核对？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者指出，2024年的前作结论是混合的：对长期限的早退休者而言，在2024年的实际利率下TIPS并未提供多少保障，而年金则带有显著的通胀风险。",
+            "evidence_ids": [
+              "p1.s8",
+              "p1.s9"
+            ]
+          },
+          {
+            "text_zh": "作者指出，20年和30年期TIPS的实际利率目前超过3%，据Bloomberg，截至October 16, 2026，30年期TIPS实际利率为3.17%。",
+            "evidence_ids": [
+              "p1.s10",
+              "p1.s136"
+            ]
+          },
+          {
+            "text_zh": "作者以TIPSladder.com的数据估算，要锁定$100,000的平均年度实际收入，今天购买整个30年期债券阶梯的花费略低于$2,000,000；按每$1,000的30年保证阶梯收入需投入$19,800计算，相当于30年内5.05%的保证提款率。",
+            "evidence_ids": [
+              "p1.s138",
+              "p1.s140",
+              "p1.s141"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "作者指出，5.05%的提款率有一个主要缺点：没有任何上行空间；若活到第31年便会一无所有。",
+            "evidence_ids": [
+              "p1.s142",
+              "p1.s143"
+            ]
+          },
+          {
+            "text_zh": "作者的TIPS回报序列由两段拼接：2004年以来使用实际TIP ETF回报，2004年之前使用因子模型估算。",
+            "evidence_ids": [
+              "p1.s106"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "c9ba65b38e31bb0ba581260f9b18c62d3c970bd2fe683d9aec7138c81e04baf4",
+        "card_hash": "1553438c35f8c606723b78ee7f36ca313f4cc70b1278a7079433c1d31f607a8f",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文标题一致，符合 source_title。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出2024年时对长期早退休者而言TIPS在当时实际利率下未提供多少保障，且年金有显著通胀风险。",
+            "evidence_ids": [
+              "p1.s8",
+              "p1.s9"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文提及20-30年期TIPS实际利率已显著上升至超过3%，并引用Bloomberg数据指出30年期为3.17%（截至10月16日）。",
+            "evidence_ids": [
+              "p1.s10",
+              "p1.s136"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文通过TIPSladder.com截图说明购买30年期阶梯需花费略低于200万美金，以每1000美元收入对应19,800美元投入计算，得出5.05%的保证提款率。",
+            "evidence_ids": [
+              "p1.s138",
+              "p1.s140",
+              "p1.s141"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出5.05%提款率无上行空间，若活过31年将一无所有，且对比了传统模型存在大量盈余。",
+            "evidence_ids": [
+              "p1.s142",
+              "p1.s143"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "verdict": "supported",
+            "reason_zh": "原文清楚说明其TIPS回报序列由2004年后实际ETF数据和2004年前因子模型拼接而成。",
+            "evidence_ids": [
+              "p1.s106"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问节选内容是否足以核对完整模拟结果及图表，原文未提供完整图表或模拟数据，属于材料缺失但问题本身无前提错误。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "c9ba65b38e31bb0ba581260f9b18c62d3c970bd2fe683d9aec7138c81e04baf4",
+        "card_hash": "1553438c35f8c606723b78ee7f36ca313f4cc70b1278a7079433c1d31f607a8f",
+        "review_hash": "12326f08121eb3e37d4f6b487834b0c6af0105effd75fcdb0e9d49b1a0307334",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题对应TIPS与安全提款率的来源问题，未称已经得出适合用户的配置结论。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "2024年前作、早退休长期限及当时实际利率的条件均保留，年金通胀风险按作者看法归属。",
+            "evidence_ids": [
+              "p1.s8",
+              "p1.s9"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "超过3%及3.17%分别核对对应原句，保留截至2026年10月16日和作者引用Bloomberg的归属，不当作今日新报价。",
+            "evidence_ids": [
+              "p1.s10",
+              "p1.s136"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "10万美元、略低于200万美元、每1000美元收入需19800美元和5.05%均有原句。明确这是作者30年阶梯提款安排，不是5.05%的投资年化收益率。",
+            "evidence_ids": [
+              "p1.s138",
+              "p1.s140",
+              "p1.s141"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "保留30年阶梯无上行余地及超过期限的资金耗尽风险，与提款率条件共同呈现。",
+            "evidence_ids": [
+              "p1.s142",
+              "p1.s143"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "decision": "confirmed",
+            "reason_zh": "已逐字核对2004年以来实际TIP ETF数据与此前因子模型估算的拼接，不称为全期实际行情回测。",
+            "evidence_ids": [
+              "p1.s106"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "输入节选末尾截断且图表未载入，仅询问完整模拟和图表，不暗示作者全文没有回答。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "c9ba65b38e31bb0ba581260f9b18c62d3c970bd2fe683d9aec7138c81e04baf4",
+        "date_status": "captured",
+        "date_note_zh": "保留采集发布日期2026-10-19；文中统计和报价的各自日期不更新为报告日。",
+        "scope_note_zh": "保存输入为末尾截断的节选，未核对完整模拟图表及后续结果；30年阶梯提款安排不等于投资年化回报。"
+      }
+    },
+    {
+      "material_id": "b6f5f70fd8622ce974ae0010b6221e472b916b84a10f042790d9edbb55896f7e",
+      "url": "https://247wallst.com/investing/etf/2026/10/19/forget-gld-investors-sent-500-million-to-the-cheaper-spdr-gold-fund/?.tsrc=rss",
+      "card": {
+        "material_id": "b6f5f70fd8622ce974ae0010b6221e472b916b84a10f042790d9edbb55896f7e",
+        "title_zh": "忘掉GLD：投资者向费率更低的SPDR黄金基金投入五亿美元",
+        "questions": [
+          "文中引用的基金费率与回报数字，能否用对应日期的基金官方资料复核？",
+          "若用于我们的持仓比较，账户所在地及适用税务规则是否与文中的美国IRS语境一致？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者指出，截至October 14, 2026，GLD录得$181.5 million净流入，相当于其$139.59 billion资产的0.10%；同期GLDM净流入$499.8 million，占其$31.08 billion资产基础的1.60%。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "text_zh": "作者指出，GLD每年收费0.40%，GLDM每年收费0.10%（依据其September 2026 fact sheet），二者相差0.30个百分点，按每$10,000计算相当于每年$40对$10。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21",
+              "p1.s22"
+            ]
+          },
+          {
+            "text_zh": "作者指出，截至September 30, 2026，GLDM的五年年化NAV回报为18.96%，GLD为18.62%，GLDM领先0.34个百分点，与费率差一致。",
+            "evidence_ids": [
+              "p1.s27"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "作者指出，两只黄金信托是否被wash-sale规则视为substantially identical属于灰色地带，因此应谨慎记录交易。",
+            "evidence_ids": [
+              "p1.s44"
+            ]
+          },
+          {
+            "text_zh": "在文中的美国IRS税务语境下，作者称两只实物黄金信托的长期收益按collectibles处理，最高税率28%；切换基金不改变该处理，但在非税收庇护账户卖出GLD会实现已积累的利得。",
+            "evidence_ids": [
+              "p1.s35",
+              "p1.s36"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "b6f5f70fd8622ce974ae0010b6221e472b916b84a10f042790d9edbb55896f7e",
+        "card_hash": "d9c6a8d652509030ff2d8f428fe5c99a44d70d9ad23b4937892443dc69b50bb7",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题内容与原文首段一致，准确反映投资者向费率更低的SPDR黄金基金（GLDM）投入5亿美元的事实，且未添加未提及信息。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文p1.s5和p1.s6明确给出截至2026年10月14日，GLD净流入1.815亿美元（占其1395.9亿美元资产的0.10%），GLDM净流入4.998亿美元（占其310.8亿美元资产的1.60%），数据与陈述完全一致。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文p1.s20、p1.s21、p1.s22明确说明GLD年费0.40%，GLDM年费0.10%（依据2026年9月30日事实表），两者差距0.30个百分点，每1万美元对应年费差额为$40与$10，计算正确。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21",
+              "p1.s22"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文p1.s27明确指出，截至2026年9月30日，GLDM五年年化NAV回报为18.96%，GLD为18.62%，领先0.34个百分点，且该差异被作者解释为与费率差一致，与陈述相符。",
+            "evidence_ids": [
+              "p1.s27"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文p1.s44明确指出，wash-sale规则是否将两只黄金信托视为实质性相同存在灰色地带，因此建议谨慎记录交易，与陈述一致。",
+            "evidence_ids": [
+              "p1.s44"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "verdict": "supported",
+            "reason_zh": "原文p1.s35和p1.s36说明：两只基金均持有实物黄金，长期收益按收藏品征税，最高税率28%；切换不改变税务处理；在非税收庇护账户卖出GLD会实现已积累利得，与陈述一致。",
+            "evidence_ids": [
+              "p1.s35",
+              "p1.s36"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问文中引用的费率与回报数据能否用官方资料复核，原文虽未直接回答，但提供了具体日期（2026年9月30日）和文件来源（fact sheet），具备可验证性基础，故问题本身成立，应支持。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问持仓比较时账户所在地及税务规则是否与文中美国IRS语境一致，原文明确限定在美国内部税务框架下讨论，此问题旨在澄清适用条件，属于合理质疑，应支持。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "b6f5f70fd8622ce974ae0010b6221e472b916b84a10f042790d9edbb55896f7e",
+        "card_hash": "d9c6a8d652509030ff2d8f428fe5c99a44d70d9ad23b4937892443dc69b50bb7",
+        "review_hash": "43fc93a21aadd41a3be625839819d0cf5b3a247039850c20e89c5cc120b27ee6",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题是来源标题的译文，保留为作者主张，不作为我们要求更换持仓的指令。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "已对照GLD和GLDM两条原句核对资金流及资产比例，日期限定为作者所述2026年10月14日，未刷新成报告日资金流。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "费率、0.30个百分点及每万美元对应金额均有原句。卡片只写2026年9月fact sheet，不沿用模型理由擅加的9月30日。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21",
+              "p1.s22"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "18.96%、18.62%和0.34个百分点均来自作者截至2026年9月30日的五年NAV年化回报比较，不推广为未来收益。",
+            "evidence_ids": [
+              "p1.s27"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "灰色地带与谨慎记录交易是原文对wash-sale适用性的说法；这里只核对作者表达，不确认法律判断。",
+            "evidence_ids": [
+              "p1.s44"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "decision": "confirmed",
+            "reason_zh": "核对了税率与出售实现利得的两个连续原句，明确限于作者的美国IRS语境；未确认用户税务适用性。",
+            "evidence_ids": [
+              "p1.s35",
+              "p1.s36"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "保留官方资料复核问题；来源中的金融数字尚未由本次编辑另作外部事实认证。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "账户所在地和适用规则仍需另行核对，不从来源的美国税务语境直接推导用户操作。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "b6f5f70fd8622ce974ae0010b6221e472b916b84a10f042790d9edbb55896f7e",
+        "date_status": "captured",
+        "date_note_zh": "保留采集发布日期2026-10-19；文中统计和报价的各自日期不更新为报告日。",
+        "scope_note_zh": "保存的网页节选；费率、历史回报和税务说法均按作者表达核对，外部正确性及适用性未另行确认。"
+      }
+    },
+    {
+      "material_id": "a7494e38765cb77bf5d71e67dad62e0a57e2fc96079bbed7e498b42a167ca87e",
+      "url": "https://arxiv.org/abs/2610.23619",
+      "card": {
+        "material_id": "a7494e38765cb77bf5d71e67dad62e0a57e2fc96079bbed7e498b42a167ca87e",
+        "title_zh": "基于Hawkes过程的连续日内电力市场跨产品建模",
+        "questions": [
+          "论文提出的SDHP模型在样本外数据上的拟合与预测表现如何？",
+          "“Normal”与“Stressed”两种状态的复合指标阈值如何设定，分类结果是否稳健？",
+          "这种状态划分及研究结论，在其他市场条件或其他电力市场中是否仍然适用？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者提出多变量状态依赖Hawkes过程（SDHP），用于建模Quarter-Hourly与Hourly IDC合约之间的跨产品流动性动态。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "text_zh": "作者指出订单流绝大部分由自身驱动，在两种市场状态下均有约95\\%的订单是对更早订单的反应。",
+            "evidence_ids": [
+              "p1.s6"
+            ]
+          },
+          {
+            "text_zh": "作者发现跨激发主要从Quarter-Hourly流向Hourly，但在压力状态下这一主导性减弱，累计跨激发之比从2.8降至1.5，同时该通道的平均滞后从6.05秒缩短至0.93秒。",
+            "evidence_ids": [
+              "p1.s7",
+              "p1.s8"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "模型校准仅使用2024年每个季度第一个月的荷兰EPEX SPOT IDC市场level 3限价订单簿（LOB）数据。",
+            "evidence_ids": [
+              "p1.s5"
+            ]
+          },
+          {
+            "text_zh": "作者按买卖价差、中间价波动率和队列失衡的复合指标，将交易时段划分为“Normal”与“Stressed”两种状态。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "a7494e38765cb77bf5d71e67dad62e0a57e2fc96079bbed7e498b42a167ca87e",
+        "card_hash": "0d7d38d48f82e081899008931205bb5faf8a077d54c22526734ce26687a435df",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题准确反映原文核心内容，与 source_title 一致，无误读或夸大。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出该论文提出多变量状态依赖Hawkes过程（SDHP）用于建模跨产品流动性动态，且具体指向Quarter-Hourly与Hourly IDC合约。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文指出订单流在两种市场状态下均主要由自身驱动，约95%的订单是对更早订单的反应，与陈述一致。",
+            "evidence_ids": [
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文明确说明跨激发主要从Quarter-Hourly流向Hourly，压力下该比例从2.8降至1.5，且平均滞后时间从6.05秒缩短至0.93秒，所有数值和方向均正确对应。",
+            "evidence_ids": [
+              "p1.s7",
+              "p1.s8"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文清楚说明模型校准使用2024年每个季度第一个月的荷兰EPEX SPOT IDC市场level 3 LOB数据，信息完整准确。",
+            "evidence_ids": [
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出状态划分基于买卖价差、中间价波动率和队列失衡的复合指标，定义清晰。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问模型在样本外的表现，而原文未提供相关信息，属于材料未披露内容，因此该问题本身无需修订。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题询问状态划分的阈值设定及分类稳健性，原文未说明具体阈值或进行敏感性分析，属合理待核对事项，不构成错误。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "问题关于结论的泛化适用性，原文仅基于荷兰市场数据，未讨论其他市场，此为合理质疑，符合研究局限性范畴。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "a7494e38765cb77bf5d71e67dad62e0a57e2fc96079bbed7e498b42a167ca87e",
+        "card_hash": "0d7d38d48f82e081899008931205bb5faf8a077d54c22526734ce26687a435df",
+        "review_hash": "3ef1a252b15e48013e1dfd5d6a724188ca72dc50e3ae7205620e416ca2388b13",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题对应连续日内电力市场跨产品Hawkes建模，未外推为股票或ETF结论。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "核对SDHP和Quarter-Hourly/Hourly两个合约粒度；前者是每刻钟而非每季度，保留原文术语。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "约95%指订单对先前订单的反应，在两种状态下的模型结果；不是收益率或全部市场的普遍事实。",
+            "evidence_ids": [
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "2.8至1.5为累计跨激发之比，6.05至0.93秒为每刻钟向小时合约通道的平均滞后；方向、量纲和压力条件逐项核对。",
+            "evidence_ids": [
+              "p1.s7",
+              "p1.s8"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "限定2024年每季度首月的荷兰EPEX SPOT三级订单簿样本，未称全年或跨市场检验。",
+            "evidence_ids": [
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "decision": "confirmed",
+            "reason_zh": "bid-ask spread为买卖价差，与中间价波动和队列失衡共同用于划分状态，不是信用利差。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "样本外表现为摘要未展开的追问，不能据此断言全文没有检验。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "追问状态划分阈值和稳健性，材料只列指标而未列阈值。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "跨市场适用性保持开放，未把荷兰电力市场结论推广为一般规律。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "a7494e38765cb77bf5d71e67dad62e0a57e2fc96079bbed7e498b42a167ca87e",
+        "date_status": "captured",
+        "date_note_zh": "沿用原采集发布时间2026-10-19T04:00:00+00:00；未把研究样本期或原报道相对日期刷新为今天。",
+        "scope_note_zh": "仅为论文摘要节选；Quarter-Hourly指每刻钟合约。95%为订单内生反应描述，结论限作者电力市场样本，未经外部核实。"
+      }
+    },
+    {
+      "material_id": "29363b1aaf53c35c3c46d56d28678a11be7a0f08b436b9eb455a84e90f64dd59",
+      "url": "https://arxiv.org/abs/2610.22839",
+      "card": {
+        "material_id": "29363b1aaf53c35c3c46d56d28678a11be7a0f08b436b9eb455a84e90f64dd59",
+        "title_zh": "仅凭基差资金费率并非股息公平：加密股票永续合约中的结算设计",
+        "questions": [
+          "样本覆盖了哪些交易场所、哪些股票和哪些除息日？",
+          "“covered ex-date”的覆盖范围和筛选标准具体是什么？",
+          "作者是否检验了 $-D/(\\mathrm{Mark}-D)$ 这一离散资金费率原子在样本中各除息日的实际数值与理论值是否一致？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者指出，交易所原生数据显示，在每个已覆盖的除息日，一家交易场所会发布等于 $-D/(\\mathrm{Mark}-D)$ 的离散资金费率原子，而标准溢价指数交易场所不发布任何此类资金费率原子，从而在交易场所之间转移股息。",
+            "evidence_ids": [
+              "p1.s7"
+            ]
+          },
+          {
+            "text_zh": "作者指出，可预测的股息是一个原子，即便在弱极限下，任何绝对连续的资金费率路径都无法在持有区间上复制该原子，因此公平性必须用原子来匹配原子，即事件信用。",
+            "evidence_ids": [
+              "p1.s6"
+            ]
+          },
+          {
+            "text_zh": "作者指出，这些交易场所运行的溢价指数资金费率架构——资金费率由同期基差 $e_t=P_t-S_t$ 设定，而非由 carry target 设定——无法为在任意时点进入和退出的交易者复制股东现金流。",
+            "evidence_ids": [
+              "p1.s2",
+              "p1.s3"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "交易所原生数据确认的结论仅覆盖各已覆盖的除息日，来自原生资金费率本身、不涉及外部现货。",
+            "evidence_ids": [
+              "p1.s7"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "29363b1aaf53c35c3c46d56d28678a11be7a0f08b436b9eb455a84e90f64dd59",
+        "card_hash": "8ded02260f819c01c7611714bff73a923834fcd3097d8bc997ac45c1cb8f760e",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文标题一致，准确反映论文核心观点：仅凭基差资金费率无法实现股息公平，且聚焦于加密股票永续合约的结算设计。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出，在每个已覆盖的除息日，一家交易场所发布离散资金费率原子 $-D/(\\mathrm{Mark}-D)$，而标准溢价指数场所不发布，股息通过原生资金费率在交易所间转移，无需外部现货。",
+            "evidence_ids": [
+              "p1.s7"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文从测度论角度指出，可预测股息是一个原子，任何绝对连续的资金路径都无法在持有区间上复制该原子（即使在弱极限下），因此公平性必须通过事件信用（原子）来匹配原子。",
+            "evidence_ids": [
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文直接提出问题并回答：基于同期基差而非持仓成本目标的资金费率架构无法为任意进出时点的交易者复制股东现金流。",
+            "evidence_ids": [
+              "p1.s2",
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确说明该结论基于交易所原生数据，仅覆盖已覆盖的除息日，且完全依赖原生资金费率，不涉及外部现货。",
+            "evidence_ids": [
+              "p1.s7"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "该问题合理询问材料未披露的具体样本范围（交易场所、股票、除息日），属于对信息缺失的正当追问，原文未提供此类细节。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "该问题询问“covered ex-date”具体覆盖范围与筛选标准，原文未解释其定义或选择逻辑，属于合理待核对问题。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "该问题询问作者是否检验了理论值 $-D/(\\mathrm{Mark}-D)$ 在实际除息日是否一致，原文未报告实证验证过程或数值对比，属合理质疑。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "29363b1aaf53c35c3c46d56d28678a11be7a0f08b436b9eb455a84e90f64dd59",
+        "card_hash": "8ded02260f819c01c7611714bff73a923834fcd3097d8bc997ac45c1cb8f760e",
+        "review_hash": "4c672dcfd7f242d0ccdb15282cc58a117a9038b4484f8c5d14f3278d63ddda68",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题限定加密股票永续合约的基差资金费率和股息结算公平性。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "核对负号、D和Mark-D分母；只归属作者所覆盖除息日的两类场所原生数据，未指明未披露交易所。",
+            "evidence_ids": [
+              "p1.s7"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "原子指测度论的离散质量，事件信用对应event credit入账；保持绝对连续路径、持有区间和弱极限条件。",
+            "evidence_ids": [
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "已连读问题句与It cannot，结论限定同期基差而非carry target架构及任意进出时点，不能单引短句支持泛化。",
+            "evidence_ids": [
+              "p1.s2",
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "原生资金费率、已覆盖除息日、不涉及外部现货三个范围均与同一完整原句核对。",
+            "evidence_ids": [
+              "p1.s7"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "追问摘要未列出的交易场所、股票和除息日，不猜测具体样本。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "覆盖和筛选口径为待查细节，不能据此断言全文未交代。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "摘要已声称原生数据confirm；本问题仅追问逐日实际值与理论值对照细节，不能解释为作者没有做验证。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "29363b1aaf53c35c3c46d56d28678a11be7a0f08b436b9eb455a84e90f64dd59",
+        "date_status": "captured",
+        "date_note_zh": "沿用原采集发布时间2026-10-19T04:00:00+00:00；未把研究样本期或原报道相对日期刷新为今天。",
+        "scope_note_zh": "仅为论文摘要节选，未核对全文、交易所或逐日数据；原子为离散质量，event credit指事件入账。摘要已声称数据验证，问题只追问细节。"
+      }
+    },
+    {
+      "material_id": "681f08b2ad9ae021030cca7dd415c2b547447f33cdc7d10fc63639078f34def6",
+      "url": "https://arxiv.org/abs/2610.23749",
+      "card": {
+        "material_id": "681f08b2ad9ae021030cca7dd415c2b547447f33cdc7d10fc63639078f34def6",
+        "title_zh": "从Alpha到执行：凹性冲击与Hurst缩放下的交易期限、状态与调度",
+        "questions": [
+          "摘要称最终调度为前置加载且节省10-17%包络成本，这一数字是在何种参数取值与市场条件下得到的？",
+          "摘要称内点最优的窗口（距最大Sharpe 1%以内）在大盘股示例中跨越一个数量级以上，该示例的具体标的、时间段和参数是什么？",
+          "摘要提到给出单一无量纲稳健水平的校准，摘要未给出该校准的具体方法与数值，需核对正文。",
+          "\"10-17%\" 的相对节省所对应的包络成本定义和计算基准在摘要中未展开，需核对正文。"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者指出，在执行窗口内价格变动计入该笔交易已实现盈亏，因此执行越慢越能降低其方差；又因冲击为凹性，执行越慢还可能降低每股成本。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s16"
+            ]
+          },
+          {
+            "text_zh": "作者指出，该问题由两个量的符号决定：冲击的期限弹性 $a$（在结构先验下等于冲击—持续性差距 $\\beta - H$，可正可负）与净紧迫度 $\\nu$（alpha实现速率扣除敞口缓解后的净值）。",
+            "evidence_ids": [
+              "p1.s6",
+              "p1.s18"
+            ]
+          },
+          {
+            "text_zh": "作者指出，对Hurst缩放包络 $w \\propto t^H$，归一化调度只依赖 $(\\beta, H)$，可用不完全beta函数写成闭式，呈前置加载（front-loaded）并平滑衰减至零，相较等时长恒定速率（TWAP）调度节省10-17%的包络成本。",
+            "evidence_ids": [
+              "p1.s11",
+              "p1.s23"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "作者说明，当 $\\nu$ 在窗口内保持同号时，按 $T/t_f$ 的首阶展开，仅当两个量都为正才存在内点最优；否则应以最快或最慢的可行节奏执行。",
+            "evidence_ids": [
+              "p1.s7",
+              "p1.s19"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "681f08b2ad9ae021030cca7dd415c2b547447f33cdc7d10fc63639078f34def6",
+        "card_hash": "80bc5c3973f421985b52139091734c4c63c5505c9a33b297219abeacb6eb7d79",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题准确反映原文核心内容，与 source_title 一致，无歧义或误译。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出价格变动属于已实现盈亏，执行越慢方差越小；且因冲击为凹性，可降低每股成本。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文清楚定义了两个关键量：冲击的期限弹性 $a = \\beta - H$ 可正可负，净紧迫度 $\\nu$ 是 alpha 实现速率减去敞口缓解后的净值。",
+            "evidence_ids": [
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文说明归一化调度仅依赖 $(\\beta, H)$，可用不完全 beta 函数表示，呈前加载并平滑衰减至零，并节省 10-17% 包络成本相比等时长 TWAP 调度。",
+            "evidence_ids": [
+              "p1.s11"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出当 $\\nu$ 保持同号时，内点最优仅在 $a > 0$ 且 $\\nu > 0$ 下存在（首阶近似），否则应以最快或最慢节奏执行。",
+            "evidence_ids": [
+              "p1.s7"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问摘要中“10-17%”节省的具体参数和市场条件，材料未披露，但问题本身不预设错误前提，故支持待核对。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题询问大盘股示例的具体标的、时间段和参数，原文未提供，但问题合理且基于摘要陈述提出，不构成错误前提，故支持待核对。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "问题指出摘要提到“单一无量纲稳健水平”的校准但未展开，需核对正文——该质疑合理，原文未在摘要中给出方法或数值，故支持待核对。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.3",
+            "verdict": "supported",
+            "reason_zh": "问题指出“10-17%”的相对节省未说明包络成本的定义与计算基准，属合理追问，原文摘要未展开，但问题无错误预设，故支持待核对。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "681f08b2ad9ae021030cca7dd415c2b547447f33cdc7d10fc63639078f34def6",
+        "card_hash": "80bc5c3973f421985b52139091734c4c63c5505c9a33b297219abeacb6eb7d79",
+        "review_hash": "fac6d66b29e83925b13bde4dfe1c746dd63abcaddb01760840f2323517973480",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题保留凹性冲击、Hurst缩放及期限与调度框架，不作实盘收益承诺。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "原句在作者执行模型中把窗口价格变动计入盈亏，缓慢执行降低方差且可能降低每股成本；范围备注限定模型条件。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "期限弹性a等于beta-H只在结构先验下；净紧迫度nu扣除敞口缓解，未混淆两者的符号。",
+            "evidence_ids": [
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "10-17%是相同期限TWAP对比下的包络成本节省，非收益率或无条件实际成交成本下降；保留Hurst包络与参数限定。",
+            "evidence_ids": [
+              "p1.s11"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "保留nu同号、T/t_f首阶近似及两个量均正的内点最优条件；其余情况才取最快或最慢可行节奏。",
+            "evidence_ids": [
+              "p1.s7"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "成本节省的具体参数与市场条件须查全文，摘要没有给出。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "1%为距最大Sharpe的容忍范围，大于一个数量级指期限窗口跨度；追问示例细节不等于收益达到一个数量级。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "原文明确声称给出稳健水平校准，只追问摘要未呈现的方法与数值。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.3",
+            "decision": "confirmed",
+            "reason_zh": "追问包络成本定义及计算基准，不把模型成本当已验证实盘费用。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "681f08b2ad9ae021030cca7dd415c2b547447f33cdc7d10fc63639078f34def6",
+        "date_status": "captured",
+        "date_note_zh": "沿用原采集发布时间2026-10-19T04:00:00+00:00；未把研究样本期或原报道相对日期刷新为今天。",
+        "scope_note_zh": "仅为论文摘要节选，所有执行结论限作者模型假设；10-17%是包络成本节省，不是投资收益或已验证实盘费用节省。"
+      }
+    },
+    {
+      "material_id": "8323a166c83038012ae4fca17d6de806e4ea8ae78f974ef34cb836314b308b79",
+      "url": "https://arxiv.org/abs/2610.22522",
+      "card": {
+        "material_id": "8323a166c83038012ae4fca17d6de806e4ea8ae78f974ef34cb836314b308b79",
+        "title_zh": "自动化市场中的Agentic AI",
+        "questions": [
+          "摘要所述结论（如跟风者压力事件最频繁但最短、操纵者最少但最持久、理性代理滚动Sharpe比率最稳定）是否来自上述试点数据，而非完整回测或真实市场验证？",
+          "原文是否给出了AMM的具体设定、交易成本、流动性参数或样本区间等可复核细节？",
+          "SHAP归因结果与三类行为对应关系的稳健性是否在摘要范围外另有检验？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者将三种行为原型建模为agentic强化学习系统：理性套利者、操纵者和散户跟风者。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "text_zh": "每种原型由其在共同的、资产无关的敞口控制环境中的奖励函数定义，并分别用基于价值的Deep Q-Network（DQN）和带学习基线的REINFORCE训练。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "text_zh": "作者在加密货币小时级数据（AAVE、ETC、SUI）上开展试点，以提出假设。",
+            "evidence_ids": [
+              "p1.s5"
+            ]
+          }
+        ],
+        "limitations": []
+      },
+      "review": {
+        "material_id": "8323a166c83038012ae4fca17d6de806e4ea8ae78f974ef34cb836314b308b79",
+        "card_hash": "3355158f81fd3180ca17c4f1385f0d1cdf8e23b5660ea88241e28e25c7419557",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文摘要一致，符合 source_title。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出三种行为原型被建模为agentic强化学习系统：理性套利者、操纵者和零售跟风者。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文说明每种原型由其奖励函数在共同的资产无关敞口控制环境中定义，并使用DQN和带学习基线的REINFORCE进行训练。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文明确提到在加密货币小时级数据（AAVE、ETC、SUI）上的试点用于激发假设。",
+            "evidence_ids": [
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问摘要结论是否基于试点数据而非完整回测或真实市场验证，原文未说明结论来自完整回测或真实市场，因此该问题属于材料未披露内容，应视为 supported。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "原文未提供AMM的具体设定、交易成本、流动性参数或样本区间等可复核细节，问题合理指向材料缺失，故为 supported。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "原文未提及SHAP归因结果在摘要范围外是否经过额外检验，问题合理询问稳健性验证情况，材料无相关信息，故为 supported。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "8323a166c83038012ae4fca17d6de806e4ea8ae78f974ef34cb836314b308b79",
+        "card_hash": "3355158f81fd3180ca17c4f1385f0d1cdf8e23b5660ea88241e28e25c7419557",
+        "review_hash": "47c8253e2d86f15ca02bf9fd3ec01399634a22bfa04a3fcb02e622a669b2867e",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题对应自动化市场中的Agentic AI研究，不称可直接部署的投资策略。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "三类是强化学习建模的行为原型，非对真实市场参与者的人群统计。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "共同资产无关环境、奖励函数定义及DQN和REINFORCE训练方式均与原句对应。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "AAVE、ETC、SUI小时数据只是pilot以激发假设，未升级为跨市场验证。",
+            "evidence_ids": [
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "材料确有三类压力和Sharpe结果，但其验证范围未展开；问题用于查证试点与完整验证的关系。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "AMM参数、成本、流动性和区间仍待查全文，不能断言作者未提供。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "SHAP对应关系在摘要出现，稳健性细节需另查，问题不假定已证实因果。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "8323a166c83038012ae4fca17d6de806e4ea8ae78f974ef34cb836314b308b79",
+        "date_status": "captured",
+        "date_note_zh": "沿用原采集发布时间2026-10-19T04:00:00+00:00；未把研究样本期或原报道相对日期刷新为今天。",
+        "scope_note_zh": "仅为论文摘要节选；行为原型、训练环境和小时加密数据试点不等于真实市场的普遍规律，未验证完整实盘表现。"
+      }
+    },
+    {
+      "material_id": "98ff80242847218b07a9803d34d494a6d25e205171b4df3ff1f94e34a66a612e",
+      "url": "https://stocktwits.com/news-articles/markets/equity/nasdaq-100-sees-best-day-in-nearly-a-month-as-ai-rout-cools-amzn-be-crwv-aapl-pltr-in-focus/cZxo2SbRBu5?.tsrc=rss",
+      "card": {
+        "material_id": "98ff80242847218b07a9803d34d494a6d25e205171b4df3ff1f94e34a66a612e",
+        "title_zh": "AI抛售降温，纳斯达克100指数创近一个月最佳单日表现——关注AMZN、BE、CRWV、AAPL、PLTR",
+        "questions": [
+          "原文称 Anxieties surrounding the AI trade escalated following CNBC reports that Anthropic generated $16.8 billion in Q3 sales，但未说明该 Q3 所属财年及数据是否经独立核实，应如何确认？",
+          "原文将 Bloom Energy 股价上涨约3%与 Oracle 在 X 上关于 Project Jupiter 的帖子相关联，但 Oracle 帖子并非 Bloom Energy 自身公告，该因果关联是否有更直接依据？",
+          "原文提及 CoreWeave 信用违约互换进入 distressed territory，是否应核对具体利差水平及日期？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者指出，纳斯达克100指数周一上涨1.2%，创下近一个月最佳单日表现；同期标普500指数收高0.4%，道琼斯工业平均指数下跌0.1%。",
+            "evidence_ids": [
+              "p1.s2",
+              "p1.s4"
+            ]
+          },
+          {
+            "text_zh": "作者报告，费城半导体指数上涨约1.6%；VanEck Semiconductor ETF 和 iShares Semiconductor ETF 在 Micron Tech、Nvidia、Broadcom 等芯片股上涨带动下涨幅略超2%。",
+            "evidence_ids": [
+              "p1.s1",
+              "p1.s11"
+            ]
+          },
+          {
+            "text_zh": "作者指出，亚马逊（AMZN）股价周一上涨近5%，有望创近三个月最佳单日表现，此前 Morgan Stanley 重申其“Overweight”评级并上调目标价。",
+            "evidence_ids": [
+              "p1.s26"
+            ]
+          }
+        ],
+        "limitations": []
+      },
+      "review": {
+        "material_id": "98ff80242847218b07a9803d34d494a6d25e205171b4df3ff1f94e34a66a612e",
+        "card_hash": "862f99f04ede9ed78f05e167bfb0c2db0cf414ae3721429bdc2345348a6c9b87",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文内容一致，准确反映纳斯达克100指数表现及关注个股。引用未包含于标题本身，但标题无事实错误。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出纳斯达克100上涨1.2%，为近一个月最佳单日表现；标普500涨0.4%，道琼斯工业平均指数跌0.1%。两项引用均支持该陈述。",
+            "evidence_ids": [
+              "p1.s2",
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "费城半导体指数上涨约1.6%；VanEck和iShares半导体ETF涨幅略超2%，且因Micron、Nvidia、Broadcom等芯片股上涨而推动。引用直接支持此描述。",
+            "evidence_ids": [
+              "p1.s1",
+              "p1.s11"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文明确说明亚马逊股价周一上涨近5%，有望创近三个月最佳单日表现，因摩根士丹利重申‘Overweight’评级并上调目标价。引用完整支持该事实。",
+            "evidence_ids": [
+              "p1.s26"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问原文未披露的Q3所属财年及数据独立核实情况，属于对信息缺失的正当质疑，不构成前提错误或矛盾。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题指出原文将Bloom Energy股价上涨归因于Oracle在X平台的帖子，而非公司自身公告，质疑因果关联是否充分。此问题基于原文逻辑结构提出，属合理待核对点。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "问题询问关于CoreWeave信用违约互换进入distressed territory的具体利差水平和日期，属于对关键金融指标缺乏细节的合理追问，原文未提供足够信息以确认。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "98ff80242847218b07a9803d34d494a6d25e205171b4df3ff1f94e34a66a612e",
+        "card_hash": "862f99f04ede9ed78f05e167bfb0c2db0cf414ae3721429bdc2345348a6c9b87",
+        "review_hash": "c64ce97070c4725202925bac84bb08c7c29293c543168e57bfd0fb1af8cb69b7",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题为原报道的市场归因与个股关注表述；只是归属来源，未独立证实AI抛售降温。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "逐项核对1.2%、0.4%和下跌0.1%，周一对应保存报道的2026年10月19日，未当作最新报价。",
+            "evidence_ids": [
+              "p1.s2",
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "半导体指数约1.6%与两只ETF略超2%分别核对，不混用指数和基金涨幅；驱动说法归属原作者。",
+            "evidence_ids": [
+              "p1.s1",
+              "p1.s11"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "AMZN近5%和有望创最佳表现仍为原报道的进行时表述，评级及目标价变化按来源归属，未独立确认。",
+            "evidence_ids": [
+              "p1.s26"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "Anthropic营收是被引用报道的未核实说法；此处明确要求核实财年和独立依据，不当作已确认事实。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "原句确将Bloom Energy上涨与Oracle帖子关联；问题要求进一步依据，未确认因果。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "CoreWeave的distressed表述没有具体利差和日期，追问数据而不补造数值。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "98ff80242847218b07a9803d34d494a6d25e205171b4df3ff1f94e34a66a612e",
+        "date_status": "captured",
+        "date_note_zh": "沿用原采集发布时间2026-10-19T23:00:23+00:00；未把研究样本期或原报道相对日期刷新为今天。",
+        "scope_note_zh": "只核对原报道措辞，未独立核对行情、评级、营收或信用数据。周一为原报道的2026年10月19日；来源归因及待核实引述不作为已确认事实，未更新行情区。"
+      }
+    },
+    {
+      "material_id": "ec984da2ff190ecbd3990fa55123da90c04f21cb95fd984fa23f5aa5d8867da6",
+      "url": "https://awealthofcommonsense.com/2026/10/15-year-stock-market-returns/",
+      "card": {
+        "material_id": "ec984da2ff190ecbd3990fa55123da90c04f21cb95fd984fa23f5aa5d8867da6",
+        "title_zh": "十五年股市回报",
+        "questions": [
+          "原文提到的S&P 500各时间段的年回报数据具体是多少？摘要中未给出完整数值。",
+          "原文所称“15年及以下的回报明显高于平均水平”具体高出多少？原文是否给出了具体数字？",
+          "原文提到的“过去100年数据”中滚动15年年化回报图表的具体数据来源和计算方法是什么？",
+          "作者提到“AI繁荣可能带我们达到互联网泡沫或二战后高点”，这一判断的依据是什么？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者指出，截至九月底，S&P 500 过去约100年的年均回报为每年10%。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "text_zh": "作者指出，20年至50年各时间段的回报都相当接近长期平均水平，而15年及以下的回报则明显高于平均水平。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "text_zh": "作者指出，样本量非常小，本质上只涉及三个巨大的牛市（包括当前这一轮）和三个惨烈的长期熊市。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "作者承认，样本量非常小，本质上只涉及三个巨大的牛市（包括当前这一轮）和三个惨烈的长期熊市。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21"
+            ]
+          },
+          {
+            "text_zh": "作者承认，均值回归可能比人们想象的要花更长时间。",
+            "evidence_ids": [
+              "p1.s8"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "ec984da2ff190ecbd3990fa55123da90c04f21cb95fd984fa23f5aa5d8867da6",
+        "card_hash": "45aa7d0767c5186c52f516a7603514cfa75bc2a378863622206a141b632b1522",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文标题一致，符合 source_title。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出‘The average annual return over the past 100 years or so is 10% per year’，且上下文提到截至九月底的数据，与卡片描述一致。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文中‘Everything from 20 years to 50 years are pretty close to the long-term average.’和‘But 15 years and down the returns are squarely above average.’直接支持该陈述。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出样本量小，并列举了三个巨型牛市和三个惨烈的长期熊市，与陈述完全一致。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "作者明确承认样本量小，并具体说明仅涉及三个巨型牛市和三个长期熊市，该限制被主动提出并清晰表述。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "verdict": "supported",
+            "reason_zh": "原文直接指出‘But mean reversion can take longer than you think.’，表明作者承认均值回归可能耗时更久。",
+            "evidence_ids": [
+              "p1.s8"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问未披露的具体数值，原文确实未提供各时间段年回报的完整数据，属于资料缺失，因此该问题应被接受为 supported。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题询问“明显高于平均水平”具体高出多少，原文未给出具体数字，属于资料缺失，因此该问题无需修订，应为 supported。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "问题询问滚动15年回报图表的数据来源和计算方法，原文未说明，属于资料缺失，因此该问题合理且应为 supported。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.3",
+            "verdict": "supported",
+            "reason_zh": "问题询问作者判断‘AI繁荣可能带我们达到互联网泡沫或二战后高点’的依据，原文未提供具体支撑，属于资料缺失，因此该问题合理，应为 supported。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "ec984da2ff190ecbd3990fa55123da90c04f21cb95fd984fa23f5aa5d8867da6",
+        "card_hash": "45aa7d0767c5186c52f516a7603514cfa75bc2a378863622206a141b632b1522",
+        "review_hash": "4158375ca0f715ecbc9bcc31eaf31da8d65e3f93d7b0bfc4ceecbac89ea8f408",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题对应十五年股市回报文章，不能据此补造未抓取图表的十五年数值。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "约100年、每年10%以及截至九月底均为作者历史描述；原句未展开年均计算口径，未承诺未来回报。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "20至50年与15年及以下是保存文章各回望区间的比较，不能泛化为所有历史起点。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "三个牛市和三个熊市是作者用于说明周期样本很小的概括，不是所有市场周期的穷尽计数。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "复核原文主动承认的小周期样本局限，不能凭此推断均值回归时点。",
+            "evidence_ids": [
+              "p1.s20",
+              "p1.s21"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "decision": "confirmed",
+            "reason_zh": "均值回归可能耗时更长是作者提醒，不构成即将下跌预测。",
+            "evidence_ids": [
+              "p1.s8"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "当前捕获没有图表完整数值，问题指向所缺内容，不断言完整原文没有数据。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "15年及以下高出平均多少仍需查原图，未猜测具体收益率。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "追问滚动十五年图表的数据与方法，保存节选不足以核实。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.3",
+            "decision": "confirmed",
+            "reason_zh": "AI可能延长行情仅为作者可能性陈述；追问依据，未改写成预测。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "ec984da2ff190ecbd3990fa55123da90c04f21cb95fd984fa23f5aa5d8867da6",
+        "date_status": "captured",
+        "date_note_zh": "沿用原采集发布时间2026-10-19T03:23:27+00:00；未把研究样本期或原报道相对日期刷新为今天。",
+        "scope_note_zh": "当前保存节选没有完整图表；回报比较限作者文章中的回望区间，周期数量是作者概括。未独立核实历史数据，不能据此预测未来或补造十五年回报。"
+      }
+    },
+    {
+      "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+      "url": "https://arxiv.org/abs/2610.23283",
+      "card": {
+        "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+        "title_zh": "资产群体变迁中的市场效率：加密货币全历史中的市值分布迁移、进入与存续",
+        "questions": [
+          "文中capacity的$293,000究竟按可承载资金、成交额还是其他定义计算？",
+          "纸面组合和有实际交易资产组合的构建、筛选与交易成本口径是什么？",
+          "不对称性下降七成对应哪项统计量、哪些起止时期及何种检验？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者称，检验覆盖其加密货币全体上市样本：8,970项资产、690个周度横截面，区间为2013至2026年；进入、退出与存续被直接观测，而非推断。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "text_zh": "作者报告，每个时期均拒绝对称性限制，但不对称性下降七成；收敛来自新资产进入驱动的构成更替，而非币种自身估值。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "text_zh": "作者称，最低十分位的纸面周收益为27.5%，但在有实际交易的资产中没有该收益；同一句将capacity列为$293,000。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "上述27.5%是纸面周收益；作者同时指出，在实际有交易的资产中并没有该收益。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+        "card_hash": "d741e4f2488f655ccf7365292b15a375b296d6d134802f4c7cb461d385a5bf9f",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文标题在语义上一致，准确反映了论文核心议题：加密货币全历史中的市值分布迁移、进入与存续。无引用必要。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出测试覆盖8,970项资产、690个周度横截面，时间区间为2013至2026年，且进入、退出与存续为直接观测而非推断。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文陈述对称性在每个时期均被拒绝，但不对称性下降了70%，且收敛的是由新资产进入驱动的构成更替，而非币种自身估值的变化。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文明确说明最低十分位的纸面周收益为27.5%，但在有实际交易的资产中该收益为零，并提及$293,000的capacity。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文已指出27.5%是纸面收益，而实际交易资产中并无此收益，因此该限制信息完整且准确。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问“capacity”定义，原文未明确其具体计算方式（如可承载资金、成交额等），属于材料未披露内容，应视为可接受的待核对问题。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题关于纸面组合与实际交易组合的构建、筛选及交易成本口径，原文未提供相关信息，属合理提问，材料缺失不影响支持状态。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "问题询问不对称性下降七成所对应的统计量、起止时期及检验方法，原文未详述，属于合理追问，材料未提供不足以否定支持。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+        "card_hash": "d741e4f2488f655ccf7365292b15a375b296d6d134802f4c7cb461d385a5bf9f",
+        "review_hash": "b3280657f9fb5fbaa5aef8fdeca91a025ea0e3a4ce252589ac0fba3bef6f7015",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "Mobility结合原摘要首句，明确为跨加密资产市值分布的迁移；已删除流动性误译。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "限定作者加密货币上市样本，逐项核对8,970资产、690周截面及2013至2026；没有把样本概括为所有金融资产。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "seventy percent是相对降幅七成，非七十个百分点；收敛对象为进入驱动的构成更替而非币种估值。旧模型错误解释未沿用。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "27.5%限最低十分位纸面周收益，与有实际交易资产没有该收益在同一条中成对说明；$293,000仅保留原capacity术语，不推断可投规模。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "以原句重申纸面与实际交易资产的区别，不把27.5%当可实现收益或年化收益。",
+            "evidence_ids": [
+              "p1.s4"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "capacity的计算口径仍未由摘要提供，追问定义而不猜测资金容量或市值。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "组合筛选和成本处理需查全文，未把摘要未披露等同于全文没有检验。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "七成指相对降幅；统计量和起止时期留待全文核对，不补造基准数值。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "bc393817baf8ccbe296c6c1e47bdf2c04bc321b5d35c8f6d15a82f97a0f199e0",
+        "date_status": "captured",
+        "date_note_zh": "沿用原采集发布时间2026-10-19T04:00:00+00:00；未刷新摘要发布日期或研究样本期。",
+        "scope_note_zh": "仅为论文摘要节选。27.5%是作者所述纸面周收益，有实际交易的资产中并无该收益；七成是相对降幅，capacity口径待查。未核对全文或外部数据。"
+      }
+    },
+    {
+      "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+      "url": "https://arxiv.org/abs/2610.23517",
+      "card": {
+        "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+        "title_zh": "预测市场中的组合套利",
+        "questions": [
+          "上述2.2%与3.2%的统计口径、样本期、持有时长和资金规模是什么？摘要未展开，需查正文；不能据此计算年化或推断实盘可得收益。",
+          "执行回放如何处理延迟、部分成交、订单簿变化及机会同时争用？需查正文，当前摘要不足以判断。",
+          "原文所述guaranteed profit与profit at resolution的定义和归集方式有何区别？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者证明，位于可容许收益向量凸包之外的价格存在套利，并通过整数规划识别最优套利组合。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "text_zh": "作者利用交易场所元数据和对结算条件的语义分析，识别出一百九十万条逻辑关系，构建的约束系统覆盖超过255,000份合约。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "text_zh": "作者回放Polymarket全深度订单簿，模拟按已有挂单执行套利组合；摘要对其中已结算的组合报告：扣除买卖价差和费用后，guaranteed profit为投入资本的2.2%，到结算时利润为3.2%。这些数字属于该回放模拟所报告的结果。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "该研究使用Polymarket订单簿回放来模拟执行，摘要给出的利润数字针对其中已结算的组合。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+        "card_hash": "d0549e4be3f3cce56a6574d0474db8dd321f1d0aee1a1b7a137719a35ca1a968",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文摘要一致，符合 source_title。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出价格在可容许收益向量凸包外存在套利，并通过整数规划识别最优套利组合。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文提到利用交易场所元数据和语义分析恢复了190万条逻辑关系，并构建覆盖超过25.5万份合约的约束系统。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文说明回放了Polymarket全深度订单簿以模拟套利执行，并报告已结算组合在扣除价差和费用后的利润为2.2%，结算时利润达3.2%。该描述准确反映了摘要内容。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文指出研究基于对Polymarket订单簿的回放模拟，且利润数据仅针对已结算组合，因此该限制条件被准确反映。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理指出摘要未提供2.2%与3.2%的具体统计口径、样本期、持有时长和资金规模，需查阅正文，属于对材料缺失信息的正当追问。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题询问回放中如何处理延迟、部分成交、订单簿变化及机会争用等执行细节，而摘要未涵盖这些机制，需查正文，故应保留为待核对问题。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "问题询问guaranteed profit与profit at resolution的定义和归集方式差异，原文未明确定义二者，此为合理质疑，需进一步查证。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+        "card_hash": "d0549e4be3f3cce56a6574d0474db8dd321f1d0aee1a1b7a137719a35ca1a968",
+        "review_hash": "5a5e10b243e35940ee398c52e0454a95a79713ed2933f1febf7c5535165292fe",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题准确指预测市场的逻辑关联组合套利，未转成保证投资收益的承诺。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "凸包之外价格存在套利及整数规划识别最优组合，为作者框架中的数学陈述，按原句归属。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "一百九十万与1.9 million一致；超过255,000份合约的关系方向、计数单位和结算条件语义分析均核对。",
+            "evidence_ids": [
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "连读回放模拟与已结算组合两句；2.2%以投入资本为分母且扣除买卖价差及费用，3.2%为结算时利润。明确仅归属该模拟，不声称年化或实盘可获得。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "只把Polymarket订单簿回放模拟及已结算组合的原文范围列为限制，没有新增作者主动承认延迟未计入的说法。",
+            "evidence_ids": [
+              "p1.s4",
+              "p1.s5"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "原复核要求的口径、区间、持有时长和资金规模列为待查，未编造平均值或年化换算。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "执行细节询问延迟、部分成交等如何处理；当前摘要不足以判断，不断言研究未考虑它们。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "两个利润术语保留英文并追问定义；未将guaranteed profit泛化为未来保证回报。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "material_id": "176ef227b2423071c250e59d4477f7a27f715bf4db908cce5cc85533f13d2343",
+        "date_status": "captured",
+        "date_note_zh": "沿用原采集发布时间2026-10-19T04:00:00+00:00；未刷新摘要发布日期或研究样本期。",
+        "scope_note_zh": "仅为论文摘要节选；2.2%与3.2%归属Polymarket订单簿回放模拟的已结算组合，不是年化收益或实盘保证。样本期、资金和执行口径待查全文，未作外部核验。"
+      }
+    }
+  ]
+}

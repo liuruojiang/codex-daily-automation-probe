@@ -3884,7 +3884,7 @@ def email_inline_markdown(text: str) -> str:
         url = html.escape(match.group(0), quote=True)
         return stash(f'<a href="{url}" class="email-link">{url}</a>')
 
-    protected = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", markdown_link, text)
+    protected = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+|#[\w-]+)\)", markdown_link, text)
     protected = re.sub(r"`([^`]+)`", inline_code, protected)
     protected = re.sub(r"https?://[^\s<>\"'，。；、）]+", bare_link, protected)
     rendered = html.escape(protected)
@@ -3895,11 +3895,47 @@ def email_inline_markdown(text: str) -> str:
     return rendered
 
 
+EMAIL_CLASS_ALIASES = {"report-td": "rt", "report-th": "rh", "report-p": "rp",
+                       "report-li": "rl", "report-list": "ru", "email-link": "el",
+                       "email-code": "ec"}
+
+
+def _rewrite_email_html_classes(rendered: str, aliases: dict[str, str]) -> str:
+
+    def class_attribute(match):
+        tokens = re.sub(r"\S+", lambda token: aliases.get(token.group(), token.group()), match.group(2))
+        return match.group(1) + tokens + match.group(3)
+
+    rendered = re.sub(r'(<[A-Za-z][^>]*?\sclass=")([^"]*)(")', class_attribute, rendered)
+
+    def stylesheet(match):
+        def selector(header):
+            value = header.group()
+            for old, new in aliases.items():
+                value = re.sub(r"\." + re.escape(old) + r"(?![\w-])", "." + new, value)
+            return value
+        # Change selectors before an opening brace, never CSS property values.
+        return match.group(1) + re.sub(r"[^{}]+(?=\{)", selector, match.group(2)) + match.group(3)
+
+    return re.sub(r"(<style\b[^>]*>)(.*?)(</style>)", stylesheet, rendered, flags=re.DOTALL)
+
+
+def compact_email_html_classes(rendered: str) -> str:
+    """Shorten generated CSS class tokens without touching visible content."""
+    return _rewrite_email_html_classes(rendered, EMAIL_CLASS_ALIASES)
+
+
+def expand_email_html_classes(rendered: str) -> str:
+    """Restore known class aliases before renderer CSS/structure validation."""
+    return _rewrite_email_html_classes(rendered, {new: old for old, new in EMAIL_CLASS_ALIASES.items()})
+
+
 def markdown_to_email_html(markdown_text: str, preheader: str) -> str:
     lines = markdown_text.splitlines()
     blocks: list[str] = []
     index = 0
     open_list: str | None = None
+    heading_ids: set[str] = set()
 
     def close_list() -> None:
         nonlocal open_list
@@ -3957,7 +3993,15 @@ def markdown_to_email_html(markdown_text: str, preheader: str) -> str:
                     f'<h1 class="report-h1">{content}</h1></div>'
                 )
             elif level == 2:
-                blocks.append(f'<h2 class="report-h2">{content}</h2>')
+                # Match the existing Markdown table-of-contents fragments.
+                base = re.sub(r"[^\w\s-]", "", heading.group(2).strip().lower())
+                base = re.sub(r"\s", "-", base) or "section"
+                anchor, suffix = base, 0
+                while anchor in heading_ids:
+                    suffix += 1
+                    anchor = f"{base}-{suffix}"
+                heading_ids.add(anchor)
+                blocks.append(f'<h2 class="report-h2" id="{html.escape(anchor, quote=True)}">{content}</h2>')
             else:
                 blocks.append(f'<h3 class="report-h3">{content}</h3>')
             index += 1
@@ -3977,7 +4021,7 @@ def markdown_to_email_html(markdown_text: str, preheader: str) -> str:
                 index += 1
             blocks.append(
                 '<div class="report-quote">'
-                f'{"<br>".join(email_inline_markdown(item) for item in quote_lines)}</div>'
+                f'{"<br>".join(html.escape(item) if item.startswith("原文引句（") else email_inline_markdown(item) for item in quote_lines)}</div>'
             )
             continue
 

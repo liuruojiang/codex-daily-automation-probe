@@ -1,0 +1,903 @@
+{
+  "version": "etf-supplement-research-v1",
+  "snapshot": {
+    "run_id": "39347818936",
+    "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b",
+    "cutoff_utc": "2026-10-20T00:28:29.686191+00:00",
+    "body_sha256": "fb5d38afdea5fa1a0327852b9021254a520107b8e5d7a665315b6ea7a1e059b4",
+    "history_sha256": "b1f73b75cbc5e10ff7acf79a224f3156b886b64e91fb7ab7a550084b957a91ce"
+  },
+  "intake_audit_sha256": "7ce5e150685b623e367f3df4a640eca5549e9a7d26d15bd3c7929b9f40f119bf",
+  "registry_sha256": "717709678405e2ca64ce8ec7a104057a9fe792d0de611dfa1a1e8bfedddcee9d",
+  "entry": {
+    "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+    "url": "https://arxiv.org/abs/2607.27188",
+    "card": {
+      "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+      "title_zh": "从不规则期权报价中逆向学习潜在风险中性密度",
+      "questions": [
+        "文中524个留出价格与33%的计数层级是什么，逐链掩码如何汇总？需用原数据或代码确认。",
+        "若重新构造为同步买卖报价、完整贴现及期限匹配的数据，各方法的排名和尾部指标是否稳健？这需要独立复现，而非原文已完成的验证。",
+        "将模拟器密度预训练与仅价格的市场适应相结合，能否改善跨模拟器—市场偏移的迁移？"
+      ],
+      "facts": [
+        {
+          "text_zh": "作者指出，在受控研究中，密度 MSE 是所测试的最有效监督目标。",
+          "evidence_ids": [
+            "p4.s1",
+            "p20.s3"
+          ]
+        },
+        {
+          "text_zh": "作者指出，在 128 节点密度与行权价格网格、相对阈值 $10^{-14}$ 下仅 31 个方向被分辨，95 个低于阈值，已分辨子空间内的条件数为 $6.89\\times 10^{3}$。",
+          "evidence_ids": [
+            "p15.s1",
+            "p15.s2",
+            "p15.s3",
+            "p15.s4"
+          ]
+        },
+        {
+          "text_zh": "作者报告，处理后的NIFTY样本包含6,191个看涨期权、295个日期及19个到期日，按时间顺序划分；文中报告留出524个价格（33%），不创建潜在标签。此处不把524解释为每个测试链的固定数量。",
+          "evidence_ids": [
+            "p24.s1",
+            "p24.s2",
+            "p24.s3",
+            "p24.s4"
+          ]
+        },
+        {
+          "text_zh": "作者报告，验证集选择的适应使DeepONet留出价格RMSE降低28.3%，但按到期日分别拟合的混合对数正态模型与SVI仍更准确；这些结果只检验可观察价格，不验证唯一的市场真实风险中性密度。",
+          "evidence_ids": [
+            "p35.s1",
+            "p36.s1",
+            "p36.s3",
+            "p36.s4"
+          ]
+        }
+      ],
+      "limitations": [
+        {
+          "text_zh": "作者指出，真实市场数据只能支持对留出价格和隐含波动率的检验，不能声称推断出的密度等于唯一的“真实”市场密度。",
+          "evidence_ids": [
+            "p13.s1",
+            "p13.s2"
+          ]
+        },
+        {
+          "text_zh": "作者指出，模拟器真值仅在所选定的过程族条件下精确，利率、股息、行权方式、动态和观测噪声方面的经济误设仍然存在。",
+          "evidence_ids": [
+            "p39.s1",
+            "p39.s2"
+          ]
+        },
+        {
+          "text_zh": "可分辨方向的计数仅适用于所述密度和行权价网格、覆盖行权价范围、数值积分、归一化、权重和阈值，不是识别定理。",
+          "evidence_ids": [
+            "p15.s5"
+          ]
+        },
+        {
+          "text_zh": "NIFTY样本是交易柱收盘价，不是买卖报价、NBBO中间价或可执行价格；同一分钟的期货和期权收盘不保证发生于同一秒。",
+          "evidence_ids": [
+            "p23.s4",
+            "p23.s5"
+          ]
+        }
+      ]
+    },
+    "review": {
+      "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+      "card_hash": "e4ffd7415450517c6cefae75e0c14a72557538e4450f8cf4646474affe68b4c9",
+      "overall": "pass",
+      "checks": [
+        {
+          "claim_id": "title",
+          "verdict": "supported",
+          "reason_zh": "标题与原文标题一致，且符合源文件标题内容。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "facts.0",
+          "verdict": "supported",
+          "reason_zh": "原文p4.s1和p20.s1明确指出密度MSE是受控研究中最强的监督目标。",
+          "evidence_ids": [
+            "p4.s1",
+            "p20.s1"
+          ]
+        },
+        {
+          "claim_id": "facts.1",
+          "verdict": "supported",
+          "reason_zh": "原文p15.s4明确说明在128节点网格、相对阈值10^-14下，仅31个方向被分辨，95个低于阈值，已分辨子空间条件数为6.89×10^3。",
+          "evidence_ids": [
+            "p15.s4"
+          ]
+        },
+        {
+          "claim_id": "facts.2",
+          "verdict": "supported",
+          "reason_zh": "原文p24.s1-s4清楚描述了样本包含6,191个看涨期权、295个日期、19个到期日，按时间划分；每个测试链固定掩码揭示1,053个价格，留出524个（33%），且未创建潜在标签。文中未将524解释为每链固定数量，表述准确。",
+          "evidence_ids": [
+            "p24.s1",
+            "p24.s2",
+            "p24.s3",
+            "p24.s4"
+          ]
+        },
+        {
+          "claim_id": "facts.3",
+          "verdict": "supported",
+          "reason_zh": "原文p35.s1报告适应使DeepONet RMSE降低28.3%，而混合对数正态和SVI更优；p36.s4明确指出结果仅验证可观测价格，不验证唯一市场真实RND。",
+          "evidence_ids": [
+            "p35.s1",
+            "p36.s4"
+          ]
+        },
+        {
+          "claim_id": "limitations.0",
+          "verdict": "supported",
+          "reason_zh": "原文p13.s2明确指出市场数据仅支持留出价格和隐含波动率检验，不能声称推断密度等于唯一“真实”市场密度。",
+          "evidence_ids": [
+            "p13.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.1",
+          "verdict": "supported",
+          "reason_zh": "原文p39.s1和p39.s2明确指出模拟器真值仅在所选族条件下精确，利率、股息、行权方式、动态和观测噪声仍存在经济误设。",
+          "evidence_ids": [
+            "p39.s1",
+            "p39.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.2",
+          "verdict": "supported",
+          "reason_zh": "原文p15.s5明确说明可分辨方向计数仅适用于特定网格、范围、积分、归一化、权重和阈值，不是识别定理。",
+          "evidence_ids": [
+            "p15.s5"
+          ]
+        },
+        {
+          "claim_id": "limitations.3",
+          "verdict": "supported",
+          "reason_zh": "原文p23.s4和p23.s5明确指出NIFTY样本是交易柱收盘价，非买卖报价或可执行价格，且精确分钟收盘不一定同步。",
+          "evidence_ids": [
+            "p23.s4",
+            "p23.s5"
+          ]
+        },
+        {
+          "claim_id": "questions.0",
+          "verdict": "supported",
+          "reason_zh": "问题合理询问原文未披露的细节（524个留出价格的层级与汇总方式），属于资料缺失下的待核对问题，应判定为supported。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.1",
+          "verdict": "supported",
+          "reason_zh": "问题询问若数据重构后方法排名是否稳健，原文未提供此类实验，属于合理推测性问题，资料缺失时应supported。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.2",
+          "verdict": "supported",
+          "reason_zh": "问题提出一个未来工作方向，原文在p39.s12和p38.s6中提到结合预训练与适应是自然下一步，问题符合作者观点，资料未覆盖但合理，应supported。",
+          "evidence_ids": []
+        }
+      ]
+    },
+    "editor": {
+      "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+      "card_hash": "e4ffd7415450517c6cefae75e0c14a72557538e4450f8cf4646474affe68b4c9",
+      "review_hash": "e44282e42d8dc85626e813bb9425bfef6d6c2ecafc103f344478e1e4f61f612a",
+      "appeal_case_id": null,
+      "checks": [
+        {
+          "claim_id": "title",
+          "decision": "confirmed",
+          "reason_zh": "标题准确对应不规则期权报价中的风险中性密度逆问题，未把风险中性密度当真实世界预测概率。",
+          "evidence_ids": [
+            "source_title"
+          ]
+        },
+        {
+          "claim_id": "facts.0",
+          "decision": "confirmed",
+          "reason_zh": "密度MSE优势限于所测试配置。已核对卡片自身p4.s1及p20.s3；新模型说明写p20.s1不够精确，未据此改动卡片引用。",
+          "evidence_ids": [
+            "p4.s1",
+            "p20.s3"
+          ]
+        },
+        {
+          "claim_id": "facts.1",
+          "decision": "confirmed",
+          "reason_zh": "连读p15.s1至s4；128节点、相对阈值、31/95方向和条件数均对应原句。没有把数值方向计数泛化为识别定理。",
+          "evidence_ids": [
+            "p15.s1",
+            "p15.s2",
+            "p15.s3",
+            "p15.s4"
+          ]
+        },
+        {
+          "claim_id": "facts.2",
+          "decision": "confirmed",
+          "reason_zh": "样本总数与原文报告的留出数量逐项引用；卡片不再将524扩张为每个测试链的固定数量。新模型说明本身仍混用逐链措辞且前后不一致，未自动采用；实际层级继续待核对。",
+          "evidence_ids": [
+            "p24.s1",
+            "p24.s2",
+            "p24.s3",
+            "p24.s4"
+          ]
+        },
+        {
+          "claim_id": "facts.3",
+          "decision": "confirmed",
+          "reason_zh": "28.3%是验证集选择适应后的价格RMSE变化；经典拟合更优、拟合机制不同及只验证可观测价格都已连读，不推断投资收益或唯一真实分布。",
+          "evidence_ids": [
+            "p35.s1",
+            "p36.s1",
+            "p36.s3",
+            "p36.s4"
+          ]
+        },
+        {
+          "claim_id": "limitations.0",
+          "decision": "confirmed",
+          "reason_zh": "真实市场数据不提供潜在真值标签，不能把价格和隐含波动率检验当作唯一密度识别。",
+          "evidence_ids": [
+            "p13.s1",
+            "p13.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.1",
+          "decision": "confirmed",
+          "reason_zh": "模拟器真值仅在所选族条件下精确；经济误设条件完整保留，未升级为真实市场真值。",
+          "evidence_ids": [
+            "p39.s1",
+            "p39.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.2",
+          "decision": "confirmed",
+          "reason_zh": "方向计数依赖具体网格、覆盖、数值积分、归一化、权重和阈值；不是识别定理。",
+          "evidence_ids": [
+            "p15.s5"
+          ]
+        },
+        {
+          "claim_id": "limitations.3",
+          "decision": "confirmed",
+          "reason_zh": "交易柱收盘价、NBBO/可执行报价和逐秒同步明确区别，未把回测数据当可成交价格。",
+          "evidence_ids": [
+            "p23.s4",
+            "p23.s5"
+          ]
+        },
+        {
+          "claim_id": "questions.0",
+          "decision": "confirmed",
+          "reason_zh": "具体计数层级保留为问题，当前只修复过度具体化表述，未声称已经复现实验。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.1",
+          "decision": "confirmed",
+          "reason_zh": "重新构造同步报价和贴现期限匹配的数据属于独立复现；不假定当前作者已经做过。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.2",
+          "decision": "confirmed",
+          "reason_zh": "正文明确称未测试模拟器密度预训练到市场的迁移，问题保留为未来工作而非既有成果。",
+          "evidence_ids": []
+        }
+      ]
+    },
+    "annotation": {
+      "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+      "date_status": "conflicting",
+      "date_note_zh": "保留RSS宣布日2026-10-19、首次提交2026-07-29与版本修订2026-10-15；选文日期口径待核，未刷新。",
+      "scope_note_zh": "后补42段正文节选，不含图表；仅供独立研究预览，不回填原邮件。524计数层级仍待数据或代码确认，价格RMSE不是投资收益。"
+    }
+  },
+  "repair": {
+    "parent_card": {
+      "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+      "title_zh": "从不规则期权报价中逆向学习潜在风险中性密度",
+      "questions": [
+        "在 $D=1$ 近似、F1 归一化及特定时间与流动性筛选下，基准的绝对金融解释受何限制？",
+        "若采用不同的市场数据构造，各方法的排名是否仍然保持？",
+        "将模拟器密度预训练与仅价格的市场适应相结合，能否改善跨模拟器—市场偏移的迁移？"
+      ],
+      "facts": [
+        {
+          "text_zh": "作者指出，在受控研究中，密度 MSE 是所测试的最有效监督目标。",
+          "evidence_ids": [
+            "p4.s1",
+            "p20.s3"
+          ]
+        },
+        {
+          "text_zh": "作者指出，在 128 节点密度与行权价格网格、相对阈值 $10^{-14}$ 下仅 31 个方向被分辨，95 个低于阈值，已分辨子空间内的条件数为 $6.89\\times 10^{3}$。",
+          "evidence_ids": [
+            "p15.s2",
+            "p15.s3",
+            "p15.s4"
+          ]
+        },
+        {
+          "text_zh": "作者指出，NIFTY 研究使用 6,191 个看涨期权、295 个日期和 19 个到期日，按时间顺序划分，测试集每个链隐藏 524 个价格（$33\\%$）且不创建潜在标签。",
+          "evidence_ids": [
+            "p24.s1",
+            "p24.s2",
+            "p24.s3",
+            "p24.s4"
+          ]
+        }
+      ],
+      "limitations": [
+        {
+          "text_zh": "作者指出，真实市场数据只能支持对留出价格和隐含波动率的检验，不能声称推断出的密度等于唯一的“真实”市场密度。",
+          "evidence_ids": [
+            "p13.s1",
+            "p13.s2"
+          ]
+        },
+        {
+          "text_zh": "作者指出，模拟器真值仅在所选定的过程族条件下精确，利率、股息、行权方式、动态和观测噪声方面的经济误设仍然存在。",
+          "evidence_ids": [
+            "p39.s1",
+            "p39.s2"
+          ]
+        }
+      ]
+    },
+    "parent_review": {
+      "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+      "card_hash": "4d6f9a08c8454932954d8a905e921ae567b920efa494de0d6bf1bc117c34fa1d",
+      "overall": "pass",
+      "checks": [
+        {
+          "claim_id": "title",
+          "verdict": "supported",
+          "reason_zh": "标题与原文标题一致，且未引入额外信息。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "facts.0",
+          "verdict": "supported",
+          "reason_zh": "原文 p4.s1 与 p20.s3 明确指出密度 MSE 是受控研究中最强的监督目标，支持该陈述。",
+          "evidence_ids": [
+            "p4.s1",
+            "p20.s3"
+          ]
+        },
+        {
+          "claim_id": "facts.1",
+          "verdict": "supported",
+          "reason_zh": "原文 p15.s4 明确说明在 128 节点网格和 $10^{-14}$ 阈值下，仅 31 个方向被分辨，95 个低于阈值，条件数为 $6.89\\times 10^3$，完全匹配所述内容。",
+          "evidence_ids": [
+            "p15.s4"
+          ]
+        },
+        {
+          "claim_id": "facts.2",
+          "verdict": "supported",
+          "reason_zh": "原文 p24.s1 至 p24.s4 明确列出：6,191 个看涨期权、295 个日期、19 个到期日；时间顺序划分；测试链中隐藏 524 个价格（33%）；不创建潜在标签，全部支持该事实。",
+          "evidence_ids": [
+            "p24.s1",
+            "p24.s2",
+            "p24.s3",
+            "p24.s4"
+          ]
+        },
+        {
+          "claim_id": "limitations.0",
+          "verdict": "supported",
+          "reason_zh": "原文 p13.s1 与 p13.s2 明确指出市场数据仅能用于留出价格与隐含波动率检验，不能声称推断密度等于唯一“真实”市场密度，直接支持该限制。",
+          "evidence_ids": [
+            "p13.s1",
+            "p13.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.1",
+          "verdict": "supported",
+          "reason_zh": "原文 p39.s1 与 p39.s2 明确指出模拟器真值仅在所选过程族条件下精确，利率、股息、行权方式、动态和观测噪声存在经济误设，完全支持该限制。",
+          "evidence_ids": [
+            "p39.s1",
+            "p39.s2"
+          ]
+        },
+        {
+          "claim_id": "questions.0",
+          "verdict": "supported",
+          "reason_zh": "问题合理询问在特定构造条件下的绝对金融解释限制，原文 p39.s5 已明确说明这些因素（如 $D=1$ 近似、F1 归一化、时间与流动性筛选）限制了绝对解释，材料已回答该问题。",
+          "evidence_ids": [
+            "p39.s5"
+          ]
+        },
+        {
+          "claim_id": "questions.1",
+          "verdict": "supported",
+          "reason_zh": "问题合理询问不同数据构造下排名是否保持，原文 p39.s8 指出更大市场训练集、时间上下文或图编码器可能改变权衡，暗示排名可能变化，材料虽未直接给出答案但提供了相关背景支持该问题的合理性。",
+          "evidence_ids": [
+            "p39.s8"
+          ]
+        },
+        {
+          "claim_id": "questions.2",
+          "verdict": "supported",
+          "reason_zh": "问题合理询问模拟器预训练与市场适应结合是否改善迁移，原文 p39.s13 和 p38.s6 明确指出这是未来工作，表明当前研究未测试此组合，问题基于材料未覆盖的内容提出，属合理待核对问题。",
+          "evidence_ids": [
+            "p39.s13",
+            "p38.s6"
+          ]
+        }
+      ]
+    },
+    "parent_veto": {
+      "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+      "card_hash": "4d6f9a08c8454932954d8a905e921ae567b920efa494de0d6bf1bc117c34fa1d",
+      "decision": "needs_revision",
+      "reason_zh": "新稿将524个留出价格写成每个测试链各有524个；来源此处计数层级存在歧义，不能把逐链掩码的应用方式扩张为逐链固定数量，需保留报告口径并追问其汇总层级。"
+    },
+    "plan": {
+      "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+      "parent_card_hash": "4d6f9a08c8454932954d8a905e921ae567b920efa494de0d6bf1bc117c34fa1d",
+      "parent_veto_hash": "c03e03adbf74c91b54a7b72e5ab90e99257450c4ec973f6ce71df9dd6c1a0063",
+      "issues": [
+        {
+          "id": "count_scope",
+          "reason_zh": "新稿将524个留出价格写成每个测试链各有524个；来源此处计数层级存在歧义，不能把逐链掩码的应用方式扩张为逐链固定数量，需保留报告口径并追问其汇总层级。"
+        },
+        {
+          "id": "quote_context",
+          "reason_zh": "Eq.后的原句被句子切分拆开，须补齐前半句与126维约束上下文，不能只引用以(2)开头的片段。"
+        },
+        {
+          "id": "main_result",
+          "reason_zh": "补充适应后仍落后于逐到期日经典拟合的主要比较结果，保留只验证价格的边界，不将RMSE变化当收益。"
+        },
+        {
+          "id": "source_limits",
+          "reason_zh": "补上有限网格非识别定理、交易柱价格不可视为可执行报价的原文限制。"
+        },
+        {
+          "id": "questions",
+          "reason_zh": "删去已被正文回答的D=1限制问题，保留计数层级、独立数据构造与未测试迁移的具体后续研究问题。"
+        }
+      ],
+      "edits": [
+        {
+          "field": "facts",
+          "value": [
+            {
+              "text_zh": "作者指出，在受控研究中，密度 MSE 是所测试的最有效监督目标。",
+              "evidence_ids": [
+                "p4.s1",
+                "p20.s3"
+              ]
+            },
+            {
+              "text_zh": "作者指出，在 128 节点密度与行权价格网格、相对阈值 $10^{-14}$ 下仅 31 个方向被分辨，95 个低于阈值，已分辨子空间内的条件数为 $6.89\\times 10^{3}$。",
+              "evidence_ids": [
+                "p15.s1",
+                "p15.s2",
+                "p15.s3",
+                "p15.s4"
+              ]
+            },
+            {
+              "text_zh": "作者报告，处理后的NIFTY样本包含6,191个看涨期权、295个日期及19个到期日，按时间顺序划分；文中报告留出524个价格（33%），不创建潜在标签。此处不把524解释为每个测试链的固定数量。",
+              "evidence_ids": [
+                "p24.s1",
+                "p24.s2",
+                "p24.s3",
+                "p24.s4"
+              ]
+            },
+            {
+              "text_zh": "作者报告，验证集选择的适应使DeepONet留出价格RMSE降低28.3%，但按到期日分别拟合的混合对数正态模型与SVI仍更准确；这些结果只检验可观察价格，不验证唯一的市场真实风险中性密度。",
+              "evidence_ids": [
+                "p35.s1",
+                "p36.s1",
+                "p36.s3",
+                "p36.s4"
+              ]
+            }
+          ],
+          "issue_ids": [
+            "count_scope",
+            "quote_context",
+            "main_result"
+          ]
+        },
+        {
+          "field": "limitations",
+          "value": [
+            {
+              "text_zh": "作者指出，真实市场数据只能支持对留出价格和隐含波动率的检验，不能声称推断出的密度等于唯一的“真实”市场密度。",
+              "evidence_ids": [
+                "p13.s1",
+                "p13.s2"
+              ]
+            },
+            {
+              "text_zh": "作者指出，模拟器真值仅在所选定的过程族条件下精确，利率、股息、行权方式、动态和观测噪声方面的经济误设仍然存在。",
+              "evidence_ids": [
+                "p39.s1",
+                "p39.s2"
+              ]
+            },
+            {
+              "text_zh": "可分辨方向的计数仅适用于所述密度和行权价网格、覆盖行权价范围、数值积分、归一化、权重和阈值，不是识别定理。",
+              "evidence_ids": [
+                "p15.s5"
+              ]
+            },
+            {
+              "text_zh": "NIFTY样本是交易柱收盘价，不是买卖报价、NBBO中间价或可执行价格；同一分钟的期货和期权收盘不保证发生于同一秒。",
+              "evidence_ids": [
+                "p23.s4",
+                "p23.s5"
+              ]
+            }
+          ],
+          "issue_ids": [
+            "source_limits"
+          ]
+        },
+        {
+          "field": "questions",
+          "value": [
+            "文中524个留出价格与33%的计数层级是什么，逐链掩码如何汇总？需用原数据或代码确认。",
+            "若重新构造为同步买卖报价、完整贴现及期限匹配的数据，各方法的排名和尾部指标是否稳健？这需要独立复现，而非原文已完成的验证。",
+            "将模拟器密度预训练与仅价格的市场适应相结合，能否改善跨模拟器—市场偏移的迁移？"
+          ],
+          "issue_ids": [
+            "questions",
+            "count_scope"
+          ]
+        }
+      ]
+    },
+    "revision_id": "7497728c52c966acb4c1c37a6cdcdb97cec9804f85b59826401d307ff4c5c309",
+    "disposition": {
+      "revision_id": "7497728c52c966acb4c1c37a6cdcdb97cec9804f85b59826401d307ff4c5c309",
+      "card_hash": "e4ffd7415450517c6cefae75e0c14a72557538e4450f8cf4646474affe68b4c9",
+      "checks": [
+        {
+          "issue_id": "count_scope",
+          "decision": "resolved",
+          "reason_zh": "已删除每个链各524个的过度具体化；只归属文中报告数字，并明确不作逐链固定数量解释。底层计数层级仍列为需代码或数据确认的问题，未声称已被验证。"
+        },
+        {
+          "issue_id": "quote_context",
+          "decision": "resolved",
+          "reason_zh": "原Eq.被切开的两部分连同126维约束及数值结果均已引用，有限网格的限定另列。"
+        },
+        {
+          "issue_id": "main_result",
+          "decision": "resolved",
+          "reason_zh": "补充28.3%为价格RMSE改善，适应后仍落后于逐到期日经典拟合，并明确不验证唯一市场真实密度；不是收益改善。"
+        },
+        {
+          "issue_id": "source_limits",
+          "decision": "resolved",
+          "reason_zh": "补足特定网格/阈值非识别定理及交易柱收盘价非可执行报价的原文范围。"
+        },
+        {
+          "issue_id": "questions",
+          "decision": "resolved",
+          "reason_zh": "删除正文已经回答的D=1限制提问；保留计数口径、需独立数据重构及作者未测试迁移的后续研究。"
+        }
+      ]
+    }
+  },
+  "original_sources": [
+    {
+      "requested_url": "https://www.quantitativo.com/p/less-wrong",
+      "started_utc": "2026-10-20T15:38:41.110308+00:00",
+      "finished_utc": "2026-10-20T15:38:42.226573+00:00",
+      "response_status": 200,
+      "body_sha256": "3bedf7f8dfb83b4b9efa28350d28ca2f63579403370a11a7ceb89e9ac7301d9b",
+      "bytes": 268891,
+      "extraction": {
+        "version": "etf-original-source-extract-v1",
+        "url": "https://www.quantitativo.com/p/less-wrong",
+        "actual_title": "Less Wrong",
+        "parent_directory_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+        "raw_sha256": "3bedf7f8dfb83b4b9efa28350d28ca2f63579403370a11a7ceb89e9ac7301d9b",
+        "published_raw": "2026-10-18T13:01:43+00:00",
+        "date_basis": "JSON-LD datePublished",
+        "date_status": "source_timestamp_with_zone",
+        "extraction_spec": {
+          "title_selector": "meta[property=\"og:title\"]",
+          "expected_title": "Less Wrong",
+          "body_selector": "div.body.markup"
+        },
+        "delivery_eligible": false,
+        "mail_approvals_added": 0,
+        "review_status": "pending",
+        "access_scope": "metadata_only_subscription_marker",
+        "material_id": null,
+        "paragraph_count": 0,
+        "text_chars": 0,
+        "pending_flags": [
+          "normal_authorized_access_required"
+        ]
+      }
+    },
+    {
+      "requested_url": "https://quanterlab.com/research/hedgefundie-s-excellent-adventure-tested-apart",
+      "started_utc": "2026-10-20T15:38:41.110035+00:00",
+      "finished_utc": "2026-10-20T15:38:44.397062+00:00",
+      "response_status": 200,
+      "body_sha256": "2d881e2271db52a6c3ab53ad97e52e15b246c8111ce8403c9fe913ebd10c8ef4",
+      "bytes": 454686,
+      "extraction": {
+        "version": "etf-original-source-extract-v1",
+        "url": "https://quanterlab.com/research/hedgefundie-s-excellent-adventure-tested-apart",
+        "actual_title": "Hedgefundie’s Excellent Adventure, Tested Apart: What It Did Until the Forum Post, and What Changed Since",
+        "parent_directory_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+        "raw_sha256": "2d881e2271db52a6c3ab53ad97e52e15b246c8111ce8403c9fe913ebd10c8ef4",
+        "published_raw": "2026-10-17T14:25:14.181715",
+        "date_basis": "article:published_time",
+        "date_status": "timezone_unconfirmed",
+        "extraction_spec": {
+          "title_selector": "meta[name=\"citation_title\"]",
+          "expected_title": "Hedgefundie’s Excellent Adventure, Tested Apart: What It Did Until the Forum Post, and What Changed Since",
+          "body_selector": "article#researchPaper"
+        },
+        "delivery_eligible": false,
+        "mail_approvals_added": 0,
+        "review_status": "pending",
+        "access_scope": "public_html_excerpt",
+        "material_id": "b85177802c9b3d55bb503634a525542603d6dbd73d1f18871418982ee2ac3068",
+        "paragraph_count": 247,
+        "text_chars": 41963,
+        "paragraph_text_sha256": "a0313ecb8c3e7a01c0d7000d1c33c7ed5e2d8b807b76025fa5cf4c6316b8b11d",
+        "generation_payload_chars": 72990,
+        "tables_and_figures_extracted": false,
+        "complete_article_claim": false,
+        "pending_flags": [
+          "confirm_source_time_zone",
+          "explicit_excerpt_selection_required"
+        ]
+      }
+    },
+    {
+      "requested_url": "https://www.handelsmeisterei.de/the_messy_business_of_building_a_futures_security_master/",
+      "started_utc": "2026-10-20T15:38:41.110595+00:00",
+      "finished_utc": "2026-10-20T15:38:43.456954+00:00",
+      "response_status": 200,
+      "body_sha256": "af523c79e9e64fd4be20f9b446e624a124b232eb729636d6a1fbba6cecfc1799",
+      "bytes": 185343,
+      "extraction": {
+        "version": "etf-original-source-extract-v1",
+        "url": "https://www.handelsmeisterei.de/the_messy_business_of_building_a_futures_security_master/",
+        "actual_title": "The Messy Business of Building a Futures Security Master | Handelsmeisterei",
+        "parent_directory_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+        "raw_sha256": "af523c79e9e64fd4be20f9b446e624a124b232eb729636d6a1fbba6cecfc1799",
+        "published_raw": "2026-10-16T09:16:44+00:00",
+        "date_basis": "article:published_time",
+        "date_status": "source_timestamp_with_zone",
+        "extraction_spec": {
+          "title_selector": "meta[property=\"og:title\"]",
+          "expected_title": "The Messy Business of Building a Futures Security Master | Handelsmeisterei",
+          "body_selector": "div.paper-full-text-body"
+        },
+        "delivery_eligible": false,
+        "mail_approvals_added": 0,
+        "review_status": "pending",
+        "access_scope": "public_html_excerpt",
+        "material_id": "4c173865ecaa1fd4ad09d408d7db2062e13143cfd43c5e9d9086b9be3c249894",
+        "paragraph_count": 206,
+        "text_chars": 45453,
+        "paragraph_text_sha256": "2635d69d3c4abd168a3df5b7ce52adac16e126bb50e79a6e4e38bc0da60470e1",
+        "generation_payload_chars": 81216,
+        "tables_and_figures_extracted": false,
+        "complete_article_claim": false,
+        "pending_flags": [
+          "explicit_excerpt_selection_required"
+        ]
+      }
+    },
+    {
+      "requested_url": "https://concretumgroup.substack.com/p/chasing-skew-in-trend-following",
+      "started_utc": "2026-10-20T15:38:41.110849+00:00",
+      "finished_utc": "2026-10-20T15:38:42.072936+00:00",
+      "response_status": 200,
+      "body_sha256": "a90ed3afdba0bf55ad4dc4d4af4f2b8ca2c56a76d3c53eab1fe631ed991f3096",
+      "bytes": 157767,
+      "extraction": {
+        "version": "etf-original-source-extract-v1",
+        "url": "https://concretumgroup.substack.com/p/chasing-skew-in-trend-following",
+        "actual_title": "Chasing Skew in Trend Following",
+        "parent_directory_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+        "raw_sha256": "a90ed3afdba0bf55ad4dc4d4af4f2b8ca2c56a76d3c53eab1fe631ed991f3096",
+        "published_raw": "2026-10-16T15:13:56+00:00",
+        "date_basis": "JSON-LD datePublished",
+        "date_status": "source_timestamp_with_zone",
+        "extraction_spec": {
+          "title_selector": "meta[property=\"og:title\"]",
+          "expected_title": "Chasing Skew in Trend Following",
+          "body_selector": "div.body.markup"
+        },
+        "delivery_eligible": false,
+        "mail_approvals_added": 0,
+        "review_status": "pending",
+        "access_scope": "metadata_only_subscription_marker",
+        "material_id": null,
+        "paragraph_count": 0,
+        "text_chars": 0,
+        "pending_flags": [
+          "normal_authorized_access_required"
+        ]
+      }
+    },
+    {
+      "requested_url": "https://quanterlab.com/research/hidden-markov-model-against-the-vix-on-a-regime-aware-factor-portfolio",
+      "started_utc": "2026-10-20T15:38:42.075185+00:00",
+      "finished_utc": "2026-10-20T15:38:44.807873+00:00",
+      "response_status": 200,
+      "body_sha256": "e6dab2330cc3dbcf5ce7db7b7a16203614bfaf7fda7ca1a0b5a0b37fb72ab159",
+      "bytes": 560348,
+      "extraction": {
+        "version": "etf-original-source-extract-v1",
+        "url": "https://quanterlab.com/research/hidden-markov-model-against-the-vix-on-a-regime-aware-factor-portfolio",
+        "actual_title": "Hidden Markov Model Against the VIX on a Regime-Aware Factor Portfolio Comparison",
+        "parent_directory_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+        "raw_sha256": "e6dab2330cc3dbcf5ce7db7b7a16203614bfaf7fda7ca1a0b5a0b37fb72ab159",
+        "published_raw": "2026-10-18T19:10:42.113289",
+        "date_basis": "article:published_time",
+        "date_status": "timezone_unconfirmed",
+        "extraction_spec": {
+          "title_selector": "meta[name=\"citation_title\"]",
+          "expected_title": "Hidden Markov Model Against the VIX on a Regime-Aware Factor Portfolio Comparison",
+          "body_selector": "article#researchPaper"
+        },
+        "delivery_eligible": false,
+        "mail_approvals_added": 0,
+        "review_status": "pending",
+        "access_scope": "public_html_excerpt",
+        "material_id": "856235f4f5a8f7f5a74bf05b04b2d8adb7ae015537444635d943688367711dd1",
+        "paragraph_count": 321,
+        "text_chars": 53545,
+        "paragraph_text_sha256": "96fab945fae0dccd0a92182f4b1b69e2a2717beac36b36bce8e81233b963e40a",
+        "generation_payload_chars": 94736,
+        "tables_and_figures_extracted": false,
+        "complete_article_claim": false,
+        "pending_flags": [
+          "confirm_source_time_zone",
+          "explicit_excerpt_selection_required"
+        ]
+      }
+    },
+    {
+      "requested_url": "https://aligrithm.com/the-real-is-oos-sharpe-haircut-closed-form-not-50/",
+      "started_utc": "2026-10-20T15:38:42.229050+00:00",
+      "finished_utc": "2026-10-20T15:38:42.922542+00:00",
+      "response_status": 200,
+      "body_sha256": "c60d4ef200c14b9952d5928272fd53fb285bbc285504c4f244f7c3f5178dc601",
+      "bytes": 54306,
+      "extraction": {
+        "version": "etf-original-source-extract-v1",
+        "url": "https://aligrithm.com/the-real-is-oos-sharpe-haircut-closed-form-not-50/",
+        "actual_title": "3.47 The Real IS→OOS Sharpe Haircut (Closed Form, Not \"50%\")",
+        "parent_directory_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+        "raw_sha256": "c60d4ef200c14b9952d5928272fd53fb285bbc285504c4f244f7c3f5178dc601",
+        "published_raw": "2026-10-16T08:42:00.000Z",
+        "date_basis": "article:published_time",
+        "date_status": "source_timestamp_with_zone",
+        "extraction_spec": {
+          "title_selector": "meta[property=\"og:title\"]",
+          "expected_title": "3.47 The Real IS→OOS Sharpe Haircut (Closed Form, Not \"50%\")",
+          "body_selector": "section.post-full-content"
+        },
+        "delivery_eligible": false,
+        "mail_approvals_added": 0,
+        "review_status": "pending",
+        "access_scope": "public_html_excerpt",
+        "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+        "paragraph_count": 70,
+        "text_chars": 24809,
+        "paragraph_text_sha256": "ca0f55055786722b92fa8baf4eab683210a5850bb03db51a99bf879c0c391ef8",
+        "generation_payload_chars": 44546,
+        "tables_and_figures_extracted": false,
+        "complete_article_claim": false,
+        "pending_flags": []
+      }
+    },
+    {
+      "requested_url": "https://blog.harbourfronts.com/2026/10/18/the-role-of-liquidity-in-stock-returns-and-option-pricing/",
+      "started_utc": "2026-10-20T15:38:42.925760+00:00",
+      "finished_utc": "2026-10-20T15:38:50.243469+00:00",
+      "response_status": 200,
+      "body_sha256": "6e7675792d2bc7c4664196f0a6d3f8aff7f75e3e664bcc0e175362e4d85f41f1",
+      "bytes": 47012,
+      "extraction": {
+        "version": "etf-original-source-extract-v1",
+        "url": "https://blog.harbourfronts.com/2026/10/18/the-role-of-liquidity-in-stock-returns-and-option-pricing/",
+        "actual_title": "The Role of Liquidity in Stock Returns and Option Pricing",
+        "parent_directory_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+        "raw_sha256": "6e7675792d2bc7c4664196f0a6d3f8aff7f75e3e664bcc0e175362e4d85f41f1",
+        "published_raw": "2026-10-18T15:50:46+00:00",
+        "date_basis": "published time element",
+        "date_status": "source_timestamp_with_zone",
+        "extraction_spec": {
+          "title_selector": "h1",
+          "expected_title": "The Role of Liquidity in Stock Returns and Option Pricing",
+          "body_selector": "div.entry-content"
+        },
+        "delivery_eligible": false,
+        "mail_approvals_added": 0,
+        "review_status": "pending",
+        "access_scope": "public_html_excerpt",
+        "material_id": "ee28284418b8c94057e1692d80a5f1d9b5b0398d124d30d7300ca2389dbe3912",
+        "paragraph_count": 32,
+        "text_chars": 5268,
+        "paragraph_text_sha256": "2c813e4a4461319b68a0c96b12f29abe0453a0d51fbe32b8662787cd9a78e27a",
+        "generation_payload_chars": 9389,
+        "tables_and_figures_extracted": false,
+        "complete_article_claim": false,
+        "pending_flags": []
+      }
+    },
+    {
+      "requested_url": "https://aligrithm.com/a-trend-factor-for-the-crypto-cross-section-and-its-overfit-tell/",
+      "started_utc": "2026-10-20T15:38:43.458771+00:00",
+      "finished_utc": "2026-10-20T15:38:43.973541+00:00",
+      "response_status": 200,
+      "body_sha256": "83efebc43ada6391d98f366a3536187ca063b14b8d8920def33fdaa1f105a237",
+      "bytes": 53258,
+      "extraction": {
+        "version": "etf-original-source-extract-v1",
+        "url": "https://aligrithm.com/a-trend-factor-for-the-crypto-cross-section-and-its-overfit-tell/",
+        "actual_title": "10.20 A Trend Factor for the Crypto Cross-Section (and Its Overfit Tell)",
+        "parent_directory_material_id": "eefd5b5a39cb3b9b918a117fefbd8163811b47ab67cdf28dc7feaac9c4c112b1",
+        "raw_sha256": "83efebc43ada6391d98f366a3536187ca063b14b8d8920def33fdaa1f105a237",
+        "published_raw": "2026-10-17T11:07:00.000Z",
+        "date_basis": "article:published_time",
+        "date_status": "source_timestamp_with_zone",
+        "extraction_spec": {
+          "title_selector": "meta[property=\"og:title\"]",
+          "expected_title": "10.20 A Trend Factor for the Crypto Cross-Section (and Its Overfit Tell)",
+          "body_selector": "section.post-full-content"
+        },
+        "delivery_eligible": false,
+        "mail_approvals_added": 0,
+        "review_status": "pending",
+        "access_scope": "public_html_excerpt",
+        "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+        "paragraph_count": 63,
+        "text_chars": 23836,
+        "paragraph_text_sha256": "a459b46442113e4080f57b48168969a497969b4e7f891cb4be2d39e3e9f85bb7",
+        "generation_payload_chars": 43047,
+        "tables_and_figures_extracted": false,
+        "complete_article_claim": false,
+        "pending_flags": []
+      }
+    }
+  ],
+  "provider_usage": {
+    "generation_requests": 1,
+    "review_requests": 2,
+    "total_requests": 3,
+    "output_tokens_reserved": 8800,
+    "provider_reported_total_tokens": 32528,
+    "unknown_outcomes": 0,
+    "usage_missing_requests": 0,
+    "monetary_cap": "not_established"
+  },
+  "editorial_actor": "assistant; not user review",
+  "delivery_eligible": false,
+  "frozen_mail_admission": "held_later_capture"
+}

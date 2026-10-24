@@ -1,0 +1,443 @@
+{
+  "version": "etf-fresh-shadow-record-v1",
+  "source": {
+    "repository": "liuruojiang/codex-daily-automation-probe",
+    "repository_id": 1236131103,
+    "branch": "main",
+    "run_id": 39518483125,
+    "run_attempt": 1,
+    "head_sha": "b69e296d21b63f40d5b6e46726c555a85b1cc5b0",
+    "workflow_path": ".github/workflows/etf-allocation-digest.yml",
+    "event": "schedule",
+    "artifact_id": 12308593073,
+    "artifact_name": "us-etf-allocation-digest",
+    "artifact_sha256": "380c653419854065e9a9c936adee355f7b9d9bc1aaf57ce42ee33d56cdcd818d"
+  },
+  "input_sha256": {
+    "metadata.json": "7873ee92247da1e38e187ddc1428b347737b5176512b6c2bcff7300eb37eecae",
+    "collection_manifest.json": "1f1c3672b53e504413a5f2c4959ed3c55842c19f9085f982dd253cee26cccde8",
+    "history_before.json": "3cc048bad599d2b807eeb15a9b150424e64711ceeb70f491e030801cd945c835"
+  },
+  "old_registry_sha256": "717709678405e2ca64ce8ec7a104057a9fe792d0de611dfa1a1e8bfedddcee9d",
+  "old_index_sha256": "057a11efdcfd3cf052d915c9c1d207f1ea35a51531efabf58aa2994cb9a03a99",
+  "registry": {
+    "version": "etf-reviewed-preview-registry-v1",
+    "snapshot": {
+      "run_id": "39518483125",
+      "head_sha": "b69e296d21b63f40d5b6e46726c555a85b1cc5b0",
+      "cutoff_utc": "2026-10-20T23:59:26.975166+00:00",
+      "body_sha256": "ab81c66b0f27481fc5701f553d2ada8b6e43c2470dbce660cf27b6c950ebaab3",
+      "history_sha256": "1500dc3e3d5d98a65b5485c6d8febfd033a3b38cdb217a55a8ae447cdb286a85"
+    },
+    "entries": [
+      {
+        "material_id": "11980d9d288afec28ec59426a4037ae1f36977798ca44296424a613d1f67ee63",
+        "url": "https://arxiv.org/abs/2610.25495",
+        "card": {
+          "material_id": "11980d9d288afec28ec59426a4037ae1f36977798ca44296424a613d1f67ee63",
+          "title_zh": "基于条件扩散模型的概率限价订单簿预测",
+          "questions": [
+            "实验中所使用的队列指标具体包括哪些，且其定义与计算方式是什么？",
+            "“无编码器的扩散消融版本”与完整 LOBGrad 的对比是否在相同数据划分和训练预算下进行？",
+            "队列预测区间的校准程度是如何度量与报告的？",
+            "下游任务的具体设置与结果数值在原文中是否有给出？"
+          ],
+          "facts": [
+            {
+              "text_zh": "作者提出 LOBGrad，一个用于概率限价订单簿（LOB）预测的条件 DDPM 框架，将自回归 RNN 编码器与基于扩散的生成器相结合。",
+              "evidence_ids": [
+                "p1.s3",
+                "p1.s11"
+              ]
+            },
+            {
+              "text_zh": "作者在指数混合与正则性假设下，为单步 DDPM 噪声预测目标建立了超额风险 oracle 不等式。",
+              "evidence_ids": [
+                "p1.s4",
+                "p1.s12"
+              ]
+            },
+            {
+              "text_zh": "作者在 BTC/USDT、GOOGL 和 META 上的实验显示，LOBGrad 在所有报告的队列指标上均优于其无编码器的扩散消融版本，并相对其他基线取得有竞争力的结果。",
+              "evidence_ids": [
+                "p1.s6",
+                "p1.s14"
+              ]
+            }
+          ],
+          "limitations": [
+            {
+              "text_zh": "超额风险 oracle 不等式的建立依赖于指数混合和正则性假设。",
+              "evidence_ids": [
+                "p1.s4",
+                "p1.s12"
+              ]
+            },
+            {
+              "text_zh": "关于条件窗口长度依赖可约化为潜在状态维度依赖的结论是在收缩动态假设下给出的。",
+              "evidence_ids": [
+                "p1.s5",
+                "p1.s13"
+              ]
+            }
+          ]
+        },
+        "review": {
+          "material_id": "11980d9d288afec28ec59426a4037ae1f36977798ca44296424a613d1f67ee63",
+          "card_hash": "25d843e93d70c67c1cdd92436c998e2e86d1e258480d8dcbf628eaed6a36779a",
+          "overall": "pass",
+          "checks": [
+            {
+              "claim_id": "title",
+              "verdict": "supported",
+              "reason_zh": "标题与原文摘要内容一致，准确反映了论文核心方法与目标。",
+              "evidence_ids": []
+            },
+            {
+              "claim_id": "facts.0",
+              "verdict": "supported",
+              "reason_zh": "原文明确指出 LOBGrad 是一个结合自回归 RNN 编码器与扩散生成器的条件 DDPM 框架，用于概率性限价订单簿预测。",
+              "evidence_ids": [
+                "p1.s3"
+              ]
+            },
+            {
+              "claim_id": "facts.1",
+              "verdict": "supported",
+              "reason_zh": "原文在 p1.s4 中明确说明在指数混合和正则性假设下建立了单步噪声预测目标的超额风险 oracle 不等式。",
+              "evidence_ids": [
+                "p1.s4"
+              ]
+            },
+            {
+              "claim_id": "facts.2",
+              "verdict": "supported",
+              "reason_zh": "原文 p1.s6 明确指出在 BTC/USDT、GOOGL、META 上，LOBGrad 在所有报告的队列指标上优于无编码器扩散消融版本，并在与其他基线对比中表现有竞争力。",
+              "evidence_ids": [
+                "p1.s6"
+              ]
+            },
+            {
+              "claim_id": "limitations.0",
+              "verdict": "supported",
+              "reason_zh": "原文 p1.s4 明确指出超额风险 oracle 不等式的成立依赖于指数混合与正则性假设。",
+              "evidence_ids": [
+                "p1.s4"
+              ]
+            },
+            {
+              "claim_id": "limitations.1",
+              "verdict": "supported",
+              "reason_zh": "原文 p1.s5 明确指出该结论是在收缩动态（contractive dynamics）假设下得出的。",
+              "evidence_ids": [
+                "p1.s5"
+              ]
+            },
+            {
+              "claim_id": "questions.0",
+              "verdict": "supported",
+              "reason_zh": "原文未披露实验中所使用的具体队列指标及其定义与计算方式，问题合理且基于材料缺失提出。",
+              "evidence_ids": []
+            },
+            {
+              "claim_id": "questions.1",
+              "verdict": "supported",
+              "reason_zh": "原文未说明“无编码器的扩散消融版本”与完整 LOBGrad 是否在相同数据划分和训练预算下进行比较，问题合理且基于信息缺失提出。",
+              "evidence_ids": []
+            },
+            {
+              "claim_id": "questions.2",
+              "verdict": "supported",
+              "reason_zh": "原文提到“合理校准的队列预测区间”，但未提供具体的度量方式或报告数值，问题合理且基于材料不足提出。",
+              "evidence_ids": []
+            },
+            {
+              "claim_id": "questions.3",
+              "verdict": "supported",
+              "reason_zh": "原文仅提及下游任务“展示了潜在价值”，但未给出具体设置与结果数值，问题合理且基于信息缺失提出。",
+              "evidence_ids": []
+            }
+          ]
+        },
+        "editor": {
+          "material_id": "11980d9d288afec28ec59426a4037ae1f36977798ca44296424a613d1f67ee63",
+          "card_hash": "25d843e93d70c67c1cdd92436c998e2e86d1e258480d8dcbf628eaed6a36779a",
+          "review_hash": "cfb601a7b5f7aa025aa5fe5e94d142badba9160a9fd45d92246b4efa8bc661a5",
+          "appeal_case_id": null,
+          "checks": [
+            {
+              "claim_id": "title",
+              "decision": "confirmed",
+              "reason_zh": "标题对应条件扩散与概率订单簿预测，未扩张为收益预测。",
+              "evidence_ids": [
+                "source_title"
+              ]
+            },
+            {
+              "claim_id": "facts.0",
+              "decision": "confirmed",
+              "reason_zh": "已核对框架原句：条件DDPM结合自回归RNN编码器与扩散生成器；仅为作者提出的方法。",
+              "evidence_ids": [
+                "p1.s3"
+              ]
+            },
+            {
+              "claim_id": "facts.1",
+              "decision": "confirmed",
+              "reason_zh": "已核对单步噪声目标的超额风险不等式；保留指数混合与正则性假设，混合指序列依赖衰减条件。",
+              "evidence_ids": [
+                "p1.s4"
+              ]
+            },
+            {
+              "claim_id": "facts.2",
+              "decision": "confirmed",
+              "reason_zh": "已核对三个市场标的、报告的队列指标及无编码器消融比较；竞争力不等于优于所有其他基线，也不是独立复现。",
+              "evidence_ids": [
+                "p1.s6"
+              ]
+            },
+            {
+              "claim_id": "limitations.0",
+              "decision": "confirmed",
+              "reason_zh": "不等式的指数混合及正则性假设有对应原句，未写成无条件保证。",
+              "evidence_ids": [
+                "p1.s4"
+              ]
+            },
+            {
+              "claim_id": "limitations.1",
+              "decision": "confirmed",
+              "reason_zh": "窗口依赖约化结论明确保留收缩动态假设。",
+              "evidence_ids": [
+                "p1.s5"
+              ]
+            },
+            {
+              "claim_id": "questions.0",
+              "decision": "confirmed",
+              "reason_zh": "本次摘要未列出具体队列指标与计算方式；问题询问全文细节，不认定全文缺失。",
+              "evidence_ids": []
+            },
+            {
+              "claim_id": "questions.1",
+              "decision": "confirmed",
+              "reason_zh": "本次摘要未交代划分和训练预算；仅提出进一步核查的问题。",
+              "evidence_ids": []
+            },
+            {
+              "claim_id": "questions.2",
+              "decision": "confirmed",
+              "reason_zh": "摘要报告校准较合理，未提供具体度量与数值；追问不否定作者全文可能给出的定义。",
+              "evidence_ids": []
+            },
+            {
+              "claim_id": "questions.3",
+              "decision": "confirmed",
+              "reason_zh": "摘要只报告风格化下游任务的潜在价值，问题要求查阅具体设置与数值，未称实际盈利。",
+              "evidence_ids": []
+            }
+          ]
+        },
+        "annotation": {
+          "material_id": "11980d9d288afec28ec59426a4037ae1f36977798ca44296424a613d1f67ee63",
+          "date_status": "captured",
+          "date_note_zh": "日期沿用本轮RSS捕获的2026年10月20日交叉收录公告字段；未认证首次提交或首次发表日期。",
+          "scope_note_zh": "本轮仅有捕获摘要，包含重复摘要与arXiv页面附带文本；重复引句不是独立证据。未研读全文、核验实验数据或复现理论推导。"
+        }
+      },
+      {
+        "material_id": "760490f7501a791f736a1fda54b1a6a32381a1a34e894300532b3186e583050d",
+        "url": "https://arxiv.org/abs/2610.24558",
+        "card": {
+          "material_id": "760490f7501a791f736a1fda54b1a6a32381a1a34e894300532b3186e583050d",
+          "title_zh": "最优交易过滤器与预测信号的价值",
+          "questions": [
+            "原文节选为摘要，完整论文是否给出最优策略、分数交易过滤器与 Ornstein-Uhlenbeck 信号中间最优均值回复率的具体推导和数值示例？",
+            "摘要未说明实证或回测，是否存在对真实市场数据的检验？"
+          ],
+          "facts": [
+            {
+              "text_zh": "作者指出，借助 Wiener-Hopf 分解，瞬态价格影响下的平稳二次交易问题的最优策略可表示为一个条件预测与一个显式因果线性滤波器的复合。",
+              "evidence_ids": [
+                "p1.s3",
+                "p1.s10"
+              ]
+            },
+            {
+              "text_zh": "作者指出，在指数型韧性（exponential resilience）下可恢复 Gârleanu-Pedersen aim-portfolio，而在幂律型影响衰减（power-law impact decay）下可导出分数交易过滤器，其所需记忆超出有限维 LQR 控制。",
+              "evidence_ids": [
+                "p1.s4",
+                "p1.s11"
+              ]
+            },
+            {
+              "text_zh": "作者指出，在风险惩罚固定为正时，瞬间预测强度相等的信号具有相等的无摩擦 Markowitz 价值；存在交易成本时，净可实现价值由摩擦加权条件预测的均方决定。",
+              "evidence_ids": [
+                "p1.s5",
+                "p1.s6",
+                "p1.s12",
+                "p1.s13"
+              ]
+            }
+          ],
+          "limitations": []
+        },
+        "review": {
+          "material_id": "760490f7501a791f736a1fda54b1a6a32381a1a34e894300532b3186e583050d",
+          "card_hash": "31ef3b0e9739cc6ec73fc7fd333cb68b0090c95e79e67e9f3dde67f60b1579d2",
+          "overall": "pass",
+          "checks": [
+            {
+              "claim_id": "title",
+              "verdict": "supported",
+              "reason_zh": "标题与原文摘要一致，准确反映论文核心内容。",
+              "evidence_ids": []
+            },
+            {
+              "claim_id": "facts.0",
+              "verdict": "supported",
+              "reason_zh": "原文明确指出使用 Wiener-Hopf 分解求解平稳二次交易问题，最优策略为条件预测与显式因果线性滤波器的复合。",
+              "evidence_ids": [
+                "p1.s3",
+                "p1.s10"
+              ]
+            },
+            {
+              "claim_id": "facts.1",
+              "verdict": "supported",
+              "reason_zh": "原文提到在指数型韧性下恢复 Gârleanu-Pedersen aim-portfolio，幂律衰减下导出分数交易滤波器，且需超出有限维 LQR 控制的记忆。",
+              "evidence_ids": [
+                "p1.s4",
+                "p1.s11"
+              ]
+            },
+            {
+              "claim_id": "facts.2",
+              "verdict": "supported",
+              "reason_zh": "原文明确说明在固定正风险惩罚下，等瞬时预测强度信号具等摩擦无摩擦 Markowitz 价值；有交易成本时，净可实现价值由摩擦加权条件预测的均方决定。",
+              "evidence_ids": [
+                "p1.s5",
+                "p1.s6",
+                "p1.s12",
+                "p1.s13"
+              ]
+            },
+            {
+              "claim_id": "questions.0",
+              "verdict": "supported",
+              "reason_zh": "摘要未提供推导过程或数值示例，问题合理询问完整论文是否包含这些内容，符合材料缺失情况。",
+              "evidence_ids": []
+            },
+            {
+              "claim_id": "questions.1",
+              "verdict": "supported",
+              "reason_zh": "摘要未提及实证或回测，问题合理询问是否存在真实市场数据检验，属于对材料未披露内容的正当提问。",
+              "evidence_ids": []
+            }
+          ]
+        },
+        "editor": {
+          "material_id": "760490f7501a791f736a1fda54b1a6a32381a1a34e894300532b3186e583050d",
+          "card_hash": "31ef3b0e9739cc6ec73fc7fd333cb68b0090c95e79e67e9f3dde67f60b1579d2",
+          "review_hash": "3e066192ccbac87b4c2e3ffeb3fc00c240094a4d79cc557d0feaab46c65abe59",
+          "appeal_case_id": null,
+          "checks": [
+            {
+              "claim_id": "title",
+              "decision": "confirmed",
+              "reason_zh": "标题准确对应最优交易过滤器与预测信号价值的理论问题。",
+              "evidence_ids": [
+                "source_title"
+              ]
+            },
+            {
+              "claim_id": "facts.0",
+              "decision": "confirmed",
+              "reason_zh": "已核对平稳二次问题、瞬态影响、Wiener-Hopf分解及条件预测与因果线性滤波器的复合关系。",
+              "evidence_ids": [
+                "p1.s3"
+              ]
+            },
+            {
+              "claim_id": "facts.1",
+              "decision": "confirmed",
+              "reason_zh": "已核对指数恢复与幂律衰减两种条件；分数过滤器需超出有限维LQR的记忆，未推断实际交易优势。",
+              "evidence_ids": [
+                "p1.s4",
+                "p1.s11"
+              ]
+            },
+            {
+              "claim_id": "facts.2",
+              "decision": "confirmed",
+              "reason_zh": "已核对固定正风险惩罚、等瞬时预测强度、无摩擦Markowitz价值，以及有成本时摩擦加权条件预测的均方；两种情形分开表述。",
+              "evidence_ids": [
+                "p1.s5",
+                "p1.s6"
+              ]
+            },
+            {
+              "claim_id": "questions.0",
+              "decision": "confirmed",
+              "reason_zh": "仅摘要可见，问题询问全文推导及数值示例，不声称本文已核验这些结果。",
+              "evidence_ids": []
+            },
+            {
+              "claim_id": "questions.1",
+              "decision": "confirmed",
+              "reason_zh": "本次摘要未说明实证或回测；询问真实数据检验，不推断全文没有实证。",
+              "evidence_ids": []
+            }
+          ]
+        },
+        "annotation": {
+          "material_id": "760490f7501a791f736a1fda54b1a6a32381a1a34e894300532b3186e583050d",
+          "date_status": "captured",
+          "date_note_zh": "日期沿用本轮RSS捕获的2026年10月20日交叉收录公告字段；未认证首次提交或首次发表日期。",
+          "scope_note_zh": "本轮仅有捕获摘要，包含重复摘要与arXiv页面附带文本；重复引句不是独立证据。未研读全文、核验实验数据或复现理论推导。"
+        }
+      }
+    ]
+  },
+  "protocol": {
+    "source_run_id": "39518483125",
+    "selection": [
+      "11980d9d288afec28ec59426a4037ae1f36977798ca44296424a613d1f67ee63",
+      "760490f7501a791f736a1fda54b1a6a32381a1a34e894300532b3186e583050d"
+    ],
+    "scope": "two exact selected captured excerpts containing duplicated arXiv abstracts and cross-list announcements; not full papers or first-publication claims",
+    "generator": "deepseek-v4.1-flash",
+    "reviewer": "qwen-flash",
+    "thinking": "disabled",
+    "initial_max_requests": 4,
+    "initial_output_reserve": 11200,
+    "conditional_changed_card_review_requests": 1,
+    "combined_max_requests": 5,
+    "combined_max_reserved_output_tokens": 14400,
+    "max_input_chars": 60000,
+    "delivery_eligible": false,
+    "external_fact_check": "not_performed"
+  },
+  "initial_model_usage": {
+    "requests": 4,
+    "reserved_output_tokens": 11200,
+    "provider_reported_total_tokens": 9741,
+    "unknown_attempts": 0,
+    "repair_requests": 0,
+    "generator": "deepseek-v4.1-flash",
+    "reviewer": "qwen-flash",
+    "run_context_id": "19636432fc6e5d9f11fafa76355cde7422c03a74f0e5609af6131080e655fc32"
+  },
+  "delivery_eligible": false,
+  "expected": {
+    "selected_count": 32,
+    "replaced_count": 2,
+    "retained_count": 30,
+    "original_content_audit": {
+      "status": "FAILED",
+      "failures": 16,
+      "gaps": 132
+    }
+  }
+}

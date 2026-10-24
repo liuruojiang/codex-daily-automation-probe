@@ -1,0 +1,129 @@
+name: ETF shadow digest
+run-name: ETF shadow source ${{ github.event.workflow_run.id || inputs.source_run_id }}
+
+on:
+  workflow_run:
+    workflows: ["US ETF & Asset Allocation Digest"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Completed production ETF run ID (read its saved collection only)"
+        required: true
+        type: string
+      resume_run_id:
+        description: "Optional prior ETF shadow run ID; restore its checkpoint for offline replay"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: etf-shadow-${{ github.event.workflow_run.id || inputs.source_run_id }}
+  cancel-in-progress: false
+
+jobs:
+  shadow:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == github.event.repository.default_branch &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Verify artifact sources
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id || inputs.source_run_id }}
+          RESUME_RUN_ID: ${{ inputs.resume_run_id }}
+        run: |
+          python - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          sys.path.insert(0, 'scripts')
+          from github_metadata import get_json
+          def read_run(value, workflow):
+              if not value.isdigit() or int(value) <= 0:
+                  raise SystemExit('Expected a positive workflow run ID')
+              run = get_json('https://api.github.com/repos/' + os.environ['REPOSITORY'] + '/actions/runs/' + value,
+                             os.environ['GH_TOKEN'])
+              if run['path'] != '.github/workflows/' + workflow or run['repository']['full_name'] != os.environ['REPOSITORY'] or run['status'] != 'completed':
+                  raise SystemExit('Unexpected source workflow or incomplete run')
+              return run
+          source = os.environ['SOURCE_RUN_ID']
+          original = read_run(source, 'etf-allocation-digest.yml')
+          if original['head_branch'] != os.environ['DEFAULT_BRANCH'] or original['conclusion'] != 'success' or original['event'] not in ('schedule', 'workflow_dispatch'):
+              raise SystemExit('Expected a successful trusted production collection')
+          resume = os.environ.get('RESUME_RUN_ID', '')
+          if resume:
+              read_run(resume, 'etf-shadow-digest.yml')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('source_run_id=' + source + '\n')
+          PY
+      - uses: actions/download-artifact@v8
+        with:
+          name: us-etf-allocation-digest
+          run-id: ${{ steps.source.outputs.source_run_id }}
+          github-token: ${{ github.token }}
+          path: shadow-source
+      - uses: actions/download-artifact@v8
+        if: ${{ inputs.resume_run_id != '' }}
+        with:
+          name: etf-shadow-state
+          run-id: ${{ inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+          path: artifacts-shadow
+      - name: Plan or replay shadow batch without model credentials
+        env:
+          SOURCE_RUN_ID: ${{ steps.source.outputs.source_run_id }}
+          ETF_SHADOW_API_URL: https://api.aisa.one/v1/chat/completions
+          ETF_SHADOW_GENERATOR: deepseek-v4.1-flash
+          ETF_SHADOW_REVIEWER: qwen-flash
+        run: |
+          python - <<'PY'
+          import os, sys
+          from pathlib import Path
+          sys.path.insert(0, 'scripts')
+          import etf_shadow_run as shadow
+          code = shadow.main(['plan', '--manifest', 'shadow-source/collection_manifest.json',
+                             '--out-dir', 'artifacts-shadow', '--run-label', 'source-' + os.environ['SOURCE_RUN_ID'],
+                             '--max-requests', '12', '--max-reserved-output-tokens', '33600',
+                             '--max-new-requests', '0', '--thinking', 'disabled'])
+          # Pending editorial/model work is expected in this offline workflow.
+          if code and not Path('artifacts-shadow/shadow-report.json').is_file():
+              raise SystemExit(code)
+          PY
+      - name: Save automatic mail preview and article coverage without sending
+        run: >-
+          python -B scripts/etf_automatic_mail_preview.py
+          --metadata shadow-source/metadata.json
+          --manifest shadow-source/collection_manifest.json
+          --history-before shadow-source/history_before.json
+          --registry config/etf-shadow-reviewed-registry.json
+          --out-dir artifacts-shadow-mail
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: etf-shadow-mail-preview
+          path: artifacts-shadow-mail/
+          retention-days: 30
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: etf-shadow-state
+          path: artifacts-shadow/
+          retention-days: 30
+          if-no-files-found: warn

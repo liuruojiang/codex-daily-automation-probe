@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import smtplib
 import ssl
 from datetime import datetime, timezone
@@ -30,6 +31,7 @@ def send_mail(
     body: str,
     attachment: str | Path | None = None,
     html_body: str | None = None,
+    message_id: str | None = None,
 ) -> str:
     required = [
         "MAIL_SERVER",
@@ -44,7 +46,9 @@ def send_mail(
         raise SystemExit("Missing required mail secrets: " + ", ".join(missing))
 
     sender, _ = mail_addresses()
-    message_id = make_msgid(domain=sender.rsplit("@", 1)[1])
+    message_id = message_id or make_msgid(domain=sender.rsplit("@", 1)[1])
+    if re.fullmatch(r"<[^<>\s]+@[^<>\s]+>", message_id) is None:
+        raise ValueError("Invalid explicit Message-ID")
     message = EmailMessage()
     message["Subject"] = subject
     message["From"] = os.environ["MAIL_FROM"]

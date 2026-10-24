@@ -12,6 +12,7 @@ from pathlib import Path
 
 from etf_preflight import canonical, rendered_urls
 from etf_candidate_audit import audit_candidates
+from etf_html_integrity import validate_html_alternative
 
 
 class LinkParser(HTMLParser):
@@ -63,6 +64,7 @@ def validate(metadata: dict, manifest: dict, history_before: dict | None = None,
         missing = actual - parser.links
         if missing:
             errors.append(f"html_body is missing clickable article links: {sorted(missing)}")
+        errors.extend(validate_html_alternative(body, html))
     market_data = manifest.get("market_data")
     if isinstance(market_data, dict) and market_data.get("included"):
         expected_session = market_data.get("us_expected_session")
