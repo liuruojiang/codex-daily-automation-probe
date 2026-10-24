@@ -189,6 +189,10 @@ def test_test_email_uses_all_three_final_csvs_and_explicit_historical_label(tmp_
     assert metadata["signal_date"] == "2026-09-30"
     assert metadata["delivery_test_id"] == TEST_ID
     assert metadata["subject"].startswith("[发送验收测试][收盘确认]")
+    assert "[新版验收]" in metadata["subject"]
+    assert metadata["subject"].endswith(TEST_ID)
+    assert "本邮件为新版验收" in metadata["body"]
+    assert "历史收盘日报样本" in metadata["body"]
     assert "[下个交易日需操作]" not in metadata["subject"]
     assert "不作为今日交易指令" in metadata["body"]
     assert "验收编号：" + TEST_ID in metadata["body"]

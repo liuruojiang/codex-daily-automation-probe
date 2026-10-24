@@ -965,10 +965,10 @@ def main() -> int:
         publication_mode=args.publication_mode,
     )
     if args.delivery_test_id:
-        subject = (f"[发送验收测试][收盘确认] 微盘股 v2.0/v2.3/v2.5 日报 - {date_s}"
+        subject = (f"[发送验收测试][收盘确认][新版验收] 微盘股 v2.0/v2.3/v2.5 日报 - {date_s}"
                    f" - {args.delivery_test_id}")
-        digest_text = ("## 邮件发送验收测试\n\n"
-                       f"本邮件仅用于核对日报收发链路，数据截至 {date_s}。"
+        digest_text = ("## 新版邮件发送验收测试\n\n"
+                       f"本邮件为新版验收，仅用于核对新版日报收发链路，数据截至 {date_s}。"
                        "下文为历史收盘日报样本，不作为今日交易指令。\n\n"
                        f"验收编号：{args.delivery_test_id}\n\n"
                        + digest_text.replace("## 今日结论", "## 历史收盘日报样本", 1))
