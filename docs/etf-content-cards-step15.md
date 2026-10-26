@@ -1,0 +1,38 @@
+# Step15: later source intake and an explicit gap inventory
+
+All12 previously uncovered articles were checked against their original URLs. This pass did not recover all missing material. It prepared one new readable paper-body excerpt and separated8 original research links from the directory. The reviewed registry stays byte-for-byte unchanged at10 entries, and the original22-article preview remains10 replaced/12 retained. No model generation, model review, mail approval, sending or history update occurred.
+
+## Actual retrieval outcomes
+
+| Original target | This pass | Subsequent work |
+| --- | --- | --- |
+| Talk Your Book: value and momentum | HTTP200; publisher page contains outline, sponsor material and charts, not a transcript. The official episode page was also inspected and exposes description rather than full discussion. Blog metadata shows a later update. | Obtain substantive public transcript or transcribe authorized public audio; do not infer arguments from a topic list |
+| Quantocracy daily links | HTTP200; actual `qo-mashup` links yield8 distinct source leads | Each original source needs its own date, body, capture and review |
+| Inverse Learning of Latent Risk-Neutral Densities | Abstract HTTP200; followed its observed version-specific publisher HTML link, also HTTP200 |42 complete outer paragraph blocks prepared as a new source version; full new review and date-event assessment remain pending |
+| Capital Allocators Berkshire episode | Direct request HTTP403. Separately inspected publisher content exposed through web retrieval says transcript coming soon | No conversation body captured; guest description is not a transcript |
+| Bogleheads G Fund post | HTTP403 | Need normal access to the exact post, including speaker, quoted text and replies |
+| Meb Faber T-bills post | HTTP200; the original post itself is short. Its explicit SSRN paper link returned403 | Capture the paper as its own source; do not splice it into the blog's author statements |
+| Five Seeking Alpha articles | Each direct request returned403; web retrieval did not provide full text | Keep existing public-summary limitations; no authentication, subscription, alternate-client or access-control bypass attempted |
+| Ben Felix portfolio video | Public page HTTP200 and publisher identity checked. It lists21 caption tracks, but the native English timed-text URL returned HTTP200 with0 bytes | No caption body obtained. This is an observed empty response, not proof that captions never exist; description/chapters remain insufficient |
+
+The direct capture experiment made12 original GETs plus3 explicit follow-ups (version-specific arXiv HTML, the blog's SSRN reference and the video's native caption track). Public source pages and one official episode search were additionally inspected. All raw responses, including403 and empty bodies, have local immutable receipts with actual post-cutoff times, byte counts and SHA256 values. No network retry or model request was used to turn a failure into a success. HTTP403 alone is not diagnosed as a paywall.
+
+## Separate supplement, unchanged historical evidence
+
+`config/etf-source-intake-audit.json` binds the12-target inventory to the original source snapshot and entire unchanged10-entry registry digest. It stores metadata, outcomes, assistant inspection dispositions,8 lead identities and the new material/provenance hashes; it contains no raw paper body, source paragraph quotations, signed caption URLs, credentials or model reasoning. The classifications are observed/source-inspection records, not automated semantic or user approvals. The raw captures remain experiment intermediates, not repository content.
+
+The new version-specific arXiv source was read as42 complete outer `ltx_para` blocks, totaling25,622 characters. Nested paragraph/list text stays within its complete outer block and is not duplicated as separate evidence. Math is taken from source MathML `alttext` rather than concatenated presentation glyphs. All selected IDs are explicit, unique and in source order; unknown/repeated IDs, different title/paper/version, absent math text and malformed HTML fail rather than silently truncating or guessing. Tables, figures and captions are not extracted, so this remains `captured_excerpt`, not a complete-paper claim.
+
+The new material ID is `ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd`. Its URL, publisher identity and captured RSS publication field are preserved from the parent, while provenance separately records the version-specific URL and later capture. The original RSS announcement date2026-10-19, page first submission2026-07-29 and v3 revision2026-10-15 remain distinct observations. They are not rewritten to one date or treated as a resolved daily-eligibility decision. This is an option-density inverse-problem paper, not an inverse ETF article.
+
+The material is pending new generation/review/editing and is marked `held_later_capture` for the frozen email. No new material is appended to the old collection manifest. New content changes its material hash and cannot inherit the old abstract's review, date annotation or mail approval. The eight Quantocracy leads are identities only, with `publication_date:null`, `date_status:unverified` and `delivery_eligible:false`; a date in a URL is not silently treated as a verified publication date.
+
+## Acceptance and practical limits
+
+`scripts/etf_source_intake.py` validates the complete target inventory, registry/snapshot binding, later capture timestamps, HTTP outcomes and pending/held source state. It rebuilds the selected arXiv text from either the exact saved HTML (offline) or the fixed public publisher URL (cloud acceptance). The live cloud fetch is a new retrieval; raw HTML hashes may differ, but selected text and material identity must match exactly or the check fails and requires a new version/review. It does not silently refresh a changed paper. The12 old HTTP outcomes are historical recorded observations; the cloud job does not pretend to reproduce every server's earlier access decision.
+
+A deliberate synthetic registry entry using the new paper material must be refused as `stale_material` by the unchanged strict mail adapter, while all10 existing valid entries still work. The test is synthetic, not an actual attempted publication. Original metadata, manifest, history, registry and audit bytes must stay unchanged. Re-extraction is identical and model calls are forbidden. The existing same-repository draft-PR job archives this intake proof alongside prior preview and repair proofs for30 days; it fetches only the validated public arXiv URL and does not access model credentials or send mail.
+
+Local targeted tests:35 passed with29 subtests. Ten new test methods cover new identity/date retention, complete nested text and math, wrong paper/version/title, explicit selection errors, malformed HTML, unsafe/different-directory links, independent lead dates, snapshot/registry/capture-time drift, HTTP mismatches, target coverage and forbidden inherited approvals. Static report checks found21 safe links, balanced HTML and no script/iframe/form. Browser appearance and email-client compatibility remain unverified.
+
+The next useful action is to review the new body as a separate research source and capture promising original research leads. Missing transcripts and access-rejected articles stay visible as gaps. This does not create complete22-article coverage or enable the unmerged daily workflow. Source faithfulness does not establish external financial correctness, and the new source needs its own model/editor work before use.

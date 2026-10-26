@@ -17,6 +17,207 @@ permissions:
   contents: read
 
 jobs:
+  etf-fresh-shadow-preview:
+    if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Restore pinned historical production archive offline
+        run: python -B scripts/etf_archived_source.py fresh --out-dir fresh-source
+      - name: Replay fresh reviewed excerpts and reject old snapshot drafts offline
+        run: >-
+          python -B scripts/etf_fresh_shadow.py replay
+          --record config/etf-fresh-shadow-record.json --source-dir fresh-source
+          --old-registry config/etf-shadow-reviewed-registry.json
+          --old-index config/etf-research-preview-index.json --out-dir artifacts-fresh-shadow
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: etf-fresh-shadow-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            fresh-source-provenance
+            artifacts-fresh-shadow
+          retention-days: 30
+  etf-automatic-mail-preview:
+    if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Restore pinned historical baseline archive offline
+        run: python -B scripts/etf_archived_source.py baseline --out-dir automatic-source
+      - name: Exercise normal, stale, invalid, rejected and absent reviewed drafts offline
+        run: >-
+          python -B scripts/etf_automatic_preview_probe.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --out-dir artifacts-automatic-preview
+      - name: Rebuild repaired cards, original decisions and complete new reviews offline
+        run: >-
+          python -B scripts/etf_repair_preview_probe.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --audit config/etf-shadow-repair-audit.json
+          --report artifacts-automatic-preview/repair-ledger-proof.json
+      - name: Verify later public-source supplement without changing frozen mail
+        run: >-
+          python -B scripts/etf_source_intake.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --audit config/etf-source-intake-audit.json
+          --report artifacts-automatic-preview/source-intake-proof.json
+      - name: Rebuild separately reviewed supplement and preserve frozen mail refusal
+        run: >-
+          python -B scripts/etf_supplement_research.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --intake-audit config/etf-source-intake-audit.json
+          --record config/etf-supplement-research-record.json
+          --report artifacts-automatic-preview/supplement-research-proof.json
+      - name: Rebuild original-source research and keep unresolved opinions held
+        # This job is separate from automation-tests and needs its own parser.
+        # The default production workflow does not install this dependency.
+        run: |
+          python -m pip install 'beautifulsoup4==4.14.3'
+          python -B scripts/etf_original_research.py \
+            --source-dir automatic-source \
+            --registry config/etf-shadow-reviewed-registry.json \
+            --parent-record config/etf-supplement-research-record.json \
+            --record config/etf-original-research-records.json \
+            --report artifacts-automatic-preview/original-research-proof.json
+      - name: Rebuild changed crypto card while preserving its original rejection
+        run: >-
+          python -B scripts/etf_research_resolution.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --source-record config/etf-supplement-research-record.json
+          --prior-record config/etf-original-research-records.json
+          --record config/etf-crypto-research-resolution.json
+          --report artifacts-automatic-preview/research-resolution-proof.json
+      - name: Rebuild explicitly selected whole sections without silent truncation
+        run: >-
+          python -B scripts/etf_section_research.py
+          --source-dir automatic-source
+          --registry config/etf-shadow-reviewed-registry.json
+          --source-record config/etf-supplement-research-record.json
+          --prior-record config/etf-crypto-research-resolution.json
+          --record config/etf-futures-section-research.json
+          --report artifacts-automatic-preview/section-research-proof.json
+      - name: Assemble exact current research versions and full candidate preview
+        run: >-
+          python -B scripts/etf_research_roundup.py
+          --source-dir automatic-source
+          --config-dir config
+          --index config/etf-research-preview-index.json
+          --out-dir artifacts-automatic-preview/research-roundup
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: etf-automatic-preview-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts-automatic-preview/
+          retention-days: 30
+          if-no-files-found: warn
+
+  etf-checkpoint-cross-run-restore:
+    if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Restore pinned prior-run checkpoint archive offline
+        run: python -B scripts/etf_archived_source.py checkpoint --out-dir artifacts-cross-run
+      - name: Restore prior-run checkpoints with original request budgets
+        run: python -B scripts/etf_cloud_checkpoint_probe.py restore --out-dir artifacts-cross-run --resume-metadata artifacts-cross-run-provenance/resume.json --report cross-run-proof.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: etf-cross-run-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            cross-run-proof.json
+            artifacts-cross-run-provenance/
+            artifacts-cross-run/
+          if-no-files-found: error
+          retention-days: 30
+
+  etf-checkpoint-save:
+    if: github.event_name == 'pull_request' && github.head_ref == 'codex/etf-evidence-cards-step1' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Restore exact historical production seed inputs offline
+        run: python -B scripts/etf_archived_source.py baseline --out-dir probe-source
+      - name: Save real offline plan and synthetic interrupted checkpoints
+        run: python -B scripts/etf_cloud_checkpoint_probe.py seed --manifest probe-source/collection_manifest.json --source-metadata probe-source/source.json --out-dir artifacts-checkpoint
+      - uses: actions/upload-artifact@v7
+        with:
+          name: etf-checkpoint-seed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts-checkpoint/
+          if-no-files-found: error
+          retention-days: 30
+
+  etf-checkpoint-restore:
+    needs: etf-checkpoint-save
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v8
+        with:
+          name: etf-checkpoint-seed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts-checkpoint
+      - name: Verify hashes, recover receipts, retain budgets and refuse duplicate requests
+        run: python -B scripts/etf_cloud_checkpoint_probe.py restore --out-dir artifacts-checkpoint --report checkpoint-proof.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: etf-checkpoint-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            checkpoint-proof.json
+            artifacts-checkpoint/
+          retention-days: 30
+
   automation-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -27,7 +228,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - run: python -m pip install 'pytest>=8,<9' 'PyYAML>=6,<7' 'hypothesis>=6,<7'
+      - run: python -m pip install 'pytest>=8,<9' 'PyYAML>=6,<7' 'hypothesis>=6,<7' 'beautifulsoup4==4.14.3'
       - name: Check delivery contracts and all automation regressions
         env:
           TEST_FAMILY: ${{ inputs.family || 'all' }}

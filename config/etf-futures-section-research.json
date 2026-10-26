@@ -1,0 +1,1229 @@
+{
+  "version": "etf-section-research-v1",
+  "snapshot": {
+    "run_id": "39347818936",
+    "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b",
+    "cutoff_utc": "2026-10-20T00:28:29.686191+00:00",
+    "body_sha256": "fb5d38afdea5fa1a0327852b9021254a520107b8e5d7a665315b6ea7a1e059b4",
+    "history_sha256": "b1f73b75cbc5e10ff7acf79a224f3156b886b64e91fb7ab7a550084b957a91ce"
+  },
+  "registry_sha256": "717709678405e2ca64ce8ec7a104057a9fe792d0de611dfa1a1e8bfedddcee9d",
+  "source_record_sha256": "05ed8b84d665795503b688a209319fd58280962ed612ed51a52cb780621cd775",
+  "prior_resolution_sha256": "13d06e98191f1665ac337b4d44af444b950dc5d974ba92fdd17f979bb64be0b7",
+  "selection": {
+    "version": "etf-whole-section-selection-v1",
+    "parent_material_id": "4c173865ecaa1fd4ad09d408d7db2062e13143cfd43c5e9d9086b9be3c249894",
+    "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+    "headings": [
+      {
+        "title": "Letter from the editor",
+        "parent_id": "p1"
+      },
+      {
+        "title": "Data sources",
+        "parent_id": "p20"
+      },
+      {
+        "title": "Building the universe",
+        "parent_id": "p53"
+      },
+      {
+        "title": "Classification system",
+        "parent_id": "p148"
+      },
+      {
+        "title": "Process automation",
+        "parent_id": "p158"
+      },
+      {
+        "title": "Conclusion",
+        "parent_id": "p186"
+      },
+      {
+        "title": "Appendix A: Definitions and Methodology",
+        "parent_id": "p192"
+      },
+      {
+        "title": "Appendix B: Research and Publication Conventions",
+        "parent_id": "p193"
+      },
+      {
+        "title": "Footnotes",
+        "parent_id": "p194"
+      }
+    ],
+    "selected_titles": [
+      "Data sources",
+      "Process automation"
+    ],
+    "sections": [
+      {
+        "title": "Data sources",
+        "start_parent_id": "p20",
+        "end_parent_id": "p52",
+        "next_heading_parent_id": "p53",
+        "paragraph_count": 33
+      },
+      {
+        "title": "Process automation",
+        "start_parent_id": "p158",
+        "end_parent_id": "p185",
+        "next_heading_parent_id": "p186",
+        "paragraph_count": 28
+      }
+    ],
+    "paragraph_map": [
+      {
+        "id": "p1",
+        "parent_id": "p20"
+      },
+      {
+        "id": "p2",
+        "parent_id": "p21"
+      },
+      {
+        "id": "p3",
+        "parent_id": "p22"
+      },
+      {
+        "id": "p4",
+        "parent_id": "p23"
+      },
+      {
+        "id": "p5",
+        "parent_id": "p24"
+      },
+      {
+        "id": "p6",
+        "parent_id": "p25"
+      },
+      {
+        "id": "p7",
+        "parent_id": "p26"
+      },
+      {
+        "id": "p8",
+        "parent_id": "p27"
+      },
+      {
+        "id": "p9",
+        "parent_id": "p28"
+      },
+      {
+        "id": "p10",
+        "parent_id": "p29"
+      },
+      {
+        "id": "p11",
+        "parent_id": "p30"
+      },
+      {
+        "id": "p12",
+        "parent_id": "p31"
+      },
+      {
+        "id": "p13",
+        "parent_id": "p32"
+      },
+      {
+        "id": "p14",
+        "parent_id": "p33"
+      },
+      {
+        "id": "p15",
+        "parent_id": "p34"
+      },
+      {
+        "id": "p16",
+        "parent_id": "p35"
+      },
+      {
+        "id": "p17",
+        "parent_id": "p36"
+      },
+      {
+        "id": "p18",
+        "parent_id": "p37"
+      },
+      {
+        "id": "p19",
+        "parent_id": "p38"
+      },
+      {
+        "id": "p20",
+        "parent_id": "p39"
+      },
+      {
+        "id": "p21",
+        "parent_id": "p40"
+      },
+      {
+        "id": "p22",
+        "parent_id": "p41"
+      },
+      {
+        "id": "p23",
+        "parent_id": "p42"
+      },
+      {
+        "id": "p24",
+        "parent_id": "p43"
+      },
+      {
+        "id": "p25",
+        "parent_id": "p44"
+      },
+      {
+        "id": "p26",
+        "parent_id": "p45"
+      },
+      {
+        "id": "p27",
+        "parent_id": "p46"
+      },
+      {
+        "id": "p28",
+        "parent_id": "p47"
+      },
+      {
+        "id": "p29",
+        "parent_id": "p48"
+      },
+      {
+        "id": "p30",
+        "parent_id": "p49"
+      },
+      {
+        "id": "p31",
+        "parent_id": "p50"
+      },
+      {
+        "id": "p32",
+        "parent_id": "p51"
+      },
+      {
+        "id": "p33",
+        "parent_id": "p52"
+      },
+      {
+        "id": "p34",
+        "parent_id": "p158"
+      },
+      {
+        "id": "p35",
+        "parent_id": "p159"
+      },
+      {
+        "id": "p36",
+        "parent_id": "p160"
+      },
+      {
+        "id": "p37",
+        "parent_id": "p161"
+      },
+      {
+        "id": "p38",
+        "parent_id": "p162"
+      },
+      {
+        "id": "p39",
+        "parent_id": "p163"
+      },
+      {
+        "id": "p40",
+        "parent_id": "p164"
+      },
+      {
+        "id": "p41",
+        "parent_id": "p165"
+      },
+      {
+        "id": "p42",
+        "parent_id": "p166"
+      },
+      {
+        "id": "p43",
+        "parent_id": "p167"
+      },
+      {
+        "id": "p44",
+        "parent_id": "p168"
+      },
+      {
+        "id": "p45",
+        "parent_id": "p169"
+      },
+      {
+        "id": "p46",
+        "parent_id": "p170"
+      },
+      {
+        "id": "p47",
+        "parent_id": "p171"
+      },
+      {
+        "id": "p48",
+        "parent_id": "p172"
+      },
+      {
+        "id": "p49",
+        "parent_id": "p173"
+      },
+      {
+        "id": "p50",
+        "parent_id": "p174"
+      },
+      {
+        "id": "p51",
+        "parent_id": "p175"
+      },
+      {
+        "id": "p52",
+        "parent_id": "p176"
+      },
+      {
+        "id": "p53",
+        "parent_id": "p177"
+      },
+      {
+        "id": "p54",
+        "parent_id": "p178"
+      },
+      {
+        "id": "p55",
+        "parent_id": "p179"
+      },
+      {
+        "id": "p56",
+        "parent_id": "p180"
+      },
+      {
+        "id": "p57",
+        "parent_id": "p181"
+      },
+      {
+        "id": "p58",
+        "parent_id": "p182"
+      },
+      {
+        "id": "p59",
+        "parent_id": "p183"
+      },
+      {
+        "id": "p60",
+        "parent_id": "p184"
+      },
+      {
+        "id": "p61",
+        "parent_id": "p185"
+      }
+    ],
+    "parent_paragraph_count": 206,
+    "selected_paragraph_count": 61,
+    "selected_text_chars": 11388,
+    "generation_payload_chars": 21034,
+    "excluded_top_level_sections": [
+      "Letter from the editor",
+      "Building the universe",
+      "Classification system",
+      "Conclusion",
+      "Appendix A: Definitions and Methodology",
+      "Appendix B: Research and Publication Conventions",
+      "Footnotes"
+    ],
+    "complete_article_claim": false,
+    "tables_and_figures_extracted": false,
+    "automatic_truncation": false
+  },
+  "entry": {
+    "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+    "url": "https://www.handelsmeisterei.de/the_messy_business_of_building_a_futures_security_master/",
+    "card": {
+      "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+      "title_zh": "期货合约主数据：数据来源与流程自动化（章节选读）",
+      "questions": [
+        "后续复现：能否用一次真实主数据修改，保留修改前后版本和各层检查结果，验证失败会阻止重新校准？需另行查看实现，不预设文章展示了运行结果。",
+        "后续来源核对：能否取得文中工作簿及对应版本代码，检查标识、单位、缺失数据记录和交易权限如何落实？这需要另行核对，当前选段未验证这些文件。"
+      ],
+      "facts": [
+        {
+          "text_zh": "作者把日线价格用于生成信号，把买卖报价用于估计价差；滑点通过下单前报价与成交价比较来测量。",
+          "evidence_ids": [
+            "p12.s2",
+            "p12.s3",
+            "p24.s1"
+          ]
+        },
+        {
+          "text_zh": "作者以Interactive Brokers期货目录为起点，IBSymbol列记录每个品种的券商代码；目录中有产品并不代表账户有权交易。",
+          "evidence_ids": [
+            "p8.s1",
+            "p8.s2",
+            "p7.s1",
+            "p7.s2"
+          ]
+        },
+        {
+          "text_zh": "自动化助手标记新产品和缺失代码，但处理这些匹配缺口仍需人工；作者记录每项候选的新增、修订、仅保留历史研究或排除决定及理由。",
+          "evidence_ids": [
+            "p39.s3",
+            "p39.s4",
+            "p44.s1",
+            "p44.s2"
+          ]
+        },
+        {
+          "text_zh": "工作簿改变后，作者的流程重载定义、更新合约历史、执行迁移和回填、创建展期日历及回溯调整序列；检查失败须回查定义或来源数据，之后重新估计预测缩放和分散化调整、运行成本后回测并出报告。",
+          "evidence_ids": [
+            "p47.s1",
+            "p48.s2",
+            "p56.s1",
+            "p56.s3"
+          ]
+        }
+      ],
+      "limitations": [
+        {
+          "text_zh": "作者指出，当前策略基于期货的每日价格生成信号（ContractType 列），股票和 ETF 的处理虽已支持但属于另一篇文章的主题。",
+          "evidence_ids": [
+            "p17.s1",
+            "p17.s2"
+          ]
+        },
+        {
+          "text_zh": "作者指出，对于没有配置数据提供商的交易所，价差成本只能用延迟数据估算。",
+          "evidence_ids": [
+            "p29.s1"
+          ]
+        },
+        {
+          "text_zh": "作者指出，跨合约共享历史的建议仍需审查单位与结算条款；用大合约历史会遗漏小合约自身成交量和未平仓量，可能影响展期决策。",
+          "evidence_ids": [
+            "p43.s3",
+            "p43.s4",
+            "p43.s5"
+          ]
+        }
+      ]
+    },
+    "review": {
+      "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+      "card_hash": "2cc8b3875608a9ebb049e6662726a40533265ee15bebfeb212d682fa4e3cdc8f",
+      "overall": "pass",
+      "checks": [
+        {
+          "claim_id": "title",
+          "verdict": "supported",
+          "reason_zh": "标题准确概括了原文内容，符合 source_title 的核心主题，且未引入额外信息。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "facts.0",
+          "verdict": "supported",
+          "reason_zh": "原文明确指出日线价格用于生成信号，买卖报价用于估计价差成本和测量滑点，通过比较成交价与下单前的报价实现。",
+          "evidence_ids": [
+            "p12.s1",
+            "p12.s2",
+            "p24.s1"
+          ]
+        },
+        {
+          "claim_id": "facts.1",
+          "verdict": "supported",
+          "reason_zh": "作者以 Interactive Brokers 期货目录为起点，IBSymbol 列记录券商符号；同时说明产品在目录中并不等于账户可交易，受司法管辖等限制影响。",
+          "evidence_ids": [
+            "p8.s1",
+            "p8.s2",
+            "p7.s1",
+            "p7.s2"
+          ]
+        },
+        {
+          "claim_id": "facts.2",
+          "verdict": "supported",
+          "reason_zh": "自动化助手标记新产品和缺失代码，但处理缺口需人工；每项候选的决策（新增、修订、保留历史、排除）及理由均被记录在工作簿中。",
+          "evidence_ids": [
+            "p39.s2",
+            "p39.s3",
+            "p39.s4",
+            "p44.s1",
+            "p44.s2"
+          ]
+        },
+        {
+          "claim_id": "facts.3",
+          "verdict": "supported",
+          "reason_zh": "工作簿修改后流程重载定义、更新历史、执行迁移回填、创建展期日历、组装回溯调整序列；检查失败会将问题退回审查；随后系统重新估计预测缩放和分散化调整，运行成本后回测并生成报告。",
+          "evidence_ids": [
+            "p47.s1",
+            "p48.s2",
+            "p56.s1",
+            "p56.s2",
+            "p56.s3"
+          ]
+        },
+        {
+          "claim_id": "limitations.0",
+          "verdict": "supported",
+          "reason_zh": "作者明确指出当前策略基于期货日线价格生成信号，股票和ETF虽已支持但将在另一篇文章中讨论。",
+          "evidence_ids": [
+            "p17.s1",
+            "p17.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.1",
+          "verdict": "supported",
+          "reason_zh": "原文明确说明：对于未配置数据提供商的交易所，价差成本只能使用延迟数据估算。",
+          "evidence_ids": [
+            "p29.s1"
+          ]
+        },
+        {
+          "claim_id": "limitations.2",
+          "verdict": "supported",
+          "reason_zh": "作者指出跨合约共享历史需审查单位与结算条款差异，且使用大合约历史会遗漏小合约自身的成交量和未平仓量，可能影响展期决策。",
+          "evidence_ids": [
+            "p43.s3",
+            "p43.s4",
+            "p43.s5"
+          ]
+        },
+        {
+          "claim_id": "questions.0",
+          "verdict": "supported",
+          "reason_zh": "该问题合理询问后续复现可行性，原文未提供实现细节或验证结果，因此不预设已有答案，属于合理待核对问题。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.1",
+          "verdict": "supported",
+          "reason_zh": "该问题询问能否取得工作簿及代码以核对标识、单位、缺失数据记录和权限落实情况，原文未提供这些文件，属合理待核对问题。",
+          "evidence_ids": []
+        }
+      ]
+    },
+    "editor": {
+      "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+      "card_hash": "2cc8b3875608a9ebb049e6662726a40533265ee15bebfeb212d682fa4e3cdc8f",
+      "review_hash": "d12cbfd1b29f05fa22745aac704555574fa0c7b90020f8c56eb09383a1d25370",
+      "appeal_case_id": null,
+      "checks": [
+        {
+          "claim_id": "title",
+          "decision": "confirmed",
+          "reason_zh": "明确这是数据来源与流程自动化的章节选读，不宣称研读全部合约选择、分类、结论与附录。",
+          "evidence_ids": [
+            "source_title"
+          ]
+        },
+        {
+          "claim_id": "facts.0",
+          "decision": "confirmed",
+          "reason_zh": "p12.s2、s3与p24.s1分别支持日线/报价分工和下单前报价衡量滑点；新模型多引p12.s1，编辑以卡片自己的引用为准。",
+          "evidence_ids": [
+            "p12.s2",
+            "p12.s3",
+            "p24.s1"
+          ]
+        },
+        {
+          "claim_id": "facts.1",
+          "decision": "confirmed",
+          "reason_zh": "Interactive Brokers和IBSymbol对应原文拼写，目录存在不等于账户有交易权限。没有将作者的账户权限泛化为我们的权限。",
+          "evidence_ids": [
+            "p8.s1",
+            "p8.s2",
+            "p7.s1",
+            "p7.s2"
+          ]
+        },
+        {
+          "claim_id": "facts.2",
+          "decision": "confirmed",
+          "reason_zh": "候选标记和人工处理缺口有对应原句；新增、修订、仅留研究及排除、连同理由均来自作者流程，不暗示全自动批准。",
+          "evidence_ids": [
+            "p39.s3",
+            "p39.s4",
+            "p44.s1",
+            "p44.s2"
+          ]
+        },
+        {
+          "claim_id": "facts.3",
+          "decision": "confirmed",
+          "reason_zh": "重建步骤、检查失败回查和成本后再校准分别有原句。原文描述失败返回调查，不是我们验证过的强制阻断控制；后续问题继续追问代码实现。",
+          "evidence_ids": [
+            "p47.s1",
+            "p48.s2",
+            "p56.s1",
+            "p56.s3"
+          ]
+        },
+        {
+          "claim_id": "limitations.0",
+          "decision": "confirmed",
+          "reason_zh": "作者当前信号基于期货日线，股票ETF支持是另一文章范围，不当作本选段已展开。",
+          "evidence_ids": [
+            "p17.s1",
+            "p17.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.1",
+          "decision": "confirmed",
+          "reason_zh": "没有配置数据商的交易所仅能用延迟报价估计价差，不能写成对所有实时滑点的可靠测量。",
+          "evidence_ids": [
+            "p29.s1"
+          ]
+        },
+        {
+          "claim_id": "limitations.2",
+          "decision": "confirmed",
+          "reason_zh": "审查单位和结算、缺失小合约成交量及未平仓量来自p43.s3至s5；不可把大合约代理历史等同于小合约实际可执行历史。",
+          "evidence_ids": [
+            "p43.s3",
+            "p43.s4",
+            "p43.s5"
+          ]
+        },
+        {
+          "claim_id": "questions.0",
+          "decision": "confirmed",
+          "reason_zh": "明确要求后续版本化实验及失败控制代码核对，不把文章给出的清单当作真实实现已经验收。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.1",
+          "decision": "confirmed",
+          "reason_zh": "作者确实提供了工作簿链接，但选段只保留其文字；我们未下载或验证内容。新模型说原文未提供文件过于绝对，未采纳；问题仅要求后续取得并核对对应版本。",
+          "evidence_ids": []
+        }
+      ]
+    },
+    "annotation": {
+      "scope": "two complete text sections only; no figures/tables",
+      "delivery_eligible": false
+    }
+  },
+  "initial_card_sha256": "029cb991eb29ce82e466fd23e889463708391201a83ca5c1b795f714683248b7",
+  "repair": {
+    "parent_card": {
+      "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+      "title_zh": "构建期货证券主数据的繁琐工作",
+      "questions": [
+        "材料为捕获节选，是否包含原文全文？",
+        "原文中提到的 Excel 工作簿下载链接是否可用、内容是否与正文一致？",
+        "作者提到“LME example above”，该示例内容是否在节选中缺失？",
+        "年度更新的具体执行频率和触发条件在原文中是否有更完整说明？"
+      ],
+      "facts": [
+        {
+          "text_zh": "作者指出，年度更新从三份产品清单开始，最终产出修订后的证券主数据和重新校准的策略。",
+          "evidence_ids": [
+            "p36.s1"
+          ]
+        },
+        {
+          "text_zh": "作者指出，实时交易使用其经纪商 Interactived Brokers 的期货目录作为起点，工作簿的 IBSymbol 列记录每个品种的经纪商代码。",
+          "evidence_ids": [
+            "p8.s1",
+            "p8.s2"
+          ]
+        },
+        {
+          "text_zh": "作者指出，初始买卖价差估计也可通过观察经纪商交易平台中的报价获得。",
+          "evidence_ids": [
+            "p30.s2"
+          ]
+        }
+      ],
+      "limitations": [
+        {
+          "text_zh": "作者指出，当前策略基于期货的每日价格生成信号（ContractType 列），股票和 ETF 的处理虽已支持但属于另一篇文章的主题。",
+          "evidence_ids": [
+            "p17.s1",
+            "p17.s2"
+          ]
+        },
+        {
+          "text_zh": "作者指出，对于没有配置数据提供商的交易所，价差成本只能用延迟数据估算。",
+          "evidence_ids": [
+            "p29.s1"
+          ]
+        }
+      ]
+    },
+    "parent_review": {
+      "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+      "card_hash": "029cb991eb29ce82e466fd23e889463708391201a83ca5c1b795f714683248b7",
+      "overall": "pass",
+      "checks": [
+        {
+          "claim_id": "title",
+          "verdict": "supported",
+          "reason_zh": "标题与原文标题《The Messy Business of Building a Futures Security Master》语义一致，且无引文要求。符合 source_title。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "facts.0",
+          "verdict": "supported",
+          "reason_zh": "原文 p36.s1 明确指出年度更新从三份产品清单开始，最终产出修订后的证券主数据和重新校准的策略。",
+          "evidence_ids": [
+            "p36.s1"
+          ]
+        },
+        {
+          "claim_id": "facts.1",
+          "verdict": "supported",
+          "reason_zh": "原文 p8.s1 和 p8.s2 分别说明作者使用 Interactive Brokers 作为起点，并记录 IBSymbol 列为经纪商符号。",
+          "evidence_ids": [
+            "p8.s1",
+            "p8.s2"
+          ]
+        },
+        {
+          "claim_id": "facts.2",
+          "verdict": "supported",
+          "reason_zh": "原文 p30.s2 明确指出初始价差估计可通过观察经纪商交易平台中的报价获得。",
+          "evidence_ids": [
+            "p30.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.0",
+          "verdict": "supported",
+          "reason_zh": "原文 p17.s1 说明当前策略基于期货每日价格生成信号；p17.s2 指出股票和 ETF 处理虽已支持但属于另一文章主题。",
+          "evidence_ids": [
+            "p17.s1",
+            "p17.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.1",
+          "verdict": "supported",
+          "reason_zh": "原文 p29 明确说明：对于未配置数据提供商的交易所，价差成本只能用延迟数据估算。",
+          "evidence_ids": [
+            "p29.s1"
+          ]
+        },
+        {
+          "claim_id": "questions.0",
+          "verdict": "supported",
+          "reason_zh": "问题询问节选是否包含全文，材料标注为 captured_excerpt，表明非完整原文，因此该问题合理且无需答案即可支持。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.1",
+          "verdict": "supported",
+          "reason_zh": "问题询问 Excel 工作簿下载链接是否可用及内容是否一致，但原文仅提供“you can download mine here”（p3.s2），未提供实际链接或验证内容，因此问题本身合理，材料未披露信息不构成证据缺失。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.2",
+          "verdict": "supported",
+          "reason_zh": "问题询问“LME example above”是否在节选中缺失，原文提及“as in the LME exam­ple above”（p57.s3），但上下文中并无具体描述，因此该示例内容确实缺失，问题合理且材料未覆盖。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.3",
+          "verdict": "supported",
+          "reason_zh": "问题询问年度更新频率和触发条件是否有更完整说明，原文虽提及其过程，但未明确说明执行频率（如每年一次）或所有触发条件（如系统级异常），因此问题合理，材料未充分回答。",
+          "evidence_ids": []
+        }
+      ]
+    },
+    "parent_veto": {
+      "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+      "card_hash": "029cb991eb29ce82e466fd23e889463708391201a83ca5c1b795f714683248b7",
+      "decision": "needs_revision",
+      "reason_zh": "初稿问全文范围与更新频率，但选段范围已固定，年度及每日触发也已说明；LME实例属于明确未选章节，不应当成未知缺口。还需纠正券商拼写并补足流程核心内容。"
+    },
+    "plan": {
+      "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+      "parent_card_hash": "029cb991eb29ce82e466fd23e889463708391201a83ca5c1b795f714683248b7",
+      "parent_veto_hash": "0232349f36e568da01f3cfe0b1a2a5c2bc85ed313137cb04e4238888eb6b72da",
+      "issues": [
+        {
+          "id": "scope_questions",
+          "reason_zh": "初稿问全文范围与更新频率，但选段范围已固定，年度及每日触发也已说明；LME实例属于明确未选章节，不应当成未知缺口。还需纠正券商拼写并补足流程核心内容。"
+        },
+        {
+          "id": "main_content",
+          "reason_zh": "补充日线与报价分工、人工匹配与决策记录、重建/失败回查及成本后再校准，避免只列目录和零散报价建议。"
+        },
+        {
+          "id": "names_limits",
+          "reason_zh": "纠正Interactived为Interactive Brokers，保留产品目录不等于账户权限、延迟报价及跨合约历史缺失数据的限制。"
+        }
+      ],
+      "edits": [
+        {
+          "field": "title_zh",
+          "value": "期货合约主数据：数据来源与流程自动化（章节选读）",
+          "issue_ids": [
+            "scope_questions"
+          ]
+        },
+        {
+          "field": "facts",
+          "value": [
+            {
+              "text_zh": "作者把日线价格用于生成信号，把买卖报价用于估计价差；滑点通过下单前报价与成交价比较来测量。",
+              "evidence_ids": [
+                "p12.s2",
+                "p12.s3",
+                "p24.s1"
+              ]
+            },
+            {
+              "text_zh": "作者以Interactive Brokers期货目录为起点，IBSymbol列记录每个品种的券商代码；目录中有产品并不代表账户有权交易。",
+              "evidence_ids": [
+                "p8.s1",
+                "p8.s2",
+                "p7.s1",
+                "p7.s2"
+              ]
+            },
+            {
+              "text_zh": "自动化助手标记新产品和缺失代码，但处理这些匹配缺口仍需人工；作者记录每项候选的新增、修订、仅保留历史研究或排除决定及理由。",
+              "evidence_ids": [
+                "p39.s3",
+                "p39.s4",
+                "p44.s1",
+                "p44.s2"
+              ]
+            },
+            {
+              "text_zh": "工作簿改变后，作者的流程重载定义、更新合约历史、执行迁移和回填、创建展期日历及回溯调整序列；检查失败须回查定义或来源数据，之后重新估计预测缩放和分散化调整、运行成本后回测并出报告。",
+              "evidence_ids": [
+                "p47.s1",
+                "p48.s2",
+                "p56.s1",
+                "p56.s3"
+              ]
+            }
+          ],
+          "issue_ids": [
+            "main_content",
+            "names_limits"
+          ]
+        },
+        {
+          "field": "limitations",
+          "value": [
+            {
+              "text_zh": "作者指出，当前策略基于期货的每日价格生成信号（ContractType 列），股票和 ETF 的处理虽已支持但属于另一篇文章的主题。",
+              "evidence_ids": [
+                "p17.s1",
+                "p17.s2"
+              ]
+            },
+            {
+              "text_zh": "作者指出，对于没有配置数据提供商的交易所，价差成本只能用延迟数据估算。",
+              "evidence_ids": [
+                "p29.s1"
+              ]
+            },
+            {
+              "text_zh": "作者指出，跨合约共享历史的建议仍需审查单位与结算条款；用大合约历史会遗漏小合约自身成交量和未平仓量，可能影响展期决策。",
+              "evidence_ids": [
+                "p43.s3",
+                "p43.s4",
+                "p43.s5"
+              ]
+            }
+          ],
+          "issue_ids": [
+            "names_limits"
+          ]
+        },
+        {
+          "field": "questions",
+          "value": [
+            "后续复现：能否用一次真实主数据修改，保留修改前后版本和各层检查结果，验证失败会阻止重新校准？需另行查看实现，不预设文章展示了运行结果。",
+            "后续来源核对：能否取得文中工作簿及对应版本代码，检查标识、单位、缺失数据记录和交易权限如何落实？这需要另行核对，当前选段未验证这些文件。"
+          ],
+          "issue_ids": [
+            "scope_questions"
+          ]
+        }
+      ]
+    },
+    "revision_id": "45acf450a1b371c7077162b4a098ac1c97a7d81b557e4b8c1338347c8465981e",
+    "disposition": {
+      "revision_id": "45acf450a1b371c7077162b4a098ac1c97a7d81b557e4b8c1338347c8465981e",
+      "card_hash": "2cc8b3875608a9ebb049e6662726a40533265ee15bebfeb212d682fa4e3cdc8f",
+      "checks": [
+        {
+          "issue_id": "scope_questions",
+          "decision": "resolved",
+          "reason_zh": "已将标题标为章节选读；删除已知节选范围、频率与未选LME实例的问题，改为明确后续实验与文件核对任务。"
+        },
+        {
+          "issue_id": "main_content",
+          "decision": "resolved",
+          "reason_zh": "已补日线/报价分工、人工决定与理由、重建和质量检查失败回查及成本后再校准。只转述作者流程，未声称其代码已通过我们的测试。"
+        },
+        {
+          "issue_id": "names_limits",
+          "decision": "resolved",
+          "reason_zh": "已纠正券商名称，补充目录非账户权限、延迟报价及大合约历史缺失小合约成交量/未平仓量的来源限制。"
+        }
+      ]
+    }
+  },
+  "frozen_protocol": {
+    "run_label": "2026-10-21-futures-master-whole-sections",
+    "selection": {
+      "version": "etf-whole-section-selection-v1",
+      "parent_material_id": "4c173865ecaa1fd4ad09d408d7db2062e13143cfd43c5e9d9086b9be3c249894",
+      "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+      "headings": [
+        {
+          "title": "Letter from the editor",
+          "parent_id": "p1"
+        },
+        {
+          "title": "Data sources",
+          "parent_id": "p20"
+        },
+        {
+          "title": "Building the universe",
+          "parent_id": "p53"
+        },
+        {
+          "title": "Classification system",
+          "parent_id": "p148"
+        },
+        {
+          "title": "Process automation",
+          "parent_id": "p158"
+        },
+        {
+          "title": "Conclusion",
+          "parent_id": "p186"
+        },
+        {
+          "title": "Appendix A: Definitions and Methodology",
+          "parent_id": "p192"
+        },
+        {
+          "title": "Appendix B: Research and Publication Conventions",
+          "parent_id": "p193"
+        },
+        {
+          "title": "Footnotes",
+          "parent_id": "p194"
+        }
+      ],
+      "selected_titles": [
+        "Data sources",
+        "Process automation"
+      ],
+      "sections": [
+        {
+          "title": "Data sources",
+          "start_parent_id": "p20",
+          "end_parent_id": "p52",
+          "next_heading_parent_id": "p53",
+          "paragraph_count": 33
+        },
+        {
+          "title": "Process automation",
+          "start_parent_id": "p158",
+          "end_parent_id": "p185",
+          "next_heading_parent_id": "p186",
+          "paragraph_count": 28
+        }
+      ],
+      "paragraph_map": [
+        {
+          "id": "p1",
+          "parent_id": "p20"
+        },
+        {
+          "id": "p2",
+          "parent_id": "p21"
+        },
+        {
+          "id": "p3",
+          "parent_id": "p22"
+        },
+        {
+          "id": "p4",
+          "parent_id": "p23"
+        },
+        {
+          "id": "p5",
+          "parent_id": "p24"
+        },
+        {
+          "id": "p6",
+          "parent_id": "p25"
+        },
+        {
+          "id": "p7",
+          "parent_id": "p26"
+        },
+        {
+          "id": "p8",
+          "parent_id": "p27"
+        },
+        {
+          "id": "p9",
+          "parent_id": "p28"
+        },
+        {
+          "id": "p10",
+          "parent_id": "p29"
+        },
+        {
+          "id": "p11",
+          "parent_id": "p30"
+        },
+        {
+          "id": "p12",
+          "parent_id": "p31"
+        },
+        {
+          "id": "p13",
+          "parent_id": "p32"
+        },
+        {
+          "id": "p14",
+          "parent_id": "p33"
+        },
+        {
+          "id": "p15",
+          "parent_id": "p34"
+        },
+        {
+          "id": "p16",
+          "parent_id": "p35"
+        },
+        {
+          "id": "p17",
+          "parent_id": "p36"
+        },
+        {
+          "id": "p18",
+          "parent_id": "p37"
+        },
+        {
+          "id": "p19",
+          "parent_id": "p38"
+        },
+        {
+          "id": "p20",
+          "parent_id": "p39"
+        },
+        {
+          "id": "p21",
+          "parent_id": "p40"
+        },
+        {
+          "id": "p22",
+          "parent_id": "p41"
+        },
+        {
+          "id": "p23",
+          "parent_id": "p42"
+        },
+        {
+          "id": "p24",
+          "parent_id": "p43"
+        },
+        {
+          "id": "p25",
+          "parent_id": "p44"
+        },
+        {
+          "id": "p26",
+          "parent_id": "p45"
+        },
+        {
+          "id": "p27",
+          "parent_id": "p46"
+        },
+        {
+          "id": "p28",
+          "parent_id": "p47"
+        },
+        {
+          "id": "p29",
+          "parent_id": "p48"
+        },
+        {
+          "id": "p30",
+          "parent_id": "p49"
+        },
+        {
+          "id": "p31",
+          "parent_id": "p50"
+        },
+        {
+          "id": "p32",
+          "parent_id": "p51"
+        },
+        {
+          "id": "p33",
+          "parent_id": "p52"
+        },
+        {
+          "id": "p34",
+          "parent_id": "p158"
+        },
+        {
+          "id": "p35",
+          "parent_id": "p159"
+        },
+        {
+          "id": "p36",
+          "parent_id": "p160"
+        },
+        {
+          "id": "p37",
+          "parent_id": "p161"
+        },
+        {
+          "id": "p38",
+          "parent_id": "p162"
+        },
+        {
+          "id": "p39",
+          "parent_id": "p163"
+        },
+        {
+          "id": "p40",
+          "parent_id": "p164"
+        },
+        {
+          "id": "p41",
+          "parent_id": "p165"
+        },
+        {
+          "id": "p42",
+          "parent_id": "p166"
+        },
+        {
+          "id": "p43",
+          "parent_id": "p167"
+        },
+        {
+          "id": "p44",
+          "parent_id": "p168"
+        },
+        {
+          "id": "p45",
+          "parent_id": "p169"
+        },
+        {
+          "id": "p46",
+          "parent_id": "p170"
+        },
+        {
+          "id": "p47",
+          "parent_id": "p171"
+        },
+        {
+          "id": "p48",
+          "parent_id": "p172"
+        },
+        {
+          "id": "p49",
+          "parent_id": "p173"
+        },
+        {
+          "id": "p50",
+          "parent_id": "p174"
+        },
+        {
+          "id": "p51",
+          "parent_id": "p175"
+        },
+        {
+          "id": "p52",
+          "parent_id": "p176"
+        },
+        {
+          "id": "p53",
+          "parent_id": "p177"
+        },
+        {
+          "id": "p54",
+          "parent_id": "p178"
+        },
+        {
+          "id": "p55",
+          "parent_id": "p179"
+        },
+        {
+          "id": "p56",
+          "parent_id": "p180"
+        },
+        {
+          "id": "p57",
+          "parent_id": "p181"
+        },
+        {
+          "id": "p58",
+          "parent_id": "p182"
+        },
+        {
+          "id": "p59",
+          "parent_id": "p183"
+        },
+        {
+          "id": "p60",
+          "parent_id": "p184"
+        },
+        {
+          "id": "p61",
+          "parent_id": "p185"
+        }
+      ],
+      "parent_paragraph_count": 206,
+      "selected_paragraph_count": 61,
+      "selected_text_chars": 11388,
+      "generation_payload_chars": 21034,
+      "excluded_top_level_sections": [
+        "Letter from the editor",
+        "Building the universe",
+        "Classification system",
+        "Conclusion",
+        "Appendix A: Definitions and Methodology",
+        "Appendix B: Research and Publication Conventions",
+        "Footnotes"
+      ],
+      "complete_article_claim": false,
+      "tables_and_figures_extracted": false,
+      "automatic_truncation": false
+    },
+    "generator": "deepseek-v4.1-flash",
+    "reviewer": "qwen-flash",
+    "thinking": "disabled",
+    "initial_max_requests": 2,
+    "initial_output_reserve": 5600,
+    "conditional_changed_card_reviews": 1,
+    "combined_max_requests": 3,
+    "combined_max_reserved_output_tokens": 8800,
+    "max_input_chars": 60000,
+    "external_fact_check": "not_performed",
+    "delivery_eligible": false
+  },
+  "provider_usage": {
+    "generation_requests": 1,
+    "review_requests": 2,
+    "total_requests": 3,
+    "output_tokens_reserved": 8800,
+    "provider_reported_total_tokens": 22327,
+    "unknown_outcomes": 0,
+    "usage_missing_requests": 0,
+    "monetary_cap": "not_established"
+  },
+  "editor_actor": "assistant; not user review",
+  "external_fact_check": "not_performed",
+  "delivery_eligible": false,
+  "mail_approvals_added": 0
+}

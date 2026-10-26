@@ -1,0 +1,1126 @@
+{
+  "version": "etf-original-research-v1",
+  "snapshot": {
+    "run_id": "39347818936",
+    "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b",
+    "cutoff_utc": "2026-10-20T00:28:29.686191+00:00",
+    "body_sha256": "fb5d38afdea5fa1a0327852b9021254a520107b8e5d7a665315b6ea7a1e059b4",
+    "history_sha256": "b1f73b75cbc5e10ff7acf79a224f3156b886b64e91fb7ab7a550084b957a91ce"
+  },
+  "registry_sha256": "717709678405e2ca64ce8ec7a104057a9fe792d0de611dfa1a1e8bfedddcee9d",
+  "parent_research_sha256": "05ed8b84d665795503b688a209319fd58280962ed612ed51a52cb780621cd775",
+  "entries": [
+    {
+      "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+      "url": "https://aligrithm.com/the-real-is-oos-sharpe-haircut-closed-form-not-50/",
+      "card": {
+        "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+        "title_zh": "真实的样本内到样本外夏普折损：闭式解，而非“五成”",
+        "questions": [
+          "十年曲线的保留比例与模拟段落为何不同？需查阅论文及代码确认，不能凭转述自行更正。",
+          "面板回归的比例与列出的夏普、以及方向写反的句子，是否有作者勘误或未四舍五入的数据可核对？",
+          "在另设的留出样本中，计入选择试验及实际交易成本后，该比例还适用吗？这是后续复现问题。"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者转述的商品期货案例以十二种期货、三个动量窗口和截距构成444个系数，使用2,520行数据，十年曲线的样本外夏普保留比例读为百分之30。",
+            "evidence_ids": [
+              "p1.s1",
+              "p1.s2",
+              "p1.s3"
+            ]
+          },
+          {
+            "text_zh": "作者指出，保留比例随训练长度、参数数目及真实夏普改变；单一期货、单一信号、真实夏普0.50时，一年保留百分之20，十年保留百分之72。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "text_zh": "作者给出的零斜率例子不含截距：12种资产、37个信号、2,520天，样本内年化夏普6.58，样本外为0；这不是把含截距商品模拟的8.2拆解出来。",
+            "evidence_ids": [
+              "p58.s1",
+              "p58.s3"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "作者说明，这个推导只拟合一次回归，未计价差、借券费或未成交成本；从多次试验中挑选赢家的额外损害还需单独处理。",
+            "evidence_ids": [
+              "p53.s1",
+              "p53.s4",
+              "p53.s5"
+            ]
+          },
+          {
+            "text_zh": "作者只在12个资产、数千天的情形观察到估计协方差后的保留比例接近已知协方差情形；500个资产且窗口短于资产数时，样本协方差会奇异，样本外夏普约为零。",
+            "evidence_ids": [
+              "p51.s1",
+              "p51.s2"
+            ]
+          },
+          {
+            "text_zh": "作者指出原文若干保留比例与所列夏普不能对应，且十年曲线的百分之30与模拟段落的百分之38之间没有给出衔接步骤；不能擅自合成一个确定折扣。",
+            "evidence_ids": [
+              "p41.s10",
+              "p41.s12"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+        "card_hash": "529bd9b4e9f12a9c9a6a55236c4ca0a7f4ca6455482efe590680f0ecce4828b2",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文标题一致，无额外断言，符合 source_title。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出商品期货案例使用12种期货、3个动量窗口和截距，共444个系数，2,520行数据；并称其十一年回测的保留比例为30%。引用完整支持该陈述。",
+            "evidence_ids": [
+              "p1.s1",
+              "p1.s2",
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文明确说明保留比例随训练长度、参数数和真实夏普变化；并给出单一资产、单一信号、真实夏普0.50时，一年保留20%，十年保留72%的数据。引用完整支持该陈述。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出在无截距情况下，12资产、37信号、2520天零斜率时，样本内年化夏普为6.58，样本外为0；并强调6.58是无截距情形，不是对含截距模拟中8.2的拆解。引用完整支持该陈述。",
+            "evidence_ids": [
+              "p58.s1",
+              "p58.s3"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出推导仅基于一次回归，未计入价差、借券费或未成交成本；若从多个试验中挑选赢家，则需单独考虑搜索带来的损害。引用完整支持该陈述。",
+            "evidence_ids": [
+              "p53.s1",
+              "p53.s2",
+              "p53.s3"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出在12资产、数千天时，估计协方差后保留比例接近已知协方差情形；在500资产且窗口短于资产数时，样本协方差奇异，样本外夏普趋近于零。引用完整支持该陈述。",
+            "evidence_ids": [
+              "p51.s1",
+              "p51.s2"
+            ]
+          },
+          {
+            "claim_id": "limitations.2",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出面板回归的比例与列出的夏普不一致（如0.6/0.9=67%≠70%），且十年曲线30%与模拟段落38%之间缺乏衔接步骤；并指出存在方向错误的句子。因此该限制成立，材料本身承认矛盾。引用完整支持该陈述。",
+            "evidence_ids": [
+              "p41.s10",
+              "p41.s12"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问论文中十年曲线30%与模拟段落38%之间的差异，而原文已承认两者未衔接且存在不一致，故此问题未被否定，属于材料未披露内容的合理追问。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题询问面板回归比例与夏普值及方向错误句子是否存在勘误或四舍五入问题，原文已承认数值不一致和方向错误，故该问题合理，无需修订。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "问题询问在留出样本中加入选择试验和实际交易成本后该比例是否仍适用，原文明确说明未计价差、借券费等，且选择行为的损害需单独处理，故此问题合理，属于材料未覆盖的后续复现问题。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+        "card_hash": "529bd9b4e9f12a9c9a6a55236c4ca0a7f4ca6455482efe590680f0ecce4828b2",
+        "review_hash": "e1cb9d30e39c049d29290cea78e0a7f303176343f72cfd556ea950bb575b22d8",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题对应原文的线性预测模型样本内外夏普折损，并未给出通用折扣。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "逐句核对十二种期货、三个窗口和截距、444个系数及2,520行；比例是十年曲线读数，不是实盘承诺。模型理由误写十一年，未采用。",
+            "evidence_ids": [
+              "p1.s1",
+              "p1.s2",
+              "p1.s3"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "对应原文单信号示例与参数依赖；百分之写法与原文percent同值，不扩张为任何策略的必然结果。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "核对无截距的零斜率设定和两个夏普，保留与含截距8.2模拟不等同的原文限定。",
+            "evidence_ids": [
+              "p58.s1",
+              "p58.s3"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "核对价差借券未成交成本、一次拟合和额外选择试验损害；模型理由列的句号不完整，编辑实际核对本卡引用的p53.s1、s4、s5。",
+            "evidence_ids": [
+              "p53.s1",
+              "p53.s4",
+              "p53.s5"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "decision": "confirmed",
+            "reason_zh": "仅陈述特定12资产长样本与500资产短样本的不同情况，没有宣称估计协方差永远不影响结果。",
+            "evidence_ids": [
+              "p51.s1",
+              "p51.s2"
+            ]
+          },
+          {
+            "claim_id": "limitations.2",
+            "decision": "confirmed",
+            "reason_zh": "保留作者明确指出的比例冲突与未提供衔接步骤，不从矛盾数值合成确定折扣。",
+            "evidence_ids": [
+              "p41.s10",
+              "p41.s12"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "原文明确未给两比例的衔接，问题要求查论文代码，不暗示差异已解决。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "原文承认数值和方向矛盾，问题保留勘误及未四舍五入数据的核对需求。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "明确作为后续成本与选择试验复现，非声称原文已做此验证。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "research_scope": "independent_original_source_excerpt",
+        "external_fact_check": "not_performed",
+        "delivery_eligible": false
+      }
+    },
+    {
+      "material_id": "ee28284418b8c94057e1692d80a5f1d9b5b0398d124d30d7300ca2389dbe3912",
+      "url": "https://blog.harbourfronts.com/2026/10/18/the-role-of-liquidity-in-stock-returns-and-option-pricing/",
+      "card": {
+        "material_id": "ee28284418b8c94057e1692d80a5f1d9b5b0398d124d30d7300ca2389dbe3912",
+        "title_zh": "流动性在股票收益与期权定价中的作用",
+        "questions": [
+          "原文称负的流动性波动溢价在全球多数股票市场普遍存在，该结论覆盖的具体市场范围与样本区间是什么？",
+          "原文称纳入随机流动性显著改善模型表现，其比较基准、评估指标与实证数据来源是什么？",
+          "原文称该模型可改善对流动性冲击的对冲响应并有助于缓释风险，这一结论基于何种检验或实验设定？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者介绍的研究发现，流动性波动在全球股票市场中负向预测后续股票收益，且在控制包括特质收益波动率在内的其他因子后依然成立。",
+            "evidence_ids": [
+              "p5.s1",
+              "p7.s1"
+            ]
+          },
+          {
+            "text_zh": "作者指出，流动性变化与收益呈不对称关系：流动性下降带来的负面影响明显强于同等幅度流动性上升带来的正面影响，且负的流动性波动溢价由下行流动性波动而非上行流动性波动驱动。",
+            "evidence_ids": [
+              "p8.s1",
+              "p10.s1"
+            ]
+          },
+          {
+            "text_zh": "作者介绍的另一项研究提出将流动性纳入欧式期权定价的模型，联合纳入随机波动率、经济周期与流动性风险，数值实验显示三者对期权价格均有显著影响，实证结果显示纳入随机流动性相比假设流动性恒定显著改善模型表现。",
+            "evidence_ids": [
+              "p20.s1",
+              "p24.s1",
+              "p25.s1"
+            ]
+          }
+        ],
+        "limitations": []
+      },
+      "review": {
+        "material_id": "ee28284418b8c94057e1692d80a5f1d9b5b0398d124d30d7300ca2389dbe3912",
+        "card_hash": "2dc7d54167c75a05556ee4c5d7008f3a1d53073a7065a98ec4284999b9670d76",
+        "overall": "pass",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与原文标题一致，且符合 source_title 内容。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "引用 p5.s1 和 p7.s1 明确支持流动性波动负向预测全球股票市场后续收益，且在控制其他因子（包括特质收益波动率）后依然成立。",
+            "evidence_ids": [
+              "p5.s1",
+              "p7.s1"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "引用 p8.s1 与 p10.s1 分别说明流动性下降的负面影响强于上升的正面影响，且下行流动性波动驱动负溢价，与陈述一致。",
+            "evidence_ids": [
+              "p8.s1",
+              "p10.s1"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "引用 p20.s1、p24.s1、p25.s1 共同支持：模型联合纳入随机波动率、经济周期和流动性风险；三者对期权价格有显著影响；实证显示引入随机流动性显著优于恒定流动性假设。",
+            "evidence_ids": [
+              "p20.s1",
+              "p24.s1",
+              "p25.s1"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问原文未披露的具体市场范围与样本区间，材料中仅提及‘global equity markets’但未具体说明，因此该问题本身不预设错误前提，应视为 supported。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "supported",
+            "reason_zh": "问题询问比较基准、评估指标与数据来源，原文未明确说明，但此为合理追问，不构成前提错误或矛盾，故应 supported。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "supported",
+            "reason_zh": "问题询问模型改善对冲响应与缓释风险的检验依据，原文虽未详述实验设定，但 p26.s1 提到其可提升对冲响应并缓解风险，因此问题基于原文存在依据，应 supported。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "ee28284418b8c94057e1692d80a5f1d9b5b0398d124d30d7300ca2389dbe3912",
+        "card_hash": "2dc7d54167c75a05556ee4c5d7008f3a1d53073a7065a98ec4284999b9670d76",
+        "review_hash": "546a934ef7ae411d3df32e395ea290364b5f7ce20dee68354a66f8d7102264a8",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题对应股票收益和欧式期权定价两个话题，没有合并成同一个模型结论。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "这是博客对所引研究的转述，核对负向预测及控制特质波动的原句，不把相关性当因果。",
+            "evidence_ids": [
+              "p5.s1",
+              "p7.s1"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "下降与上升的不对称，以及下行流动性波动的作用有独立原句对应。",
+            "evidence_ids": [
+              "p8.s1",
+              "p10.s1"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "原文确实报告联合模型及相对恒定流动性假设的改善，但没有收益承诺；没有自行填入效果大小和评估指标。",
+            "evidence_ids": [
+              "p20.s1",
+              "p24.s1",
+              "p25.s1"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "博客没有列具体市场和样本期，问题保留这些缺失信息。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "博客说改善但未给具体评估指标和数据来源；下一步应查所引论文，不能自行补数字。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "博客只有改善对冲的概括性陈述，尚无实验细节，提问不等于认可外部事实。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "research_scope": "independent_original_source_excerpt",
+        "external_fact_check": "not_performed",
+        "delivery_eligible": false
+      }
+    },
+    {
+      "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+      "url": "https://aligrithm.com/a-trend-factor-for-the-crypto-cross-section-and-its-overfit-tell/",
+      "card": {
+        "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+        "title_zh": "加密资产横截面趋势因子及其过拟合线索",
+        "questions": [
+          "表格与正文相差一枚币的原因是什么？需核对原论文和数据，而非选择一个计数后视为已解决。",
+          "若实施延迟与验证片段同时启用，并在后续独立时期复现，扣除可执行交易和借币成本后表现如何？原文分别的条件中位数不能回答这个联合问题。",
+          "在这些相关设计之间做多重检验校正后，证据强度还能保留多少？Lo单策略检验不能直接替代这一检查。"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者转述，二〇一五年四月至二〇二二年五月的历史样本中，多空组合周收益为3.87%，t统计量5.19，年化夏普1.94。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "text_zh": "作者指出，55,296种设计共用同一历史样本；弹性网设计的夏普中位数1.34，等权配置并关闭百万美元市值筛选的极端设计为10.92。",
+            "evidence_ids": [
+              "p31.s1",
+              "p31.s4",
+              "p31.s5",
+              "p30.s9"
+            ]
+          },
+          {
+            "text_zh": "作者指出，CTREND方法将28个技术指标的预测值经弹性网筛选后保留正权重预测并取等权平均，买入最高五分之一市值加权的币并做空最低五分之一，持仓一周。",
+            "evidence_ids": [
+              "p4.s1",
+              "p4.s2",
+              "p4.s3",
+              "p50.s1"
+            ]
+          },
+          {
+            "text_zh": "作者分别报告条件中位数：设置12周验证片段时，夏普从1.47变为1.19；实施延迟一天时，从1.46变为1.24。两项不是已联合施加后的单一结果。",
+            "evidence_ids": [
+              "p53.s3",
+              "p53.s4"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "作者指出，所有单元格共享同一段423周的样本，79%的命中率只是对一个正值样本做微小扰动时呈现的结果。",
+            "evidence_ids": [
+              "p30.s9",
+              "p34.s2"
+            ]
+          },
+          {
+            "text_zh": "作者报告每周更换68.46%的权重，并提出可考虑滞回区间，但论文并未测试这种区间，不能把它当成已验证的降换手结果。",
+            "evidence_ids": [
+              "p47.s1",
+              "p47.s2",
+              "p47.s4"
+            ]
+          },
+          {
+            "text_zh": "作者将Lo检验描述为允许自相关后检验夏普是否为正；另指出t统计量属于单一设计、不同设计共用同一段样本。",
+            "evidence_ids": [
+              "p31.s6",
+              "p34.s1",
+              "p34.s2"
+            ]
+          }
+        ]
+      },
+      "review": {
+        "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+        "card_hash": "2f2f1b731ab803934e20215ff71a086cd91d16e2d259d00faf2597eb1d8b6599",
+        "overall": "revise",
+        "checks": [
+          {
+            "claim_id": "title",
+            "verdict": "supported",
+            "reason_zh": "标题与源文章标题一致，符合 source_title。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "facts.0",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出从2015年4月到2022年5月，该多空组合周收益为3.87%，t统计量5.19，年化夏普比率为1.94。引用来自 p1.s2。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "verdict": "supported",
+            "reason_zh": "原文说明55,296个设计共用同一423周样本；弹性网设计的夏普中位数为1.34，等权并关闭百万美元市值筛选的极端设计夏普为10.92。引用来自 p30.s9、p31.s4、p31.s5。",
+            "evidence_ids": [
+              "p30.s9",
+              "p31.s4",
+              "p31.s5"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "verdict": "supported",
+            "reason_zh": "原文描述了方法：将28个技术指标的预测值经弹性网筛选后保留正权重预测并取等权平均，形成CTREND得分，并进行价值加权的高低五分之一做空交易，持仓一周。引用来自 p4.s1–s3、p50.s1–s2。",
+            "evidence_ids": [
+              "p4.s1",
+              "p4.s2",
+              "p4.s3",
+              "p50.s1",
+              "p50.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.3",
+            "verdict": "needs_revision",
+            "reason_zh": "该条声称‘两项不是已联合施加后的单一结果’，但原文未说明12周验证片段和一日实施延迟是否可叠加或存在交互效应。此推断超出原文陈述，不能由作者报告两个独立条件中位数就推出它们不可联合。因此需修订以避免误导。",
+            "evidence_ids": [
+              "p53.s3",
+              "p53.s4"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "verdict": "supported",
+            "reason_zh": "原文指出所有单元格共享同一423周样本，且79%的命中率是基于对一个正值样本的小扰动所呈现的结果。引用来自 p30.s9、p34.s2。",
+            "evidence_ids": [
+              "p30.s9",
+              "p34.s2"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "verdict": "supported",
+            "reason_zh": "原文明确指出每周更换68.46%的权重，并提及滞回区间（band）作为可能改进方案，但强调论文未测试该方法。因此限制表述准确。引用来自 p47.s1、p47.s2、p47.s3。",
+            "evidence_ids": [
+              "p47.s1",
+              "p47.s2",
+              "p47.s3"
+            ]
+          },
+          {
+            "claim_id": "limitations.2",
+            "verdict": "supported",
+            "reason_zh": "原文明确说明Lo检验用于判断夏普比率在允许自相关下是否为正；同时指出t统计量属于单一设计，各设计共享同一样本。引用来自 p31.s6、p34.s1、p34.s2。",
+            "evidence_ids": [
+              "p31.s6",
+              "p34.s1",
+              "p34.s2"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "verdict": "supported",
+            "reason_zh": "问题合理询问表格与正文计数差异原因，原文承认“表中为3,245，文中为3,244，一枚币未解释”，表明资料缺失。因此问题应被支持，不因无答案而判 insufficient_evidence。",
+            "evidence_ids": [
+              "p9.s4",
+              "p9.s5",
+              "p9.s6"
+            ]
+          },
+          {
+            "claim_id": "questions.1",
+            "verdict": "needs_revision",
+            "reason_zh": "问题要求评估‘实施延迟与验证片段同时启用’并在后续时期复现后的表现，但原文仅分别报告两个条件下的中位数（1.19 和 1.24），并未提供联合条件下的结果。因此无法回答该联合问题，现有信息不足以支持该问题的解答，需修订。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "verdict": "needs_revision",
+            "reason_zh": "问题关于多重检验校正后的证据强度，但原文仅使用Lo检验（单策略）判断夏普是否为正，未进行多重检验校正（如FDR、Bonferroni）。因此原文未提供多重检验校正后的结论，不能直接用洛检验替代。需修订以避免误读。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "editor": {
+        "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+        "card_hash": "2f2f1b731ab803934e20215ff71a086cd91d16e2d259d00faf2597eb1d8b6599",
+        "review_hash": "77f81a8de13be77a7aee10fa7e5c57c41670fcd3c29eca17d3acd6bdbc46c8ac",
+        "appeal_case_id": null,
+        "checks": [
+          {
+            "claim_id": "title",
+            "decision": "confirmed",
+            "reason_zh": "标题准确对应加密横截面趋势与过拟合线索，不引申到股票ETF。",
+            "evidence_ids": [
+              "source_title"
+            ]
+          },
+          {
+            "claim_id": "facts.0",
+            "decision": "confirmed",
+            "reason_zh": "核对历史日期、周收益、t统计量及年化夏普，明确只是作者转述的历史样本。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "claim_id": "facts.1",
+            "decision": "confirmed",
+            "reason_zh": "数量、中位数和极端设计均逐句核对；多个设计共享一段历史，不能当独立样本。",
+            "evidence_ids": [
+              "p31.s1",
+              "p31.s4",
+              "p31.s5",
+              "p30.s9"
+            ]
+          },
+          {
+            "claim_id": "facts.2",
+            "decision": "confirmed",
+            "reason_zh": "正权重弹性网筛选后对预测等权，组合再按币市值加权，两个权重层级分清；最高五分之一做多、最低做空。",
+            "evidence_ids": [
+              "p4.s1",
+              "p4.s2",
+              "p4.s3",
+              "p50.s1"
+            ]
+          },
+          {
+            "claim_id": "facts.3",
+            "decision": "needs_revision",
+            "reason_zh": "两个数值对正确，但为消除复核模型对联合关系表述的误读，仍应补引条件中位数定义并收紧末句；当前不认定完成。",
+            "evidence_ids": [
+              "p53.s3",
+              "p53.s4"
+            ]
+          },
+          {
+            "claim_id": "limitations.0",
+            "decision": "confirmed",
+            "reason_zh": "共用423周与79%命中率的解释对应原文，没有把命中率当独立成功概率。",
+            "evidence_ids": [
+              "p30.s9",
+              "p34.s2"
+            ]
+          },
+          {
+            "claim_id": "limitations.1",
+            "decision": "confirmed",
+            "reason_zh": "每周68.46%与未测试band均核对；模型理由错列p47.s3，编辑核对卡片自己的p47.s4，未更换证据。",
+            "evidence_ids": [
+              "p47.s1",
+              "p47.s2",
+              "p47.s4"
+            ]
+          },
+          {
+            "claim_id": "limitations.2",
+            "decision": "confirmed",
+            "reason_zh": "Lo只检验允许自相关后的单策略夏普，与跨设计多重检验不等同；卡片不声称已做多重校正。",
+            "evidence_ids": [
+              "p31.s6",
+              "p34.s1",
+              "p34.s2"
+            ]
+          },
+          {
+            "claim_id": "questions.0",
+            "decision": "confirmed",
+            "reason_zh": "原文明说币数相差一枚未解释，问题要求查原论文数据而未擅自选择正确计数。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.1",
+            "decision": "confirmed",
+            "reason_zh": "这是明确标记的后续联合条件及独立时期复现问题，不预设现有材料有答案；模型将无法作答当成拒绝理由，分歧保留。",
+            "evidence_ids": []
+          },
+          {
+            "claim_id": "questions.2",
+            "decision": "confirmed",
+            "reason_zh": "询问尚未做的多重检验校正，未将Lo当成已校正结果；模型把缺答案判拒绝，分歧保留且不能覆盖其拒绝。",
+            "evidence_ids": []
+          }
+        ]
+      },
+      "annotation": {
+        "research_scope": "independent_original_source_excerpt",
+        "external_fact_check": "not_performed",
+        "delivery_eligible": false
+      }
+    }
+  ],
+  "repairs": {
+    "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424": {
+      "parent_card": {
+        "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+        "title_zh": "真实的样本内到样本外夏普折损：闭式解，而非“五成”",
+        "questions": [
+          "原文商品案例的 30% 与模拟段落中的 38% 之间如何衔接？",
+          "原文称面板回归把复制比例从 71% 提高到 30% 的句子方向是否写反，应如何更正？",
+          "模拟中面板样本内 0.9、样本外 0.6 与其所称 70% 的比例为何不一致？",
+          "真实行情中 0.5 除以 0.7 得 71%，与原文所称 68% 的差异如何解释？",
+          "6.58 的样本内 Sharpe 是在不含截距的设定下得出的，包含截距后结果应如何调整？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者指出，在十二种商品期货、三个动量窗口、一个截距项、十年日收盘价的设定下有 444 个系数、2,520 行数据；Jacquier、Muhle-Karbe 与 Mulligan 的案例研究把十年回测的该比例定为 30%。",
+            "evidence_ids": [
+              "p1.s1",
+              "p1.s3"
+            ]
+          },
+          {
+            "text_zh": "作者指出，该比例随训练长度、参数个数和真实 Sharpe 变动；单一期货、单一信号、真实 Sharpe 0.50 时，公式在一年后保留 20%，十年后保留 72%。",
+            "evidence_ids": [
+              "p1.s5",
+              "p1.s6"
+            ]
+          },
+          {
+            "text_zh": "作者指出，十二种期货、37 个信号、斜率为零、十年样本时，样本内年化 Sharpe 为 6.58，而保留比例为零。",
+            "evidence_ids": [
+              "p1.s8"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "作者明确说明，该公式在剔除亏损试验后会显得过于宽容，且不计买卖价差。",
+            "evidence_ids": [
+              "p6.s4"
+            ]
+          },
+          {
+            "text_zh": "作者明确说明，估计协方差是后续章节的内容；在十二个品种上该比例保持不变。",
+            "evidence_ids": [
+              "p11.s3"
+            ]
+          }
+        ]
+      },
+      "parent_review": null,
+      "parent_evaluation": {
+        "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+        "card_hash": "1d894724e40f969f482117343185057e8c6115c771885065fd728e00d4b6ec09",
+        "title": "3.47 The Real IS→OOS Sharpe Haircut (Closed Form, Not \"50%\")",
+        "status": "blocked_by_evidence",
+        "errors": [
+          "unsupported_claim_number"
+        ]
+      },
+      "parent_veto": {
+        "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+        "card_hash": "1d894724e40f969f482117343185057e8c6115c771885065fd728e00d4b6ec09",
+        "decision": "needs_revision",
+        "reason_zh": "6.58的样本内年化夏普仅属于不含截距的零斜率设定，不能省略条件；协方差误差和原文比例冲突也需显式限定。"
+      },
+      "plan": {
+        "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+        "parent_card_hash": "1d894724e40f969f482117343185057e8c6115c771885065fd728e00d4b6ec09",
+        "parent_veto_hash": "0d654b34de11628aa6031eac42659ed68e5689760f56469d07cfbf53a24e15fc",
+        "issues": [
+          {
+            "id": "scope",
+            "reason_zh": "6.58的样本内年化夏普仅属于不含截距的零斜率设定，不能省略条件；协方差误差和原文比例冲突也需显式限定。"
+          },
+          {
+            "id": "numbers",
+            "reason_zh": "数字检查拒绝英文percent与百分号的不同表示；逐句对齐来源，保留同值的中文百分之写法，不改变校验器。"
+          },
+          {
+            "id": "questions",
+            "reason_zh": "比例冲突应保留为原文未解决的问题；不把已给出的解释再当空白追问。"
+          }
+        ],
+        "edits": [
+          {
+            "field": "facts",
+            "value": [
+              {
+                "text_zh": "作者转述的商品期货案例以十二种期货、三个动量窗口和截距构成444个系数，使用2,520行数据，十年曲线的样本外夏普保留比例读为百分之30。",
+                "evidence_ids": [
+                  "p1.s1",
+                  "p1.s2",
+                  "p1.s3"
+                ]
+              },
+              {
+                "text_zh": "作者指出，保留比例随训练长度、参数数目及真实夏普改变；单一期货、单一信号、真实夏普0.50时，一年保留百分之20，十年保留百分之72。",
+                "evidence_ids": [
+                  "p1.s5",
+                  "p1.s6"
+                ]
+              },
+              {
+                "text_zh": "作者给出的零斜率例子不含截距：12种资产、37个信号、2,520天，样本内年化夏普6.58，样本外为0；这不是把含截距商品模拟的8.2拆解出来。",
+                "evidence_ids": [
+                  "p58.s1",
+                  "p58.s3"
+                ]
+              }
+            ],
+            "issue_ids": [
+              "numbers"
+            ]
+          },
+          {
+            "field": "limitations",
+            "value": [
+              {
+                "text_zh": "作者说明，这个推导只拟合一次回归，未计价差、借券费或未成交成本；从多次试验中挑选赢家的额外损害还需单独处理。",
+                "evidence_ids": [
+                  "p53.s1",
+                  "p53.s4",
+                  "p53.s5"
+                ]
+              },
+              {
+                "text_zh": "作者只在12个资产、数千天的情形观察到估计协方差后的保留比例接近已知协方差情形；500个资产且窗口短于资产数时，样本协方差会奇异，样本外夏普约为零。",
+                "evidence_ids": [
+                  "p51.s1",
+                  "p51.s2"
+                ]
+              },
+              {
+                "text_zh": "作者指出原文若干保留比例与所列夏普不能对应，且十年曲线的百分之30与模拟段落的百分之38之间没有给出衔接步骤；不能擅自合成一个确定折扣。",
+                "evidence_ids": [
+                  "p41.s10",
+                  "p41.s12"
+                ]
+              }
+            ],
+            "issue_ids": [
+              "scope"
+            ]
+          },
+          {
+            "field": "questions",
+            "value": [
+              "十年曲线的保留比例与模拟段落为何不同？需查阅论文及代码确认，不能凭转述自行更正。",
+              "面板回归的比例与列出的夏普、以及方向写反的句子，是否有作者勘误或未四舍五入的数据可核对？",
+              "在另设的留出样本中，计入选择试验及实际交易成本后，该比例还适用吗？这是后续复现问题。"
+            ],
+            "issue_ids": [
+              "questions"
+            ]
+          }
+        ]
+      },
+      "revision_id": "56955eff6f4ae17341cc8bcee95ca336b2744a7a513f5bc782c35d8c8d7c8b0f",
+      "disposition": {
+        "revision_id": "56955eff6f4ae17341cc8bcee95ca336b2744a7a513f5bc782c35d8c8d7c8b0f",
+        "card_hash": "529bd9b4e9f12a9c9a6a55236c4ca0a7f4ca6455482efe590680f0ecce4828b2",
+        "checks": [
+          {
+            "issue_id": "scope",
+            "decision": "resolved",
+            "reason_zh": "已在事实中补上不含截距与模拟不可拆解的条件，并在限制中保留协方差适用范围及比例冲突。"
+          },
+          {
+            "issue_id": "numbers",
+            "decision": "resolved",
+            "reason_zh": "已逐句修正数字精度、日期汉字表示和同句证据，保守数字检查通过；未修改校验器。"
+          },
+          {
+            "issue_id": "questions",
+            "decision": "resolved",
+            "reason_zh": "已将问题明确为作者勘误和后续独立复现，原文未解的比例冲突未被擅自修正。"
+          }
+        ]
+      }
+    },
+    "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24": {
+      "parent_card": {
+        "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+        "title_zh": "加密资产横截面趋势因子及其过拟合线索",
+        "questions": [
+          "原文表1统计3,245枚唯一币，而正文写3,244，这一枚币的差异是否有解释？",
+          "论文声称的10.92等极值是否来自未披露的插值方法或特定数据窗口？",
+          "论文是否对交易成本做了敏感性分析，以支持净收益2.90%及盈亏平衡费率1.41%？",
+          "样本中比特币市值超过其他币的十个日度观测被删除，是否会影响结果？",
+          "论文是否讨论了多重检验（如Lo检验或其它多重检验校正）对t统计量5.19的影响？"
+        ],
+        "facts": [
+          {
+            "text_zh": "作者指出，该策略在2015年4月至2022年5月期间每周取得3.87%的对冲收益，t统计量为5.19，年化Sharpe比率为1.94。",
+            "evidence_ids": [
+              "p1.s2"
+            ]
+          },
+          {
+            "text_zh": "作者指出，在55,296种研究设计下，推荐估计量的Sharpe中位数为1.34，而等权配置且关闭百万美元市值筛选的单元格Sharpe比为10.92。",
+            "evidence_ids": [
+              "p1.s5"
+            ]
+          },
+          {
+            "text_zh": "作者指出，CTREND方法将28个技术指标的预测值经弹性网筛选后保留正权重预测并取等权平均，买入最高五分之一市值加权的币并做空最低五分之一，持仓一周。",
+            "evidence_ids": [
+              "p4.s1",
+              "p4.s2",
+              "p4.s3",
+              "p50.s1"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "text_zh": "作者指出，所有单元格共享同一段423周的样本，79%的命中率只是对一个正值样本做微小扰动时呈现的结果。",
+            "evidence_ids": [
+              "p30.s9",
+              "p34.s2"
+            ]
+          },
+          {
+            "text_zh": "作者指出，论文没有测试滞回区间（band），该区间可减少每周更换约68%权重带来的换手。",
+            "evidence_ids": [
+              "p47.s1",
+              "p47.s4"
+            ]
+          }
+        ]
+      },
+      "parent_review": null,
+      "parent_evaluation": {
+        "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+        "card_hash": "efacdabcf8fdf81d88b657f3e2f7d67f062490d9b22d17fe22956263fca371ca",
+        "title": "10.20 A Trend Factor for the Crypto Cross-Section (and Its Overfit Tell)",
+        "status": "blocked_by_evidence",
+        "errors": [
+          "unsupported_claim_number"
+        ]
+      },
+      "parent_veto": {
+        "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+        "card_hash": "efacdabcf8fdf81d88b657f3e2f7d67f062490d9b22d17fe22956263fca371ca",
+        "decision": "needs_revision",
+        "reason_zh": "原问题将删除“其他币市值超过比特币”的异常观测写反，并把原文已给出的成本敏感性分析当成未回答问题；不得将Lo单策略检验当多重检验校正。"
+      },
+      "plan": {
+        "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+        "parent_card_hash": "efacdabcf8fdf81d88b657f3e2f7d67f062490d9b22d17fe22956263fca371ca",
+        "parent_veto_hash": "973fdef06345ee2e6dc903066bd627e05e794a7f45254ea13dd841c316cc9b2e",
+        "issues": [
+          {
+            "id": "questions",
+            "reason_zh": "原问题将删除“其他币市值超过比特币”的异常观测写反，并把原文已给出的成本敏感性分析当成未回答问题；不得将Lo单策略检验当多重检验校正。"
+          },
+          {
+            "id": "numbers",
+            "reason_zh": "日期月份数字不在原英文引句、55,296缺少对应句、68%不等于68.46%；须修正逐句引用和精度。"
+          },
+          {
+            "id": "limits",
+            "reason_zh": "滞回区间并未实测，不能保证降低成本；验证样本和交易延迟分别是条件中位数，不能合成为已联合验证的夏普。"
+          }
+        ],
+        "edits": [
+          {
+            "field": "facts",
+            "value": [
+              {
+                "text_zh": "作者转述，二〇一五年四月至二〇二二年五月的历史样本中，多空组合周收益为3.87%，t统计量5.19，年化夏普1.94。",
+                "evidence_ids": [
+                  "p1.s2"
+                ]
+              },
+              {
+                "text_zh": "作者指出，55,296种设计共用同一历史样本；弹性网设计的夏普中位数1.34，等权配置并关闭百万美元市值筛选的极端设计为10.92。",
+                "evidence_ids": [
+                  "p31.s1",
+                  "p31.s4",
+                  "p31.s5",
+                  "p30.s9"
+                ]
+              },
+              {
+                "text_zh": "作者指出，CTREND方法将28个技术指标的预测值经弹性网筛选后保留正权重预测并取等权平均，买入最高五分之一市值加权的币并做空最低五分之一，持仓一周。",
+                "evidence_ids": [
+                  "p4.s1",
+                  "p4.s2",
+                  "p4.s3",
+                  "p50.s1"
+                ]
+              },
+              {
+                "text_zh": "作者分别报告条件中位数：设置12周验证片段时，夏普从1.47变为1.19；实施延迟一天时，从1.46变为1.24。两项不是已联合施加后的单一结果。",
+                "evidence_ids": [
+                  "p53.s3",
+                  "p53.s4"
+                ]
+              }
+            ],
+            "issue_ids": [
+              "numbers"
+            ]
+          },
+          {
+            "field": "limitations",
+            "value": [
+              {
+                "text_zh": "作者指出，所有单元格共享同一段423周的样本，79%的命中率只是对一个正值样本做微小扰动时呈现的结果。",
+                "evidence_ids": [
+                  "p30.s9",
+                  "p34.s2"
+                ]
+              },
+              {
+                "text_zh": "作者报告每周更换68.46%的权重，并提出可考虑滞回区间，但论文并未测试这种区间，不能把它当成已验证的降换手结果。",
+                "evidence_ids": [
+                  "p47.s1",
+                  "p47.s2",
+                  "p47.s4"
+                ]
+              },
+              {
+                "text_zh": "作者将Lo检验描述为允许自相关后检验夏普是否为正；另指出t统计量属于单一设计、不同设计共用同一段样本。",
+                "evidence_ids": [
+                  "p31.s6",
+                  "p34.s1",
+                  "p34.s2"
+                ]
+              }
+            ],
+            "issue_ids": [
+              "limits"
+            ]
+          },
+          {
+            "field": "questions",
+            "value": [
+              "表格与正文相差一枚币的原因是什么？需核对原论文和数据，而非选择一个计数后视为已解决。",
+              "若实施延迟与验证片段同时启用，并在后续独立时期复现，扣除可执行交易和借币成本后表现如何？原文分别的条件中位数不能回答这个联合问题。",
+              "在这些相关设计之间做多重检验校正后，证据强度还能保留多少？Lo单策略检验不能直接替代这一检查。"
+            ],
+            "issue_ids": [
+              "questions"
+            ]
+          }
+        ]
+      },
+      "revision_id": "79a05d1ac6f76d058aa72d790934d6bb30ff60571f840d821146218b634f21b8",
+      "disposition": {
+        "revision_id": "79a05d1ac6f76d058aa72d790934d6bb30ff60571f840d821146218b634f21b8",
+        "card_hash": "2f2f1b731ab803934e20215ff71a086cd91d16e2d259d00faf2597eb1d8b6599",
+        "checks": [
+          {
+            "issue_id": "questions",
+            "decision": "resolved",
+            "reason_zh": "已删除成本分析已给答案的问题和市值比较写反的前提，保留未回答的来源核查与后续复现问题。"
+          },
+          {
+            "issue_id": "numbers",
+            "decision": "resolved",
+            "reason_zh": "已逐句修正数字精度、日期汉字表示和同句证据，保守数字检查通过；未修改校验器。"
+          },
+          {
+            "issue_id": "limits",
+            "decision": "resolved",
+            "reason_zh": "已将滞回区间写成未测试建议，分开报告两个条件中位数；模型仍质疑事实表述和后续问题，单独保留为未解决复核意见。"
+          }
+        ]
+      }
+    }
+  },
+  "initial_card_sha256": {
+    "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24": "efacdabcf8fdf81d88b657f3e2f7d67f062490d9b22d17fe22956263fca371ca",
+    "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424": "1d894724e40f969f482117343185057e8c6115c771885065fd728e00d4b6ec09",
+    "ee28284418b8c94057e1692d80a5f1d9b5b0398d124d30d7300ca2389dbe3912": "2dc7d54167c75a05556ee4c5d7008f3a1d53073a7065a98ec4284999b9670d76"
+  },
+  "source_review_status": {
+    "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424": "source_review_complete_for_research_preview",
+    "ee28284418b8c94057e1692d80a5f1d9b5b0398d124d30d7300ca2389dbe3912": "source_review_complete_for_research_preview",
+    "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24": "editorial_revision_required"
+  },
+  "provider_usage": {
+    "generation_requests": 3,
+    "review_requests": 3,
+    "total_requests": 6,
+    "output_tokens_reserved": 16800,
+    "provider_reported_total_tokens": 57500,
+    "unknown_outcomes": 0,
+    "usage_missing_requests": 0,
+    "monetary_cap": "not_established"
+  },
+  "frozen_protocol": {
+    "selection": "all three public original-source captures without pending date/input flags; fixed step16 capture, not new mail candidates",
+    "source_record_sha256": "05ed8b84d665795503b688a209319fd58280962ed612ed51a52cb780621cd775",
+    "generator": "deepseek-v4.1-flash",
+    "reviewer": "qwen-flash",
+    "thinking": "disabled",
+    "max_requests": 6,
+    "max_reserved_output_tokens": 16800,
+    "generation_tokens": 2400,
+    "review_tokens": 3200,
+    "max_input_chars": 60000,
+    "external_fact_check": "not_performed",
+    "frozen_mail_admission": "not_selected_and_later_capture"
+  },
+  "repair_protocol": {
+    "original_run_unchanged": true,
+    "changed_cards": [
+      "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+      "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24"
+    ],
+    "reviewer": "qwen-flash",
+    "max_new_review_calls": 2,
+    "reserved_output_tokens": 6400,
+    "combined_max_requests": 6,
+    "combined_max_reserved_output_tokens": 16800,
+    "reason": "four original calls plus two changed-card reviews; no resampling of unchanged failed cards"
+  },
+  "editor_actor": "assistant",
+  "external_fact_check": "not_performed",
+  "delivery_eligible": false,
+  "mail_approvals_added": 0
+}

@@ -1,0 +1,460 @@
+{
+  "version": "etf-research-resolution-v1",
+  "snapshot": {
+    "run_id": "39347818936",
+    "head_sha": "dc34eab7dcd3d44a487bc18ff3807472fdcac14b",
+    "cutoff_utc": "2026-10-20T00:28:29.686191+00:00",
+    "body_sha256": "fb5d38afdea5fa1a0327852b9021254a520107b8e5d7a665315b6ea7a1e059b4",
+    "history_sha256": "b1f73b75cbc5e10ff7acf79a224f3156b886b64e91fb7ab7a550084b957a91ce"
+  },
+  "registry_sha256": "717709678405e2ca64ce8ec7a104057a9fe792d0de611dfa1a1e8bfedddcee9d",
+  "source_record_sha256": "05ed8b84d665795503b688a209319fd58280962ed612ed51a52cb780621cd775",
+  "prior_research_sha256": "bfdc7843dde788998ebd2f7709d13683da92d5c2e6dfe8f7eb00307d24704774",
+  "entry": {
+    "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+    "url": "https://aligrithm.com/a-trend-factor-for-the-crypto-cross-section-and-its-overfit-tell/",
+    "card": {
+      "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+      "title_zh": "加密资产横截面趋势因子及其过拟合线索",
+      "questions": [
+        "表格与正文相差一枚币的原因是什么？需核对原论文和数据，而非选择一个计数后视为已解决。",
+        "后续复现：能否在同一设计中同时启用验证片段和实施延迟，再用独立时期及可执行交易、借币成本评估？答案需新实验，本问题不宣称原文已有结果。",
+        "后续检验：若对相关的策略设计进行多重检验校正，证据强度会怎样变化？这需要另行选择方法和复现，不预设原文已经做过校正或已有校正后的结论。"
+      ],
+      "facts": [
+        {
+          "text_zh": "作者转述，二〇一五年四月至二〇二二年五月的历史样本中，多空组合周收益为3.87%，t统计量5.19，年化夏普1.94。",
+          "evidence_ids": [
+            "p1.s2"
+          ]
+        },
+        {
+          "text_zh": "作者指出，55,296种设计共用同一历史样本；弹性网设计的夏普中位数1.34，等权配置并关闭百万美元市值筛选的极端设计为10.92。",
+          "evidence_ids": [
+            "p31.s1",
+            "p31.s4",
+            "p31.s5",
+            "p30.s9"
+          ]
+        },
+        {
+          "text_zh": "作者指出，CTREND方法将28个技术指标的预测值经弹性网筛选后保留正权重预测并取等权平均，买入最高五分之一市值加权的币并做空最低五分之一，持仓一周。",
+          "evidence_ids": [
+            "p4.s1",
+            "p4.s2",
+            "p4.s3",
+            "p50.s1"
+          ]
+        },
+        {
+          "text_zh": "作者将这些条目解释为条件中位数：每行固定一个开关、对其他组合取中位数；12周验证片段的比较为1.47到1.19，实施延迟一天的比较为1.46到1.24。",
+          "evidence_ids": [
+            "p32.s1",
+            "p32.s2",
+            "p53.s3",
+            "p53.s4"
+          ]
+        }
+      ],
+      "limitations": [
+        {
+          "text_zh": "作者指出，所有单元格共享同一段423周的样本，79%的命中率只是对一个正值样本做微小扰动时呈现的结果。",
+          "evidence_ids": [
+            "p30.s9",
+            "p34.s2"
+          ]
+        },
+        {
+          "text_zh": "作者报告每周更换68.46%的权重，并提出可考虑滞回区间，但论文并未测试这种区间，不能把它当成已验证的降换手结果。",
+          "evidence_ids": [
+            "p47.s1",
+            "p47.s2",
+            "p47.s4"
+          ]
+        },
+        {
+          "text_zh": "作者将Lo检验描述为允许自相关后检验夏普是否为正；另指出t统计量属于单一设计、不同设计共用同一段样本。",
+          "evidence_ids": [
+            "p31.s6",
+            "p34.s1",
+            "p34.s2"
+          ]
+        }
+      ]
+    },
+    "review": {
+      "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+      "card_hash": "94ed184a20515e3331cf524139ccff54597f642378257147048cc9f4b43dfd35",
+      "overall": "pass",
+      "checks": [
+        {
+          "claim_id": "title",
+          "verdict": "supported",
+          "reason_zh": "标题与 source_title 一致，符合原文主题。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "facts.0",
+          "verdict": "supported",
+          "reason_zh": "引用 p1.s2 明确说明了 2015 年 4 月至 2022 年 5 月期间，该多空组合周收益为 3.87%，t 统计量为 5.19，年化夏普比率为 1.94。",
+          "evidence_ids": [
+            "p1.s2"
+          ]
+        },
+        {
+          "claim_id": "facts.1",
+          "verdict": "supported",
+          "reason_zh": "引用 p30.s9 表明所有 55,296 个单元格共用同一 423 周样本；引用 p31.s4 指出弹性网设计的夏普中位数为 1.34，引用 p31.s5 说明 10.92 是等权配置且关闭百万美元市值筛选时的结果。",
+          "evidence_ids": [
+            "p30.s9",
+            "p31.s4",
+            "p31.s5"
+          ]
+        },
+        {
+          "claim_id": "facts.2",
+          "verdict": "supported",
+          "reason_zh": "引用 p4.s1-p4.s3 和 p50.s1 描述了方法流程：将 28 个技术指标的预测值经弹性网筛选后保留正权重并取等权平均生成 CTREND，再进行价值加权的高低五分之一多空对冲，持有周期为一周。",
+          "evidence_ids": [
+            "p4.s1",
+            "p4.s2",
+            "p4.s3",
+            "p50.s1"
+          ]
+        },
+        {
+          "claim_id": "facts.3",
+          "verdict": "supported",
+          "reason_zh": "引用 p32.s1-s2 明确指出表6的条目是条件中位数，每行固定一个开关并取其他组合的中位数；引用 p53.s3 和 p53.s4 分别说明验证片段和实施延迟对中位数的影响。",
+          "evidence_ids": [
+            "p32.s1",
+            "p32.s2",
+            "p53.s3",
+            "p53.s4"
+          ]
+        },
+        {
+          "claim_id": "limitations.0",
+          "verdict": "supported",
+          "reason_zh": "引用 p30.s9 表明所有单元格共享同一 423 周样本；引用 p34.s2 指出 79% 的命中率是正值样本微小扰动的表现。",
+          "evidence_ids": [
+            "p30.s9",
+            "p34.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.1",
+          "verdict": "supported",
+          "reason_zh": "引用 p47.s1 明确说明每周更换 68.46% 的权重；引用 p47.s2-4 指出滞回区间（band）是相关建议，但论文未测试，不能视为已验证结果。",
+          "evidence_ids": [
+            "p47.s1",
+            "p47.s2",
+            "p47.s3",
+            "p47.s4"
+          ]
+        },
+        {
+          "claim_id": "limitations.2",
+          "verdict": "supported",
+          "reason_zh": "引用 p31.s6 明确说明 Lo 检验用于判断夏普比率在允许自相关下是否为正；引用 p34.s1-s2 指出 t 统计量属于单一设计，且各单元格共用同一样本。",
+          "evidence_ids": [
+            "p31.s6",
+            "p34.s1",
+            "p34.s2"
+          ]
+        },
+        {
+          "claim_id": "questions.0",
+          "verdict": "supported",
+          "reason_zh": "问题合理询问表格与正文计数差异（3,245 对 3,244），原文承认“一个币未解释”，材料未提供原因，因此应保留为待核对问题。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.1",
+          "verdict": "supported",
+          "reason_zh": "问题提出后续复现需同时启用验证片段与实施延迟，并评估独立时期及交易成本，原文未完成此类实验，问题不预设已有答案，属合理追问。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.2",
+          "verdict": "supported",
+          "reason_zh": "问题探讨多重检验校正对证据强度的影响，原文未进行此类校正，也未报告校正后结果，问题本身合理且无预设结论，应支持。",
+          "evidence_ids": []
+        }
+      ]
+    },
+    "editor": {
+      "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+      "card_hash": "94ed184a20515e3331cf524139ccff54597f642378257147048cc9f4b43dfd35",
+      "review_hash": "08b9d41ed95f9bc58a57d8b86ac8cf66cec3702eb5c0f7162f2e696f5a209726",
+      "appeal_case_id": null,
+      "checks": [
+        {
+          "claim_id": "title",
+          "decision": "confirmed",
+          "reason_zh": "标题准确对应加密横截面趋势与过拟合线索，不引申到股票ETF。",
+          "evidence_ids": [
+            "source_title"
+          ]
+        },
+        {
+          "claim_id": "facts.0",
+          "decision": "confirmed",
+          "reason_zh": "核对历史日期、周收益、t统计量及年化夏普，明确只是作者转述的历史样本。",
+          "evidence_ids": [
+            "p1.s2"
+          ]
+        },
+        {
+          "claim_id": "facts.1",
+          "decision": "confirmed",
+          "reason_zh": "55,296的总设计数量核对卡片自己的p31.s1；共用样本来自p30.s9，中位数及极端设计来自p31.s4与s5。新模型理由将总数并入p30.s9，编辑未据此改引用。",
+          "evidence_ids": [
+            "p31.s1",
+            "p31.s4",
+            "p31.s5",
+            "p30.s9"
+          ]
+        },
+        {
+          "claim_id": "facts.2",
+          "decision": "confirmed",
+          "reason_zh": "正权重弹性网筛选后对预测等权，组合再按币市值加权，两个权重层级分清；最高五分之一做多、最低做空。",
+          "evidence_ids": [
+            "p4.s1",
+            "p4.s2",
+            "p4.s3",
+            "p50.s1"
+          ]
+        },
+        {
+          "claim_id": "facts.3",
+          "decision": "confirmed",
+          "reason_zh": "按p32.s1、s2确认每行固定一个开关、对其他组合取中位数；p53.s3、s4支持两个分别的数值比较。已删除联合关系推断，不给出不存在的联合数值。",
+          "evidence_ids": [
+            "p32.s1",
+            "p32.s2",
+            "p53.s3",
+            "p53.s4"
+          ]
+        },
+        {
+          "claim_id": "limitations.0",
+          "decision": "confirmed",
+          "reason_zh": "共用423周与79%命中率的解释对应原文，没有把命中率当独立成功概率。",
+          "evidence_ids": [
+            "p30.s9",
+            "p34.s2"
+          ]
+        },
+        {
+          "claim_id": "limitations.1",
+          "decision": "confirmed",
+          "reason_zh": "68.46%与band建议及未测试分别核对p47.s1、s2、s4；新模型同时列了s3的四周持有结果，卡片不依赖它证明band已测试。",
+          "evidence_ids": [
+            "p47.s1",
+            "p47.s2",
+            "p47.s4"
+          ]
+        },
+        {
+          "claim_id": "limitations.2",
+          "decision": "confirmed",
+          "reason_zh": "Lo只检验允许自相关后的单策略夏普，与跨设计多重检验不等同；卡片不声称已做多重校正。",
+          "evidence_ids": [
+            "p31.s6",
+            "p34.s1",
+            "p34.s2"
+          ]
+        },
+        {
+          "claim_id": "questions.0",
+          "decision": "confirmed",
+          "reason_zh": "原文明说币数相差一枚未解释，问题要求查原论文数据而未擅自选择正确计数。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.1",
+          "decision": "confirmed",
+          "reason_zh": "实际问题已改为后续复现，未宣称现有材料给出联合效果或后续时期实证；这一问题可保留，不能当成已完成实验。",
+          "evidence_ids": []
+        },
+        {
+          "claim_id": "questions.2",
+          "decision": "confirmed",
+          "reason_zh": "实际问题已改为后续多重检验任务，不预设已校正或已有结论。新模型现判支持，只说明此版表述通过，不能推断以后同类问题不会误判。",
+          "evidence_ids": []
+        }
+      ]
+    },
+    "annotation": {
+      "research_scope": "independent_original_source_excerpt",
+      "external_fact_check": "not_performed",
+      "delivery_eligible": false
+    }
+  },
+  "repair": {
+    "parent_veto": {
+      "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+      "card_hash": "2f2f1b731ab803934e20215ff71a086cd91d16e2d259d00faf2597eb1d8b6599",
+      "decision": "needs_revision",
+      "reason_zh": "两个数值对正确，但为消除复核模型对联合关系表述的误读，仍应补引条件中位数定义并收紧末句；当前不认定完成。"
+    },
+    "plan": {
+      "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+      "parent_card_hash": "2f2f1b731ab803934e20215ff71a086cd91d16e2d259d00faf2597eb1d8b6599",
+      "parent_veto_hash": "15c47bf56389e10d4fcf17934da03b4a125b0d8fee5cd8a6fc7073c9fcf207ad",
+      "issues": [
+        {
+          "id": "conditional_medians",
+          "reason_zh": "两个数值对正确，但为消除复核模型对联合关系表述的误读，仍应补引条件中位数定义并收紧末句；当前不认定完成。"
+        },
+        {
+          "id": "future_replication",
+          "reason_zh": "原模型拒绝questions.1因原文未给联合复现答案；需明确这是后续实验，不暗示已有结果。"
+        },
+        {
+          "id": "future_multiple_testing",
+          "reason_zh": "原模型拒绝questions.2因未提供多重检验校正结论；需明确提问不预设已校正，也不能用Lo单策略检验替代。"
+        }
+      ],
+      "edits": [
+        {
+          "field": "facts",
+          "value": [
+            {
+              "text_zh": "作者转述，二〇一五年四月至二〇二二年五月的历史样本中，多空组合周收益为3.87%，t统计量5.19，年化夏普1.94。",
+              "evidence_ids": [
+                "p1.s2"
+              ]
+            },
+            {
+              "text_zh": "作者指出，55,296种设计共用同一历史样本；弹性网设计的夏普中位数1.34，等权配置并关闭百万美元市值筛选的极端设计为10.92。",
+              "evidence_ids": [
+                "p31.s1",
+                "p31.s4",
+                "p31.s5",
+                "p30.s9"
+              ]
+            },
+            {
+              "text_zh": "作者指出，CTREND方法将28个技术指标的预测值经弹性网筛选后保留正权重预测并取等权平均，买入最高五分之一市值加权的币并做空最低五分之一，持仓一周。",
+              "evidence_ids": [
+                "p4.s1",
+                "p4.s2",
+                "p4.s3",
+                "p50.s1"
+              ]
+            },
+            {
+              "text_zh": "作者将这些条目解释为条件中位数：每行固定一个开关、对其他组合取中位数；12周验证片段的比较为1.47到1.19，实施延迟一天的比较为1.46到1.24。",
+              "evidence_ids": [
+                "p32.s1",
+                "p32.s2",
+                "p53.s3",
+                "p53.s4"
+              ]
+            }
+          ],
+          "issue_ids": [
+            "conditional_medians"
+          ]
+        },
+        {
+          "field": "questions",
+          "value": [
+            "表格与正文相差一枚币的原因是什么？需核对原论文和数据，而非选择一个计数后视为已解决。",
+            "后续复现：能否在同一设计中同时启用验证片段和实施延迟，再用独立时期及可执行交易、借币成本评估？答案需新实验，本问题不宣称原文已有结果。",
+            "后续检验：若对相关的策略设计进行多重检验校正，证据强度会怎样变化？这需要另行选择方法和复现，不预设原文已经做过校正或已有校正后的结论。"
+          ],
+          "issue_ids": [
+            "future_replication",
+            "future_multiple_testing"
+          ]
+        }
+      ]
+    },
+    "revision_id": "678981ea9d54bd81854411ca4fd2fa98d9f744ad39619f151670208859783a5e",
+    "disposition": {
+      "revision_id": "678981ea9d54bd81854411ca4fd2fa98d9f744ad39619f151670208859783a5e",
+      "card_hash": "94ed184a20515e3331cf524139ccff54597f642378257147048cc9f4b43dfd35",
+      "checks": [
+        {
+          "issue_id": "conditional_medians",
+          "decision": "resolved",
+          "reason_zh": "已加入p32.s1与p32.s2的条件中位数定义，保留两项数值比较，删除可能被理解为两开关不可联合的推断句；新模型完整复核支持。"
+        },
+        {
+          "issue_id": "future_replication",
+          "decision": "resolved",
+          "reason_zh": "问题明确写为后续复现，答案需新实验，不假定原文完成联合设置、独立时期和实际成本评估；新模型对该问题判supported。"
+        },
+        {
+          "issue_id": "future_multiple_testing",
+          "decision": "resolved",
+          "reason_zh": "问题明确是后续校正及复现任务，不声称原文已有校正结果；与Lo允许自相关的单策略检验区分。新模型支持，但旧稿拒绝未撤销。"
+        }
+      ]
+    }
+  },
+  "issue_claims": [
+    {
+      "issue_id": "conditional_medians",
+      "claim_ids": [
+        "facts.3"
+      ],
+      "action": "revise"
+    },
+    {
+      "issue_id": "future_replication",
+      "claim_ids": [
+        "questions.1"
+      ],
+      "action": "revise"
+    },
+    {
+      "issue_id": "future_multiple_testing",
+      "claim_ids": [
+        "questions.2"
+      ],
+      "action": "revise"
+    }
+  ],
+  "provider_usage": {
+    "generation_requests": 0,
+    "full_review_requests": 1,
+    "appeal_requests": 0,
+    "total_requests": 1,
+    "output_tokens_reserved": 3200,
+    "provider_reported_total_tokens": 12480,
+    "unknown_outcomes": 0,
+    "usage_missing_requests": 0,
+    "monetary_cap": "not_established"
+  },
+  "frozen_protocol": {
+    "scope": "one changed crypto research card; all step17 records unchanged",
+    "parent_research_sha256": "bfdc7843dde788998ebd2f7709d13683da92d5c2e6dfe8f7eb00307d24704774",
+    "registry_sha256": "717709678405e2ca64ce8ec7a104057a9fe792d0de611dfa1a1e8bfedddcee9d",
+    "max_requests": 2,
+    "max_reserved_output_tokens": 5600,
+    "full_review": {
+      "model": "qwen-flash",
+      "max_output_tokens": 3200,
+      "max_requests": 1
+    },
+    "conditional_appeal": {
+      "model": "deepseek-v4.1-flash",
+      "thinking": "disabled",
+      "max_output_tokens": 2400,
+      "max_requests": 1,
+      "only_if_new_review_rejects": true
+    },
+    "max_input_chars": 60000,
+    "delivery_eligible": false,
+    "external_fact_check": "not_performed"
+  },
+  "editor_actor": "assistant; not user review",
+  "external_fact_check": "not_performed",
+  "delivery_eligible": false,
+  "mail_approvals_added": 0
+}

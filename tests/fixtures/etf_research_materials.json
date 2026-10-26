@@ -1,0 +1,1958 @@
+[
+  {
+    "material_id": "32be3375ab4d5e02f332c52410d124254bbcd6e2e7225af68993f67f1bbd1e24",
+    "title": "10.20 A Trend Factor for the Crypto Cross-Section (and Its Overfit Tell)",
+    "url": "https://aligrithm.com/a-trend-factor-for-the-crypto-cross-section-and-its-overfit-tell/",
+    "source": "aligrithm.com",
+    "published": "2026-10-17T11:07:00.000Z",
+    "evidence_level": "captured_excerpt",
+    "paragraphs": [
+      {
+        "id": "p1",
+        "text": "Fieberg, Liedtke, Poddig, Walker, and Zaremba build a weekly score from 28 technical indicators, buy the value-weighted top fifth of coins, and short the bottom fifth. From April 2015 to May 2022 that hedge earns 3.87% a week, t-statistic 5.19, annualized Sharpe ratio 1.94. They then rebuild the same trade under 55,296 research designs. The published Sharpe sits at the upper edge of that pile. The median Sharpe of the estimator they recommend is 1.34, and the cell that equal-weights coins with the million-dollar size screen turned off prints 10.92. The ranking is a pattern in this sample. The 1.94 is the friendly cell."
+      },
+      {
+        "id": "p2",
+        "text": "What this actually is"
+      },
+      {
+        "id": "p3",
+        "text": "A coin book has no earnings to sort on. Market cap is a supply figure the issuer can mint, and the tape you can recompute is price and volume. The desk question is whether a stack of chart readings, combined by a shrinkage regression, ranks next week's returns well enough to pay for replacing about two-thirds of the weights every week."
+      },
+      {
+        "id": "p4",
+        "text": "Each week the method turns 28 chart readings into separate forecasts of next week's return, throws out the forecasts with the wrong sign, and averages the rest into one score. They call that average CTREND. The trade is a value-weighted long-short of the top and bottom fifths, held for one week."
+      },
+      {
+        "id": "p5",
+        "text": "Picture a clerk who refuses to trust one dial. He writes down a relative-strength reading, a stochastic, seven moving averages, a volume oscillator, and a Bollinger band for every coin. He checks, over the last 52 weeks, which dials pointed the same way as the following week's return, throws out the dials that pointed the wrong way, and averages the survivors. The average is the score. Top fifth against bottom fifth is the trade."
+      },
+      {
+        "id": "p6",
+        "text": "If that score survived a one-day delay, a validation slice, and a multiple-testing haircut, you would swap a 2-to-4-week momentum sort for it and you would drop momentum out of a crypto factor model. If 1.94 is the upper edge of a 55,296-cell grid on one sample of 423 weeks, you would underwrite the median cell, and you would put the t-statistic of 5.19 through the old article \"The Factor Zoo and the Multiple-Testing Reckoning\" before you sized a book on it."
+      },
+      {
+        "id": "p7",
+        "text": "Twenty-eight dials, then an average"
+      },
+      {
+        "id": "p8",
+        "text": "This section settles whether the combiner beats the best single oscillator, or lands next to it."
+      },
+      {
+        "id": "p9",
+        "text": "CoinMarketCap, weekly, April 2015 through May 2022, 423 weeks. A coin-week needs a close, a dollar volume, and a market cap. They delete the ten daily prints in which some coin's cap exceeds Bitcoin's, require a cap of at least 1 million dollars, and truncate returns at the 0.5 and 99.5 percentiles. Table 1 counts 3,245 unique coins. The prose says 3,244. One coin, unexplained. The table stands."
+      },
+      {
+        "id": "p10",
+        "text": "The 28 inputs sit in four groups, at fixed horizons taken from the technical-analysis literature, which is how the authors keep the window lengths out of the search. Oscillators: the 14-day relative strength index (average up-move divided by average down-move), a stochastic of that index, the fast and slow stochastics (where the close sits in the 14-day high-low range, and a 3-day average of that), and the commodity channel index. Moving averages: simple averages at 3, 5, 10, 20, 50, 100, and 200 days, each divided by the week's close so a high-priced coin does not dominate, plus the gap between a 12-day and a 26-day exponential average as a percent of the fast one, and that gap minus its 9-day signal. Volume: the same seven lengths of dollar volume divided by current volume, the volume versions of that gap and its signal, and Chaikin money flow. Volatility: Bollinger lower, middle, and upper bands divided by price, and the bandwidth."
+      },
+      {
+        "id": "p11",
+        "text": "Every indicator is replaced by its cross-sectional rank, mapped into the interval from -0.5 to +0.5, so the lowest coin that week sits at -0.5 and the highest at +0.5. The paper states the interval and does not print the interpolation. Regressions are fit by value-weighted least squares, weights proportional to market cap, so a microcap's residual barely moves a slope. The combiner is imported from the equity trend factor of Han, Zhou, and Zhu and from the cross-sectional elastic net of Han, He, Rapach, and Zhou. It was built for stocks. Crypto is the new tape."
+      },
+      {
+        "id": "p12",
+        "text": "Each week, for each indicator, they run a cross-sectional regression of this week's return on last week's rank. The intercept and the slope that enter the forecast are the arithmetic means of those weekly estimates over a rolling 52-week window. The first score therefore does not exist in April 2015. The table captions still date the study from April 2015."
+      },
+      {
+        "id": "p13",
+        "text": "$$ \\hat{r}^{j}_{i,t+1} = \\bar{\\alpha}_{j,t} + \\bar{\\beta}_{j,t}\\, z_{i,j,t} $$"
+      },
+      {
+        "id": "p14",
+        "text": "Read it as: the forecast of coin i's next-week return from indicator j equals the 52-week-averaged intercept, in percent per week, plus the averaged slope times the coin's current rank. The rank is a pure number between -0.5 and +0.5. The forecast is in percent per week. Worked illustration, not a coefficient from the paper. An averaged intercept of 0.80 and an averaged slope of 5.0 send a coin at rank +0.30 to 0.80 + 5.0 times 0.30, which is 2.30 percent. The same dial at rank -0.30 sends it to 0.80 minus 1.50, which is -0.70 percent."
+      },
+      {
+        "id": "p15",
+        "text": "They repeat that for all 28 indicators, then regress realized return on the 28 forecasts with an elastic net. The penalty is a half-and-half mix of the sum of absolute weights and the sum of squared weights, and the penalty strength is chosen by the corrected Akaike criterion. A forecast whose fitted weight is positive stays. A forecast whose weight hits zero or goes negative is dropped. The score is the equal-weighted average of the survivors. Their equation (11) is this average. The printed notation uses one symbol for the index, the set, and the count. The denominator is the number of forecasts with a positive weight."
+      },
+      {
+        "id": "p16",
+        "text": "$$ \\mathrm{CTREND}_{i,t+1} = \\frac{1}{|J^{+}|} \\sum_{j \\in J^{+}} \\hat{r}^{j}_{i,t+1}, \\qquad J^{+} = \\{ j : \\theta_{j} > 0 \\} $$"
+      },
+      {
+        "id": "p17",
+        "text": "Read it as: CTREND for coin i next week is the arithmetic mean of the univariate forecasts whose elastic-net weight theta is positive. Each forecast is in percent per week, and so is the mean. Worked continuation of the illustration. The coin's first forecast is 2.30 percent and a second survivor is 1.26 percent. The score is (2.30 + 1.26) / 2 = 1.78 percent. Dividing by 28 instead of by 2 would print 0.13 percent and would throw away the selection step. A third forecast with a negative weight does not enter, and it is not flipped into a reversal signal. In this sample that restriction fits the tape: the relative strength index, a textbook reversal tool, has a high-minus-low return of +3.52% a week (t-statistic 5.41). Coins the oscillator calls overbought keep rising."
+      },
+      {
+        "id": "p18",
+        "text": "The ingredients already pay. The fast stochastic's high-minus-low earns 3.96% a week (t-statistic 5.73), and its alpha against the Liu, Tsyvinski, and Wu three-factor model is 2.56% (t-statistic 4.13). The combined score earns 3.87% (t-statistic 5.19) and a three-factor alpha of 2.62% (t-statistic 4.22). On raw return the stochastic leads by 0.09 points. On three-factor alpha the score leads by 0.06 points, six basis points a week. The authors' appendix ranks the middle Bollinger band, the commodity channel index, and the convergence/divergence as the heaviest inputs. A blend can load on several dials and still land its portfolio next to the strongest dial."
+      },
+      {
+        "id": "p19",
+        "text": "Moving-average signs run the other way, and the reason is the scaling. They divide the average by price, so a high reading means the average sits above the price and the coin has been falling. The 5-day average's high-minus-low is -2.90% a week (t-statistic -3.35). The continuation trade is the low reading, price above its average. A negative high-minus-low column is the trend, with the sign flipped by the scaling."
+      },
+      {
+        "id": "p20",
+        "text": "The 3.87% is the long book"
+      },
+      {
+        "id": "p21",
+        "text": "This section settles who pays the 3.87%, the coins you buy or the coins you short."
+      },
+      {
+        "id": "p22",
+        "text": "Value-weighted quintiles, rebalanced every week. Average weekly returns, in percent: low 0.12 (t-statistic 0.16), then 0.93, 1.12, 2.72, and high 3.98 (t-statistic 4.80). The high-minus-low row prints 3.87. The two extremes differ by 3.86, and the extra hundredth is rounding. The step from the third quintile to the fourth is 1.60 points. The step from the second to the third is 0.19. The spread lives in the tails, and the bottom fifth earns about zero."
+      },
+      {
+        "id": "p23",
+        "text": "$$ SR = \\frac{\\bar{r}}{s} \\sqrt{52} $$"
+      },
+      {
+        "id": "p24",
+        "text": "Read it as: the annualized Sharpe ratio is the weekly mean return divided by the weekly standard deviation, times the square root of 52. Both the mean and the standard deviation are in percent per week, so the ratio is a pure number. The square root of 52 is the right scale when the weeks are uncorrelated. Worked with Table 3's high-minus-low row. Mean 3.87, standard deviation 14.34. The weekly ratio is 3.87 / 14.34 = 0.2699. Times the square root of 52, which is 7.211, that is 1.946. The table prints 1.94. The third digit moves with rounding of the two inputs. The other five quintile Sharpes in the same table recover from their printed means and standard deviations without that gap. Multiply 3.87 by 52 and you get 201 percentage points, arithmetic, before a week with a 14.34% standard deviation has been allowed to hurt the book. The 1.94 is the number that includes the volatility."
+      },
+      {
+        "id": "p25",
+        "text": "The hedge's market beta is 0.03 (t-statistic 0.50) and its size beta is -0.08 (t-statistic -1.79). Its momentum beta is 0.79 (t-statistic 14.88). Alpha against the one-factor crypto market model is 3.80% a week (t-statistic 5.03). Alpha against the three-factor model is 2.62% (t-statistic 4.22)."
+      },
+      {
+        "id": "p26",
+        "text": "Split that 2.62. The high quintile's three-factor alpha is 1.10% with a t-statistic of 1.94, which misses the 5% line the authors use for boldface. The low quintile's alpha is -1.51% (t-statistic -3.23). Taking 1.10 minus a negative 1.51 gives 2.61, against the printed 2.62. The raw return is the long book: 3.98% minus a bottom fifth that earns 0.12%. The alpha the factor model cares about is the short book failing to earn its premium. The bottom fifth is the smaller one. Average market cap is 135 million dollars there and 1,182 million in the top fifth. Average cumulative return over the prior three weeks is -21.63% in the bottom fifth and +62.74% in the top fifth. That gap is why the momentum beta is 0.79. The top fifth itself carries a momentum beta of 0.52, and the bottom fifth carries -0.27. The difference is the hedge's 0.79."
+      },
+      {
+        "id": "p27",
+        "text": "A double sort leaves a long-short between 1.42% and 3.10% a week after a momentum control at one to four weeks. The Fama-MacBeth slope, a cross-sectional coefficient fit separately each week and then averaged, stays between 2.00 and 2.94 with those controls in, and prints 2.62 (Newey-West t-statistic 3.93; the standard errors allow for autocorrelation) when every control enters at once. The univariate slope is 2.36 (t-statistic 5.00). If the score is already in percent per week, 2.36 says one point of predicted return lines up with 2.36 points of realized return. Averaging noisy forecasts shrinks the score's cross-sectional spread, and a second-stage slope above one is what that shrinkage looks like. The paper never prints the spread, so the 2.36 stays a slope per unit of the score. The control that bites is the Amihud illiquidity ratio, absolute weekly return divided by dollar volume. After that double sort the three-factor alpha is 0.62% and clears the 10% line."
+      },
+      {
+        "id": "p28",
+        "text": "One sample, 55,296 outfits"
+      },
+      {
+        "id": "p29",
+        "text": "This section settles what \"it works in 55,296 specifications\" is worth."
+      },
+      {
+        "id": "p30",
+        "text": "The grid multiplies switches: how you treat outliers, whether stablecoins stay in, the cap screen, a one-dollar price screen, rolling versus expanding windows, 26 to 104 weeks of estimation, a lag of zero or one day, quintiles versus tertiles, value weights versus equal weights, and whether the volume indicators are included. Six estimators sit on that common grid. The figure caption's comparison uses 6,144 designs. The text says 55,296 combinations. Those two numbers divide evenly, 55,296 / 6,144 = 9. Panel C of their design table adds a validation switch and a forecast-weight switch that are filled in only for the elastic-net column. Five plain estimators plus four elastic-net variants is nine. The paper does not write the multiplication. The product is the grid, and every cell is the same 423 weeks."
+      },
+      {
+        "id": "p31",
+        "text": "Graph A is the density of Sharpe ratios across all 55,296 cells. The dashed line is the published specification, and the authors place it at the upper edge. Most of the mass lies between 0.5 and 2.5. For the elastic-net estimator alone the Sharpe runs from -1.45 to 10.92, and the median is 1.34. The 10.92 is the corner that equal-weights coins and turns the million-dollar cap screen off. Using Lo's test, which judges whether a Sharpe ratio is positive once the standard error allows for autocorrelation, 79% of all combinations clear 5%. The size factor clears that bar in 56% of its designs (median Sharpe 0.94, maximum 4.60). Momentum clears it in 49% (median 0.83, maximum 2.30, minimum -4.47)."
+      },
+      {
+        "id": "p32",
+        "text": "Read the entries in their Table 6 as conditional medians. Each row holds one switch fixed and takes the median over everything else. Holding the elastic net, a few switches move that median by enough to matter. With no validation sample the median Sharpe is 1.47. When the most recent 12 weeks are used only to decide which forecasts survive, it falls to 1.19. A zero implementation lag prints 1.46. A one-day lag, the version you can run after the close, prints 1.24. A price screen at zero prints 1.64. A screen at one dollar prints 1.13. Dropping every volume indicator moves the median from 1.30 to 1.39, so exchange wash volume is not where this Sharpe lives."
+      },
+      {
+        "id": "p33",
+        "text": "The plain multivariate regression, the original Han, Zhou, and Zhu estimator, is the wide, low box in the comparison panel. Averaging the univariate forecasts and then keeping the positive weights is what tightens the distribution. That is a methods result, and it is the part worth taking to another market. The level of the crypto Sharpe is a separate claim, and it moves when you delay the trade by a day or when you stop selecting indicators on the weeks you score."
+      },
+      {
+        "id": "p34",
+        "text": "A t-statistic of 5.19 belongs to one cell. The cells share one sample, and a 79% hit rate is what a small perturbation of a positive sample looks like. The old article \"The Factor Zoo and the Multiple-Testing Reckoning\" is the tax on publishing the cell near the top. The number their own grid supports is the elastic-net median, 1.34, and the validation-sample median, 1.19. Both beat momentum's median of 0.83. Quote 1.34, or 1.19 when the surviving indicators are chosen on a held-out 12 weeks."
+      },
+      {
+        "id": "p35",
+        "text": "It prices the strategies it was built from"
+      },
+      {
+        "id": "p36",
+        "text": "This section settles whether swapping momentum for this score prices the cross-section, or prices the indicators that went into the score."
+      },
+      {
+        "id": "p37",
+        "text": "They form tangency portfolios out of sample. Weights are estimated on the prior 52 weeks, the book is rescaled to a weekly volatility of 10%, and the weight is the usual mean-variance one: the inverse covariance matrix times the mean vector, normalized to sum to one. Adding the trend factor to the three-factor tangency portfolio produces an alpha of 2.77% a week (Newey-West t-statistic 3.80). Adding momentum to a model that already has the market, size, and the trend factor produces 0.37% (t-statistic 1.02). On this test, momentum is the factor that does not expand the frontier."
+      },
+      {
+        "id": "p38",
+        "text": "The scatter compares each anomaly portfolio's average return with the alpha a model leaves behind. On the 45-degree line, alpha equals the average return. A cloud around the horizontal axis means the alphas are near zero. The Gibbons, Ross, and Shanken statistic tests the joint claim that every alpha is zero. The one-factor market model leaves an average absolute alpha of 2.69%, 20 portfolios still individually significant, joint-test p-value 0.00%. The three-factor model leaves 1.44%, 11 significant, p-value 0.38%. The model that swaps momentum for the trend factor leaves 0.68%, 2 significant, p-value 8.02%."
+      },
+      {
+        "id": "p39",
+        "text": "Split the pooled row, because that is where the win sits. On the technical-indicator portfolios the p-value goes from 0.86% under the three-factor model to 25.6% under the trend model, and the count of significant alphas goes from 8 to 1. On the Liu-Tsyvinski-Wu anomalies, which include size and the momentum horizons, the p-value is 0.19% under both models, and the weighted pricing error stays at 0.061. The pooled pricing error falls from 0.159 to 0.112 because the technical-indicator error falls from 0.106 to 0.061. A score blended from those indicators should price those indicators. The paper also says the trend model explains the momentum sorts, and names the two leftovers: the size quintile, and the fast stochastic, with a t-statistic of 1.98. The size miss has a mechanical piece they state themselves. Their size factor is a tercile sort, and the quintile sort they are trying to price has a wider spread. No model they try passes the test on that anomaly set."
+      },
+      {
+        "id": "p40",
+        "text": "Large coins and a 68% weekly turnover"
+      },
+      {
+        "id": "p41",
+        "text": "This section settles what is left once you refuse the microcaps and you pay to trade."
+      },
+      {
+        "id": "p42",
+        "text": "Inside the largest half of coins by cap, the hedge earns 3.84% a week (t-statistic 5.00). Inside the largest tenth, 2.51% (t-statistic 3.01), with a three-factor alpha of 2.02% (t-statistic 3.18). Inside the most liquid tenth by the Amihud ratio, 2.20% (t-statistic 2.76), alpha 1.97% (t-statistic 3.18). The largest 100 coins earn 3.39% (t-statistic 4.49) in the size table and 3.40% (t-statistic 4.48) in the cost table. A hundredth. The spread survives after the small half is gone. It is largest in the liquid half, at 4.36% a week (t-statistic 5.62). The top tenth is where about a third of the full-sample 3.87% disappears."
+      },
+      {
+        "id": "p43",
+        "text": "$$ r^{\\mathrm{net}} = r^{\\mathrm{gross}} - \\left( c_{L} \\cdot 2 \\cdot TO_{L} + c_{S} \\cdot 2 \\cdot TO_{S} \\right) $$"
+      },
+      {
+        "id": "p44",
+        "text": "Read it as: net and gross returns are in percent per week. Turnover is the fraction of a leg they print, and the 2 turns that half-sum into the fraction of weight traded. The cost rates are in percent per unit of weight traded, so a 30 basis-point long leg enters as 0.30. Worked with the printed turnovers, 62.84% on the long leg and 74.09% on the short leg, at 30 basis points long and 40 short. The long-leg cost is 0.30 times 2 times 0.6284, which is 0.377. The short-leg cost is 0.40 times 2 times 0.7409, which is 0.593. The sum is 0.970 percentage points. Subtract from 3.87 and you get 2.90, the net return they print (t-statistic 3.89). At 0.50 long and 0.60 short the cost is 0.50 times 1.2568 plus 0.60 times 1.4818, which is 1.517, and 3.87 minus 1.517 is 2.35 (t-statistic 3.16)."
+      },
+      {
+        "id": "p45",
+        "text": "Their net-return equation writes the cost on the raw change in weight. The turnover equation above it grows last week's weight by one plus the coin's return before taking the difference. The printed net returns reconcile with twice the printed turnover, so the card uses the turnover equation. A flat cost rate that zeros the 3.87% mean divides 3.87 by the total weight traded, 2 times (0.6284 + 0.7409) = 2.7386. Then 3.87 / 2.7386 = 1.413%, and they print a breakeven of 1.41%. The rate that pushes the t-statistic through 5% is 0.88%. On the largest 100 coins the gross mean is 3.40%, turnover is 68.21%, the 30/40 basis-point net is 2.45%, and the breakeven flat rate is 1.25%."
+      },
+      {
+        "id": "p46",
+        "text": "Holding for two weeks instead of one cuts the average weekly return by what they call 1.5 percentage points, to 2.34%. Subtracting 1.5 from 3.87 gives 2.37, not 2.34, so the \"1.5\" is rounded and 2.34 is the number in the supplement. They say the mean stays past the 5% line out to a four-week hold. That table is in the supplement."
+      },
+      {
+        "id": "p47",
+        "text": "The hedge replaces 68.46% of its weights each week. The old article \"Percentile-Rank Momentum With Hysteresis: Low-Churn Signals\" is the relevant patch: a band that keeps a coin in the book until the rank crosses out of the quintile. The four-week result says the mean is still past the 5% line at a one-month hold. The paper does not test the band. A different path summary sits in the old article \"Price-Path Convexity: A New Cross-Sectional Anomaly (−45bp per σ)\" , which prices one functional of the equity path at -45 basis points per standard deviation. This score prices a bundle of 28 functionals of the crypto path. Leave the equity figure in that article."
+      },
+      {
+        "id": "p48",
+        "text": "Own the long fifth of large coins if you want the raw return and you can live with that leg's momentum beta of 0.52. Leave the 2.62% three-factor alpha on the hedge: 1.10 points of it sit on the long leg, t-statistic 1.94, and the rest is the short. Underwrite a Sharpe nearer 1.2 than 1.94 once the design includes a one-day lag and a validation slice, because that is where their own medians sit. The 68% weekly replacement against a 141 basis-point breakeven is a wide gate, measured on CoinMarketCap from 2015 to 2022, stablecoins out, returns already truncated at half a percent."
+      },
+      {
+        "id": "p49",
+        "text": "KEY POINTS"
+      },
+      {
+        "id": "p50",
+        "text": "CTREND averages the univariate 52-week Fama-MacBeth forecasts, among 28 ranked technicals, that keep a positive elastic-net weight. The value-weighted high-minus-low quintile earns 3.87% a week (t-statistic 5.19), weekly standard deviation 14.34%, printed Sharpe 1.94. The printed mean and standard deviation annualize to 1.946."
+      },
+      {
+        "id": "p51",
+        "text": "The raw return is the long fifth, at 3.98%. The short fifth earns 0.12%. The three-factor alpha of 2.62% is mostly the short leg's alpha of -1.51%. The long leg's alpha is 1.10%, t-statistic 1.94. Momentum beta of the hedge is 0.79."
+      },
+      {
+        "id": "p52",
+        "text": "The fast stochastic alone earns 3.96% a week and a three-factor alpha of 2.56%. The combiner adds six basis points of weekly alpha. Relative strength continues in this sample (+3.52% high-minus-low), the opposite of the textbook reversal reading."
+      },
+      {
+        "id": "p53",
+        "text": "Across the elastic-net designs the Sharpe runs from -1.45 to 10.92, median 1.34. The published 1.94 sits at the upper edge of the 55,296-cell density. A 12-week validation slice drops the conditional median from 1.47 to 1.19. A one-day implementation lag drops it from 1.46 to 1.24. The 10.92 cell equal-weights coins and drops the million-dollar cap screen. 55,296 / 6,144 = 9, a product of switches on one sample."
+      },
+      {
+        "id": "p54",
+        "text": "Swapping momentum for CTREND cuts average absolute anomaly alpha from 1.44% to 0.68% and lifts the Gibbons-Ross-Shanken p-value from 0.38% to 8.02%. The pricing-error drop lives in the technical-indicator portfolios. The Liu-Tsyvinski-Wu anomaly set still rejects, p-value 0.19%, with the weighted pricing error unchanged at 0.061."
+      },
+      {
+        "id": "p55",
+        "text": "The spread survives in the largest tenth (2.51%) and the most liquid tenth (2.20%). Weekly turnover is 68.46%. At 30 basis points long and 40 short the net is 2.90%. The flat breakeven rate is 1.41%. A two-week hold prints 2.34% a week in the supplement; their \"drop of 1.5 points\" from 3.87 lands on 2.37, so the 1.5 is rounded."
+      },
+      {
+        "id": "p56",
+        "text": "References"
+      },
+      {
+        "id": "p57",
+        "text": "Han, He, Rapach, and Zhou (2024). Cross-Sectional Expected Returns: New Fama-MacBeth Regressions in the Era of Machine Learning"
+      },
+      {
+        "id": "p58",
+        "text": "Han, Zhou, and Zhu (2016). A Trend Factor: Any Economic Gains from Using Information over Investment Horizons?"
+      },
+      {
+        "id": "p59",
+        "text": "Liu, Tsyvinski, and Wu (2022). Common Risk Factors in Cryptocurrency"
+      },
+      {
+        "id": "p60",
+        "text": "Lo (2002). The Statistics of Sharpe Ratios"
+      },
+      {
+        "id": "p61",
+        "text": "Menkveld et al. (2024). Nonstandard Errors"
+      },
+      {
+        "id": "p62",
+        "text": "Fieberg, Liedtke, Poddig, Walker, and Zaremba (2025). A Trend Factor for the Cross Section of Cryptocurrency Returns"
+      },
+      {
+        "id": "p63",
+        "text": "A note on AI. The ideas, research, analysis, and conclusions in this article are my own. I use AI tools to help with editing and wordsmithing, because English is not my first language, and I am not shy about that. AI-generated ideas and AI-assisted writing are not the same thing: the first is empty slop from a generic prompt, the second is a tool for communicating years of real research more clearly. Judge the work by its substance, not by whether software helped polish the prose."
+      }
+    ]
+  },
+  {
+    "material_id": "4c173865ecaa1fd4ad09d408d7db2062e13143cfd43c5e9d9086b9be3c249894",
+    "title": "The Messy Business of Building a Futures Security Master | Handelsmeisterei",
+    "url": "https://www.handelsmeisterei.de/the_messy_business_of_building_a_futures_security_master/",
+    "source": "www.handelsmeisterei.de",
+    "published": "2026-10-16T09:16:44+00:00",
+    "evidence_level": "captured_excerpt",
+    "paragraphs": [
+      {
+        "id": "p1",
+        "text": "Letter from the editor"
+      },
+      {
+        "id": "p2",
+        "text": "If I want my auto­mat­ed trad­ing sys­tem to start trad­ing some­thing new—cocoa, for example—I begin with one row in a spread­sheet. Get­ting that row right can swal­low an entire week."
+      },
+      {
+        "id": "p3",
+        "text": "The past five weeks have been full of this kind of work. Once a year, I review and update my trad­ing system’s futures uni­verse. This year, I got the order a lit­tle mixed up: I recal­i­brat­ed the strate­gies first, as described in my last arti­cle . That work fol­lowed the method­ol­o­gy improve­ments intro­duced in Craft­ing a Trad­ing Strat­e­gy ."
+      },
+      {
+        "id": "p4",
+        "text": "Research has a habit of dis­rupt­ing estab­lished rou­tines. Updat­ing the uni­verse after cal­i­bra­tion meant recal­i­brat­ing the strate­gies again. The extra work did have a ben­e­fit: it gave me more con­fi­dence in the new cal­i­bra­tion pro­ce­dure. It han­dled the expand­ed trad­ing uni­verse as intend­ed, with­out requir­ing fur­ther changes to the method­ol­o­gy."
+      },
+      {
+        "id": "p5",
+        "text": "The annu­al update also prompt­ed automa­tion to sup­port my deci­sions. Auto­mat­i­cal­ly extract­ing the broker’s avail­able futures saves me work­ing through its cat­a­log by hand and helps me decide which mar­kets to inves­ti­gate. My annu­al spread­sheet update had qui­et­ly become a soft­ware project."
+      },
+      {
+        "id": "p6",
+        "text": "Those tools helped gath­er the answers, but I still had to check them. Con­tract details and price his­to­ries need­ed a clos­er look, and every excep­tion need­ed doc­u­ment­ing. Do enough of this and you start to sound like your Uncle Fred at the Ger­man tax office: “that’s prob­a­bly right” means the paper­work is com­ing straight back. This arti­cle is about that work. And about your inner Fred."
+      },
+      {
+        "id": "p7",
+        "text": "The Question"
+      },
+      {
+        "id": "p8",
+        "text": "What belongs in a futures secu­ri­ty mas­ter, and how do you keep it reli­able?"
+      },
+      {
+        "id": "p9",
+        "text": "Behind the scenes"
+      },
+      {
+        "id": "p10",
+        "text": "Instru­ment def­i­n­i­tions, delist­ings, con­flict­ing data sources, chang­ing mul­ti­pli­ers, bro­ken histories—and the checks a new mar­ket must pass before join­ing the port­fo­lio."
+      },
+      {
+        "id": "p11",
+        "text": "The takeaway"
+      },
+      {
+        "id": "p12",
+        "text": "A secu­ri­ty mas­ter records the deci­sions and assump­tions your entire trad­ing sys­tem depends on. Get­ting those details right is an ongo­ing job."
+      },
+      {
+        "id": "p13",
+        "text": "301 instru­ments"
+      },
+      {
+        "id": "p14",
+        "text": "51 years of data"
+      },
+      {
+        "id": "p15",
+        "text": "4 data providers"
+      },
+      {
+        "id": "p16",
+        "text": "A futures secu­ri­ty mas­ter tells the trad­ing sys­tem what each instru­ment is, how to inter­pret its prices, and whether it may be trad­ed. These def­i­n­i­tions con­nect his­tor­i­cal research to live exe­cu­tion."
+      },
+      {
+        "id": "p17",
+        "text": "A market’s sym­bol is only part of its iden­ti­ty. The sys­tem also needs the con­tract size, price units and deliv­ery month. Get those details wrong and a sound trad­ing rule can pro­duce a posi­tion you nev­er intend­ed to take."
+      },
+      {
+        "id": "p18",
+        "text": "The data uni­verse and the trad­ing uni­verse serve dif­fer­ent pur­pos­es. A full-size con­tract may sup­ply his­to­ry for a small­er con­tract, while a delist­ed future can remain use­ful in his­tor­i­cal back­tests. The secu­ri­ty mas­ter records those rela­tion­ships."
+      },
+      {
+        "id": "p19",
+        "text": "Before adding an instru­ment, we there­fore need to set­tle two ques­tions: can we trade it, and which data should rep­re­sent it?"
+      },
+      {
+        "id": "p20",
+        "text": "Data sources"
+      },
+      {
+        "id": "p21",
+        "text": "Con­nect­ing trad­able mar­kets to the right data."
+      },
+      {
+        "id": "p22",
+        "text": "It is eas­i­er to explain a secu­ri­ty mas­ter with a real one in front of you. You can down­load mine here . Yes, it is an Excel work­book. I real­ize you may have expect­ed some­thing more sophis­ti­cat­ed."
+      },
+      {
+        "id": "p23",
+        "text": "In 20 years as a quant, I have yet to vis­it a finan­cial insti­tu­tion that did not use Excel. Appar­ent­ly, suc­cess in finance requires at least one spread­sheet. That’s why my trad­ing sys­tem uses one."
+      },
+      {
+        "id": "p24",
+        "text": "In prac­tice, Excel gives me a con­ve­nient way to edit the con­fig­u­ra­tion. The trad­ing sys­tem reads the work­book and val­i­dates its con­tents before using them. Excel is the inter­face. The checks live in the code."
+      },
+      {
+        "id": "p25",
+        "text": "Before fill­ing in the rows, though, we need to estab­lish which con­tracts belong there."
+      },
+      {
+        "id": "p26",
+        "text": "For live trad­ing, the bro­ker sets the first con­straint: it must offer the con­tract and allow your account to trade it. A prod­uct can appear in its cat­a­log and still be unavail­able to you, for exam­ple because of restric­tions in your juris­dic­tion."
+      },
+      {
+        "id": "p27",
+        "text": "I use Inter­ac­tive Bro­kers for exe­cu­tion, so its futures cat­a­log is my start­ing point. The workbook’s IBSym­bol col­umn records the broker’s sym­bol for each instru­ment."
+      },
+      {
+        "id": "p28",
+        "text": "Exchanges and data providers have their own nam­ing schemes. To keep track of the same mar­ket across them, I give each instru­ment a mem­o­rable name and an icon, such as 🐷 LEANHOG ."
+      },
+      {
+        "id": "p29",
+        "text": "The pair appears on dash­boards, in logs and through­out the system’s oth­er out­put. A pig is eas­i­er to spot than anoth­er cryp­tic con­tract code."
+      },
+      {
+        "id": "p30",
+        "text": "As a sys­tem­at­ic retail trad­er, you are also the main user of your own soft­ware. Make life easy for the per­son read­ing its logs at the end of a long day. That per­son is usu­al­ly you."
+      },
+      {
+        "id": "p31",
+        "text": "Once an instru­ment has a place in the work­book, it needs data. Fig­ure 1 shows how the secu­ri­ty mas­ter con­nects the broker’s instru­ment def­i­n­i­tions to two kinds of input: dai­ly prices for gen­er­at­ing sig­nals and bid/ask quotes for esti­mat­ing spread costs. The jobs are dif­fer­ent, even when one provider sup­plies both."
+      },
+      {
+        "id": "p32",
+        "text": "I pay for ded­i­cat­ed data main­ly to save time, even where the bro­ker could sup­ply it. I col­lect and store some his­to­ries myself, such as stock bor­row rebate rates, but avoid tak­ing on anoth­er data-main­te­nance job unless I need to."
+      },
+      {
+        "id": "p33",
+        "text": "For­mats change, his­to­ries need to remain con­sis­tent, and back­ups need look­ing after. Down­load­ing the prices is the easy part."
+      },
+      {
+        "id": "p34",
+        "text": "Bro­ker data is not nec­es­sar­i­ly free either: exchange sub­scrip­tions can add up. I there­fore weigh the sub­scrip­tion bill against the work of col­lect­ing and main­tain­ing the his­to­ry."
+      },
+      {
+        "id": "p35",
+        "text": "Signal data"
+      },
+      {
+        "id": "p36",
+        "text": "The cur­rent strate­gies gen­er­ate sig­nals from dai­ly prices for futures ( Con­tract­Type col­umn). Han­dling stocks and ETFs is already sup­port­ed but will be the top­ic of anoth­er arti­cle."
+      },
+      {
+        "id": "p37",
+        "text": "The sys­tem stitch­es his­to­ries for indi­vid­ual futures con­tracts into back-adjust­ed series for sig­nal cal­cu­la­tions and back­tests."
+      },
+      {
+        "id": "p38",
+        "text": "CSI and Nor­gate togeth­er cov­er more mar­kets than either pro­vides on its own. Both have pro­vid­ed excel­lent sup­port and cor­rect­ed data after I report­ed incon­sis­ten­cies. That is a good rea­son to build your own qual­i­ty checks, even when you are pay­ing some­one else to do theirs."
+      },
+      {
+        "id": "p39",
+        "text": "The Provider col­umn selects the extrac­tor used to load an instrument’s dai­ly data. One provider may have sev­er­al extrac­tors, such as Nor­gate and Nor­gate-Delist­ed . The lat­ter runs only when rebuild­ing the his­to­ry from scratch."
+      },
+      {
+        "id": "p40",
+        "text": "Delist­ed mar­kets have no new dai­ly prices, so their his­to­ries can sit out the dai­ly down­load."
+      },
+      {
+        "id": "p41",
+        "text": "The Provider­Sym­bol col­umn records the instrument’s sym­bol at the select­ed provider. When his­tor­i­cal data is unavail­able, it con­tains NA and the miss­ing cov­er­age is doc­u­ment­ed in Com­ment . That makes the gap explic­it rather than leav­ing an emp­ty cell for the read­er, or the code, to inter­pret. Start­Date records the date the sys­tem has his­toric data for an instru­ment."
+      },
+      {
+        "id": "p42",
+        "text": "Bid/ask data"
+      },
+      {
+        "id": "p43",
+        "text": "Bid and ask quotes allow the sys­tem to esti­mate spread costs and mea­sure slip­page by com­par­ing exe­cu­tion prices with the quotes pre­vail­ing imme­di­ate­ly before order place­ment."
+      },
+      {
+        "id": "p44",
+        "text": "While delayed bid/ask data at rel­a­tive­ly coarse inter­vals is usu­al­ly avail­able free of charge from the bro­ker, real-time feeds gen­er­al­ly require a paid sub­scrip­tion."
+      },
+      {
+        "id": "p45",
+        "text": "To keep costs down, I esti­mate spread costs using free bro­ker data wher­ev­er pos­si­ble. To mea­sure slip­page in live trad­ing, I use real-time feeds from exchanges with afford­able sub­scrip­tions. For exchanges with more expen­sive real-time feeds, such as CME and ICE, I use Data­ben­to instead."
+      },
+      {
+        "id": "p46",
+        "text": "Data­ben­to pro­vides his­tor­i­cal trade and quote data. I use the record­ed order-place­ment time­stamp to retrieve the bid and ask quotes imme­di­ate­ly before sub­mis­sion, then com­pare them with the exe­cu­tion price."
+      },
+      {
+        "id": "p47",
+        "text": "The Intra­dayProvider col­umn spec­i­fies the provider used to mea­sure slip­page, while Intra­dayI­den­ti­fi­er iden­ti­fies the instru­ment at that provider."
+      },
+      {
+        "id": "p48",
+        "text": "For exchanges that do not have a con­fig­ured provider, spread costs can only be esti­mat­ed using delayed data."
+      },
+      {
+        "id": "p49",
+        "text": "If you are start­ing out, you do not need a ded­i­cat­ed quote-data feed. An ini­tial spread esti­mate can also be obtained from observ­ing quotes in your broker’s trad­ing plat­form. With a hand­ful of mar­kets, that is man­age­able. Across a large uni­verse, you have qui­et­ly acquired a sec­ond job."
+      },
+      {
+        "id": "p50",
+        "text": "Key Take­aways"
+      },
+      {
+        "id": "p51",
+        "text": "Bal­ance cov­er­age, sub­scrip­tion costs and main­te­nance. Paid data still needs qual­i­ty checks."
+      },
+      {
+        "id": "p52",
+        "text": "Dai­ly prices dri­ve sig­nals and back­tests while bid/ask quotes mea­sure spreads and slip­page."
+      },
+      {
+        "id": "p53",
+        "text": "Building the universe"
+      },
+      {
+        "id": "p54",
+        "text": "Build­ing reli­able his­to­ries, select­ing trad­able mar­kets, and get­ting the con­tract details right."
+      },
+      {
+        "id": "p55",
+        "text": "A row in the work­book is not a promise to trade. Some rows pre­serve old price his­to­ries. Oth­ers record mar­kets that failed an ear­li­er check."
+      },
+      {
+        "id": "p56",
+        "text": "This is where Uncle Fred pulls up a chair and reach­es for his stamp. Is the price his­to­ry usable? Will the bro­ker accept the order? Is there enough liq­uid­i­ty, and how much will it cost to trade?"
+      },
+      {
+        "id": "p57",
+        "text": "“It looked good in the back­test” is unlike­ly to get the appli­ca­tion approved."
+      },
+      {
+        "id": "p58",
+        "text": "His fil­ing habits are use­ful here. Keep­ing exclud­ed mar­kets in the work­book pre­serves the rea­son for each deci­sion. Oth­er­wise, the same attrac­tive con­tract can turn up at the next annu­al review, ready to waste anoth­er after­noon. The Com­ment col­umn is where Fred leaves his objec­tions for future ref­er­ence. A new data feed or bet­ter liq­uid­i­ty may change the ver­dict, but there should be a rea­son for reopen­ing the file."
+      },
+      {
+        "id": "p59",
+        "text": "Fig­ure 2 shows how these checks nar­row the list. Each entry is count­ed under the first applic­a­ble fil­ter, even if sev­er­al rea­sons would rule it out."
+      },
+      {
+        "id": "p60",
+        "text": "The chart is a snap­shot, not a per­ma­nent ver­dict. Costs and liq­uid­i­ty change, and bro­ker access can dis­ap­pear even when an exchange still lists the con­tract. An instru­ment that pass­es these checks is eli­gi­ble for trad­ing. Sig­nal strength, avail­able cap­i­tal and port­fo­lio con­struc­tion deter­mine whether it reach­es the book."
+      },
+      {
+        "id": "p61",
+        "text": "The fol­low­ing sec­tions walk through the selec­tion process step by step, skip­ping those that are self-explana­to­ry."
+      },
+      {
+        "id": "p62",
+        "text": "Piecing together the past"
+      },
+      {
+        "id": "p63",
+        "text": "The “back­fill” step uses rows from the spread­sheet to sup­ply the price his­to­ry for anoth­er instru­ment. They remain use­ful for back­test­ing, but do not rep­re­sent addi­tion­al instru­ments to trade."
+      },
+      {
+        "id": "p64",
+        "text": "Take 🍫️ COCOA : the CSI his­to­ry used here starts in June 1975, while the stored Nor­gate his­to­ry begins in Decem­ber 1979. Com­bin­ing them adds about four and a half years with­out requir­ing ongo­ing down­loads from both providers."
+      },
+      {
+        "id": "p65",
+        "text": "My CSI sub­scrip­tion allows 150 mar­kets to be updat­ed at a time, so each slot is valu­able. The old­er CSI prices are down­loaded once, archived under 🍫️ COCOA_backfill , and read by the CSI-Delist­ed extrac­tor. That frees the CSI slot while Nor­gate sup­plies new data for COCOA ."
+      },
+      {
+        "id": "p66",
+        "text": "The same approach works across con­tract sizes. The his­to­ry of 🇺🇸 SP500_micro , for exam­ple, is extend­ed with data from the larg­er E‑mini con­tract, 🇺🇸 SP500 . That his­to­ry is extend­ed in turn with the orig­i­nal full-size con­tract, 🇺🇸 SP500ORG . The chain reach­es back to 1982."
+      },
+      {
+        "id": "p67",
+        "text": "Some­times the larg­er con­tract rep­re­sents the entire his­to­ry: 🇨🇦 TSE60_mini uses the stan­dard contract’s data because the providers do not cov­er the small­er ver­sion. These cas­es are marked “uses full size data” in the Com­ment col­umn and are only pos­si­ble if small-size vari­ants of the con­tract are always liq­uid enough."
+      },
+      {
+        "id": "p68",
+        "text": "Where the small­er con­tract is suf­fi­cient­ly liq­uid, using the larg­er contract’s data can also save a provider slot, as with 🌽️ CORN-W_mi­cro . Fig­ure 3 shows how much his­to­ry this recov­ers in three exam­ples."
+      },
+      {
+        "id": "p69",
+        "text": "“Wait a minute,” you might say. “The S&P 500 Micro did not exist in 1982. How can it appear in a back­test that goes back that far?”"
+      },
+      {
+        "id": "p70",
+        "text": "For the years before the Micro exist­ed, the back­test uses the old­er S&P 500 contract’s price his­to­ry and cal­cu­lates posi­tions using the Micro’s small­er con­tract size. This recon­structs how a small­er posi­tion would have behaved over that peri­od."
+      },
+      {
+        "id": "p71",
+        "text": "The full-size, E‑mini and Micro con­tracts there­fore have very sim­i­lar his­to­ries. My sys­tem groups them when allo­cat­ing risk, so adding anoth­er con­tract size does not auto­mat­i­cal­ly give the S&P 500 more weight in the port­fo­lio. Small­er con­tracts still serve a pur­pose: they allow posi­tions to be adjust­ed in small­er steps."
+      },
+      {
+        "id": "p72",
+        "text": "I will return to the details of risk allo­ca­tion in a sep­a­rate arti­cle on port­fo­lio con­struc­tion."
+      },
+      {
+        "id": "p73",
+        "text": "Recov­er­ing the his­to­ry of instru­ments is only half the job. The con­tracts need a clear han­dover, and their prices need to speak the same lan­guage."
+      },
+      {
+        "id": "p74",
+        "text": "Fig­ure 4 shows three ways of com­bin­ing price his­to­ries."
+      },
+      {
+        "id": "p75",
+        "text": "For COCOA , the back­fill Inac­tive­Con­tract is the Decem­ber 1981 con­tract tak­en from CSI. Lat­er con­tracts come from Nor­gate. The han­dover fol­lows con­tract expiry rather than a sin­gle cal­en­dar-date cut­off across all price series."
+      },
+      {
+        "id": "p76",
+        "text": "Price con­ven­tions also need to agree. CSI quotes 🌾 WHEAT_micro in dol­lars, while the bro­ker quotes it in cents. There­fore, its prices are mul­ti­plied by 100 before they are com­bined with the old­er wheat con­tracts."
+      },
+      {
+        "id": "p77",
+        "text": "Oth­er migra­tions need a fixed off­set. After the mar­ket closed on April 26, 2024, Mon­tréal Exchange con­vert­ed the out­stand­ing BAX con­tracts expir­ing after June 2024 into three-month CORRA futures 1 . In the work­book, these are 🇨🇦 CAD3M and 🇨🇦 CORRA3 . The con­ver­sion spread was 32.138 basis points. Because these futures are quot­ed as 100 minus the inter­est rate, putting the old BAX prices on the CORRA basis requires adding 0.32138 price points. The back­fill applies that adjust­ment to the pre­de­ces­sor con­tracts before join­ing the his­to­ries."
+      },
+      {
+        "id": "p78",
+        "text": "If you are now tempt­ed to aban­don futures trad­ing alto­geth­er, I sym­pa­thize. You can lose months untan­gling this mess before you have test­ed a sin­gle trad­ing idea. With equi­ties, at least a good data provider takes the bur­den of splits and oth­er cor­po­rate actions off your shoul­ders. Nor­gate does this well."
+      },
+      {
+        "id": "p79",
+        "text": "And just when the his­to­ries seem com­plete, cur­ren­cies add anoth­er com­pli­ca­tion. The back­test needs exchange-rate his­to­ries to express non-dol­lar posi­tions and prof­its in US dol­lars. Some price his­to­ries, like 🇫🇷️ CAC , use euros even for years before the euro exist­ed."
+      },
+      {
+        "id": "p80",
+        "text": "To cov­er those years, I had to recon­struct a euro proxy from the his­tor­i­cal cur­ren­cy bas­ket behind the Euro­pean Cur­ren­cy Unit (ECU)."
+      },
+      {
+        "id": "p81",
+        "text": "Adding a futures mar­ket takes one row in a spread­sheet. Get­ting that row right can swal­low an entire week."
+      },
+      {
+        "id": "p82",
+        "text": "Gone, but still in the backtest"
+      },
+      {
+        "id": "p83",
+        "text": "An instru­ment can leave today’s trad­ing uni­verse and still be part of the back­test. Build­ing a back­test strict­ly from today’s sur­vivors is prob­lem­at­ic, as is easy to see in equi­ties: omit the com­pa­nies that went bank­rupt, and some expen­sive mis­takes dis­ap­pear from the back­test. That is called sur­vivor­ship bias, and keep­ing delist­ed instru­ments helps address it. The secu­ri­ty mas­ter must there­fore record both what can be trad­ed today and what was avail­able to the strat­e­gy in each ear­li­er peri­od."
+      },
+      {
+        "id": "p84",
+        "text": "Retired mar­kets also add data where it is most wel­come: in the ear­ly years, when far few­er instru­ments exist­ed. Keep­ing them broad­ens the set of mar­kets avail­able in those years and lets a strat­e­gy face more mar­ket con­di­tions. Relat­ed mar­kets still share risks, so every extra instru­ment is not an inde­pen­dent time series, but the broad­er sam­ple makes the back­test more rep­re­sen­ta­tive."
+      },
+      {
+        "id": "p85",
+        "text": "Futures mar­kets can dis­ap­pear for dif­fer­ent rea­sons. Hedg­ing needs change, liq­uid­i­ty dries up, or a replace­ment con­tract attracts more busi­ness. The com­mod­i­ty itself need not have become worth­less. Take 🐖 PORKBELLIES , which had their moment of Hol­ly­wood fame in Trad­ing Places (1983) 2 . CME delist­ed frozen pork bel­ly futures in July 2011 3 after a pro­longed lack of trad­ing vol­ume. Bacon had not gone out of fash­ion, but trad­ing that par­tic­u­lar futures con­tract had."
+      },
+      {
+        "id": "p86",
+        "text": "Uncle Fred there­fore stamps the file “Retired” and puts it back in the cab­i­net. The trades it gen­er­at­ed, includ­ing the bad ones, still belong in the back­test. Fred may enjoy a tidy desk, but that is no excuse to put the losers through the shred­der."
+      },
+      {
+        "id": "p87",
+        "text": "A more recent exam­ple comes from my bro­ker. Inter­ac­tive Bro­kers will stop trad­ing its Lon­don Met­al Exchange looka­likes in Novem­ber 2026. These are over-the-counter con­tracts that ref­er­ence LME futures 4 , giv­ing access to met­als such as alu­minum, cop­per and tin. The under­ly­ing LME mar­kets con­tin­ue to exist, but this route to trad­ing them is clos­ing. Their his­to­ries remain use­ful even after they leave the live uni­verse. Here, “retired” describes their sta­tus in the sys­tem. It does not mean the exchange has delist­ed the under­ly­ing mar­ket."
+      },
+      {
+        "id": "p88",
+        "text": "The Inac­tive­Con­tract col­umn records where the retained con­tract his­to­ry ends. It con­tains a con­tract iden­ti­fi­er, rather than a cal­en­dar date. For 🟠️ COPPER-LME , for exam­ple, 1763CAM-2026M iden­ti­fies the June 2026 con­tract. Lat­er con­tracts are exclud­ed when build­ing the his­to­ry, and an instru­ment with this field filled in is omit­ted from the live con­fig­u­ra­tion. That June cut­off is sep­a­rate from IB’s Novem­ber with­draw­al. The final sim­u­lat­ed trade also depends on the roll sched­ule and the data it needs."
+      },
+      {
+        "id": "p89",
+        "text": "The same col­umn serves two pur­pos­es. A back­fill entry sup­plies old­er con­tracts to anoth­er instru­ment, as in the cocoa exam­ple above. A retired instru­ment keeps its own his­tor­i­cal iden­ti­ty and can remain in the back­test."
+      },
+      {
+        "id": "p90",
+        "text": "Fig­ure 5 shows the 55 retired instru­ments with stored price his­to­ries. The retire­ment cab­i­net holds rather more than a few curiosi­ties."
+      },
+      {
+        "id": "p91",
+        "text": "Fig­ure 6 counts the his­to­ries avail­able in each year. Togeth­er, these retired instru­ments con­tribute ten his­to­ries in 1980 and 27 in 1990, reach­ing a peak of 39. The retire­ment cab­i­net is doing use­ful work long before many of today’s con­tracts enter the pic­ture."
+      },
+      {
+        "id": "p92",
+        "text": "Keep­ing a delist­ed instru­ment does not auto­mat­i­cal­ly make it eli­gi­ble every day in the his­toric back­test: The instru­ment still needs usable data and enough liq­uid­i­ty dur­ing the peri­od being test­ed. The aim is to include mar­kets that could real­is­ti­cal­ly have been trad­ed then, with the infor­ma­tion avail­able then."
+      },
+      {
+        "id": "p93",
+        "text": "One market, several contracts"
+      },
+      {
+        "id": "p94",
+        "text": "Uncle Fred has bare­ly put his stamp down when the Aus­tralian dol­lar returns to his desk wear­ing a dif­fer­ent exchange badge."
+      },
+      {
+        "id": "p95",
+        "text": "“New tick­er” it announces. “More diver­si­fi­ca­tion”. Fred looks over his glass­es. “I have three stamps that say ‘Reject­ed’. That doesn’t make them three inde­pen­dent instru­ments.”"
+      },
+      {
+        "id": "p96",
+        "text": "The same expo­sure can come in sev­er­al con­tract sizes or trade on com­pet­ing exchanges. The work­book excludes 🇦🇺 AUD-ICE in favor of AUD , for exam­ple, and 🇪🇺 ESTR-CME in favor of ESTR . In both cas­es, the Com­ment col­umn doc­u­ments a cheap­er, more liq­uid alter­na­tive. Fred points to it with the expres­sion of a man who sus­pects you have come all this way with­out read­ing the form."
+      },
+      {
+        "id": "p97",
+        "text": "Each can­di­date still deserves a prop­er exam­i­na­tion. Whether two con­tracts count as dupli­cates is a case-by-case deci­sion. I treat 🍫 COCOA-LDN and COCOA as dis­tinct mar­kets: Lon­don cocoa is priced in ster­ling for deliv­ery in Europe, while New York cocoa is priced in US dol­lars for deliv­ery in the US 5 . Cur­ren­cy move­ments and local sup­ply-and-demand con­di­tions can there­fore dri­ve their prices apart. Even Fred accepts that “both involve choco­late” is an inad­e­quate basis for a rejec­tion."
+      },
+      {
+        "id": "p98",
+        "text": "For the back­test, anoth­er high­ly cor­re­lat­ed instru­ment may add no diver­si­fi­ca­tion at all. Pho­to­copy­ing the same wit­ness state­ment does not give you ten wit­ness­es. Count­ing each ver­sion as a sep­a­rate mar­ket can also give the under­ly­ing expo­sure more weight sim­ply because an exchange offers anoth­er way to pack­age it. Ten wrap­pers around the same mar­ket do not make a diver­si­fied port­fo­lio."
+      },
+      {
+        "id": "p99",
+        "text": "The addi­tion­al con­tract also needs a use­ful job. If the pre­ferred con­tract pro­vides the desired expo­sure more cheap­ly and with bet­ter liq­uid­i­ty, its rival may nev­er reach the port­fo­lio. Fred com­pares costs for equiv­a­lent expo­sure. A low­er com­mis­sion per con­tract is less impres­sive when you need ten of them. The Black­list flag records the exclu­sion, and Com­ment explains the deci­sion, sav­ing the reject­ed appli­cant from return­ing next year with a fresh hair­cut and the same spread."
+      },
+      {
+        "id": "p100",
+        "text": "Then 🇦🇺 AUD_micro arrives. Fred checks the con­tract size: A$10,000, against AUD ’s A$100,000. “You appear to have lost a zero.” In this case, that is the point. A small­er con­tract allows fin­er posi­tion siz­ing when posi­tions must be round­ed to whole con­tracts, espe­cial­ly in a small­er account. The S&P 500 vari­ants dis­cussed ear­li­er serve the same pur­pose. Fred puts down the rejec­tion stamp. “Approved. But your larg­er rel­a­tive has already claimed the diver­si­fi­ca­tion allowance.”"
+      },
+      {
+        "id": "p101",
+        "text": "Cor­re­la­tion weight­ing pre­vents retained vari­ants from each receiv­ing the allo­ca­tion of an inde­pen­dent mar­ket. Port­fo­lio con­struc­tion then decides how to express the expo­sure. High cor­re­la­tion alone there­fore does not set­tle the appli­ca­tion: the “high­ly cor­re­lat­ed” step in Fig­ure 2 removes alter­na­tives that offer no com­pelling exe­cu­tion advan­tage, while the final “unique mar­kets” bar groups the retained size vari­ants."
+      },
+      {
+        "id": "p102",
+        "text": "Fig­ure 7 shows the ver­dict for one exam­ple: keep the stan­dard and micro con­tracts at CME, and exclude the ICE alter­na­tive. Three appli­ca­tions, two approvals, one AUD/USD mar­ket. Fred has earned a bis­cuit. He breaks it in half and briefly con­sid­ers record­ing two."
+      },
+      {
+        "id": "p103",
+        "text": "Broker access"
+      },
+      {
+        "id": "p104",
+        "text": "Fred has approved the paper­work. Unfor­tu­nate­ly, the bro­ker has its own rejec­tion stamp, and unlike Fred, it does not stop work­ing at five."
+      },
+      {
+        "id": "p105",
+        "text": "An instru­ment can have a use­ful price his­to­ry and still be unavail­able to trade. The DoNot­Trade col­umn lets me keep that dis­tinc­tion in the sys­tem. With the flag set to 1 , an instru­ment will still gen­er­ate a trad­ing sig­nal and receive a the­o­ret­i­cal posi­tion in the opti­mal port­fo­lio, where frac­tion­al con­tracts are allowed. Dur­ing port­fo­lio con­struc­tion, how­ev­er, its posi­tion lim­it is set to zero. It may con­tribute infor­ma­tion, but the result­ing port­fo­lio holds no con­tracts in it."
+      },
+      {
+        "id": "p106",
+        "text": "This assumes the instru­ment is not black­list­ed. With Black­list set to 1 , its price his­to­ry is not loaded and no trad­ing sig­nal is gen­er­at­ed. The sys­tem still checks its bid/ask spreads if DoNot­Trade is 0 . Fig­ure 8 com­pares these paths through the sys­tem."
+      },
+      {
+        "id": "p107",
+        "text": "I typ­i­cal­ly refrain from hav­ing too many instru­ments in the uni­verse that gen­er­ate sig­nals but are not trad­able because sev­er­al exper­i­ments have shown that when an instru­ment gen­er­ates a sig­nal but is not trad­able, the final port­fo­lio does not improve."
+      },
+      {
+        "id": "p108",
+        "text": "Some trad­abil­i­ty restric­tions arise from reg­u­la­tion. The work­book flags some US sec­tor futures such as 💻 US-TECH because of restric­tions asso­ci­at­ed with sec­tion 871(m) of the US tax code with regard to non-US investors 6 ."
+      },
+      {
+        "id": "p109",
+        "text": "Oth­er obsta­cles are more mun­dane. The bro­ker may not sup­port the prod­uct for the account, or may not make it avail­able for mar­gin trad­ing. Restric­tions can also be tem­po­rary. The bro­ker may tem­porar­i­ly block trades that open or increase a posi­tion. The mar­ket can remain open, with prices arriv­ing nor­mal­ly, while my route into it is blocked. DoNot­Trade is a blunt con­trol: it impos­es a zero posi­tion lim­it rather than rep­re­sent­ing every vari­a­tion of those rules. The Com­ment col­umn records the rea­son, and a tem­po­rary restric­tion needs revis­it­ing when the bro­ker changes its pol­i­cy."
+      },
+      {
+        "id": "p110",
+        "text": "There­fore, bro­ker access is an ongo­ing main­te­nance job. Fig­ure 9 shows the cur­rent process: the sys­tem auto­mat­i­cal­ly records whether the bro­ker allows each instru­ment to be trad­ed, but I update DoNot­Trade man­u­al­ly in the secu­ri­ty mas­ter. Once enough trad­abil­i­ty his­to­ry has accu­mu­lat­ed, I plan to feed it auto­mat­i­cal­ly into the back­test, with the option of man­u­al over­rides."
+      },
+      {
+        "id": "p111",
+        "text": "Anyone on the other side?"
+      },
+      {
+        "id": "p112",
+        "text": "Fred has the broker’s approval. He calls out, “Next, please.” Noth­ing hap­pens. He tries again. For the first time in his career, the emp­ty wait­ing room is a prob­lem."
+      },
+      {
+        "id": "p113",
+        "text": "Mar­kets with vir­tu­al­ly no activ­i­ty usu­al­ly go on my Black­list . Thin­ly trad­ed mar­kets can stay in the dataset because liq­uid­i­ty changes. The eli­gi­bil­i­ty is reassessed each day with­in the sys­tem with its own flag IsTrad­able ."
+      },
+      {
+        "id": "p114",
+        "text": "This dai­ly liq­uid­i­ty check has two parts. Aver­age dai­ly vol­ume over the pre­vi­ous 20 trad­ing days must exceed 50 con­tracts. Risk vol­ume must also exceed USD 100,000. This mea­sure mul­ti­plies aver­age con­tract vol­ume by the contract’s val­ue in US dol­lars and its esti­mat­ed annu­alised volatil­i­ty. The result puts dif­fer­ent­ly sized con­tracts on a com­mon risk scale."
+      },
+      {
+        "id": "p115",
+        "text": "Fig­ure 10 illus­trates these checks using 🇪🇺 MSCIEU , an MSCI Europe equi­ty-index future. It remains eli­gi­ble through­out 2021, becomes inter­mit­tent as activ­i­ty weak­ens, spends much of the sec­ond half of 2024 out­side the trad­able uni­verse, and qual­i­fies for most of 2025. In 2026, it moves in and out again as the two liq­uid­i­ty mea­sures cross their thresh­olds."
+      },
+      {
+        "id": "p116",
+        "text": "IsTrad­able also checks min­i­mum volatil­i­ty and esti­mat­ed hold­ing costs. Those tests pass through­out this exam­ple. To avoid con­stant­ly switch­ing eli­gi­bil­i­ty on and off, a pass­ing result is car­ried for­ward for up to 30 trad­ing days. The flag can there­fore remain 1 after liq­uid­i­ty falls below a thresh­old. An eli­gi­ble instru­ment can thus be includ­ed in the live port­fo­lio."
+      },
+      {
+        "id": "p117",
+        "text": "The mar­ket can qual­i­fy again when activ­i­ty returns. At the end of the chart, both liq­uid­i­ty mea­sures have slipped below their thresh­olds, but the flag remains 1 because the last pass­ing obser­va­tion is still inside the 30-day grace peri­od. Fred approves of the dai­ly review. An appli­ca­tion that can be reopened every morn­ing is prac­ti­cal­ly a pen­sion plan."
+      },
+      {
+        "id": "p118",
+        "text": "Cost configuration"
+      },
+      {
+        "id": "p119",
+        "text": "Trad­ing involves two main vari­able costs: bro­ker com­mis­sions and bid–ask spreads."
+      },
+      {
+        "id": "p120",
+        "text": "These costs arise when­ev­er a posi­tion is opened or closed, includ­ing when it is rolled from one con­tract expiry to the next. Depend­ing on the rolling method, this may involve clos­ing the exist­ing posi­tion and open­ing a new one, or trad­ing the cal­en­dar spread direct­ly."
+      },
+      {
+        "id": "p121",
+        "text": "The tim­ing and method of each roll can mate­ri­al­ly affect the trad­ing system’s total costs. Automat­ing this process prop­er­ly is a top­ic in its own right."
+      },
+      {
+        "id": "p122",
+        "text": "In brief, PriceRoll­Cy­cle defines the con­tracts used for each instru­ment, while Hol­dRoll­Cy­cle spec­i­fies the expiries that the sys­tem may hold. RollOff­set­Days sets how many trad­ing days before expiry a roll may occur, while Car­ry­Off­set deter­mines whether the sys­tem cal­cu­lates an instrument’s car­ry using the next or the pre­vi­ous con­tract."
+      },
+      {
+        "id": "p123",
+        "text": "The work­book also spec­i­fies a Spread­Cost for each instru­ment. Expressed in the con­tract cur­ren­cy, this val­ue rep­re­sents half of the instrument’s typ­i­cal bid–ask spread. The sys­tem uses it as an ini­tial esti­mate when reli­able his­tor­i­cal spread data are not yet avail­able. Once enough obser­va­tions and actu­al fills have been col­lect­ed to esti­mate the spread cost, the field is no longer used."
+      },
+      {
+        "id": "p124",
+        "text": "You may have noticed that the work­book does not spec­i­fy bro­ker fees for each instru­ment. My sys­tem retrieves the cur­rent com­mis­sion from the bro­ker auto­mat­i­cal­ly and main­tains a his­to­ry of each instrument’s fees."
+      },
+      {
+        "id": "p125",
+        "text": "Fig­ure 11 applies the dai­ly cost fil­ter to five live instru­ments and the black­list­ed AEX Mini. For each instru­ment, it adds the one-way com­mis­sion to the esti­mat­ed half-spread, divides that cost by the cur­rent annu­alised risk of one con­tract, and then mul­ti­plies the result by the num­ber of sched­uled rolls per year. This com­mon scale reveals what dol­lar fees can hide: the Nas­daq Nano has a low­er dol­lar fee than its larg­er rel­a­tives, but a much high­er cost rel­a­tive to the risk it car­ries. Sim­i­lar­ly, month­ly rolls can push an appar­ent­ly mod­est trad­ing cost above the screen­ing thresh­old."
+      },
+      {
+        "id": "p126",
+        "text": "As Fig­ure 11 shows, the AEX Mini exceeds the 10% ceil­ing and is there­fore marked “too expen­sive” in the work­book. Pass­ing this cost screen does not by itself make an instru­ment trad­able: the liq­uid­i­ty and volatil­i­ty checks apply inde­pen­dent­ly, and each strat­e­gy also decides which instru­ments it can trade based part­ly on its turnover."
+      },
+      {
+        "id": "p127",
+        "text": "Com­mis­sions change over time, and real­is­tic esti­mates are essen­tial for a mean­ing­ful back­test. Because the price his­to­ries of some instru­ments extend back to the 1970s, the cost his­to­ry must include at least rea­son­able prox­ies for the bro­ker fees charged at the time. In the 1970s, com­mis­sions could be as high as USD 30 per trans­ac­tion!"
+      },
+      {
+        "id": "p128",
+        "text": "I will cov­er how these set­tings work togeth­er, how to auto­mate rolls effi­cient­ly and how to esti­mate costs for the ear­li­er part of the back­test in a sep­a­rate arti­cle."
+      },
+      {
+        "id": "p129",
+        "text": "Contract quirks"
+      },
+      {
+        "id": "p130",
+        "text": "Fred likes the phrase “stan­dard­ised con­tracts”. It sounds as though some­one has already done the dif­fi­cult work. He opens the secu­ri­ty mas­ter expect­ing a qui­et after­noon and finds a pet­ting zoo."
+      },
+      {
+        "id": "p131",
+        "text": "The first ani­mal is 🔥 GAS-US-WEEKLY , which expires every Fri­day 7 . Fred’s fil­ing sys­tem iden­ti­fies a futures con­tract only by year and month. This works beau­ti­ful­ly until a month con­tains five Fri­days. “Which Fri­day?” asks Fred. The spread­sheet main­tains a dig­ni­fied silence (see Fig­ure 12). This instru­ment is black­list­ed because the required his­to­ry is unavail­able, but the prob­lem of week­ly expiries would remain even if the data became avail­able."
+      },
+      {
+        "id": "p132",
+        "text": "Then comes Euro­pean nat­ur­al gas along: It changes its size with­out ask­ing per­mis­sion. The con­tract sizes of Dutch TTF 🔥 GAS-W-NL 8 and UK NBP 🔥 GAS-W-UK 9 depend on the num­ber of days in the deliv­ery month, so a March con­tract is larg­er than a Feb­ru­ary con­tract. TTF also counts the deliv­ery hours, where day­light-sav­ing time occa­sion­al­ly adds or removes an hour."
+      },
+      {
+        "id": "p133",
+        "text": "My solu­tion is to hold only Decem­ber expiries (hence the suf­fix ‑W for Win­ter). Decem­ber reli­ably sup­plies 31 days, giv­ing fixed con­fig­ured mul­ti­pli­ers of 744 MWh for TTF and 31,000 therms for NBP. It is less a tri­umph of finan­cial engi­neer­ing than a strate­gic alliance with the cal­en­dar."
+      },
+      {
+        "id": "p134",
+        "text": "Fred is just begin­ning to admire this solu­tion when ICE announces a min­i­mum trad­ing size of five lots for both prod­ucts. Order­ing one gas con­tract is not on the menu: The small­est serv­ing feeds a fam­i­ly of five. Fred marks both rows DoNot­Trade , stamps the appli­ca­tion closed and con­grat­u­lates him­self on anoth­er job well done."
+      },
+      {
+        "id": "p135",
+        "text": "Trad­ing on exchanges around the world brings plen­ty of local pecu­liar­i­ties. Aus­tralia is a par­tic­u­lar­ly gen­er­ous con­trib­u­tor. Until June 2025, ASX cash equi­ties opened in five groups ordered by secu­ri­ty code 10 . Trad­ing start­ed in alpha­bet­i­cal batch­es: A–B first, C–F next, and every­one from S–Z wait­ing at the back. ASX now uses a sin­gle open­ing auc­tion, but its bond futures still keep Fred employed."
+      },
+      {
+        "id": "p136",
+        "text": "The Aus­tralian bond futures have a fixed face val­ue of AUD 100,000, yet their prices are quot­ed as 100 minus the annu­al yield. Con­se­quent­ly, the dol­lar val­ue of the same yield move varies with the lev­el of inter­est rates 11 . The exact con­ver­sion is non­lin­ear."
+      },
+      {
+        "id": "p137",
+        "text": "My sys­tem uses a fixed aver­age mul­ti­pli­er instead. This will not win a prize in numer­i­cal analy­sis, but the vari­a­tion is small enough for the job and Com­ment records the approx­i­ma­tion for the next per­son who won­ders why the mul­ti­pli­er looks sus­pi­cious­ly hand-craft­ed."
+      },
+      {
+        "id": "p138",
+        "text": "Hong Kong sup­plied anoth­er les­son when I first trad­ed equi­ties there. At noon, the reg­u­lar morn­ing ses­sion end­ed. I checked the logs, the inter­net con­nec­tion, and, briefly, my san­i­ty. Noth­ing was bro­ken: the after­noon ses­sion begins at 1 p.m. Even an elec­tron­ic mar­ket can put up a sign say­ing, “Back after lunch.”"
+      },
+      {
+        "id": "p139",
+        "text": "Final­ly, expiry sched­ules can change dur­ing the life­time of an instru­ment. For 🌾 MILLWHEAT , Com­ment records a cycle change and says that the usable sequence begins with the March 2015 con­tract, 2015H . The cur­rent cycle com­pris­es March, May, Sep­tem­ber and Decem­ber 12 . Unfor­tu­nate­ly, a com­ment is doc­u­men­ta­tion, not an exe­cutable instruc­tion. Writ­ing “start here” in a spread­sheet does not make the loader start there, just as Fred’s note say­ing “please work” does not repair the office print­er."
+      },
+      {
+        "id": "p140",
+        "text": "These odd­i­ties point to the same engi­neer­ing rule: a futures iden­ti­fi­er is part of the data mod­el, not just a label. If an excep­tion changes prices, posi­tion size, trad­ing access or con­tract selec­tion, the rule belongs in code and tests. Com­ment should explain the excep­tion, not be the only place where it exists."
+      },
+      {
+        "id": "p141",
+        "text": "Fred adds “stan­dard­ised” to his list of words that should require sup­port­ing evi­dence."
+      },
+      {
+        "id": "p142",
+        "text": "Key Take­aways"
+      },
+      {
+        "id": "p143",
+        "text": "A secu­ri­ty mas­ter is not a list of things to buy. Of 684 entries, 301 result in trad­able instru­ments, and those rep­re­sent 243 mar­ket expo­sures. Dai­ly checks can nar­row the live uni­verse fur­ther."
+      },
+      {
+        "id": "p144",
+        "text": "Back­fill and retired rows are his­tor­i­cal infra­struc­ture, not clut­ter. Con­tract han­dovers, price units and con­ver­sion off­sets must all agree before his­to­ries can be joined."
+      },
+      {
+        "id": "p145",
+        "text": "Black­list , DoNot­Trade and IsTrad­able answer dif­fer­ent ques­tions: whether to load the his­to­ry, whether the port­fo­lio may hold the instru­ment, and whether it pass­es dai­ly liq­uid­i­ty, volatil­i­ty and cost tests."
+      },
+      {
+        "id": "p146",
+        "text": "Con­tract vari­ants earn a place through cheap­er exe­cu­tion or posi­tion siz­ing, not by pre­tend­ing to be inde­pen­dent mar­kets. Group cor­re­lat­ed vari­ants before allo­cat­ing risk to them."
+      },
+      {
+        "id": "p147",
+        "text": "Doc­u­men­ta­tion is essen­tial: it records what is unusu­al, why an excep­tion exists, and how it should be han­dled."
+      },
+      {
+        "id": "p148",
+        "text": "Classification system"
+      },
+      {
+        "id": "p149",
+        "text": "How instru­ments become risk buck­ets."
+      },
+      {
+        "id": "p150",
+        "text": "The secu­ri­ty mas­ter uses three clas­si­fi­ca­tion lev­els. Asset­Class divides the uni­verse into sev­en top-lev­el groups: agri­cul­ture, ener­gy, equi­ty, for­eign exchange, met­als, rates, and volatil­i­ty. Each class is sub­di­vid­ed at two fur­ther lev­els. The aim is to group instru­ments by eco­nom­ic expo­sure. For exam­ple, the rates class sep­a­rates short-term inter­est rates ( STIR ) from longer-term bonds ( Bonds ). The third lev­el usu­al­ly adds a region or a nar­row­er prod­uct fam­i­ly. An equi­ty con­tract might there­fore be clas­si­fied as Equi­ty / Index / EMEA , and a wheat future as Ags / Grain / Wheat ."
+      },
+      {
+        "id": "p151",
+        "text": "This hier­ar­chy sup­ports the risk allo­ca­tion mod­el. Each top-lev­el group receives the same risk allo­ca­tion, except volatil­i­ty, which receives less. The same prin­ci­ple applies at the low­er lev­els. Cor­re­la­tion group­ing fur­ther reduces the influ­ence of con­tracts that rep­re­sent sub­stan­tial­ly the same mar­ket. Togeth­er, the instru­ments in Equi­ty / Index receive the same cap­i­tal allo­ca­tion as those in Ener­gy / Coal ."
+      },
+      {
+        "id": "p152",
+        "text": "The con­se­quence is easy to miss. Adding a thir­ti­eth equi­ty-index future does not give equi­ties thir­ty times the risk allo­ca­tion of a sin­gle ener­gy con­tract. It main­ly divides the exist­ing equi­ty allo­ca­tion into small­er pieces."
+      },
+      {
+        "id": "p153",
+        "text": "Fig­ure 13 shows the num­ber of trad­able instru­ments in each asset class over time. The 150-day aver­age smooths out the effects of local hol­i­days and brief drops in liq­uid­i­ty. The equi­ty class has grown fastest, par­tic­u­lar­ly since 2000. Agri­cul­ture and rates have much longer his­to­ries but have expand­ed more slow­ly. Volatil­i­ty remains delib­er­ate­ly small."
+      },
+      {
+        "id": "p154",
+        "text": "Some clas­si­fi­ca­tions are fac­tu­al. A Japan­ese yen future is FX / Devel­oped / ASIA . Oth­ers reflect choic­es about how the port­fo­lio should treat an expo­sure."
+      },
+      {
+        "id": "p155",
+        "text": "The work­book places cryp­to futures under Met­als / Cryp­to / None . This does not mean that Bit­coin is a met­al. It pre­vents a still-small group from acquir­ing its own top-lev­el risk bud­get mere­ly because it does not fit the tra­di­tion­al labels. The word None at the third lev­el is also inten­tion­al: geog­ra­phy adds lit­tle to that group­ing."
+      },
+      {
+        "id": "p156",
+        "text": "🌐 MSCIWORLD is anoth­er judg­ment call. Its bench­mark is glob­al, but the work­book assigns it to the US branch because the index is heav­i­ly weight­ed toward US equi­ties."
+      },
+      {
+        "id": "p157",
+        "text": "The labels need not be philo­soph­i­cal­ly per­fect. Sev­er­al clas­si­fi­ca­tions can be rea­son­able. The scheme must be inter­nal­ly con­sis­tent and doc­u­ment­ed, and changes to it must be treat­ed as mod­el changes. Reclas­si­fy­ing an instru­ment can alter his­tor­i­cal group counts, port­fo­lio weights, and any cross-sec­tion­al sig­nal built from its peers."
+      },
+      {
+        "id": "p158",
+        "text": "Process automation"
+      },
+      {
+        "id": "p159",
+        "text": "Soft­ware assem­bles the work — with a human in the loop."
+      },
+      {
+        "id": "p160",
+        "text": "The annu­al update begins with three prod­uct lists and ends with a revised secu­ri­ty mas­ter and recal­i­brat­ed strate­gies. In between lies the tedious work: find­ing what has changed, decid­ing what deserves a clos­er look, and check­ing that the result­ing data can sup­port research and trad­ing. Automa­tion turns a tour of sev­er­al hun­dred spread­sheet rows into a short­er list of deci­sions. Fig­ure 14 shows the process."
+      },
+      {
+        "id": "p161",
+        "text": "Collect, compare, reconcile"
+      },
+      {
+        "id": "p162",
+        "text": "The process starts with three auto­mat­ed steps: retriev­ing the futures uni­verse from Inter­ac­tive Bro­kers, col­lect­ing CSI’s prod­uct cat­a­log, and obtain­ing Norgate’s futures sym­bols. Each source pro­vides a dif­fer­ent part of the pic­ture. The bro­ker lists prod­ucts that may be avail­able to trade. The providers list the his­to­ries they cov­er."
+      },
+      {
+        "id": "p163",
+        "text": "Next comes match­ing. Auto­mat­ed helpers com­pare the bro­ker cat­a­log with the sym­bols already record­ed in the secu­ri­ty mas­ter. They flag new prod­ucts to con­fig­ure and exist­ing sym­bols that no longer appear in the broker’s cat­a­log. Resolv­ing these gaps is still a man­u­al process. The descrip­tion, exchange, cur­ren­cy, con­tract size, and set­tle­ment terms help estab­lish whether a bro­ker prod­uct match­es a provider’s his­to­ry. Sim­i­lar names are use­ful clues, but they are not proof."
+      },
+      {
+        "id": "p164",
+        "text": "From candidates to decisions"
+      },
+      {
+        "id": "p165",
+        "text": "Once the sources are rec­on­ciled, the review pro­ceeds through sev­er­al fil­ters and pro­pos­al lists. The first pass removes prod­ucts out­side the intend­ed scope: sin­gle-stock and spot-quot­ed futures, along with mar­kets the sys­tem can­not access. The remain­ing can­di­dates need usable his­to­ries and a way to esti­mate trad­ing costs."
+      },
+      {
+        "id": "p166",
+        "text": "The next pass revis­its ear­li­er exclu­sions. Has a pre­vi­ous­ly illiq­uid con­tract attract­ed vol­ume? Has a short his­to­ry become long enough? Is bid/ask data now avail­able? Have mea­sured spreads fall­en below the cost esti­mate that kept the instru­ment out? The note­book iden­ti­fies these can­di­dates using provider sta­tis­tics, stored his­to­ries, and col­lect­ed spreads. Where evi­dence is miss­ing, the work list may point back to the exchange for a man­u­al liq­uid­i­ty check."
+      },
+      {
+        "id": "p167",
+        "text": "Exist­ing instru­ments need atten­tion too. Miss­ing bro­ker sym­bols and sus­tained zero vol­ume can sig­nal dete­ri­o­rat­ing access or liq­uid­i­ty. Oth­er reports com­pare high­ly cor­re­lat­ed con­tracts and sug­gest shar­ing his­to­ries across sizes. These pro­pos­als need review: units and set­tle­ment terms can dif­fer. Using a larg­er contract’s his­to­ry also omits the small­er contract’s own vol­ume and open-inter­est data, which can affect roll deci­sions."
+      },
+      {
+        "id": "p168",
+        "text": "The review ends with a deci­sion for each can­di­date: add it, revise its con­fig­u­ra­tion, retain it only for his­tor­i­cal research, or leave it exclud­ed. The work­book records the deci­sion and its rea­son, so next year’s review can ques­tion an assump­tion rather than recon­struct it."
+      },
+      {
+        "id": "p169",
+        "text": "The reports iden­ti­fy can­di­dates — I make the changes. Fred’s REVIEWED stamp is only use­ful if next year’s review­er can tell what he checked."
+      },
+      {
+        "id": "p170",
+        "text": "Rebuild, check, repeat"
+      },
+      {
+        "id": "p171",
+        "text": "After the work­book changes, the data pipeline reloads the def­i­n­i­tions, updates the con­tract his­to­ries, applies migra­tions and back­fills, cre­ates roll cal­en­dars, and assem­bles the back-adjust­ed series. This is where a plau­si­ble spread­sheet row has to pro­duce usable data."
+      },
+      {
+        "id": "p172",
+        "text": "Auto­mat­ed data qual­i­ty checks sup­port each step, as out­lined below. A fail­ure sends the rel­e­vant def­i­n­i­tion or source data back for inves­ti­ga­tion."
+      },
+      {
+        "id": "p173",
+        "text": "Data qual­i­ty checks"
+      },
+      {
+        "id": "p174",
+        "text": "Spread­sheet: com­plete, con­sis­tent instru­ment def­i­n­i­tions, iden­ti­fiers, units, and doc­u­ment­ed exclu­sions."
+      },
+      {
+        "id": "p175",
+        "text": "Con­tract data: expect­ed his­to­ries and dates, cur­rent obser­va­tions, sen­si­ble prices and vol­umes, and miss­ing data flagged for review."
+      },
+      {
+        "id": "p176",
+        "text": "Migra­tions and back­fills: com­pat­i­ble con­tracts, cor­rect unit con­ver­sions, and joins that pre­serve the intend­ed expo­sure."
+      },
+      {
+        "id": "p177",
+        "text": "Roll cal­en­dars: con­tracts avail­able for the con­fig­ured hold­ing and pric­ing sched­ules, includ­ing those need­ed for upcom­ing rolls and car­ry cal­cu­la­tions."
+      },
+      {
+        "id": "p178",
+        "text": "Back-adjust­ed series: con­tin­u­ous his­to­ries with plau­si­ble returns, sup­port­ed by the required cur­ren­cy data."
+      },
+      {
+        "id": "p179",
+        "text": "Exe­cu­tion feed­back: bro­ker access, col­lect­ed spreads, and exe­cu­tion prices checked for dis­crep­an­cies that war­rant anoth­er look."
+      },
+      {
+        "id": "p180",
+        "text": "The updat­ed mas­ter then feeds into strat­e­gy recal­i­bra­tion. New mar­kets and longer his­to­ries can change sig­nal mag­ni­tudes and cor­re­la­tions. The sys­tem re-esti­mates fore­cast scal­ing and diver­si­fi­ca­tion adjust­ments, then reruns the port­fo­lio back­test after costs and pro­duces a recal­i­bra­tion report."
+      },
+      {
+        "id": "p181",
+        "text": "The annu­al review revis­its the whole uni­verse. Dai­ly auto­mat­ed checks and mon­i­tor­ing may prompt an ad hoc review. A new prod­uct or a bro­ker restric­tion (as in the LME exam­ple above) can there­fore restart the rel­e­vant part of the process. The aim is to make each update small­er and eas­i­er to explain, rather than save a year’s sur­pris­es for one hero­ic spread­sheet ses­sion."
+      },
+      {
+        "id": "p182",
+        "text": "Key Take­aways"
+      },
+      {
+        "id": "p183",
+        "text": "Auto­mat­ed checks flag new prod­ucts, miss­ing sym­bols, and chang­ing mar­ket con­di­tions for review. Revis­it ear­li­er exclu­sions when the evi­dence changes."
+      },
+      {
+        "id": "p184",
+        "text": "Con­tract match­ing and inclu­sion deci­sions still need human judg­ment."
+      },
+      {
+        "id": "p185",
+        "text": "Val­i­date what the revised work­book pro­duces: con­tract data, migra­tions, roll cal­en­dars, and back-adjust­ed his­to­ries. Failed checks send the rel­e­vant def­i­n­i­tions or data back for review."
+      },
+      {
+        "id": "p186",
+        "text": "Conclusion"
+      },
+      {
+        "id": "p187",
+        "text": "Small gains, earned the tedious way."
+      },
+      {
+        "id": "p188",
+        "text": "Suc­cess­ful sys­tem­at­ic trad­ing depends less on bril­liant strate­gies than on get­ting a great many dull things right. The secu­ri­ty mas­ter is part of that work: it keeps the uni­verse used for research con­nect­ed to the mar­kets avail­able for trad­ing. Neglect it, and a promis­ing back­test may rely on trades you could nev­er have made."
+      },
+      {
+        "id": "p189",
+        "text": "So far, every arti­cle in this series has involved grind­ing out anoth­er small improve­ment. These gains add up. The cumu­la­tive result comes from patient atten­tion to details that are easy to over­look and rarely excit­ing to fix."
+      },
+      {
+        "id": "p190",
+        "text": "The lat­est secu­ri­ty mas­ter update raised my back­test­ed Sharpe ratio by 0.1 over the peri­od since the 2008 finan­cial cri­sis. Much of that improve­ment came from exclud­ing illiq­uid instru­ments and mar­kets I could not trade. Chas­ing max­i­mum diver­si­fi­ca­tion with­out get­ting the details right had not helped. Being more selec­tive did."
+      },
+      {
+        "id": "p191",
+        "text": "Uncle Fred sur­veys the reject­ed appli­ca­tions, straight­ens the sur­viv­ing files, and rais­es his stamp for a thun­der­ous APPROVED . His con­tri­bu­tion to quan­ti­ta­tive finance is com­plete for this year. He has earned a sec­ond bis­cuit. Some­where out­side, a genius is wait­ing to explain a rev­o­lu­tion­ary strat­e­gy. Fred calls through the door: “Take a num­ber. And bring the paper­work.”"
+      },
+      {
+        "id": "p192",
+        "text": "Appendix A: Definitions and Methodology"
+      },
+      {
+        "id": "p193",
+        "text": "Appendix B: Research and Publication Conventions"
+      },
+      {
+        "id": "p194",
+        "text": "Footnotes"
+      },
+      {
+        "id": "p195",
+        "text": "Mon­tréal Exchange, BAX-to-COR­RA con­ver­sion announce­ment . ↩︎"
+      },
+      {
+        "id": "p196",
+        "text": "Rot­ten Toma­toes, Trad­ing Places (1983) . ↩︎"
+      },
+      {
+        "id": "p197",
+        "text": "CME Group, frozen pork bel­ly futures delist­ing notice . ↩︎"
+      },
+      {
+        "id": "p198",
+        "text": "Inter­ac­tive Bro­kers, OTC futures on LME met­als . ↩︎"
+      },
+      {
+        "id": "p199",
+        "text": "ICE, Lon­don Cocoa Futures spec­i­fi­ca­tions and Cocoa Futures spec­i­fi­ca­tions . ↩︎"
+      },
+      {
+        "id": "p200",
+        "text": "Inter­ac­tive Bro­kers, 871(m) with­hold­ing ; ↩︎"
+      },
+      {
+        "id": "p201",
+        "text": "CME Group, Hen­ry Hub Nat­ur­al Gas Week­ly Futures . ↩︎"
+      },
+      {
+        "id": "p202",
+        "text": "ICE, Dutch TTF Nat­ur­al Gas Futures spec­i­fi­ca­tions . ↩︎"
+      },
+      {
+        "id": "p203",
+        "text": "ICE, UK NBP Nat­ur­al Gas Futures spec­i­fi­ca­tions . ↩︎"
+      },
+      {
+        "id": "p204",
+        "text": "ASX, Changes to equi­ty mar­ket structure—opening and clos­ing the mar­ket . ↩︎"
+      },
+      {
+        "id": "p205",
+        "text": "ASX, Bond deriv­a­tives con­tract spec­i­fi­ca­tions . ↩︎"
+      },
+      {
+        "id": "p206",
+        "text": "Euronext, Tech­ni­cal spec­i­fi­ca­tions of the Milling Wheat No. 2 Futures con­tract . ↩︎"
+      }
+    ]
+  },
+  {
+    "material_id": "ce8f8580996c78fd72b23dd80e4c15afec77b1969d3160d8b29bbdeacdf668dd",
+    "title": "Inverse Learning of Latent Risk-Neutral Densities from Irregular Option Quotes",
+    "url": "https://arxiv.org/abs/2607.27188",
+    "source": "arXiv q-fin.ST",
+    "published": "2026-10-19T04:00:00+00:00",
+    "evidence_level": "captured_excerpt",
+    "paragraphs": [
+      {
+        "id": "p1",
+        "text": "Option prices contain information about a market-implied distribution over a future asset price. This RND supports tail probabilities, quantiles, and risk-neutral moments, but it is not directly observed. Markets instead provide prices at a changing, sparse collection of strikes and maturities. Practical pipelines commonly smooth prices or implied volatilities and then differentiate the fitted surface (Breeden and Litzenberger, 1978; Jackwerth and Rubinstein, 1996; Aït-Sahalia and Lo, 1998; Tzavalis and Rompolis, 2008; Figlewski, 2008; Figlewski, 2018; Monteiro et al., 2011)."
+      },
+      {
+        "id": "p2",
+        "text": "This workflow creates two questions that are easy to conflate: whether a method reconstructs observable prices and whether it recovers the latent density that generated them. The first can be tested on markets by hiding quotes. The second cannot because a market RND is itself inferred. Synthetic data are necessary for latent error, but synthetic evidence alone cannot establish practical market accuracy. In machine-learning terms, RND recovery is an inverse problem from irregular observations (Arridge et al., 2019; Putzky and Welling, 2019), with a function-valued output that invites operator learning (Lu et al., 2021; Li et al., 2021; Kovachki et al., 2023)."
+      },
+      {
+        "id": "p3",
+        "text": "We therefore separate the evidence. The simulator draws exact densities from martingale process families, prices continuous quotes analytically, and reveals the density only for controlled supervision and evaluation. The market study uses chronologically disjoint NIFTY transaction bars and tests only held-out prices. Four learned backbones are compared with direct parametric and regularized density estimators, surface smoothers, and Breeden–Litzenberger (BL) extraction. Matched density-output and direct-surface variants isolate representation from architecture."
+      },
+      {
+        "id": "p4",
+        "text": "Across the controlled study, density MSE is the most effective tested supervised objective. A well-specified mixture is strongest on aggregate synthetic metrics, while learned operators improve selected functionals and the misspecified Merton regime. Test-time adaptation helps on NIFTY but does not close the gap to local classical refitting. The relevant scientific result is not a single winning architecture: the inverse problem, supervision target, structural specification, and downstream functional jointly determine the ranking."
+      },
+      {
+        "id": "p5",
+        "text": "This paper is a controlled empirical findings study, not a claim of a new universal architecture. Its contributions are:"
+      },
+      {
+        "id": "p6",
+        "text": "• A benchmark that separates simulator-truth latent evaluation from held-out real-market observable evaluation. • A ten-seed density-MSE protocol with direct mixture and regularized density baselines, decision-relevant functionals, and family-stratified results. • A numerical spectrum and constructive density pair that illustrate finite-grid conditioning and uncovered-tail ambiguity. • Matched representation, stress, operator-mismatch, and real-data adaptation studies that delimit where the learned prior helps and fails."
+      },
+      {
+        "id": "p7",
+        "text": "Breeden and Litzenberger identify the state-price density with a second strike derivative (Breeden and Litzenberger, 1978). Practical estimators combine smoothing, interpolation, or constrained optimization with differentiation (Jackwerth and Rubinstein, 1996; Aït-Sahalia and Lo, 1998). Direct recovery, tail treatment, and maturity-indexed RND surfaces are studied in (Tzavalis and Rompolis, 2008; Figlewski, 2008; Figlewski, 2018; Monteiro et al., 2011). Recent distributional approaches use normalizing flows and generative networks (Yang and Hospedales, 2023; Xian et al., 2024). We study controlled recovery, not the novelty of RND estimation itself. These finance-specific learned estimators are not included in our benchmark: the learned suite instead isolates backbone, output representation, and supervision effects under a common protocol. Consequently, our comparisons do not establish superiority over specialized learned RND estimators."
+      },
+      {
+        "id": "p8",
+        "text": "SVI is a standard parametric volatility-slice model with known static-arbitrage conditions (Gatheral and Jacquier, 2014). Roper studies continuous regularity and arbitrage conditions (Roper, 2010); Ackerer et al. use financial structure in neural smoothing (Ackerer et al., 2020); and Operator Deep Smoothing maps sparse quotes to volatility (Wiedemann et al., 2025). Related neural work covers calibration, surrogates, real-time smoothing, finance-informed losses, and term structure (Hernandez, 2016; Horvath et al., 2021; Ruf and Wang, 2020; Yang et al., 2025; Aboussalah et al., 2026; Zhang, 2025). Transfer learning has been proposed for illiquid regimes (Conti and Morelli, 2026). Our discrete certification is not equivalent to Roper’s continuous conditions."
+      },
+      {
+        "id": "p9",
+        "text": "Hexagon-Net uses heterogeneous graph attention to propagate information across liquidity regions and forecast volatility surfaces (Liang et al., 2025), while forecasting benchmarks have used replayable historical evaluation with evidence restricted to information available at each forecast date (Ye et al., 2026). These forecasting targets differ from our same-snapshot inverse target, but they motivate careful treatment of irregular quote geometry and evaluation design."
+      },
+      {
+        "id": "p10",
+        "text": "DeepONet couples branch and trunk networks (Lu et al., 2021); FNO uses spectral convolutions (Li et al., 2021); and related operator work studies latent representations, general geometries, convolutional constructions, boundary-indexed operators, and pretraining (Kovachki et al., 2023; Wang and Wang, 2024; Shikhman, 2026b; Raonic et al., 2023; Chen et al., 2024). Deep Sets and Transformers provide invariant or attention-based encoders (Zaheer et al., 2017; Vaswani et al., 2017). Learned inversion and physics-informed models motivate differentiating through known forward maps (Putzky and Welling, 2019; Raissi et al., 2019), while structured-shift studies warn that robustness depends on both architecture and problem family (Shikhman, 2026a). We use these as controlled backbones rather than architectural contributions."
+      },
+      {
+        "id": "p11",
+        "text": "For maturity $\\tau$ , let $F_{\\tau}$ be the forward price, $x=\\log(S_{\\tau}/F_{\\tau})$ normalized log terminal price, and $k=\\log(K/F_{\\tau})$ log-moneyness. A normalized risk-neutral density $q_{\\tau}(x)$ satisfies (1) $q_{\\tau}(x)\\geq 0,\\qquad\\int q_{\\tau}(x)\\,dx=1,\\qquad\\int e^{x}q_{\\tau}(x)\\,dx=1.$ With discounting removed by forward normalization, the call price is (2) $C(k,\\tau)=\\int(e^{x}-e^{k})_{+}q_{\\tau}(x)\\,dx.$ The observed input is an unordered set (3) $\\mathcal{Q}=\\{(k_{i},\\tau_{i},\\widetilde{C}_{i})\\}_{i=1}^{n},\\qquad\\widetilde{C}_{i}=C(k_{i},\\tau_{i})+\\epsilon_{i},$ where both $n$ and the locations vary by example."
+      },
+      {
+        "id": "p12",
+        "text": "A density-output model predicts $\\widehat{q}_{\\tau}(x)$ ; the differentiable version of Eq. (2) maps it to $\\widehat{C}(k,\\tau)$ . A direct-surface model predicts $\\widehat{C}(k,\\tau)$ first. For a controlled latent comparison, we apply the same fixed physical-strike BL extraction, clipping, trapezoidal normalization, and forward-moment repair to every direct surface."
+      },
+      {
+        "id": "p13",
+        "text": "Simulator-truth density error is available only in the synthetic study. Market data support held-out price and implied-volatility tests, not a claim that an inferred density equals a unique “true” market density. We enforce this boundary throughout the results."
+      },
+      {
+        "id": "p14",
+        "text": "Let $Q_{\\tau}(x)=\\int_{-\\infty}^{x}q_{\\tau}(u)\\,du$ . We report maturity-averaged integrated density error (4) $L^{1}_{q}=\\frac{1}{|\\mathcal{T}|}\\sum_{\\tau\\in\\mathcal{T}}\\int|\\widehat{q}_{\\tau}(x)-q_{\\tau}(x)|\\,dx,$ and the one-dimensional Wasserstein distance (5) $W_{1}=\\frac{1}{|\\mathcal{T}|}\\sum_{\\tau\\in\\mathcal{T}}\\int|\\widehat{Q}_{\\tau}(x)-Q_{\\tau}(x)|\\,dx.$ Equation (5) is the cumulative-distribution term: it evaluates mass allocation across the domain rather than duplicating pointwise density MSE (Peyré and Cuturi, 2019). The tail metric is the absolute error in $\\Pr[x<-0.5]$ , averaged by maturity. We add absolute error in the 1% quantile and in risk-neutral variance as decision-relevant latent functionals. Observable metrics are price RMSE and Black–Scholes implied-volatility RMSE on valid inversions (Black and Scholes, 1973). Synthetic price error uses a dense common grid; real price error uses quotes withheld before fitting."
+      },
+      {
+        "id": "p15",
+        "text": "To connect the evaluation principle to the inverse mechanism, we discretize Eq. (2) on the 128-node density and strike grids. We restrict perturbations to the 126-dimensional subspace with zero total mass and zero forward moment, then compute its singular spectrum. At a relative threshold of $10^{-14}$ , only 31 directions are resolved and 95 fall below threshold; the condition number within the resolved subspace is $6.89\\times 10^{3}$ . This count is specific to the density and strike grids, covered strike range, quadrature, normalization, weighting, and threshold; it is not an identification theorem. Uniform scaling leaves the relative spectrum unchanged, whereas nonuniform weighting or discretization need not. Observation noise does not change these singular values but does change which directions are practically resolvable. Because the map is analyzed maturity-wise, additional maturities help only through imposed cross-maturity structure."
+      },
+      {
+        "id": "p16",
+        "text": "Each synthetic example is drawn directly from one of three positive martingale process families: time-varying-volatility geometric Brownian motion, an inception-time mixture of lognormal processes, or compensated Merton jump diffusion (Black and Scholes, 1973; Merton, 1976). The density is the generating distribution, not the output of a smoothing method. Headline quote prices are evaluated with family-specific analytic formulas. The learning target is represented on 128 $x$ -nodes over $[-4,3]$ , while an independent 1,024-node audit grid covers $[-8,5]$ . Across the three families, analytic-versus-audit-grid price RMSE is approximately $9\\!\\times\\!10^{-6}$ , and analytic-versus-model-grid RMSE ranges from $1.15\\!\\times\\!10^{-4}$ to $1.27\\!\\times\\!10^{-4}$ . Thus the quotes are not generated by the 128-node pricing layer used during learning."
+      },
+      {
+        "id": "p17",
+        "text": "Every seed generates 3,000 examples with a 70/15/15 split (2,100/450/450). Each surface has 16 maturities and a 128-node strike grid, but only 40–320 continuous, jittered strike–maturity locations are observed, corresponding to 2–15.625% of the 2,048-node lattice. Across the 4,500 test examples, the realized mean is 180.24 quotes. Six regimes are mixed: uniform, maturity-stratified, strike-local, tail-undersampled, clustered, and market-like. “Market-like” names a synthetic stress geometry only: it is neither estimated from nor calibrated to NIFTY or exchange sampling frequencies. Bounded heteroskedastic noise depends on moneyness, maturity, and liquidity proxies and is sampled conditional on static call bounds; quotes are not clipped after corruption."
+      },
+      {
+        "id": "p18",
+        "text": "The four backbones share a padded quote-set interface. DeepONet combines a mean-pooled quote branch with a coordinate trunk. FNO averages quote embeddings onto the output grid and applies four two-dimensional spectral blocks. The quote transformer uses two layers and four attention heads. The set decoder uses a pointwise MLP, invariant mean pooling, and coordinate decoder."
+      },
+      {
+        "id": "p19",
+        "text": "The primary benchmark trains density outputs for all four. Its strongest classical comparator is a joint two-component martingale-lognormal density fitted to all irregular quotes by soft- $L^{1}$ least squares with six fixed starts. It nests the Black–Scholes family and matches the simulator’s two-component family, but is structurally misspecified for Merton jumps. A second direct baseline fits a nonnegative discrete density at each observed maturity using a second-difference penalty plus mass and forward penalties, then interpolates across maturities. The real-data comparison additionally includes interpolation, SVI, a shape-constrained spline, and BL extraction."
+      },
+      {
+        "id": "p20",
+        "text": "The primary protocol uses only supervised density MSE, (6) $\\mathcal{L}_{\\mathrm{main}}=\\mathcal{L}_{\\mathrm{pdf}}.$ An objective ablation compares density MSE with combinations of observed-quote MSE, Eq. (5), a forward-moment penalty, and an $H^{1}$ -style grid roughness penalty. Density MSE provides the strongest latent recovery under the tested configuration. The forward term is (7) $\\mathcal{L}_{\\mathrm{fwd}}=\\mathbb{E}_{\\tau}\\left[\\left(\\int e^{x}\\widehat{q}_{\\tau}(x)\\,dx-1\\right)^{2}\\right].$ It enforces one martingale moment, not complete no-arbitrage. Likewise, the roughness term regularizes a finite density grid and does not establish twice differentiability of implied volatility."
+      },
+      {
+        "id": "p21",
+        "text": "For reporting, predicted prices are certified against bounds, strike monotonicity, vertical-spread slopes, physical-strike convexity, and calendar monotonicity. A deterministic PAVA-based repair is reproducible but is not the exact global Euclidean projection; an optional quadratic program supplies that projection. These checks relate to arbitrage detection and learned projection (Cohen et al., 2020; Yang et al., 2020). They complement, but do not replace, the continuous conditions studied by Roper (2010) and Ackerer et al. (2020)."
+      },
+      {
+        "id": "p22",
+        "text": "The price-only representation comparison trains density and direct-surface variants with the same observed-price loss, data, seeds, minibatch order, initial weights, budget, and parameter count. A separately labeled oracle comparison aligns dense targets to each representation. An auxiliary robustness study evaluates 31 stress settings and three family holdouts for seeds 42–51, for 34 conditions in total. It uses the composite objective and BL-style classical baselines, so it is interpreted as a sensitivity analysis rather than as the primary comparison against the direct mixture estimator."
+      },
+      {
+        "id": "p23",
+        "text": "We use the CC0 NIFTY spot, futures, and options one-minute archive of Bhat (2024). The adapter selects positive-volume 15:15 Asia/Kolkata transaction-bar closes from 2019–2020, calls with 7–35 days to maturity, and an exact-minute maturity-aligned NIFTY F1 close. It normalizes by $F=\\mathrm{F1}$ and uses $D=1$ , an explicit short-horizon approximation. These are transaction bars, not bid–ask quotes, NBBO midpoints, or executable prices. Exact-minute closes need not occur at the same second. Because every method uses the same normalization, this approximation primarily limits the absolute financial interpretation of the benchmark; it need not preserve rankings under a different market-data construction."
+      },
+      {
+        "id": "p24",
+        "text": "The processed sample contains 6,191 calls, 295 dates, and 19 expiries, with 295 post-hoc call–put parity audits. Splits are chronological: 2,667 calls on 165 dates for training through 19 December 2019; 1,947 calls on 66 dates for validation through 23 April 2020; and 1,577 calls on 64 dates from 4 May through 20 August 2020. Within every test chain, a fixed moneyness-stratified mask reveals 1,053 prices and withholds 524 ( $33\\%$ ). No latent labels are created."
+      },
+      {
+        "id": "p25",
+        "text": "All eight learned variants are trained only on observed real prices for 50 epochs and ten initialization seeds. Classical comparators include strike interpolation, two-dimensional surface interpolation, SVI, a shape-constrained spline, BL constrained-spline density, a two-component lognormal mixture, and a regularized discrete density. The classical methods are fitted independently to each observed expiry slice; the learned models amortize across the training period."
+      },
+      {
+        "id": "p26",
+        "text": "To make this comparison more structurally informative, we adapt the pretrained DeepONet surface separately to each observed test chain and evaluate only its hidden quotes. Five step-size and iteration candidates are selected once on the chronological validation period. The selected setting uses 50 Adam steps, learning rate $10^{-4}$ , and a $10^{-4}$ proximal penalty to the pretrained weights. Each test surface starts from the same seed-specific checkpoint, so adaptation cannot carry information across test dates."
+      },
+      {
+        "id": "p27",
+        "text": "Synthetic tables use one rerun seed as the unit and report the mean with a 95% nonparametric bootstrap interval over ten seeds (Efron and Tibshirani, 1993). We prespecified three primary paired comparisons: set decoder versus mixture lognormal for $L^{1}$ , $W_{1}$ , and fixed-tail error. Exact sign-flip tests are Holm-adjusted within this three-test family (Holm, 1979). Quantile, variance, regularized-density, and family-stratified comparisons are labeled exploratory. With ten pairs, the smallest two-sided exact $p$ -value is $0.001953$ ."
+      },
+      {
+        "id": "p28",
+        "text": "For real learned models, intervals vary the ten initialization seeds. The classical baselines are deterministic under the frozen mask, so repeating their value across seeds would create false precision; their intervals instead cluster-bootstrap the 64 calendar dates. Adapted versus zero-shot DeepONet is paired by seed. The two uncertainty units are reported separately."
+      },
+      {
+        "id": "p29",
+        "text": "An objective comparison shows that density MSE reduces $L^{1}$ relative to the composite objective by 57.3% for DeepONet, 58.4% for FNO, 63.7% for the quote transformer, and 55.0% for the set decoder. Every reduction occurs in all ten paired seeds. Under density-MSE supervision, the quote transformer has the lowest stable learned $L^{1}$ and $W_{1}$ , while DeepONet has the best learned fixed-tail, 1% quantile, variance, and price errors. FNO has two failure seeds and correspondingly wide intervals."
+      },
+      {
+        "id": "p30",
+        "text": "The direct mixture baseline is stronger on aggregate price, $L^{1}$ , $W_{1}$ , and fixed-tail error. All three prespecified confirmatory comparisons favor the mixture: set-decoder error is 33.4%, 24.5%, and 36.0% higher, respectively, with exact Holm-adjusted $p=0.0059$ for each. Thus, the learned models are not the strongest general density estimators under the aggregate metrics."
+      },
+      {
+        "id": "p31",
+        "text": "Aggregate performance conceals economically relevant differences. DeepONet’s 1% quantile error is 39.0% below the mixture and its variance error is 34.6% lower; both exploratory paired comparisons favor DeepONet in all ten seeds (unadjusted exact $p=0.001953$ ). Family stratification identifies the source. The mixture is strongest on Black–Scholes and mixture draws, where its form is well matched. On Merton jump diffusion, the quote transformer reduces $L^{1}$ by 16.4% relative to the mixture, while DeepONet improves $W_{1}$ and fixed-tail error. These are specification-sensitive gains, not evidence of universal learned superiority."
+      },
+      {
+        "id": "p32",
+        "text": "The learned models also beat the regularized discrete estimator: the set decoder reduces $L^{1}$ , $W_{1}$ , and tail error by 39.3%, 51.6%, and 20.4%. An auxiliary 34-condition stress suite uses the composite objective and omits the direct mixture baseline, so we interpret it only as sensitivity analysis."
+      },
+      {
+        "id": "p33",
+        "text": "The matched price-only comparison remains mixed. FNO favors density output; DeepONet and the quote transformer favor direct surfaces followed by fixed BL extraction; and the set decoder splits by metric. Under representation-aligned dense oracle labels, density outputs improve latent metrics for all four backbones. Thus representation, deterministic output map, and supervision interact; density output alone is not sufficient."
+      },
+      {
+        "id": "p34",
+        "text": "A 1,000-surface objective ablation and the 3,000-surface objective comparison both show that the tested auxiliary losses hurt $L^{1}$ . Price-only density training remains much worse. Increasing the set-decoder sample size from 1,000 to 3,000 improves $L^{1}$ , with a smaller gain at 5,000. Separately, replacing the 128-node training pricer with analytic prices changes DeepONet $L^{1}$ by only $3\\times 10^{-5}$ . This controls numerical resolution, not stochastic-model misspecification."
+      },
+      {
+        "id": "p35",
+        "text": "Validation-selected adaptation lowers DeepONet surface RMSE from 0.004833 to 0.003464, a 28.3% paired reduction that occurs for all ten seeds (exact $p=0.001953$ ). MAE falls by 27.1% in eight seeds ( $p=0.0078$ ). Adaptation takes 0.138 seconds per surface on average and now beats the regularized density and simple interpolation in RMSE. The change in price-bound violations is inconclusive. Because comparator runtimes were not benchmarked under a common implementation, the adaptation timing does not by itself establish an end-to-end computational advantage."
+      },
+      {
+        "id": "p36",
+        "text": "The strongest local fits remain far better: mixture lognormal and SVI attain RMSE 0.000166 and 0.000241. The adapted network is also worse than the shape-constrained spline and BL constrained density. Classical models refit each expiry, whereas the neural model uses amortized pretraining plus a short refit; this is a more informative comparison, but not identical statistical machinery. These results validate observable prices only, not a unique market-truth RND."
+      },
+      {
+        "id": "p37",
+        "text": "The conditioning experiment provides a finite-grid illustration of the rankings. Pricing integrates a density against call payoffs, while BL extraction differentiates a fitted surface twice. In the present construction, the equal-price pair differs below the lowest covered strike and therefore demonstrates extrapolative left-tail nonidentifiability; it does not establish comparable ambiguity entirely within the covered region. More generally, weakly observed finite-grid directions require an estimator to select among price-compatible densities through an explicit or learned structural prior. The mixture prior is excellent when its family is well matched. The learned prior becomes useful for the Merton family and for functionals such as extreme quantiles and variance. Observable fit alone cannot identify which prior recovers the generating density."
+      },
+      {
+        "id": "p38",
+        "text": "Simulation supplies latent labels for controlled measurement. At inference every trained model receives only quotes. Market data supply a separate test of observable generalization. Adaptation shows that amortized training can provide a useful initialization, but the NIFTY result still favors per-expiry classical fits. Together with the mixed representation comparison, this rules out a claim that density output or operator learning is intrinsically superior. We do not test whether simulator-density pretraining transfers across the simulator–market shift; combining such pretraining with price-only market adaptation is a natural next experiment."
+      },
+      {
+        "id": "p39",
+        "text": "• Simulator truth is exact only conditional on the chosen families. Numerical pricer mismatch is small, but economic misspecification in rates, dividends, exercise style, dynamics, and observation noise remains. • The market study covers one index, 19 expiries, and one period. NIFTY observations are transaction-bar closes without bid and ask, and exact-minute futures and option closes need not be synchronized to the second. The shared $D=1$ approximation, F1 normalization, time filter, and liquidity filters limit absolute interpretation; no market latent labels exist. • Classical methods refit each expiry. Adaptation narrows but does not eliminate this regime difference, and the reported adaptation time is not a common-system runtime comparison. Larger multi-market training sets, time context, or graph encoders such as Hexagon-Net may alter the tradeoff. • Ten seeds limit exact-test resolution. The auxiliary stress suite uses a different objective and baseline set from the primary benchmark. Certification is finite-grid evidence, not a proof of continuous no-arbitrage. • The generic learned suite does not benchmark specialized learned RND or volatility-smoothing estimators. Broader market validation, simulator-to-market transfer, and uncertainty-aware densities or prediction sets remain future work."
+      },
+      {
+        "id": "p40",
+        "text": "An RND estimator can support market monitoring, scenario analysis, and research on implied tail risk. The main risk is false precision: a plausible density can be overinterpreted as a uniquely identified forecast or physical probability. We mitigate this by separating market observables from latent simulator truth, reporting failures as well as wins, and avoiding trading or decision recommendations."
+      },
+      {
+        "id": "p41",
+        "text": "Recovering a risk-neutral density from sparse option quotes is not equivalent to reconstructing the observed price surface. Our conditioning analysis makes this distinction explicit for the stated finite grid: after enforcing mass and forward constraints, many directions fall below the selected relative threshold, and different unobserved left tails can produce identical prices at the covered strikes. This construction establishes extrapolative tail nonidentifiability, not ambiguity confined to the covered region. Every estimator must therefore resolve the remaining inverse ambiguity through an implicit or explicit structural prior. The appropriate prior depends on the target. A well-specified lognormal mixture provides the strongest aggregate synthetic performance, whereas learned operators offer narrower advantages for tail functionals and under Merton-family misspecification. The matched representation experiments further show that density output alone is not sufficient; representation, supervision, architecture, and postprocessing jointly determine recovery quality."
+      },
+      {
+        "id": "p42",
+        "text": "The chronological NIFTY study reinforces the separation between latent and observable evaluation. Test-time adaptation substantially improves the amortized DeepONet, but per-expiry mixture and SVI fits remain more accurate on held-out market prices. Thus, the evidence supports neither a universal learned estimator nor a universal classical one. RND recovery claims should instead state the supervision available, the assumed distributional structure, the downstream functional of interest, and whether validation concerns observable prices or simulator-truth densities. More broadly, price accuracy should be treated as necessary evidence of market consistency, not as sufficient evidence that the latent risk-neutral distribution has been identified."
+      }
+    ]
+  },
+  {
+    "material_id": "e607ffbb35892fba1d705ed79e2e8ec6c10e2983714e7c2af11dbd497a14a96c",
+    "title": "The Messy Business of Building a Futures Security Master | Handelsmeisterei",
+    "url": "https://www.handelsmeisterei.de/the_messy_business_of_building_a_futures_security_master/",
+    "source": "www.handelsmeisterei.de",
+    "published": "2026-10-16T09:16:44+00:00",
+    "evidence_level": "captured_excerpt",
+    "paragraphs": [
+      {
+        "id": "p1",
+        "text": "Data sources"
+      },
+      {
+        "id": "p2",
+        "text": "Con­nect­ing trad­able mar­kets to the right data."
+      },
+      {
+        "id": "p3",
+        "text": "It is eas­i­er to explain a secu­ri­ty mas­ter with a real one in front of you. You can down­load mine here . Yes, it is an Excel work­book. I real­ize you may have expect­ed some­thing more sophis­ti­cat­ed."
+      },
+      {
+        "id": "p4",
+        "text": "In 20 years as a quant, I have yet to vis­it a finan­cial insti­tu­tion that did not use Excel. Appar­ent­ly, suc­cess in finance requires at least one spread­sheet. That’s why my trad­ing sys­tem uses one."
+      },
+      {
+        "id": "p5",
+        "text": "In prac­tice, Excel gives me a con­ve­nient way to edit the con­fig­u­ra­tion. The trad­ing sys­tem reads the work­book and val­i­dates its con­tents before using them. Excel is the inter­face. The checks live in the code."
+      },
+      {
+        "id": "p6",
+        "text": "Before fill­ing in the rows, though, we need to estab­lish which con­tracts belong there."
+      },
+      {
+        "id": "p7",
+        "text": "For live trad­ing, the bro­ker sets the first con­straint: it must offer the con­tract and allow your account to trade it. A prod­uct can appear in its cat­a­log and still be unavail­able to you, for exam­ple because of restric­tions in your juris­dic­tion."
+      },
+      {
+        "id": "p8",
+        "text": "I use Inter­ac­tive Bro­kers for exe­cu­tion, so its futures cat­a­log is my start­ing point. The workbook’s IBSym­bol col­umn records the broker’s sym­bol for each instru­ment."
+      },
+      {
+        "id": "p9",
+        "text": "Exchanges and data providers have their own nam­ing schemes. To keep track of the same mar­ket across them, I give each instru­ment a mem­o­rable name and an icon, such as 🐷 LEANHOG ."
+      },
+      {
+        "id": "p10",
+        "text": "The pair appears on dash­boards, in logs and through­out the system’s oth­er out­put. A pig is eas­i­er to spot than anoth­er cryp­tic con­tract code."
+      },
+      {
+        "id": "p11",
+        "text": "As a sys­tem­at­ic retail trad­er, you are also the main user of your own soft­ware. Make life easy for the per­son read­ing its logs at the end of a long day. That per­son is usu­al­ly you."
+      },
+      {
+        "id": "p12",
+        "text": "Once an instru­ment has a place in the work­book, it needs data. Fig­ure 1 shows how the secu­ri­ty mas­ter con­nects the broker’s instru­ment def­i­n­i­tions to two kinds of input: dai­ly prices for gen­er­at­ing sig­nals and bid/ask quotes for esti­mat­ing spread costs. The jobs are dif­fer­ent, even when one provider sup­plies both."
+      },
+      {
+        "id": "p13",
+        "text": "I pay for ded­i­cat­ed data main­ly to save time, even where the bro­ker could sup­ply it. I col­lect and store some his­to­ries myself, such as stock bor­row rebate rates, but avoid tak­ing on anoth­er data-main­te­nance job unless I need to."
+      },
+      {
+        "id": "p14",
+        "text": "For­mats change, his­to­ries need to remain con­sis­tent, and back­ups need look­ing after. Down­load­ing the prices is the easy part."
+      },
+      {
+        "id": "p15",
+        "text": "Bro­ker data is not nec­es­sar­i­ly free either: exchange sub­scrip­tions can add up. I there­fore weigh the sub­scrip­tion bill against the work of col­lect­ing and main­tain­ing the his­to­ry."
+      },
+      {
+        "id": "p16",
+        "text": "Signal data"
+      },
+      {
+        "id": "p17",
+        "text": "The cur­rent strate­gies gen­er­ate sig­nals from dai­ly prices for futures ( Con­tract­Type col­umn). Han­dling stocks and ETFs is already sup­port­ed but will be the top­ic of anoth­er arti­cle."
+      },
+      {
+        "id": "p18",
+        "text": "The sys­tem stitch­es his­to­ries for indi­vid­ual futures con­tracts into back-adjust­ed series for sig­nal cal­cu­la­tions and back­tests."
+      },
+      {
+        "id": "p19",
+        "text": "CSI and Nor­gate togeth­er cov­er more mar­kets than either pro­vides on its own. Both have pro­vid­ed excel­lent sup­port and cor­rect­ed data after I report­ed incon­sis­ten­cies. That is a good rea­son to build your own qual­i­ty checks, even when you are pay­ing some­one else to do theirs."
+      },
+      {
+        "id": "p20",
+        "text": "The Provider col­umn selects the extrac­tor used to load an instrument’s dai­ly data. One provider may have sev­er­al extrac­tors, such as Nor­gate and Nor­gate-Delist­ed . The lat­ter runs only when rebuild­ing the his­to­ry from scratch."
+      },
+      {
+        "id": "p21",
+        "text": "Delist­ed mar­kets have no new dai­ly prices, so their his­to­ries can sit out the dai­ly down­load."
+      },
+      {
+        "id": "p22",
+        "text": "The Provider­Sym­bol col­umn records the instrument’s sym­bol at the select­ed provider. When his­tor­i­cal data is unavail­able, it con­tains NA and the miss­ing cov­er­age is doc­u­ment­ed in Com­ment . That makes the gap explic­it rather than leav­ing an emp­ty cell for the read­er, or the code, to inter­pret. Start­Date records the date the sys­tem has his­toric data for an instru­ment."
+      },
+      {
+        "id": "p23",
+        "text": "Bid/ask data"
+      },
+      {
+        "id": "p24",
+        "text": "Bid and ask quotes allow the sys­tem to esti­mate spread costs and mea­sure slip­page by com­par­ing exe­cu­tion prices with the quotes pre­vail­ing imme­di­ate­ly before order place­ment."
+      },
+      {
+        "id": "p25",
+        "text": "While delayed bid/ask data at rel­a­tive­ly coarse inter­vals is usu­al­ly avail­able free of charge from the bro­ker, real-time feeds gen­er­al­ly require a paid sub­scrip­tion."
+      },
+      {
+        "id": "p26",
+        "text": "To keep costs down, I esti­mate spread costs using free bro­ker data wher­ev­er pos­si­ble. To mea­sure slip­page in live trad­ing, I use real-time feeds from exchanges with afford­able sub­scrip­tions. For exchanges with more expen­sive real-time feeds, such as CME and ICE, I use Data­ben­to instead."
+      },
+      {
+        "id": "p27",
+        "text": "Data­ben­to pro­vides his­tor­i­cal trade and quote data. I use the record­ed order-place­ment time­stamp to retrieve the bid and ask quotes imme­di­ate­ly before sub­mis­sion, then com­pare them with the exe­cu­tion price."
+      },
+      {
+        "id": "p28",
+        "text": "The Intra­dayProvider col­umn spec­i­fies the provider used to mea­sure slip­page, while Intra­dayI­den­ti­fi­er iden­ti­fies the instru­ment at that provider."
+      },
+      {
+        "id": "p29",
+        "text": "For exchanges that do not have a con­fig­ured provider, spread costs can only be esti­mat­ed using delayed data."
+      },
+      {
+        "id": "p30",
+        "text": "If you are start­ing out, you do not need a ded­i­cat­ed quote-data feed. An ini­tial spread esti­mate can also be obtained from observ­ing quotes in your broker’s trad­ing plat­form. With a hand­ful of mar­kets, that is man­age­able. Across a large uni­verse, you have qui­et­ly acquired a sec­ond job."
+      },
+      {
+        "id": "p31",
+        "text": "Key Take­aways"
+      },
+      {
+        "id": "p32",
+        "text": "Bal­ance cov­er­age, sub­scrip­tion costs and main­te­nance. Paid data still needs qual­i­ty checks."
+      },
+      {
+        "id": "p33",
+        "text": "Dai­ly prices dri­ve sig­nals and back­tests while bid/ask quotes mea­sure spreads and slip­page."
+      },
+      {
+        "id": "p34",
+        "text": "Process automation"
+      },
+      {
+        "id": "p35",
+        "text": "Soft­ware assem­bles the work — with a human in the loop."
+      },
+      {
+        "id": "p36",
+        "text": "The annu­al update begins with three prod­uct lists and ends with a revised secu­ri­ty mas­ter and recal­i­brat­ed strate­gies. In between lies the tedious work: find­ing what has changed, decid­ing what deserves a clos­er look, and check­ing that the result­ing data can sup­port research and trad­ing. Automa­tion turns a tour of sev­er­al hun­dred spread­sheet rows into a short­er list of deci­sions. Fig­ure 14 shows the process."
+      },
+      {
+        "id": "p37",
+        "text": "Collect, compare, reconcile"
+      },
+      {
+        "id": "p38",
+        "text": "The process starts with three auto­mat­ed steps: retriev­ing the futures uni­verse from Inter­ac­tive Bro­kers, col­lect­ing CSI’s prod­uct cat­a­log, and obtain­ing Norgate’s futures sym­bols. Each source pro­vides a dif­fer­ent part of the pic­ture. The bro­ker lists prod­ucts that may be avail­able to trade. The providers list the his­to­ries they cov­er."
+      },
+      {
+        "id": "p39",
+        "text": "Next comes match­ing. Auto­mat­ed helpers com­pare the bro­ker cat­a­log with the sym­bols already record­ed in the secu­ri­ty mas­ter. They flag new prod­ucts to con­fig­ure and exist­ing sym­bols that no longer appear in the broker’s cat­a­log. Resolv­ing these gaps is still a man­u­al process. The descrip­tion, exchange, cur­ren­cy, con­tract size, and set­tle­ment terms help estab­lish whether a bro­ker prod­uct match­es a provider’s his­to­ry. Sim­i­lar names are use­ful clues, but they are not proof."
+      },
+      {
+        "id": "p40",
+        "text": "From candidates to decisions"
+      },
+      {
+        "id": "p41",
+        "text": "Once the sources are rec­on­ciled, the review pro­ceeds through sev­er­al fil­ters and pro­pos­al lists. The first pass removes prod­ucts out­side the intend­ed scope: sin­gle-stock and spot-quot­ed futures, along with mar­kets the sys­tem can­not access. The remain­ing can­di­dates need usable his­to­ries and a way to esti­mate trad­ing costs."
+      },
+      {
+        "id": "p42",
+        "text": "The next pass revis­its ear­li­er exclu­sions. Has a pre­vi­ous­ly illiq­uid con­tract attract­ed vol­ume? Has a short his­to­ry become long enough? Is bid/ask data now avail­able? Have mea­sured spreads fall­en below the cost esti­mate that kept the instru­ment out? The note­book iden­ti­fies these can­di­dates using provider sta­tis­tics, stored his­to­ries, and col­lect­ed spreads. Where evi­dence is miss­ing, the work list may point back to the exchange for a man­u­al liq­uid­i­ty check."
+      },
+      {
+        "id": "p43",
+        "text": "Exist­ing instru­ments need atten­tion too. Miss­ing bro­ker sym­bols and sus­tained zero vol­ume can sig­nal dete­ri­o­rat­ing access or liq­uid­i­ty. Oth­er reports com­pare high­ly cor­re­lat­ed con­tracts and sug­gest shar­ing his­to­ries across sizes. These pro­pos­als need review: units and set­tle­ment terms can dif­fer. Using a larg­er contract’s his­to­ry also omits the small­er contract’s own vol­ume and open-inter­est data, which can affect roll deci­sions."
+      },
+      {
+        "id": "p44",
+        "text": "The review ends with a deci­sion for each can­di­date: add it, revise its con­fig­u­ra­tion, retain it only for his­tor­i­cal research, or leave it exclud­ed. The work­book records the deci­sion and its rea­son, so next year’s review can ques­tion an assump­tion rather than recon­struct it."
+      },
+      {
+        "id": "p45",
+        "text": "The reports iden­ti­fy can­di­dates — I make the changes. Fred’s REVIEWED stamp is only use­ful if next year’s review­er can tell what he checked."
+      },
+      {
+        "id": "p46",
+        "text": "Rebuild, check, repeat"
+      },
+      {
+        "id": "p47",
+        "text": "After the work­book changes, the data pipeline reloads the def­i­n­i­tions, updates the con­tract his­to­ries, applies migra­tions and back­fills, cre­ates roll cal­en­dars, and assem­bles the back-adjust­ed series. This is where a plau­si­ble spread­sheet row has to pro­duce usable data."
+      },
+      {
+        "id": "p48",
+        "text": "Auto­mat­ed data qual­i­ty checks sup­port each step, as out­lined below. A fail­ure sends the rel­e­vant def­i­n­i­tion or source data back for inves­ti­ga­tion."
+      },
+      {
+        "id": "p49",
+        "text": "Data qual­i­ty checks"
+      },
+      {
+        "id": "p50",
+        "text": "Spread­sheet: com­plete, con­sis­tent instru­ment def­i­n­i­tions, iden­ti­fiers, units, and doc­u­ment­ed exclu­sions."
+      },
+      {
+        "id": "p51",
+        "text": "Con­tract data: expect­ed his­to­ries and dates, cur­rent obser­va­tions, sen­si­ble prices and vol­umes, and miss­ing data flagged for review."
+      },
+      {
+        "id": "p52",
+        "text": "Migra­tions and back­fills: com­pat­i­ble con­tracts, cor­rect unit con­ver­sions, and joins that pre­serve the intend­ed expo­sure."
+      },
+      {
+        "id": "p53",
+        "text": "Roll cal­en­dars: con­tracts avail­able for the con­fig­ured hold­ing and pric­ing sched­ules, includ­ing those need­ed for upcom­ing rolls and car­ry cal­cu­la­tions."
+      },
+      {
+        "id": "p54",
+        "text": "Back-adjust­ed series: con­tin­u­ous his­to­ries with plau­si­ble returns, sup­port­ed by the required cur­ren­cy data."
+      },
+      {
+        "id": "p55",
+        "text": "Exe­cu­tion feed­back: bro­ker access, col­lect­ed spreads, and exe­cu­tion prices checked for dis­crep­an­cies that war­rant anoth­er look."
+      },
+      {
+        "id": "p56",
+        "text": "The updat­ed mas­ter then feeds into strat­e­gy recal­i­bra­tion. New mar­kets and longer his­to­ries can change sig­nal mag­ni­tudes and cor­re­la­tions. The sys­tem re-esti­mates fore­cast scal­ing and diver­si­fi­ca­tion adjust­ments, then reruns the port­fo­lio back­test after costs and pro­duces a recal­i­bra­tion report."
+      },
+      {
+        "id": "p57",
+        "text": "The annu­al review revis­its the whole uni­verse. Dai­ly auto­mat­ed checks and mon­i­tor­ing may prompt an ad hoc review. A new prod­uct or a bro­ker restric­tion (as in the LME exam­ple above) can there­fore restart the rel­e­vant part of the process. The aim is to make each update small­er and eas­i­er to explain, rather than save a year’s sur­pris­es for one hero­ic spread­sheet ses­sion."
+      },
+      {
+        "id": "p58",
+        "text": "Key Take­aways"
+      },
+      {
+        "id": "p59",
+        "text": "Auto­mat­ed checks flag new prod­ucts, miss­ing sym­bols, and chang­ing mar­ket con­di­tions for review. Revis­it ear­li­er exclu­sions when the evi­dence changes."
+      },
+      {
+        "id": "p60",
+        "text": "Con­tract match­ing and inclu­sion deci­sions still need human judg­ment."
+      },
+      {
+        "id": "p61",
+        "text": "Val­i­date what the revised work­book pro­duces: con­tract data, migra­tions, roll cal­en­dars, and back-adjust­ed his­to­ries. Failed checks send the rel­e­vant def­i­n­i­tions or data back for review."
+      }
+    ]
+  },
+  {
+    "material_id": "eb31c71e4cdb292b85b4cb824b973212bae9982ab946f7f8767d495046f6e424",
+    "title": "3.47 The Real IS→OOS Sharpe Haircut (Closed Form, Not \"50%\")",
+    "url": "https://aligrithm.com/the-real-is-oos-sharpe-haircut-closed-form-not-50/",
+    "source": "aligrithm.com",
+    "published": "2026-10-16T08:42:00.000Z",
+    "evidence_level": "captured_excerpt",
+    "paragraphs": [
+      {
+        "id": "p1",
+        "text": "Twelve commodity futures, three momentum windows and an intercept, ten years of daily closes: 444 coefficients on 2,520 rows. Jacquier, Muhle-Karbe, and Mulligan compute the fraction of the in-sample Sharpe ratio this linear book is expected to keep on new data. Their commodity case study puts that fraction at 30 percent for a ten-year backtest. They attribute the rule of thumb that keeps 50 percent to Harvey and Liu. The fraction moves with the training length, the parameter count, and the true Sharpe. One future and one signal, true Sharpe 0.50: the formula keeps 20 percent after one year and 72 percent after ten. True Sharpe 2, ten years, still one signal: it keeps 98 percent. Twelve futures, 37 signals, a slope of zero, ten years: the in-sample Sharpe is 6.58 annualized and the fraction kept is zero."
+      },
+      {
+        "id": "p2",
+        "text": "What this actually is"
+      },
+      {
+        "id": "p3",
+        "text": "You run twelve commodity futures, aluminium through sugar, and you fit a 5-day, a 1-year, and a 5-year momentum signal on each name, plus an intercept. That is 37 regressors and 444 coefficients. Ten years of closes is 2,520 rows. The backtest prints a Sharpe ratio, the mean profit-and-loss divided by its standard deviation, and you have to decide what fraction of it the same linear fit keeps on the next sample."
+      },
+      {
+        "id": "p4",
+        "text": "The method is a closed form for that fraction. It takes the signal count, the asset count, the number of training days, and the Sharpe the book would earn if the slopes were known. It returns an expected in-sample Sharpe and an expected out-of-sample Sharpe. Divide the second by the first."
+      },
+      {
+        "id": "p5",
+        "text": "Picture a student who sits the same exam twice. On the first sitting the answer key is on the desk, and every guess that matches the key is marked correct. On the second sitting the key is in the drawer. The drop equals those guesses. A short exam with a long question sheet drops harder. A long exam with one question the student knows keeps the first score."
+      },
+      {
+        "id": "p6",
+        "text": "At the desk you compute the fraction before you size the book. Keeping half of the 6.58 Sharpe that this 444-coefficient design prints when the true slope is zero would put on a book the formula sets to zero out of sample. Keeping half of one signal with a true Sharpe of 2, on ten years, throws away a book the formula says keeps 98 percent. The formula is too kind once you have discarded losing trials, and it charges no spread. Those bills sit in the old article \"CSCV: A Direct Probability of Backtest Overfit\" and the old article \"The Backtest Integrity Checklist\" ."
+      },
+      {
+        "id": "p7",
+        "text": "The in-sample mean carries an extra term"
+      },
+      {
+        "id": "p8",
+        "text": "The question is why the backtest Sharpe sits above the live one even when you fit the regression once and never touch it again. The return model is linear. Tomorrow's return on each asset is a slope times today's signals, plus a residual."
+      },
+      {
+        "id": "p9",
+        "text": "$$ r_{t+1} = \\beta s_t + \\epsilon_{t+1} $$"
+      },
+      {
+        "id": "p10",
+        "text": "Read it as a forecast. The vector r is next period's return on m assets, in return units per day. The vector s is today's signals, p of them, standardized in the formulas below to mean zero and unit variance. Beta is the m-by-p matrix of slopes, in return per unit of signal. Epsilon is the residual, mean zero, covariance sigma-epsilon. In the commodity fit, m is 12 and p is 37."
+      },
+      {
+        "id": "p11",
+        "text": "You estimate beta by ordinary least squares on the training window, then you trade the Markowitz book: weights equal the inverse residual covariance times beta times the current signal. The known-covariance assumption is deliberate. Estimating the covariance is a later section, and on twelve names the fraction stays put."
+      },
+      {
+        "id": "p12",
+        "text": "The fitted profit-and-loss splits into three pieces. The true piece is the book you would hold if beta were known. The misestimation piece multiplies the error in beta by the true expected return; its expectation is zero in the training window and out of it, because the residual mean is zero. The overfitting piece multiplies the error in beta by the residual itself. Inside the training window that residual is a row the regression already saw, and the expectation of that piece is not zero. Outside the window the residual is a fresh draw, and the expectation is zero. That is the entire mean gap."
+      },
+      {
+        "id": "p13",
+        "text": "$$ \\mathbb{E}[\\text{mean}_{\\text{IS}}] = \\operatorname{tr}(\\Gamma) + \\frac{p m}{T_1}, \\qquad \\mathbb{E}[\\text{mean}_{\\text{OOS}}] = \\operatorname{tr}(\\Gamma), \\qquad \\Gamma = \\beta^{\\top} \\Sigma_{\\epsilon}^{-1} \\beta $$"
+      },
+      {
+        "id": "p14",
+        "text": "Read it as two expected daily profit-and-loss figures, in the units of that Markowitz book, plus the gap between them. Gamma is a p-by-p matrix: beta-transpose times the inverse residual covariance times beta. Its trace is the daily profit-and-loss you would expect if the slopes were known. T1 is the number of training observations. The in-sample expectation adds p times m over T1. The out-of-sample expectation does not. This is their Proposition 3.1 for centred signals and Markowitz weights. The add-on is not a percent of net asset value. A constant rescaling of the weights scales the mean and the standard deviation together, so the Sharpe ratio, which is what you compare to a backtest, does not depend on that scaling."
+      },
+      {
+        "id": "p15",
+        "text": "Worked count for the commodity design: 12 times 37 is 444, and 444 divided by 2,520 is 0.1762. Every training day, the expected in-sample profit-and-loss sits 0.1762 above the expected out-of-sample profit-and-loss, in those units, at any true beta. Out of sample the add-on is zero. Add signals or add assets and the gap grows in a straight line. Lengthen the backtest and it shrinks as one over T1."
+      },
+      {
+        "id": "p16",
+        "text": "One asset and one signal"
+      },
+      {
+        "id": "p17",
+        "text": "The question is what that gap does to the Sharpe ratio when there is only one slope to overfit. Set m = 1 and p = 1, scale the signal variance and the residual variance to 1, and leave the intercept out. The true per-day Sharpe, the one you would get with the slope known, collapses to a function of beta alone."
+      },
+      {
+        "id": "p18",
+        "text": "$$ \\mathrm{SR} = \\frac{\\beta}{\\sqrt{1 + 2\\beta^{2}}} $$"
+      },
+      {
+        "id": "p19",
+        "text": "Read it as a per-day Sharpe. Beta is the slope, in daily return per unit of signal, taken positive. Square root of 252 turns it into an annualized Sharpe under the model's own assumption that each day's profit-and-loss is independent of the last. The replication ratio below is a ratio of two Sharpes, so the square root of 252 cancels. It does not cancel on the horizontal axis of a chart drawn in annualized units, which is why the conversion is stated here."
+      },
+      {
+        "id": "p20",
+        "text": "Solve for the slope that delivers a true annualized Sharpe of 0.50. The square root of 252 is 15.8745, so the per-day Sharpe is 0.50 divided by 15.8745, which is 0.031497. Beta-squared equals 0.031497 squared, divided by 1 minus twice 0.031497 squared, which is 0.00099404. The true daily mean profit-and-loss in this scaling is that same 0.00099404. Add 1 divided by 2,520. The in-sample mean is 0.00139086. The ratio of the two means, 0.00099404 divided by 0.00139086, is 0.715."
+      },
+      {
+        "id": "p21",
+        "text": "The Sharpe ratio also has a variance, and the estimation error inflates it. Their simplified form of Proposition 3.1, for this one-asset case, is the pair below. Both are per-day Sharpes. The numerator is the expected profit-and-loss. The denominator is the square root of the expected variance. T1 is the training length in days."
+      },
+      {
+        "id": "p22",
+        "text": "$$ \\mathrm{SR}_{\\mathrm{EIS}} = \\frac{\\beta^{2} + 1/T_1}{\\sqrt{2\\beta^{4} + \\left(1 + \\dfrac{15}{T_1-2} - \\dfrac{2}{T_1}\\right)\\beta^{2} + \\dfrac{4}{T_1} - \\dfrac{3}{T_1+2} - \\dfrac{1}{T_1^{2}}}} $$$$ \\mathrm{SR}_{\\mathrm{EOOS}} = \\frac{\\beta^{2}}{\\sqrt{2\\beta^{4} + \\left(1 + \\dfrac{2}{T_1-2}\\right)\\beta^{2} + \\dfrac{1}{T_1-2}}} $$"
+      },
+      {
+        "id": "p23",
+        "text": "Read the first as the in-sample approximation and the second as the out-of-sample approximation. EIS is the ratio of the expected in-sample mean to the square root of the expected in-sample variance, and EOOS is the same construction on the new sample. They use this ratio-of-expectations because the expectation of the ratio has no closed form. In their checks the gap between the two stays within 2.5 percent of the Sharpe."
+      },
+      {
+        "id": "p24",
+        "text": "Plug in beta-squared of 0.00099404 and T1 of 2,520, which is the unrounded slope behind the 0.50 Sharpe. The in-sample variance is three terms: 0.000001976 from two times beta to the fourth, 0.000999168 from the slope term, and 0.000397612 from the estimation-noise constant. The sum is 0.001398756. Its square root is 0.037400. The in-sample mean, 0.00139086, divided by that square root, is a per-day Sharpe of 0.03719, and 0.03719 times 15.8745 is 0.590 annualized. The out-of-sample variance sums to 0.00139394. The per-day out-of-sample Sharpe is 0.02662, and the annualized figure is 0.423. Divide 0.4226 by 0.5904 and the fraction kept is 0.716. The ratio of the means alone was 0.715. In this cell the variance adjustment is a rounding error. Hold that thought for the twelve-asset book, where it is not."
+      },
+      {
+        "id": "p25",
+        "text": "$$ \\text{Replication ratio} = \\frac{\\mathrm{SR}_{\\mathrm{EOOS}}}{\\mathrm{SR}_{\\mathrm{EIS}}} $$"
+      },
+      {
+        "id": "p26",
+        "text": "Read it as the fraction of the expected in-sample Sharpe that the expected out-of-sample Sharpe still covers. One means the backtest survives whole. Zero means the expected out-of-sample Sharpe is zero. The 50 percent rule is this ratio nailed to one half."
+      },
+      {
+        "id": "p27",
+        "text": "The same plug-in at other cells, all annualized by the square root of 252:"
+      },
+      {
+        "id": "p28",
+        "text": "Check the 50 percent row before trusting the rest. Half of 1.3779 is 0.6890, and 0.6890 divided by 1.3779 is 0.500. That row is the folklore rule, and it is one cell: one asset, one signal, one year, a true Sharpe of 0.983. The crossings nearby sit at a true Sharpe of about 0.45 on five years, 0.32 on ten years, and 0.16 on forty years. A flat stamp of 50 percent is that curve's intersection with a horizontal line, read off at whatever sample length you happen to have."
+      },
+      {
+        "id": "p29",
+        "text": "On the one-year row with a true Sharpe of 0.50, the backtest is expected to print 1.10. Half of 1.10 is 0.55. The formula keeps 0.223. The stamp is more than twice too generous. On the ten-year row with a true Sharpe of 2, the backtest prints 2.02 and the formula keeps 1.98. Half of 2.02 is 1.01. The stamp throws away a Sharpe near 2. On a pure-noise signal the fraction kept is zero at every length, and a one-year sample still prints an in-sample Sharpe of 0.99. Half of 0.99 is a position. Zero is the out-of-sample number."
+      },
+      {
+        "id": "p30",
+        "text": "The curves are Proposition 3.1 in the one-asset case, not a fit to the commodity tape. A worthless signal sits at the origin. A strong signal on a long sample sits near one. The dashed line is the 50 percent rule, and each training length crosses it at a different true Sharpe."
+      },
+      {
+        "id": "p31",
+        "text": "Twelve assets, thirty-seven signals, a zero slope"
+      },
+      {
+        "id": "p32",
+        "text": "The question is what this commodity parameter count prints when the signals carry nothing. Proposition 3.1 with a zero beta is exact on the variance side as well as the mean side: the leftover term they drop from the in-sample variance is a covariance between the inverse signal Gram matrix and a quadratic in beta, so a zero slope kills it."
+      },
+      {
+        "id": "p33",
+        "text": "Set m = 12, p = 37, T1 = 2,520, beta = 0, no intercept, known residual covariance, Markowitz weights. The in-sample mean is 444 divided by 2,520, which is 0.17619 per day. The in-sample variance reduces to two terms:"
+      },
+      {
+        "id": "p34",
+        "text": "$$ \\mathbb{E}[\\mathrm{var}_{\\mathrm{IS}}] = \\frac{p m (2m + p + T_1 + 4)}{T_1 (T_1 + 2)} - \\frac{2 m^{2} p^{2}}{T_1^{2} (T_1 + 2)} $$"
+      },
+      {
+        "id": "p35",
+        "text": "Read it as a daily variance of the Markowitz profit-and-loss when the true slope is zero. The first term grows with the parameter count. The second subtracts a smaller piece that comes from the square of the mean. Evaluated here, the variance is 0.18057. That agrees with the long coefficient form in Proposition 3.1, the one with their c2 and c-tilde-2, digit for digit at this precision. The square root is 0.42493. Divide 0.17619 by 0.42493 and the per-day Sharpe is 0.4146. Times 15.8745, the annualized in-sample Sharpe is 6.58. The out-of-sample mean is zero, so the out-of-sample Sharpe is zero and the fraction kept is zero. The out-of-sample variance is 0.179, next to an in-sample variance of 0.181. The damage is the mean."
+      },
+      {
+        "id": "p36",
+        "text": "A 50 percent stamp on 6.58 leaves a Sharpe of 3.29 to trade. The formula leaves zero."
+      },
+      {
+        "id": "p37",
+        "text": "Two caveats sit on the 6.58. Proposition 3.1 drops the intercept. The commodity regression puts an intercept inside the 37 columns, so the variance terms shift once a column of ones is in the design, and 6.58 is the no-intercept null at this dimension. The mean gap does not shift: in the general expression the add-on is p over T1 times the trace of the weight matrix times sigma-epsilon, and for Markowitz weights that trace equals the asset count, so the add-on is still 0.1762 per day. And 6.58 is not a decomposition of the 8.2 they later report for a simulated book with a nonzero slope. Different beta, different number. The use of 6.58 is as a floor. A design of this size prints an annualized Sharpe above 6 on empty signals. An in-sample 8 has not cleared much."
+      },
+      {
+        "id": "p38",
+        "text": "The commodity case study prints two ten-year fractions"
+      },
+      {
+        "id": "p39",
+        "text": "The question is what happened when they ran the design on commodity futures rather than on a zero slope. The universe is twelve names, May 1998 through December 2023: aluminium, copper, nickel, zinc, and lead on the LME; gasoil on ICE; WTI on NYMEX; gold and silver on COMEX; coffee, cocoa, and sugar on NYBOT. Signals are the 5-day, 1-year, and 5-year Sharpe ratio of each future, centred and scaled to unit variance, plus an asset-level intercept. They fit the simulator's beta by ridge with penalty 0.1, then draw 10,000 paths. Inside each path the traded book is ordinary least squares on that path. A path is 13 years at 252 days, 10 years in sample and 3 years out. Average correlation across signals is 20 percent, across residuals 28 percent. Average excess kurtosis of the residuals is 9. The diagonal of the fitted autoregressive matrix averages 0.88, a half-life of ln(2) over minus ln(0.88), which is 5.4 daily steps."
+      },
+      {
+        "id": "p40",
+        "text": "The authors read this curve as 30 percent at ten years, and it is still climbing through 80 percent out near 120 years. The parameter count is what pulls the fraction down there. A panel regression, one coefficient per momentum window shared across the twelve names, cuts the free parameters from 444 to 3."
+      },
+      {
+        "id": "p41",
+        "text": "The numbers they attach to that comparison do not all divide. In the simulation, where the data are drawn from the full model, they report an in-sample Sharpe of 8.2 and an out-of-sample Sharpe of 3.1 for the unrestricted book, and they call the replication ratio 38 percent. Those two Sharpes divide to 37.8 percent, so that pair checks. For the panel on the same simulated paths they report 0.9 in sample and 0.6 out of sample, and they call the ratio 70 percent. Divide 0.6 by 0.9 and you get 67 percent. On the real tape they report a panel ratio of 68 percent next to Sharpes of 0.7 and 0.5; 0.5 divided by 0.7 is 71 percent. They report an unrestricted ratio of 9 percent next to 3.6 and 0.3; 0.3 divided by 3.6 is 8.3 percent. An earlier sentence says a panel regression raises the replication ratio from 71 percent to 30 percent, which runs the wrong way, and which disagrees with both the 70-versus-38 simulation pair and the 68-versus-9 tape pair. The printed figures stay as printed. The ratios and the Sharpes do not reconcile, except the simulated unrestricted pair, and that one sentence has the direction backwards. The source may have swapped the 30 and the 71, or rounded the Sharpes past the point where the division survives. The paper also never shows the step that connects the 30 percent on the ten-year curve to the 38 percent in the simulation paragraph."
+      },
+      {
+        "id": "p42",
+        "text": "Read the pair that comes with Sharpes, and keep the conflict visible. In the simulation the fat model has the higher out-of-sample Sharpe, 3.1 against 0.6, because the paths were drawn from the fat model. The panel keeps a larger fraction of a smaller backtest. On the real tape the panel has the higher out-of-sample Sharpe, 0.5 against 0.3, and the unrestricted in-sample Sharpe of 3.6 falls to 0.3. The fraction kept and the level you earn are different questions. Keeping 70 percent of 0.9 leaves a smaller book than keeping 38 percent of 8.2, which is the simulation. On the tape the unrestricted 3.6 falls to 0.3. Prefer the panel when the tape says the extra coefficients are empty. Prefer it for the out-of-sample level, not for the prettier fraction."
+      },
+      {
+        "id": "p43",
+        "text": "The Gaussian, independent-signal simulation lands on the analytical values. They say the match is tight. Replacing the shocks with a t-distribution and the signals with an autoregression moves both Sharpes down and leaves the fraction close to the Gaussian number. Persistence has to get extreme before the independent-signal formula misleads: they put the gap against the independent case as small until the autoregressive coefficient exceeds 0.99. A coefficient of 0.9, which they describe as a half-life of 6.5 daily steps, is 6.6 steps if you compute ln(2) over minus ln(0.9). The fitted commodity diagonals, at 0.88, sit in the region where the formula still tracked."
+      },
+      {
+        "id": "p44",
+        "text": "Ten signals sit below the Kan, Wang, and Zheng curve"
+      },
+      {
+        "id": "p45",
+        "text": "The question is how much of this is new relative to the constant-mean result. Kan, Wang, and Zheng have a closed form for the expected in-sample and out-of-sample Sharpe of a Markowitz book when the means and the covariance do not move, and the only thing you estimate is the mean vector. In this paper's language that is one signal per asset, and the signal never decays. Jacquier, Muhle-Karbe, and Mulligan add signals that die. At 2,520 observations in sample and the same count out of sample, with the true Sharpe fixed at 1.5, their one-signal curve lies on top of Kan, Wang, and Zheng as the asset count rises. Their ten-signal curve lies below it."
+      },
+      {
+        "id": "p46",
+        "text": "The true Sharpe is held fixed, so each extra signal is weaker. A new signal has to raise the true Sharpe by enough to pay for the drop in the fraction. Muller, in Quantitative Finance in 2001, said he would rather hold one strategy with a Sharpe ratio of 2 than stitch five uncorrelated Sharpe-1 strategies into a blend with a Sharpe ratio of 2.5. The one-signal row of the table above is that preference with a denominator: a true Sharpe of 2 on ten years keeps 98 percent. Five weak signals are a larger p, and the fraction falls."
+      },
+      {
+        "id": "p47",
+        "text": "The same moral shows up on the equity-premium side of the old article \"Does Complexity Actually Help? The Virtue-of-Complexity Autopsy\" . There, a 15-predictor ridge beat a 12,000-feature timing model because the sample could not carry the coefficients. Here the bill is the Sharpe ratio itself, explicit in p, m, and T1. Kelly, Malamud, and Zhou are also the normalization this paper copies when it touches the Goyal, Welch, and Zafirov tape: returns divided by a trailing 12-month volatility, signals divided by an expanding volatility."
+      },
+      {
+        "id": "p48",
+        "text": "Where the formula stops"
+      },
+      {
+        "id": "p49",
+        "text": "The question is which of your books this expression is allowed to tax. A few bounds are in the paper, and a few are outside it."
+      },
+      {
+        "id": "p50",
+        "text": "They drop a covariance term from the in-sample variance. In the commodity simulation that term was negative, and the simulated variance ran about 3 percent below the formula with the term set to zero. Across a wider draw of parameters the gap stays under 3 percent when the signal count over the training length is below 0.1, which is ten rows per signal. Thirty-seven signals on 2,520 days is 68 rows per signal, inside the bound. Thirty-seven signals on 252 days is 6.8 rows per signal, outside it. Do not quote the formula on a one-year fit of this design."
+      },
+      {
+        "id": "p51",
+        "text": "Estimating the residual covariance, instead of plugging in the true one, matches the known-covariance fraction at 12 assets and thousands of days. At 500 assets and a window shorter than the asset count, the sample covariance is singular and the out-of-sample Sharpe falls to about zero until the window exceeds the asset count. Their fix, once the asset count over the effective sample exceeds one, puts weight one over that ratio on the sample covariance and parks the rest on a scaled identity that preserves the trace. The slope error dominates the covariance error on the commodity book. On a 500-name book with a short window, the covariance error takes over."
+      },
+      {
+        "id": "p52",
+        "text": "The equity-premium check uses the Goyal, Welch, and Zafirov monthly predictors: 39 series with coverage somewhere in 1926 to 2024, random subsets of size 1 to 39, random windows of 10 to 70 years with both legs at least five years, five million draws. For each draw they pick a single scale k on the slope vector so that the analytical out-of-sample Sharpe matches the realized out-of-sample Sharpe. That match is by construction. The content of the test is whether the in-sample side, and therefore the fraction, lines up after you average across draws. They report that it does. More signals, lower fraction. Longer window, higher fraction. Higher implied true Sharpe, higher fraction. Read that figure as a check on the in-sample formula after the out-of-sample level has been pinned. Next year's Sharpe was an input to k."
+      },
+      {
+        "id": "p53",
+        "text": "Nothing here pays a spread, a borrow fee, or a missed fill. The old article \"The Backtest Integrity Checklist\" is the place those charges get applied, and a 30 percent statistical fraction is the input to that checklist, not the output. Nothing here prices the trials you threw away. The derivation is one regression, fit once. If you searched a stack of signal sets and kept the winner, this fraction is the damage from fitting that one winner, and the old article \"CSCV: A Direct Probability of Backtest Overfit\" is the damage from the search. Stack them. Do not substitute one for the other."
+      },
+      {
+        "id": "p54",
+        "text": "KEY POINTS"
+      },
+      {
+        "id": "p55",
+        "text": "The fraction of in-sample Sharpe a linear book keeps out of sample has a closed form. It falls as you add signals or assets, and it rises with the training length and with the true Sharpe. The commodity case study, as the authors read their curve, keeps 30 percent at ten years."
+      },
+      {
+        "id": "p56",
+        "text": "The mean gap is p times m over T1. For 12 assets, 37 signals, and 2,520 days that add-on is 0.1762 per day in Markowitz units, at any true slope. Out of sample the add-on is zero."
+      },
+      {
+        "id": "p57",
+        "text": "One asset, one signal, true annualized Sharpe 0.50: after one year the formula keeps 0.202 (in-sample 1.104, out-of-sample 0.223); after ten years it keeps 0.716 (in-sample 0.590, out-of-sample 0.423). A true Sharpe of 2 on ten years keeps 0.978. The 50 percent rule is the cell at one year and a true Sharpe of 0.983."
+      },
+      {
+        "id": "p58",
+        "text": "With the intercept left out, 12 assets and 37 signals on 2,520 days and a zero slope print an in-sample Sharpe of 6.58 annualized and an out-of-sample Sharpe of 0. A 50 percent stamp would trade 3.29 of that. The commodity regression includes an intercept, so 6.58 is the no-intercept null, not a split of their simulated 8.2."
+      },
+      {
+        "id": "p59",
+        "text": "In the simulation drawn from the full model they report unrestricted Sharpes of 8.2 in sample and 3.1 out of sample, ratio stated as 38 percent, and 3.1 divided by 8.2 is 37.8 percent. The panel pair 0.9 and 0.6 does not divide to the stated 70 percent (it divides to 67). On the real tape, 0.5/0.7 is 71 percent against a stated 68, and 0.3/3.6 is 8.3 percent against a stated 9. One sentence runs the panel effect backwards, from 71 percent to 30 percent. The ten-year curve's 30 percent and the simulation's 38 percent are also unreconciled in the paper."
+      },
+      {
+        "id": "p60",
+        "text": "On the real tape the panel, 3 coefficients, has the higher out-of-sample Sharpe (0.5 against 0.3). In the simulation the fat model has the higher out-of-sample Sharpe (3.1 against 0.6), because the paths were drawn from it. Keep the fraction and the level as separate questions."
+      },
+      {
+        "id": "p61",
+        "text": "The dropped variance term is about 3 percent in their commodity check, and under 3 percent when you have at least ten rows per signal. Covariance error is secondary at 12 names and dominant at 500 names on a window shorter than the cross-section. The equity-premium figure pins the out-of-sample Sharpe by construction and then checks the in-sample side. No spread is charged. Selection across many trials is a separate bill."
+      },
+      {
+        "id": "p62",
+        "text": "References"
+      },
+      {
+        "id": "p63",
+        "text": "Backtesting (Harvey, Liu, 2015)"
+      },
+      {
+        "id": "p64",
+        "text": "In-Sample and Out-of-Sample Sharpe Ratios of Multi-Factor Asset Pricing Models (Kan, Wang, Zheng, 2024)"
+      },
+      {
+        "id": "p65",
+        "text": "Dynamic Trading with Predictable Returns and Transaction Costs (Garleanu, Pedersen, 2013)"
+      },
+      {
+        "id": "p66",
+        "text": "A Comprehensive 2022 Look at the Empirical Performance of Equity Premium Prediction (Goyal, Welch, Zafirov, 2024)"
+      },
+      {
+        "id": "p67",
+        "text": "The Virtue of Complexity in Return Prediction (Kelly, Malamud, Zhou, 2024)"
+      },
+      {
+        "id": "p68",
+        "text": "Proprietary Trading: Truth and Fiction (Muller, 2001)"
+      },
+      {
+        "id": "p69",
+        "text": "In-Sample and Out-of-Sample Sharpe Ratios for Linear Predictive Models (Jacquier, Muhle-Karbe, Mulligan, 2025)"
+      },
+      {
+        "id": "p70",
+        "text": "A note on AI. The ideas, research, analysis, and conclusions in this article are my own. I use AI tools to help with editing and wordsmithing, because English is not my first language, and I am not shy about that. AI-generated ideas and AI-assisted writing are not the same thing: the first is empty slop from a generic prompt, the second is a tool for communicating years of real research more clearly. Judge the work by its substance, not by whether software helped polish the prose."
+      }
+    ]
+  },
+  {
+    "material_id": "ee28284418b8c94057e1692d80a5f1d9b5b0398d124d30d7300ca2389dbe3912",
+    "title": "The Role of Liquidity in Stock Returns and Option Pricing",
+    "url": "https://blog.harbourfronts.com/2026/10/18/the-role-of-liquidity-in-stock-returns-and-option-pricing/",
+    "source": "blog.harbourfronts.com",
+    "published": "2026-10-18T15:50:46+00:00",
+    "evidence_level": "captured_excerpt",
+    "paragraphs": [
+      {
+        "id": "p1",
+        "text": "Liquidity is an important factor in financial markets, but it is not always the first consideration in asset pricing, trading, or risk management. In this post, we examine the importance of liquidity from two different perspectives: its predictive relationship with stock returns and its role in option pricing and hedging."
+      },
+      {
+        "id": "p2",
+        "text": "How Liquidity of Stock Affects Its Future Expected Return"
+      },
+      {
+        "id": "p3",
+        "text": "The liquidity of a stock is of concern to traders who want to execute a large order at reasonable prices without making a big impact on the market. A stock liquidity level is, however, also a factor influencing the stock’s expected return. Along this line, Reference [1] examined how a stock’s liquidity volatility affects its future performance."
+      },
+      {
+        "id": "p4",
+        "text": "Findings"
+      },
+      {
+        "id": "p5",
+        "text": "-The authors find that liquidity volatility negatively predicts subsequent stock returns across global equity markets."
+      },
+      {
+        "id": "p6",
+        "text": "-The relationship is robust across different liquidity measures, including turnover, the Amihud illiquidity ratio, and the percentage of zero-return days."
+      },
+      {
+        "id": "p7",
+        "text": "-The negative liquidity-volatility premium persists after controlling for other factors, including idiosyncratic return volatility."
+      },
+      {
+        "id": "p8",
+        "text": "-The results show an asymmetric relationship between liquidity changes and returns: liquidity decreases have a substantially stronger negative impact than the positive impact associated with comparable liquidity increases."
+      },
+      {
+        "id": "p9",
+        "text": "-This asymmetry implies that stocks with high liquidity volatility are more exposed to large price declines that are not fully offset by price appreciation following liquidity increases."
+      },
+      {
+        "id": "p10",
+        "text": "-Further analysis indicates that downside liquidity volatility, rather than upside liquidity volatility, drives the negative liquidity-volatility premium."
+      },
+      {
+        "id": "p11",
+        "text": "-The stronger effect of liquidity decreases is consistent with the collateral-constraint mechanism proposed in previous research."
+      },
+      {
+        "id": "p12",
+        "text": "In short, the article pointed out that a stock’s liquidity is important not only because of the issues associated with order execution but also because it affects the future performance of the stock. The negative volatility premium is a universal phenomenon that occurs in the majority of global equity markets and across different liquidity measures. Practically speaking, when a stock’s liquidity decreases, it will likely decline in the following months."
+      },
+      {
+        "id": "p13",
+        "text": "Reference"
+      },
+      {
+        "id": "p14",
+        "text": "[1] Feng, Frank Yulin and Kang, Wenjin and Zhang, Huiping, Liquidity Shocks and the Negative Premium of Liquidity Volatility Around the World , SSRN 3930591"
+      },
+      {
+        "id": "p15",
+        "text": "Incorporating Liquidity into Option Pricing"
+      },
+      {
+        "id": "p16",
+        "text": "Liquidity is an overlooked research area, yet it plays a crucial role in financial markets. Trading system developers often use the bid-ask spread as a proxy for liquidity, but this approach is less effective in the options market."
+      },
+      {
+        "id": "p17",
+        "text": "Reference [2] proposes a method for integrating liquidity into the option pricing model. Essentially, it introduces market liquidity as a variable that can change randomly and affects stock prices through a discounting factor and market liquidity levels."
+      },
+      {
+        "id": "p18",
+        "text": "The paper begins by incorporating a stochastic liquidity variable into the SDE for stock price under the P measure. Here, the liquidity process is modeled as an Ornstein-Uhlenbeck process. The SDE is then transformed into the Q measure in which European options are analytically evaluated using a closed-form characteristic function."
+      },
+      {
+        "id": "p19",
+        "text": "Findings"
+      },
+      {
+        "id": "p20",
+        "text": "-The authors develop a European option pricing model that jointly incorporates stochastic volatility, economic cycles, and liquidity risk."
+      },
+      {
+        "id": "p21",
+        "text": "-The model combines Heston stochastic volatility with regime switching to capture economic cycles, while market liquidity follows a mean-reverting stochastic process."
+      },
+      {
+        "id": "p22",
+        "text": "-Stock prices are adjusted using a liquidity discounting factor to account for the impact of liquidity risk."
+      },
+      {
+        "id": "p23",
+        "text": "-A regime-switching Esscher transform is used to obtain risk-neutral dynamics and derive a closed-form European option pricing formula."
+      },
+      {
+        "id": "p24",
+        "text": "-Numerical experiments and sensitivity analysis demonstrate that stochastic volatility, economic cycles, and liquidity risk all have significant effects on option prices."
+      },
+      {
+        "id": "p25",
+        "text": "-Empirical results show that incorporating stochastic liquidity significantly improves model performance compared with assuming constant liquidity."
+      },
+      {
+        "id": "p26",
+        "text": "-The stochastic-liquidity component can also improve hedging responses to liquidity shocks and help mitigate risk."
+      },
+      {
+        "id": "p27",
+        "text": "In short, liquidity is integrated as a discount factor, and the study demonstrates its impact on option prices."
+      },
+      {
+        "id": "p28",
+        "text": "Reference"
+      },
+      {
+        "id": "p29",
+        "text": "[2] Xin-Jiang He, Hang Chen, Sha Lin, A Closed-Form Formula for Pricing European Options With Stochastic Volatility, Regime Switching, and Stochastic Market Liquidity , Journal of Futures Markets, 2025; 1–12"
+      },
+      {
+        "id": "p30",
+        "text": "Closing Thoughts"
+      },
+      {
+        "id": "p31",
+        "text": "Together, these studies highlight the importance of considering liquidity in both asset pricing and risk management. The first shows that liquidity volatility contains predictive information about future stock returns, with downside liquidity changes playing a particularly important role. The second demonstrates that incorporating stochastic liquidity into option pricing significantly improves model performance and can enhance hedging against liquidity shocks."
+      },
+      {
+        "id": "p32",
+        "text": "Overall, liquidity is not merely a trading friction but an important source of information and risk that should be explicitly incorporated into quantitative models."
+      }
+    ]
+  }
+]
