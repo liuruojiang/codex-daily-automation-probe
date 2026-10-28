@@ -4863,6 +4863,19 @@
       "zh_summary": "Ben Carlson以Theranos投资者为例讨论过度自信、名人背书、从众和偏见盲点；强调专业成功不自动带来投资判断力。原文完整可读；不是量化因果检验。",
       "evidence_level": "publisher_full_article",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "40618489931",
+      "origin_report_date": "2026-10-28",
+      "source": "24/7 Wall St.",
+      "title": "Applied Digital Jumps 10% as Data Center Stocks Rebound; Riot Climbs 7%, Core Scientific Gains 4%",
+      "zh_title": "数据中心运营商反弹：为何DTCR不等于纯HPC敞口",
+      "url": "https://247wallst.com/investing/2026/10/27/applied-digital-jumps-10-as-data-center-stocks-rebound-riot-climbs-7-core-scientific-gains-4?.tsrc=rss",
+      "published": "2026-10-27T18:02:16+00:00",
+      "summary": "原文不仅报道个股波动，还解释DTCR前四大持仓偏房地产与通信塔、APLD在5月31日的权重为4.5%；对比纯HPC运营商的建设、融资和租金转换风险。持仓日期较旧，未独立核验当前权重。",
+      "zh_summary": "原文不仅报道个股波动，还解释DTCR前四大持仓偏房地产与通信塔、APLD在5月31日的权重为4.5%；对比纯HPC运营商的建设、融资和租金转换风险。持仓日期较旧，未独立核验当前权重。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对ETF正式持仓与日期、运营商风险、租约现金转化及融资成本；旧权重不当作当前持仓。"
     }
   ]
 }
