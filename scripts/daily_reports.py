@@ -2453,16 +2453,35 @@ def forum_display_title(item: Item) -> str:
     return f"{original}（{chinese}）"
 
 
-def forum_engagement_score(item: Item) -> int:
+def forum_engagement_values(item: Item) -> dict[str, tuple[str, int]]:
     text = f"{item.source} {item.summary}".lower()
-    score_match = re.search(r"(?:score/upvotes|score|upvotes?)\s*[:：]?\s*([\d,]+)", text)
-    comments_match = re.search(r"(?:comments/replies|comments?|replies)\s*[:：]?\s*([\d,]+)", text)
-    views_match = re.search(r"(?:views?)\s*[:：]?\s*([\d,]+)", text)
-    hot_rank_match = re.search(r"hot rss rank\s*[:#]?\s*(\d+)", text)
-    score = int(score_match.group(1).replace(",", "")) if score_match else 0
-    comments = int(comments_match.group(1).replace(",", "")) if comments_match else 0
-    views = int(views_match.group(1).replace(",", "")) if views_match else 0
-    hot_rank = int(hot_rank_match.group(1)) if hot_rank_match else 0
+    patterns = {
+        "score": r"(?:score/upvotes|score|upvotes?)\b\s*[:：]?\s*(\d[\d,]*)",
+        "comments": r"(?:comments/replies|comments?|replies)\b\s*[:：]?\s*(\d[\d,]*)",
+        "views": r"views?\b\s*[:：]?\s*(\d[\d,]*)",
+        "hot_rank": r"hot rss rank\b\s*[:#]?\s*(\d+)",
+    }
+    values: dict[str, tuple[str, int]] = {}
+    for name, pattern in patterns.items():
+        for match in re.finditer(r"(?<!\w)" + pattern, text):
+            raw = match.group(1)
+            try:
+                value = int(raw.replace(",", ""))
+            except ValueError:
+                # Untrusted feed text can exceed Python's integer conversion limit.
+                # Keep looking: a later explicit field may contain the real count.
+                continue
+            values[name] = (raw, value)
+            break
+    return values
+
+
+def forum_engagement_score(item: Item) -> int:
+    values = forum_engagement_values(item)
+    score = values.get("score", ("", 0))[1]
+    comments = values.get("comments", ("", 0))[1]
+    views = values.get("views", ("", 0))[1]
+    hot_rank = values.get("hot_rank", ("", 0))[1]
     hot_rank_score = max(0, ETF_FORUM_MIN_ENGAGEMENT_SCORE + 60 - hot_rank * 8) if hot_rank else 0
     return score + comments * 3 + views // 50 + hot_rank_score
 
@@ -2548,20 +2567,16 @@ def forum_has_specific_summary_evidence(item: Item, points: list[str] | None = N
 
 
 def forum_engagement_label(item: Item) -> str:
-    text = f"{item.source} {item.summary}".lower()
-    score_match = re.search(r"(?:score/upvotes|score|upvotes?)\s*[:：]?\s*([\d,]+)", text)
-    comments_match = re.search(r"(?:comments/replies|comments?|replies)\s*[:：]?\s*([\d,]+)", text)
-    views_match = re.search(r"(?:views?)\s*[:：]?\s*([\d,]+)", text)
-    hot_rank_match = re.search(r"hot rss rank\s*[:#]?\s*(\d+)", text)
+    values = forum_engagement_values(item)
     bits: list[str] = []
-    if score_match:
-        bits.append(f"点赞/评分 {score_match.group(1)}")
-    if comments_match:
-        bits.append(f"回复 {comments_match.group(1)}")
-    if views_match:
-        bits.append(f"浏览 {views_match.group(1)}")
-    if hot_rank_match:
-        bits.append(f"old Reddit hot RSS rank {hot_rank_match.group(1)}")
+    if "score" in values:
+        bits.append(f"点赞/评分 {values['score'][0]}")
+    if "comments" in values:
+        bits.append(f"回复 {values['comments'][0]}")
+    if "views" in values:
+        bits.append(f"浏览 {values['views'][0]}")
+    if "hot_rank" in values:
+        bits.append(f"old Reddit hot RSS rank {values['hot_rank'][0]}")
     return "、".join(bits)
 
 
