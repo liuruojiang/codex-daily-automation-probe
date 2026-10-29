@@ -44,8 +44,6 @@ def classify_signal_output(
     publication_mode: str = "realtime",
 ) -> tuple[str, str]:
     code = exit_code.strip().lower()
-    if code and code not in {"0", "none", "unknown"}:
-        return "FAILED", f"script exit code is {exit_code}"
     if "preflight_failed" in output:
         reason = extract_value(output, "reason")
         if reason:
@@ -54,6 +52,8 @@ def classify_signal_output(
         if refresh_code:
             return "FAILED", f"state refresh failed with exit code {refresh_code}"
         return "FAILED", "state refresh failed before realtime signal ran"
+    if code and code not in {"0", "none", "unknown"}:
+        return "FAILED", f"script exit code is {exit_code}"
     expected_marker = "realtime_signal" if publication_mode == "realtime" else "signal"
     if re.search(rf"^{re.escape(expected_marker)}\s*$", output, flags=re.M) is None:
         return "FAILED", f"{expected_marker} marker is missing"
@@ -833,6 +833,7 @@ def main() -> int:
     parser.add_argument("--subject-prefix", default="")
     parser.add_argument("--delivery-test-id", default="")
     parser.add_argument("--strategy-sha", default="", help="Checked-out microcap strategy commit SHA")
+    parser.add_argument("--refresh-log", default="", help="Upstream refresh log for failed preflight diagnostics only")
     parser.add_argument(
         "--publication-mode",
         choices=("realtime", "close_confirmed"),
@@ -881,6 +882,21 @@ def main() -> int:
         output = clean_output(raw)
         exit_code = exit_codes.get(version, default_exit_code)
         status, status_note = classify_signal_output(output, exit_code, args.publication_mode)
+        if status == "FAILED" and "preflight_failed" in output and args.refresh_log:
+            refresh_path = Path(args.refresh_log)
+            if refresh_path.is_file():
+                refresh_text = refresh_path.read_text(encoding="utf-8", errors="replace")
+                # Prefer the inner cause over the subsequent stale-state fallback error.
+                changed_symbols = sorted(set(re.findall(
+                    r"Security metadata historical intervals changed for (\d{6})", refresh_text
+                )))
+                if changed_symbols:
+                    status_note = (
+                        "上游数据刷新受阻：历史 ST 区间发生变化（" + "、".join(changed_symbols)
+                        + "），须完成精确哈希与来源审核；当日信号未生成。"
+                    )
+                elif "proxy metadata fingerprint mismatch" in refresh_text:
+                    status_note = "上游数据刷新受阻：证券元数据指纹与正式历史不一致；当日信号未生成。"
         stdout_fields = parse_output_fields(output)
         csv_fields, csv_status_note = read_last_csv_row(signal_csv_paths.get(version, ""))
         fields: dict[str, str] = {}
@@ -940,6 +956,8 @@ def main() -> int:
         }
         if len(close_dates) != 1:
             for item in results:
+                if item["status"] == "FAILED":
+                    continue
                 item["status"] = "FAILED"
                 item["status_note"] = "publication contract invalid: close-confirmed CSV dates must match"
             date_s = now_bj().date().isoformat()
@@ -952,8 +970,10 @@ def main() -> int:
             if close_dates != {args.expected_signal_date}:
                 actual = ",".join(sorted(close_dates)) if close_dates else "<missing>"
                 for item in results:
+                    prior_note = str(item["status_note"]) if item["status"] == "FAILED" else ""
                     item["status"] = "FAILED"
                     item["status_note"] = (
+                        (prior_note + "; " if prior_note else "") +
                         "publication contract invalid: close-confirmed CSV date does not match "
                         f"scheduled delivery date; actual={actual} expected={args.expected_signal_date}"
                     )

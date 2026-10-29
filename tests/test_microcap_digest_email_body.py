@@ -201,6 +201,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         signal_csv_paths: dict[str, Path] | None = None,
         publication_mode: str = "realtime",
         expected_signal_date: str = "",
+        refresh_log: Path | None = None,
     ) -> dict[str, object]:
         out_dir = tmp_path / "artifacts"
         argv = ["build_microcap_realtime_digest.py"]
@@ -217,6 +218,8 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         argv += ["--out-dir", str(out_dir), "--planned", "09:30 Asia/Shanghai"]
         argv += ["--strategy-sha", strategy_sha]
         argv += ["--publication-mode", publication_mode]
+        if refresh_log is not None:
+            argv += ["--refresh-log", str(refresh_log)]
         if expected_signal_date:
             argv += ["--expected-signal-date", expected_signal_date]
         if subject_prefix:
@@ -342,6 +345,33 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertEqual(meta["signal_date"], "2026-08-07")
         self.assertIn("收盘确认日期：未记录", str(meta["body"]))
         self.assertIn("close-confirmed CSV date does not match", str(meta["body"]))
+
+    def test_failed_close_preserves_upstream_reason_with_missing_csv(self) -> None:
+        for expected_date in ("", "2026-10-29"):
+            with self.subTest(expected_date=expected_date), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                log = root / "refresh.txt"
+                log.write_text(
+                    "SecurityMetaHistoryCorrectionRequired: Security metadata historical intervals changed for 000677; "
+                    "an exact-hash lineage review is required before replacement\n"
+                    "RuntimeError: proxy metadata fingerprint mismatch", encoding="utf-8")
+                meta = self.run_digest(
+                    root, {v: "preflight_failed\nreason: state refresh failed" for v in ("v2.0", "v2.3", "v2.5")},
+                    exit_codes={v: "1" for v in ("v2.0", "v2.3", "v2.5")},
+                    publication_mode="close_confirmed", expected_signal_date=expected_date, refresh_log=log)
+                self.assertEqual(meta["status"], "FAILED")
+                self.assertIn("历史 ST 区间发生变化（000677）", str(meta["body"]))
+                self.assertIn("当日信号未生成", str(meta["body"]))
+                self.assertIn("不可用 → 不可用", str(meta["body"]))
+
+    def test_failed_close_without_refresh_log_retains_preflight_reason(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = self.run_digest(
+                Path(tmp), {"v2.0": "preflight_failed\nreason: upstream unavailable"},
+                exit_codes={"v2.0": "1"}, publication_mode="close_confirmed",
+                expected_signal_date="2026-10-29", refresh_log=Path(tmp) / "missing.txt")
+        self.assertEqual(meta["status"], "FAILED")
+        self.assertIn("upstream unavailable", str(meta["body"]))
 
     def test_actionable_digest_is_compact_and_uses_version_correct_momentum_labels(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
