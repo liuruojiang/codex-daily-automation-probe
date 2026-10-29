@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "strategy_sha": "24712ce3a78d7968386495d605ef11d86e4b54ec",
+  "strategy_sha": "5fc79f825a5721459fcbad2d2f9c5abda352fc3a",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-no-overheat-20261029-24712ce3/microcap-whole-state-20261028-no-overheat.zip",
   "state_sha256": "a0c05467dc0755eb342a28da3c9caef4d0674abceb6a7bb76359e58e3f962b24",
   "state_date": "2026-10-28"
