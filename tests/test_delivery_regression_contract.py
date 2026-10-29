@@ -140,7 +140,7 @@ def test_microcap_regression_covers_required_files_with_isolated_zero_skip_gate(
     assert 'mandatory group has no test cases' in step['run']
     assert 'assert not list(root.iter(\'skipped\'))' in step['run'] or "root.iter('skipped')" in step['run']
     assert "Path('../automation')" in step['run']
-    assert "tests/fixtures/microcap/v23_identity_20261009" in step['run']
+    assert "tests/fixtures/microcap/v23_identity_20261029" in step['run']
     assert "Path(entry['target_path'])" in step['run']
     assert "if destination.exists():" in step['run']
     for name in required:
@@ -165,30 +165,30 @@ def test_microcap_v23_identity_fixture_matches_frozen_real_whole_delivery():
     import io
     import json
 
-    fixture = ROOT / 'tests/fixtures/microcap/v23_identity_20261009'
+    fixture = ROOT / 'tests/fixtures/microcap/v23_identity_20261029'
     provenance_bytes = (fixture / 'fixture_provenance.json').read_bytes()
     provenance = json.loads(provenance_bytes.decode('utf-8'))
-    assert provenance['signal_date'] == '2026-10-09'
-    assert provenance['strategy_revision'] == 'plain_lb25_hl2p5_r2off_vol10_26_20_20260904'
+    assert provenance['signal_date'] == '2026-10-28'
+    assert provenance['strategy_revision'] == 'plain_lb25_hl2p5_r2off_no_overheat_20261029'
     source_manifest = provenance['source']['source_manifest']
-    assert source_manifest['sha256_raw'] == 'd39a2539d47b591a4400a2f8155dfc5869d19f4ff78e247ca7d07c0b92a3e129'
+    assert source_manifest['sha256_raw'] == '2588d2ede76078013beb759d42f4da6870bb4e1f206c3f3324c7cb10b6e58ff5'
     manifest_bytes = (ROOT / source_manifest['fixture_path']).read_bytes()
     assert hashlib.sha256(manifest_bytes).hexdigest() == source_manifest['sha256_raw']
     manifest = json.loads(manifest_bytes.decode('utf-8'))
     assert manifest['ok'] is True
     assert manifest['scope'] == 'whole_workspace_delivery'
     assert manifest['errors'] == []
-    assert manifest['expected_date'] == '2026-10-09'
+    assert manifest['expected_date'] == '2026-10-28'
     assert manifest['status'] == 'complete'
     assert manifest['release_sha'] == provenance['source']['source_head']
     assert provenance['source']['post_signal_whole_check']['exit_code'] == 0
     assert provenance['source']['post_signal_whole_check']['ok'] is True
 
     frozen_hashes = {
-        'nav': ('c5f379c3f09cbbd7648b48f438b77040ffd51f2174259089cef07e3cf540584c',
-                '81610c690e24113b4728833448b511ebf03ebecb43f6b6fd5d5b8342ff1e50ce'),
-        'latest_signal': ('484a61ecc89962b637f158e3db0eb8ad0da0afbbefa7ea5beef8b1b02cf2c012',
-                          '833c4e026e398c0f6bab6cde00c1bb0ef9b0d250f7dd154d6100257ea08f1296'),
+        'nav': ('1d4ac8fbc457bf9e3b67904b5dd4a83e053d04ce9c06392bdd42c489daaf6337',
+                'c35ad4de8104118831a622919d54d8a16f6b0e612995559c27178bee2b90d156'),
+        'latest_signal': ('a4e79f5d5905fa6899388d9070261f467d01f22fa0aad375137ef9a5e6c6ee42',
+                          '281398c5afb9aab6be8a1c212f243923674d7c259ec957493e6b8eb1556ea1d5'),
     }
     assert set(provenance['files']) == set(frozen_hashes)
     for key, expected_file in provenance['files'].items():
@@ -215,8 +215,8 @@ def test_microcap_v23_identity_fixture_matches_frozen_real_whole_delivery():
             assert rows[0]['official_close_confirmed_signal'].lower() == 'true'
 
     attributes = (ROOT / '.gitattributes').read_text(encoding='utf-8')
-    assert 'tests/fixtures/microcap/v23_identity_20261009/*.csv -text' in attributes
-    assert 'tests/fixtures/microcap/v23_identity_20261009/*.json -text' in attributes
+    assert 'tests/fixtures/microcap/v23_identity_20261029/*.csv -text' in attributes
+    assert 'tests/fixtures/microcap/v23_identity_20261029/*.json -text' in attributes
 
 
 def test_microcap_automation_suite_is_not_coupled_to_icim_release_fixtures():

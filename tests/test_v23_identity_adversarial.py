@@ -37,3 +37,13 @@ def test_v23_numeric_identity_is_finite(field, bad):
     row = _identity()
     row[field] = bad
     assert not digest.validate_strategy_identity("v2.3", row)[0]
+
+
+@pytest.mark.parametrize("field", ["overheat_overlay_enabled", "overheat_risk_off", "overheat_exit_triggered", "overheat_reentry_triggered", "overheat_block_entry_triggered"])
+@pytest.mark.parametrize("bad", ["True", "nan", ""])
+def test_disabled_volatility_cannot_carry_active_or_invalid_risk_state(field, bad):
+    row = _identity()
+    row[field] = "False"
+    assert digest.validate_strategy_identity("v2.3", row)[0]
+    row[field] = bad
+    assert not digest.validate_strategy_identity("v2.3", row)[0]

@@ -104,9 +104,9 @@ jobs:
           from pathlib import Path
 
           automation = Path('../automation')
-          fixture_root = automation / 'tests/fixtures/microcap/v23_identity_20261009'
+          fixture_root = automation / 'tests/fixtures/microcap/v23_identity_20261029'
           provenance = json.loads((fixture_root / 'fixture_provenance.json').read_text(encoding='utf-8'))
-          if provenance['signal_date'] != '2026-10-09' or provenance['source']['post_signal_whole_check']['ok'] is not True:
+          if provenance['signal_date'] != '2026-10-28' or provenance['source']['post_signal_whole_check']['ok'] is not True:
               raise SystemExit('v2.3 real-output fixture provenance is not accepted')
           for entry in provenance['files'].values():
               source = automation / entry['fixture_path']
@@ -130,7 +130,7 @@ jobs:
             tests/test_adversarial_microcap_delivery.py tests/test_script_delivery_adversarial.py \
             tests/test_realtime_exchange_calendar.py tests/test_exchange_calendar_provider.py \
             tests/test_realtime_publication_deadline.py \
-            tests/test_v20_plain_promotion.py tests/test_v23_plain_promotion.py tests/test_v25_plain_promotion.py \
+            tests/test_v20_plain_promotion.py tests/test_v23_plain_promotion.py tests/test_v25_plain_promotion.py tests/test_v23_no_overheat_promotion.py \
             tests/test_adversarial_v20_plain_20260904.py tests/test_adversarial_v23_plain_20260904.py \
             tests/test_adversarial_delivery_plain_20260904.py tests/test_adversarial_delivery_state_consistency.py \
             tests/test_v23_identity_adversarial.py tests/test_index_history_preflight.py \

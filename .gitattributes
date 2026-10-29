@@ -4,3 +4,6 @@ tests/fixtures/icim/v14_ledger_20261008/*.json -text
 tests/fixtures/microcap/v23_identity_20261009/*.csv -text
 tests/fixtures/microcap/v23_identity_20261009/*.json -text
 tests/fixtures/icim/readiness_20261009/*.json -text
+
+tests/fixtures/microcap/v23_identity_20261029/*.csv -text
+tests/fixtures/microcap/v23_identity_20261029/*.json -text

@@ -43,9 +43,9 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
             "v2.3": {
                 "version": "2.3",
                 "strategy_version": "v2.3",
-                "overlay_type": "plain_lb25_hl2p5_r2off_vol10_26_20_20260904",
-                "strategy_revision": "plain_lb25_hl2p5_r2off_vol10_26_20_20260904",
-                "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2off_signal1p0_exec0p8_vol10_overheat26_recovery20",
+                "overlay_type": "plain_lb25_hl2p5_r2off_no_overheat_20261029",
+                "strategy_revision": "plain_lb25_hl2p5_r2off_no_overheat_20261029",
+                "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2off_signal1p0_exec0p8_no_overheat",
                 "lookback": "25",
                 "halflife": "2.5",
                 "r2_entry_gate": "0.0",
@@ -56,7 +56,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 "cash_day_yield_enabled": "False",
                 "financing_enabled": "False",
                 "execution_hedge_ratio": "0.8",
-                "overheat_enabled": "True",
+                "overheat_enabled": "False",
                 "overheat_feature_window": "10",
                 "overheat_trigger_threshold": "0.26",
                 "overheat_recovery_threshold": "0.20",
@@ -418,7 +418,7 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
                 "v2.3": {
                     **self.signal_fields("v2.3"),
                     "annualized_log_wls_score": "1.664220", "log_wls_r2": "0.5144",
-                    "overheat_risk_off": "True",
+                    "overheat_risk_off": "False",
                     "overheat_feature_value": "0.3177309",
                     "overheat_trigger_threshold": "0.26",
                     "overheat_recovery_threshold": "0.20",
@@ -437,9 +437,9 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         self.assertIn("对冲价差年化 WLS 得分 **+166.42%**；R² **0.514**", body)
         self.assertIn("微盘年化 WLS 得分 **+300.68%**；R² **0.783**", body)
         self.assertNotIn("**v2.0：**过热退出后锁定", body)
-        self.assertIn("**v2.3：**过热风险关闭中", body)
-        self.assertIn("31.77%", body)
-        self.assertIn("20.00%", body)
+        self.assertNotIn("过热风险关闭中", body)
+        self.assertNotIn("31.77%", body)
+        self.assertNotIn("恢复线", body)
         self.assertIn("[查看完整诊断与原始输出](https://github.com/example/actions/runs/123)", body)
         self.assertIn(self.STRATEGY_SHA, body)
         self.assertNotIn("原始实时信号输出", body)

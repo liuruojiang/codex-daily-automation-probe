@@ -250,12 +250,12 @@ STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
         "text": {
             "version": "2.3",
             "strategy_version": "v2.3",
-            "overlay_type": "plain_lb25_hl2p5_r2off_vol10_26_20_20260904",
-            "strategy_revision": "plain_lb25_hl2p5_r2off_vol10_26_20_20260904",
-            "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2off_signal1p0_exec0p8_vol10_overheat26_recovery20",
+            "overlay_type": "plain_lb25_hl2p5_r2off_no_overheat_20261029",
+            "strategy_revision": "plain_lb25_hl2p5_r2off_no_overheat_20261029",
+            "signal_model": "spread_nav_log_wls_exp_halflife_2p5_lb25_r2off_signal1p0_exec0p8_no_overheat",
         },
         "bool": {
-            "overheat_enabled": True,
+            "overheat_enabled": False,
             "target_vol_enabled": False,
             "r2_gate_enabled": False,
             "cash_day_yield_enabled": False,
@@ -337,6 +337,12 @@ def validate_strategy_identity(version: str, fields: dict[str, str]) -> tuple[bo
         if actual_number is None or not math.isclose(actual_number, float(expected), rel_tol=0.0, abs_tol=1e-9):
             actual_display = escape_markdown_inline(actual) if actual else "<missing>"
             mismatches.append(f"{key} expected {expected:g}, got {actual_display}")
+
+    if version == "v2.3":
+        for key in ("overheat_overlay_enabled", "overheat_risk_off", "overheat_exit_triggered",
+                    "overheat_reentry_triggered", "overheat_block_entry_triggered"):
+            if key in fields and parse_strict_bool(first_value(fields, key)) is not False:
+                mismatches.append(f"{key} must be False when overheat is disabled")
 
     if mismatches:
         return False, "strategy identity mismatch: " + "; ".join(mismatches[:3])

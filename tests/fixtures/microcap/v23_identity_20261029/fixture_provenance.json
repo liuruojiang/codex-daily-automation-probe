@@ -1,0 +1,59 @@
+{
+  "fixture_id": "microcap-v23-no-overheat-20261028-close-confirmed",
+  "purpose": "Provide complete real v2.3 output bytes to the mandatory identity test in a disposable strategy checkout.",
+  "signal_date": "2026-10-28",
+  "strategy_revision": "plain_lb25_hl2p5_r2off_no_overheat_20261029",
+  "source": {
+    "strategy_repository": "liuruojiang/microcap",
+    "source_head": "24712ce3a78d7968386495d605ef11d86e4b54ec",
+    "workflow_strategy_pin": "24712ce3a78d7968386495d605ef11d86e4b54ec",
+    "execution_python_diff_from_pin": "none",
+    "source_manifest": {
+      "path": "outputs/top100_delivery_manifest.json",
+      "fixture_path": "tests/fixtures/microcap/v23_identity_20261029/source_top100_delivery_manifest.json",
+      "sha256_raw": "2588d2ede76078013beb759d42f4da6870bb4e1f206c3f3324c7cb10b6e58ff5",
+      "status": "complete",
+      "scope": "whole_workspace_delivery",
+      "expected_date": "2026-10-28",
+      "release_sha": "24712ce3a78d7968386495d605ef11d86e4b54ec"
+    },
+    "post_signal_whole_check": {
+      "command": "python -B -X utf8 scripts/top100_delivery.py check",
+      "exit_code": 0,
+      "ok": true,
+      "errors": [],
+      "expected_date": "2026-10-28",
+      "evidence_stdout": "research_reports/20261029_v23_no_overheat_promotion/released_check.json"
+    }
+  },
+  "files": {
+    "nav": {
+      "fixture_path": "tests/fixtures/microcap/v23_identity_20261029/microcap_top100_mom16_biweekly_live_v2_3_nav.csv",
+      "target_path": "outputs/microcap_top100_mom16_biweekly_live_v2_3_nav.csv",
+      "source_path": "outputs/microcap_top100_mom16_biweekly_live_v2_3_nav.csv",
+      "size_bytes": 5666866,
+      "sha256_raw": "1d4ac8fbc457bf9e3b67904b5dd4a83e053d04ce9c06392bdd42c489daaf6337",
+      "sha256_lf_normalized_manifest": "c35ad4de8104118831a622919d54d8a16f6b0e612995559c27178bee2b90d156",
+      "row_count": 4002,
+      "first_date": "2010-05-05",
+      "last_date": "2026-10-28",
+      "manifest_rows": 4002,
+      "manifest_latest_date": "2026-10-28"
+    },
+    "latest_signal": {
+      "fixture_path": "tests/fixtures/microcap/v23_identity_20261029/microcap_top100_mom16_biweekly_live_v2_3_latest_signal.csv",
+      "target_path": "outputs/microcap_top100_mom16_biweekly_live_v2_3_latest_signal.csv",
+      "source_path": "outputs/microcap_top100_mom16_biweekly_live_v2_3_latest_signal.csv",
+      "size_bytes": 5064,
+      "sha256_raw": "a4e79f5d5905fa6899388d9070261f467d01f22fa0aad375137ef9a5e6c6ee42",
+      "sha256_lf_normalized_manifest": "281398c5afb9aab6be8a1c212f243923674d7c259ec957493e6b8eb1556ea1d5",
+      "row_count": 1,
+      "first_date": "2026-10-28",
+      "last_date": "2026-10-28",
+      "signal_timing": "close_confirmed",
+      "official_close_confirmed_signal": true,
+      "manifest_rows": 1,
+      "manifest_latest_date": "2026-10-28"
+    }
+  }
+}
