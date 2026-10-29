@@ -4876,6 +4876,45 @@
       "zh_summary": "原文不仅报道个股波动，还解释DTCR前四大持仓偏房地产与通信塔、APLD在5月31日的权重为4.5%；对比纯HPC运营商的建设、融资和租金转换风险。持仓日期较旧，未独立核验当前权重。",
       "evidence_level": "publisher_full_article",
       "verify_next": "核对ETF正式持仓与日期、运营商风险、租约现金转化及融资成本；旧权重不当作当前持仓。"
+    },
+    {
+      "origin_run_id": "40798275559",
+      "origin_report_date": "2026-10-29",
+      "source": "Seeking Alpha ETFs",
+      "title": "CIBR ETF: Reaping The Benefits From The AI Developments",
+      "zh_title": "CIBR：AI发展带来的网络安全需求与估值",
+      "url": "https://seekingalpha.com/article/4958876-cibr-etf-reaping-the-benefits-from-the-ai-developments",
+      "published": "2026-10-28T21:44:55+00:00",
+      "summary": "发布者公开摘要认为网络安全预算韧性较高，作者估计未来12个月约10%空间；这是作者观点，未独立估值。",
+      "zh_summary": "发布者公开摘要认为网络安全预算韧性较高，作者估计未来12个月约10%空间；这是作者观点，未独立估值。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "40798275559",
+      "origin_report_date": "2026-10-29",
+      "source": "Seeking Alpha ETFs",
+      "title": "JAAA: Federal Reserve Hikes Should Result In Dividend Growth And Continued Outperformance",
+      "zh_title": "JAAA：浮动利率CLO的分配对加息的敏感性",
+      "url": "https://seekingalpha.com/article/4958404-jaaa-federal-reserve-hikes-should-result-in-dividend-growth-and-continued-outperformance",
+      "published": "2026-10-28T10:29:05+00:00",
+      "summary": "发布者公开摘要列AAA CLO敞口和4.8%分配率，认为加息有利于未来分配；未独立核对货币政策与基金分配。",
+      "zh_summary": "发布者公开摘要列AAA CLO敞口和4.8%分配率，认为加息有利于未来分配；未独立核对货币政策与基金分配。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "40798275559",
+      "origin_report_date": "2026-10-29",
+      "source": "HKEX News Releases",
+      "title": "香港交易所拓展綜合基金平台 推出平台及代理人服務",
+      "zh_title": "香港交易所拓展综合基金平台，推出平台及代理人服务",
+      "url": "https://www.hkex.com.hk/News/News-Release/2026/261028news?sc_lang=zh-HK",
+      "published": "2026-10-28T04:00:00+00:00",
+      "summary": "港交所原公告介绍总分销、代理人及行政服务，覆盖客户登记、订单、交收、付款、对账及报告；参与机构由33家增至60多家。",
+      "zh_summary": "港交所原公告介绍总分销、代理人及行政服务，覆盖客户登记、订单、交收、付款、对账及报告；参与机构由33家增至60多家。",
+      "evidence_level": "official_publisher_full_article",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
