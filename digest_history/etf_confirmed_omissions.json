@@ -4915,6 +4915,32 @@
       "zh_summary": "港交所原公告介绍总分销、代理人及行政服务，覆盖客户登记、订单、交收、付款、对账及报告；参与机构由33家增至60多家。",
       "evidence_level": "official_publisher_full_article",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "40984312253",
+      "origin_report_date": "2026-10-30",
+      "source": "Seeking Alpha ETFs",
+      "title": "The S&P 500's Thanksgiving Leftovers In October 2026",
+      "zh_title": "标普500去年落后股组合：2026年10月回顾",
+      "url": "https://seekingalpha.com/article/4959564-sp500-thanksgiving-leftovers-october-2026?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-29T17:55:00+00:00",
+      "summary": "公开摘要追踪2025年标普500表现最差的十只股票：以2025年感恩节后为100，等权组合9月底约85，10月22日恢复100，此后回落至94.4；市值加权组合10月7日约80、22日86.5、随后84.3。是单组事后追踪，不是跨期反转策略验证。",
+      "zh_summary": "公开摘要追踪2025年标普500表现最差的十只股票：以2025年感恩节后为100，等权组合9月底约85，10月22日恢复100，此后回落至94.4；市值加权组合10月7日约80、22日86.5、随后84.3。是单组事后追踪，不是跨期反转策略验证。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "40984312253",
+      "origin_report_date": "2026-10-30",
+      "source": "Seeking Alpha ETFs",
+      "title": "MCN: Discount Deepens Even Further, Making This Name Even More Enticing",
+      "zh_title": "MCN：折价进一步扩大，作者认为吸引力提升",
+      "url": "https://seekingalpha.com/article/4959273-mcn-discount-deepens-even-further-making-this-name-even-more-enticing?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-29T13:49:53+00:00",
+      "summary": "公开摘要认为MCN折价扩大；其备兑看涨策略及较均衡行业配置区别于科技权重较高的基准。拟议次级顾问调整可能引入优先股；并非已经实施或证明分配可持续。",
+      "zh_summary": "公开摘要认为MCN折价扩大；其备兑看涨策略及较均衡行业配置区别于科技权重较高的基准。拟议次级顾问调整可能引入优先股；并非已经实施或证明分配可持续。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
