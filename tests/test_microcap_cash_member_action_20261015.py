@@ -6,6 +6,8 @@ canonical CSV SHA256 6c3e1daf2306445a8a2b8b470d2f768fdf2d1a67a50c2b626e5d34efa33
 It is an acceptance fixture, never a current investment instruction.
 """
 import csv
+import hashlib
+from pathlib import Path
 import json
 import sys
 from datetime import datetime
@@ -139,7 +141,7 @@ REAL_V25 = {
 }
 
 
-def render(tmp_path, row, version="v2.5", *, mode="close_confirmed", stdout=""):
+def render(tmp_path, row, version="v2.5", *, mode="close_confirmed", stdout="", expected_date="2026-10-15"):
     source = tmp_path / "final.csv"
     with source.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(row))
@@ -150,7 +152,7 @@ def render(tmp_path, row, version="v2.5", *, mode="close_confirmed", stdout=""):
     argv = ["digest", "--result", f"{version}={output}", "--signal-csv", f"{version}={source}",
             "--exit-code", f"{version}=0", "--out-dir", str(tmp_path / "rendered"), "--publication-mode", mode]
     if mode == "close_confirmed":
-        argv += ["--expected-signal-date", "2026-10-15"]
+        argv += ["--expected-signal-date", expected_date]
     before = source.read_bytes()
     with patch.object(sys, "argv", argv), patch.object(digest, "now_bj", return_value=datetime(2026, 10, 16, 10, tzinfo=digest.BJ)):
         assert digest.main() == 0
@@ -168,8 +170,8 @@ def row_for(version, current, nxt):
     return row
 
 
-def test_real_v25_cash_member_update_is_background_not_trade(tmp_path):
-    result = render(tmp_path, REAL_V25)
+def test_synthetic_current_policy_cash_member_update_is_background_not_trade(tmp_path):
+    result = render(tmp_path, row_for("v2.5", "cash", "cash"))
     assert result["status"] == "OK"
     assert "[下个交易日无需操作]" in result["subject"]
     assert "| v2.5 | 空仓 → 空仓 | 无操作 | 0.00 |" in result["body"]
@@ -208,7 +210,7 @@ def test_entry_and_exit_are_not_suppressed_by_member_event(tmp_path, current, nx
     {"member_rebalance_execution_date": "2026-10-14"},
 ])
 def test_invalid_identity_scale_or_dated_event_is_still_rejected(tmp_path, changes):
-    result = render(tmp_path, {**REAL_V25, **changes})
+    result = render(tmp_path, {**row_for("v2.5", "cash", "cash"), **changes})
     assert result["status"] == "FAILED"
     assert "| v2.5 | 不可用 → 不可用 | 异常 |" in result["body"]
     assert "名单更新背景" not in result["body"]
@@ -220,15 +222,15 @@ def test_zero_target_scale_cannot_hide_invalid_active_holding(tmp_path):
     assert render(tmp_path, row, "v2.3")["status"] == "FAILED"
 
 
-def test_stdout_cannot_promote_real_cash_csv_to_active_member_trade(tmp_path):
+def test_stdout_cannot_promote_current_policy_cash_csv_to_active_member_trade(tmp_path):
     stdout = "current_holding: long_microcap_top100\nnext_holding: long_microcap_top100\nnext_session_actionable_scale: 1\n"
-    result = render(tmp_path, REAL_V25, stdout=stdout)
+    result = render(tmp_path, row_for("v2.5", "cash", "cash"), stdout=stdout)
     assert result["status"] == "OK"
     assert "| v2.5 | 空仓 → 空仓 | 无操作 | 0.00 |" in result["body"]
 
 
 def test_realtime_cash_event_on_execution_day_remains_background(tmp_path):
-    row = {**REAL_V25, "date": "2026-10-16", "quote_trade_date": "2026-10-16",
+    row = {**row_for("v2.5", "cash", "cash"), "date": "2026-10-16", "quote_trade_date": "2026-10-16",
            "latest_anchor_trade_date": "2026-10-15", "expected_latest_completed_trade_date": "2026-10-15",
            "snapshot_time": "2026-10-16T09:55:00+08:00", "signal_timing": "intraday_hypothetical_if_now_close",
            "official_close_confirmed_signal": "False"}
@@ -236,3 +238,24 @@ def test_realtime_cash_event_on_execution_day_remains_background(tmp_path):
     assert result["status"] == "OK" and "[无需操作]" in result["subject"]
     assert "| v2.5 | 空仓 → 空仓 | 无操作 | 0.00 |" in result["body"]
     assert "信号日 2026-10-15，执行日 2026-10-16" in result["body"]
+
+
+def test_old_real_policy_fixture_is_rejected_without_relabeling(tmp_path):
+    assert "terminal_loss_policy" not in REAL_V25
+    result = render(tmp_path, REAL_V25)
+    assert result["status"] == "FAILED"
+    assert "名单更新背景" not in result["body"]
+    assert "terminal_loss_policy" in json.dumps(result)
+
+
+def test_current_real_20261030_terminal_policy_fixture_passes(tmp_path):
+    folder = Path(__file__).parent / "fixtures/microcap/terminal_policy_20261030"
+    raw = (folder / "v25_latest_signal.csv").read_bytes()
+    proof = json.loads((folder / "provenance.json").read_text(encoding="utf-8"))
+    assert hashlib.sha256(raw).hexdigest() == proof["sha256_raw"]
+    row = next(csv.DictReader(raw.decode("utf-8-sig").splitlines()))
+    assert row["date"] == proof["signal_date"] == "2026-10-30"
+    assert row["terminal_loss_policy"] == proof["terminal_loss_policy"]
+    result = render(tmp_path, row, expected_date="2026-10-30")
+    assert result["status"] == "OK"
+    assert "保守模型假设，非真实成交" in result["body"]

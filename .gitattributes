@@ -7,3 +7,4 @@ tests/fixtures/icim/readiness_20261009/*.json -text
 
 tests/fixtures/microcap/v23_identity_20261029/*.csv -text
 tests/fixtures/microcap/v23_identity_20261029/*.json -text
+tests/fixtures/microcap/terminal_policy_20261030/* -text

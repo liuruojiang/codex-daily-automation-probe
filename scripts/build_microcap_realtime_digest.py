@@ -308,16 +308,17 @@ STRATEGY_IDENTITIES: dict[str, dict[str, dict[str, object]]] = {
 }
 
 
+for _identity in STRATEGY_IDENTITIES.values():
+    _identity["text"].update(terminal_loss_policy=TERMINAL_LOSS_POLICY,
+                             terminal_loss_policy_note=TERMINAL_LOSS_POLICY_NOTE)
+
+
 def validate_strategy_identity(version: str, fields: dict[str, str]) -> tuple[bool, str]:
     identity = STRATEGY_IDENTITIES.get(version)
     if identity is None:
         return False, f"unsupported strategy version {version}"
 
     mismatches: list[str] = []
-    for key, expected in {"terminal_loss_policy": TERMINAL_LOSS_POLICY,
-                          "terminal_loss_policy_note": TERMINAL_LOSS_POLICY_NOTE}.items():
-        if first_value(fields, key) != expected:
-            mismatches.append(f"{key} missing or inconsistent with approved terminal loss model")
     for key, expected in identity["text"].items():
         actual = first_value(fields, key)
         if actual != expected:
