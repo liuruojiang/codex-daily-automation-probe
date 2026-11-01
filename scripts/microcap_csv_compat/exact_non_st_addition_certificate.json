@@ -53,5 +53,8 @@
     "Only this exact known addition is admitted; any deletion, other addition, non-display field change, ST/issuer/title mismatch is rejected.",
     "Common5671 rows still use original strict precision comparator."
   ],
-  "generated_utc": "2026-11-01T09:51:58.644735+00:00"
+  "generated_utc": "2026-11-01T09:51:58.644735+00:00",
+  "source_hash_serialization": "canonical_lf: replace CRLF with LF only; raw source hashes above retain original Windows capture identity",
+  "selector_source_canonical_lf_sha256": "1365b7c0aa289efc30537ef2ede5a1bd7126952bd29c6a026a69d9d25659e47b",
+  "classifier_source_canonical_lf_sha256": "876894b02b3bd77d7388798014247a9d06f6a50d3fb6d26924deb66eea77421c"
 }

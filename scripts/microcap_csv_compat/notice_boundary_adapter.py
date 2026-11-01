@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import sys
 
-CERT_SHA = "79e957bb3dcfd5b09927da67f917ae1a6d03ae5478baeff28ec85cbe5014f318"
+CERT_SHA = "1b883caf14d9ab433ccab128448dac7fef804b7ec37439327246f4313206d9e9"
 ADDED_ID = "AN202611011831295457"
 
 def digest(raw):
@@ -35,8 +35,8 @@ def wrap_comparator(module):
         original({ADDED_ID: cert["native_row"]}, {ADDED_ID: row})
         scope = importlib.import_module("scripts.st_history_scope")
         base = importlib.import_module("microcap_top100_mom16_biweekly_live_v2_0")
-        if (digest(Path(scope.__file__).read_bytes()) != cert["selector_source_sha256"]
-                or digest(Path(base.__file__).read_bytes()) != cert["classifier_source_sha256"]):
+        if (digest(Path(scope.__file__).read_bytes().replace(b"\r\n", b"\n")) != cert["selector_source_canonical_lf_sha256"]
+                or digest(Path(base.__file__).read_bytes().replace(b"\r\n", b"\n")) != cert["classifier_source_canonical_lf_sha256"]):
             raise module.StNoticeEvidenceError("Reviewed non-ST classification source changed")
         if (scope._daily_notice_row(row, "601611", cert["boundary_day"], {}) is not None
                 or base.freq_mod.classify_st_notice_risk_actions(row["title"]) != {}):
