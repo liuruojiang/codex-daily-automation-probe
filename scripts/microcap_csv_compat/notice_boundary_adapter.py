@@ -50,7 +50,7 @@ def wrap_comparator(module):
             changed_event_count=len(changed),
             changed_event_ids_sha256=digest(json.dumps(changed, separators=(",", ":")).encode()),
             reviewed_non_st_added_ids=[ADDED_ID], removed_event_ids=[],
-            certificate_sha256=CERT_SHA, adapter_sha256=digest(Path(__file__).read_bytes()),
+            certificate_sha256=CERT_SHA, adapter_canonical_lf_sha256=digest(Path(__file__).read_bytes().replace(b"\r\n", b"\n")),
             added_native_row_sha256=digest(canonical(row)),
             boundary_native_content_unchanged=False)
         return result
