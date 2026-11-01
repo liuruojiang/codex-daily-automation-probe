@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "strategy_sha": "5fc79f825a5721459fcbad2d2f9c5abda352fc3a",
-  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-no-overheat-20261029-24712ce3/microcap-whole-state-20261028-no-overheat.zip",
-  "state_sha256": "a0c05467dc0755eb342a28da3c9caef4d0674abceb6a7bb76359e58e3f962b24",
-  "state_date": "2026-10-28"
+  "strategy_sha": "1559dba5f0b3349f66e631ac5cc2e83390c3f615",
+  "state_url": "https://github.com/liuruojiang/microcap/releases/download/top100-shared-history-20261101/microcap-whole-delivery-20261030.zip",
+  "state_sha256": "8d6af3322aeb693f0bcee2e61281d6389c21b496b8305f3e1f1c27834fdc8664",
+  "state_date": "2026-10-30"
 }
