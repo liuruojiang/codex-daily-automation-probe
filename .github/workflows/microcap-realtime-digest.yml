@@ -113,6 +113,7 @@ jobs:
     timeout-minutes: 180
     env:
       MICROCAP_CSV_LINE_TERMINATOR: crlf
+      MICROCAP_REVIEWED_NON_ST_BOUNDARY: 20261030-exact-v1
       PYTHONPATH: ${{ github.workspace }}/automation/scripts/microcap_csv_compat
       TZ: Asia/Shanghai
       PLANNED_BJ: "16:00 Asia/Shanghai"
