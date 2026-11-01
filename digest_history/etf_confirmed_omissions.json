@@ -5240,6 +5240,58 @@
       "zh_summary": "指定原文比较VGLT与LQD的信用、费用和五年回撤；政府信用安全不等于低久期风险。原文有将长期国债直接称低风险的概括，不能照单接受。",
       "evidence_level": "publisher_full_article",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41255898350",
+      "origin_report_date": "2026-11-01",
+      "source": "Seeking Alpha ETFs",
+      "title": "TECL: The Wrong Tool For A Mixed Earnings Season",
+      "zh_title": "TECL：财报表现分化时，三倍科技杠杆的风险",
+      "url": "https://seekingalpha.com/article/4960587-tecl-the-wrong-tool-for-a-mixed-earnings-season?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-31T10:37:36+00:00",
+      "summary": "公开摘要讨论17年历史中六次超过50%的回撤及从2000年起模拟仍亏损的路径，历史真实记录与模拟须分开；不是已验证的择时规则。",
+      "zh_summary": "公开摘要讨论17年历史中六次超过50%的回撤及从2000年起模拟仍亏损的路径，历史真实记录与模拟须分开；不是已验证的择时规则。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41255898350",
+      "origin_report_date": "2026-11-01",
+      "source": "Seeking Alpha ETFs",
+      "title": "QQQ Quarterly Outlook Report",
+      "zh_title": "QQQ季度展望：科技与能源敞口拖累相对表现",
+      "url": "https://seekingalpha.com/article/4960576-qqq-quarterly-outlook-report?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-31T08:10:00+00:00",
+      "summary": "Invesco发行人摘要称第三季度QQQ净值总回报0.53%，标普500为2.30%；科技选股及能源低配拖累相对表现。只是季度报告数字，不用于补写周末行情。",
+      "zh_summary": "Invesco发行人摘要称第三季度QQQ净值总回报0.53%，标普500为2.30%；科技选股及能源低配拖累相对表现。只是季度报告数字，不用于补写周末行情。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41255898350",
+      "origin_report_date": "2026-11-01",
+      "source": "Seeking Alpha ETFs",
+      "title": "UVIX: Fade Today's Monster Move (Rating Downgrade)",
+      "zh_title": "UVIX：作者下调评级，警告波动率期货杠杆损耗",
+      "url": "https://seekingalpha.com/article/4960540-uvix-fade-todays-monster-move?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-10-31T03:58:00+00:00",
+      "summary": "公开摘要讨论两倍VIX期货敞口的波动损耗与升水展期，三年跌逾99%为作者口径；其逢大涨卖出观点未独立检验。",
+      "zh_summary": "公开摘要讨论两倍VIX期货敞口的波动损耗与升水展期，三年跌逾99%为作者口径；其逢大涨卖出观点未独立检验。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41255898350",
+      "origin_report_date": "2026-11-01",
+      "source": "ETF Trends",
+      "title": "Who Gets Paid for AI?",
+      "zh_title": "谁能从AI中获得收入？",
+      "url": "https://www.etftrends.com/model-portfolio-content-hub/who-gets-paid-ai/",
+      "published": "2026-10-31T11:00:52+00:00",
+      "summary": "发布者RSS摘要称WisdomTree人工智能与创新指数再平衡偏向AI变现企业和稀缺投入供应商、减少依赖借贷的企业，新增微软并增加Alphabet等敞口；尚未核对完整权重及指数规则。",
+      "zh_summary": "发布者RSS摘要称WisdomTree人工智能与创新指数再平衡偏向AI变现企业和稀缺投入供应商、减少依赖借贷的企业，新增微软并增加Alphabet等敞口；尚未核对完整权重及指数规则。",
+      "evidence_level": "publisher_RSS_summary_only; direct_original_blocked",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
