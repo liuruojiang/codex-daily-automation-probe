@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "strategy_sha": "1559dba5f0b3349f66e631ac5cc2e83390c3f615",
+  "strategy_sha": "24f8f8cc7ad0a61362404c77eb55770fea61d461",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/top100-shared-history-20261101/microcap-whole-delivery-20261030.zip",
   "state_sha256": "8d6af3322aeb693f0bcee2e61281d6389c21b496b8305f3e1f1c27834fdc8664",
   "state_date": "2026-10-30"
