@@ -25,7 +25,8 @@ def test_csv_serialization_in_fresh_subprocess(enabled):
 def test_compatibility_is_scoped_to_delivery_job():
     workflow = yaml.safe_load((ROOT / ".github/workflows/microcap-realtime-digest.yml").read_text(encoding="utf-8"))
     assert workflow["jobs"]["send"]["env"]["MICROCAP_CSV_LINE_TERMINATOR"] == "crlf"
-    assert workflow["jobs"]["send"]["env"]["PYTHONPATH"].endswith("/automation/scripts/microcap_csv_compat")
+    paths = workflow["jobs"]["send"]["env"]["PYTHONPATH"].split(":")
+    assert paths == ["${{ github.workspace }}/automation/scripts/microcap_csv_compat", "${{ github.workspace }}/microcap"]
     for name, job in workflow["jobs"].items():
         if name != "send":
             assert "MICROCAP_CSV_LINE_TERMINATOR" not in job.get("env", {})
