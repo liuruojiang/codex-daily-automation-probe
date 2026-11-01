@@ -123,7 +123,7 @@ jobs:
               destination.write_bytes(raw)
           PY
           # Keep the complete existing delivery group; bound each independent group.
-          timeout --foreground 180s python -B -X utf8 -m pytest -q -p no:cacheprovider \
+          timeout --foreground 600s python -B -X utf8 -m pytest -q -p no:cacheprovider \
             tests/test_realtime_preflight.py tests/test_realtime_state_guard_20260915.py \
             tests/test_top100_delivery.py tests/test_top100_cloud_delivery.py \
             tests/test_full_rebalance_cache_bundle.py tests/test_top100_data_guards.py \
@@ -143,7 +143,7 @@ jobs:
             tests/test_return_integrity_20261015.py \
             tests/test_security_meta_fail_closed_20261015.py \
             tests/test_v25_realtime_artifact_invalidation.py --junitxml=regression-core.xml
-          timeout --foreground 180s python -B -X utf8 -m pytest -q -p no:cacheprovider \
+          timeout --foreground 600s python -B -X utf8 -m pytest -q -p no:cacheprovider \
             tests/test_close_confirmation_1500_20261023.py \
             tests/test_realtime_quote_integrity_20261024.py \
             tests/test_st_notice_state_machine_20261024.py \

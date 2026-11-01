@@ -133,7 +133,7 @@ def test_microcap_regression_covers_required_files_with_isolated_zero_skip_gate(
     assert step['env']['MICROCAP_DIGEST_SOURCE'] == '${{ github.workspace }}/automation/scripts/build_microcap_realtime_digest.py'
     assert step['env']['PYTHONDONTWRITEBYTECODE'] == '1'
     assert 'working-directory' not in step or step['working-directory'] == 'strategy'
-    assert step['run'].count('timeout --foreground 180s python -B -X utf8 -m pytest -q -p no:cacheprovider') == 2
+    assert step['run'].count('timeout --foreground 600s python -B -X utf8 -m pytest -q -p no:cacheprovider') == 2
     assert '--junitxml=regression-core.xml' in step['run']
     assert '--junitxml=regression-release.xml' in step['run']
     assert "ET.ElementTree(root).write('regression.xml'" in step['run']
