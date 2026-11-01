@@ -112,6 +112,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
+      MICROCAP_CSV_LINE_TERMINATOR: crlf
+      PYTHONPATH: ${{ github.workspace }}/automation/scripts/microcap_csv_compat
       TZ: Asia/Shanghai
       PLANNED_BJ: "16:00 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
