@@ -17,6 +17,20 @@ def cn_today() -> str:
     return (datetime.now(timezone.utc) + timedelta(hours=8)).date().isoformat()
 
 
+def can_reuse_static_inputs(proof: object, expected_date: str, today: str) -> bool:
+    """Select reuse only after the workflow has validated the restored state."""
+    try:
+        if date.fromisoformat(expected_date).isoformat() != expected_date or date.fromisoformat(today).isoformat() != today or expected_date > today:
+            return False
+    except (TypeError, ValueError):
+        return False
+    return (isinstance(proof, dict) and type(proof.get("version")) is int
+            and proof.get("version") == REFRESH_PROOF_VERSION
+            and proof.get("source") == REFRESH_PROOF_SOURCE
+            and proof.get("target_end_date") == expected_date
+            and proof.get("verified_on") in (expected_date, today))
+
+
 def check_report(report: dict[str, object], expected_date: str, verified_on: str) -> None:
     parsed_expected = date.fromisoformat(expected_date)
     if parsed_expected.isoformat() != expected_date:

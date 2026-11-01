@@ -7,10 +7,21 @@ from pathlib import Path
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from check_microcap_refresh_target import check_report  # noqa: E402
+from check_microcap_refresh_target import can_reuse_static_inputs, check_report  # noqa: E402
 
 
 class MicrocapRefreshTargetTests(unittest.TestCase):
+    def test_validated_weekend_seed_reuses_static_inputs_without_accepting_stale_target(self) -> None:
+        proof = self.report("2026-10-30")["refresh_proof"]
+        for verified in ("2026-10-30", "2026-11-01"):
+            proof["verified_on"] = verified
+            self.assertTrue(can_reuse_static_inputs(proof, "2026-10-30", "2026-11-01"))
+        for key, value in (("verified_on", "2026-11-02"), ("verified_on", "2026-10-29"),
+                           ("target_end_date", "2026-10-29"), ("version", True), ("source", "cache_copy")):
+            changed = {**proof, key: value}
+            self.assertFalse(can_reuse_static_inputs(changed, "2026-10-30", "2026-11-01"))
+        self.assertFalse(can_reuse_static_inputs(proof, "2026-11-02", "2026-11-01"))
+
     def report(self, anchor: str, proof: str | None = None) -> dict[str, object]:
         return {
             "ok": True,

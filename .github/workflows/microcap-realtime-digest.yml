@@ -382,7 +382,7 @@ jobs:
         env:
           EXPECTED_DATE: ${{ steps.market_target.outputs.date }}
         run: |
-          python -c 'import json, os; from pathlib import Path; expected=os.environ["EXPECTED_DATE"]; path=Path("microcap/.microcap_index_cache/realtime/top100_realtime_refresh_proof.json"); proof=json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}; reusable=proof.get("version")==1 and proof.get("source")=="independent_close_history_refresh" and proof.get("target_end_date")==expected and proof.get("verified_on")==expected; print(f"force_static_inputs={str(not reusable).lower()}"); print(f"same_day_validated_state={str(reusable).lower()}")' >> "${GITHUB_OUTPUT}"
+          python -c 'import json, os, sys; from pathlib import Path; sys.path.insert(0,"automation/scripts"); from check_microcap_refresh_target import can_reuse_static_inputs, cn_today; expected=os.environ["EXPECTED_DATE"]; path=Path("microcap/.microcap_index_cache/realtime/top100_realtime_refresh_proof.json"); proof=json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}; reusable=can_reuse_static_inputs(proof,expected,cn_today()); print(f"force_static_inputs={str(not reusable).lower()}"); print(f"same_day_validated_state={str(reusable).lower()}")' >> "${GITHUB_OUTPUT}"
 
       - name: Clear stale signal outputs
         if: always() && steps.delivery_gate.outputs.should_send == 'true'
