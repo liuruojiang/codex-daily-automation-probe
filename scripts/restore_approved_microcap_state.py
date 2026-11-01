@@ -13,12 +13,14 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import urllib.parse
 import urllib.request
 from datetime import date
 from pathlib import Path
 
-MAX_BUNDLE_BYTES = 150 * 1024 * 1024
+MAX_BUNDLE_BYTES = 2 * 1024 * 1024 * 1024
+DOWNLOAD_CHUNK_BYTES = 1024 * 1024
 
 
 def validate_seed(url: str, expected_sha256: str, seed_date: str) -> None:
@@ -34,16 +36,37 @@ def validate_seed(url: str, expected_sha256: str, seed_date: str) -> None:
         raise ValueError("Approved state requires an ISO session date")
 
 
-def download_seed(url: str, expected_sha256: str) -> bytes:
+def download_seed(url: str, expected_sha256: str, destination: Path) -> Path:
     # Public release asset download: never forward GitHub authentication.
-    with urllib.request.urlopen(url, timeout=60) as response:
-        content = response.read(MAX_BUNDLE_BYTES + 1)
-    if not content or len(content) > MAX_BUNDLE_BYTES:
-        raise ValueError("Approved state bundle is empty or exceeds size limit")
-    actual = hashlib.sha256(content).hexdigest()
-    if actual.lower() != expected_sha256.lower():
-        raise ValueError(f"Approved state SHA-256 mismatch: actual={actual}")
-    return content
+    # Verify the actual body before replacing any existing approved bundle.
+    destination = Path(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    partial = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="wb", prefix=destination.name + ".",
+                                         suffix=".partial", dir=destination.parent,
+                                         delete=False) as target:
+            partial = Path(target.name)
+            digest = hashlib.sha256()
+            count = 0
+            with urllib.request.urlopen(url, timeout=60) as response:
+                while chunk := response.read(DOWNLOAD_CHUNK_BYTES):
+                    count += len(chunk)
+                    if count > MAX_BUNDLE_BYTES:
+                        raise ValueError("Approved state bundle exceeds size limit")
+                    digest.update(chunk)
+                    target.write(chunk)
+            if count == 0:
+                raise ValueError("Approved state bundle is empty")
+            actual = digest.hexdigest()
+            if actual.lower() != expected_sha256.lower():
+                raise ValueError(f"Approved state SHA-256 mismatch: actual={actual}")
+        os.replace(partial, destination)
+        partial = None
+        return destination
+    finally:
+        if partial is not None:
+            partial.unlink(missing_ok=True)
 
 
 def load_release_config(path: Path, actual_strategy_sha: str) -> dict[str, str]:
@@ -73,9 +96,7 @@ def main() -> int:
         config = load_release_config(args.config, actual_sha)
         args.url, args.sha256, args.seed_date = (config["state_url"], config["state_sha256"], config["state_date"])
     validate_seed(args.url, args.sha256, args.seed_date)
-    content = download_seed(args.url, args.sha256)
-    args.bundle.parent.mkdir(parents=True, exist_ok=True)
-    args.bundle.write_bytes(content)
+    download_seed(args.url, args.sha256, args.bundle)
     subprocess.run([
         sys.executable, str(args.root / "scripts/top100_cloud_delivery.py"), "restore",
         "--root", str(args.root), "--bundle", str(args.bundle),

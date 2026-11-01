@@ -30,13 +30,13 @@ def test_exact_release_identity_required():
         seed.validate_seed(URL, 'a' * 64, '2026-09-99')
 
 
-def test_download_checks_hash_before_returning_bytes():
+def test_download_checks_hash_before_publishing_file(tmp_path):
     data = b'exact approved test bytes'
     with patch.object(seed.urllib.request, 'urlopen', return_value=io.BytesIO(data)):
-        assert seed.download_seed(URL, hashlib.sha256(data).hexdigest()) == data
+        assert seed.download_seed(URL, hashlib.sha256(data).hexdigest(), tmp_path / 'bundle.zip').read_bytes() == data
     with patch.object(seed.urllib.request, 'urlopen', return_value=io.BytesIO(data)):
         with pytest.raises(ValueError, match='SHA-256 mismatch'):
-            seed.download_seed(URL, 'a' * 64)
+            seed.download_seed(URL, 'a' * 64, tmp_path / 'bundle.zip')
 
 
 def test_failed_whole_manifest_restore_never_reports_success(tmp_path, monkeypatch):
