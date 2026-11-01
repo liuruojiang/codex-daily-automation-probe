@@ -1,0 +1,29 @@
+name: Microcap notice boundary diagnostic
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: 24f8f8cc7ad0a61362404c77eb55770fea61d461
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - run: python -m pip install requests
+      - name: Collect exact failed boundary only
+        run: python -B -m scripts.st_notice_incremental --root boundary-diagnostic --start 2026-10-30 --end 2026-10-30
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: microcap-notice-boundary-20261030
+          path: boundary-diagnostic/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
