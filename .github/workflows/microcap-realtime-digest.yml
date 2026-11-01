@@ -213,7 +213,7 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true'
         run: |
           python -m pip install --upgrade pip
-          python -m pip install numpy "pandas<3" requests "akshare==1.18.46" matplotlib
+          python -m pip install numpy "pandas<3" requests "akshare==1.18.46" "baostock==0.9.1" matplotlib
 
       - name: Resolve independent completed session
         id: market_target
@@ -475,7 +475,7 @@ jobs:
             # A rejected history/lineage cannot be repaired by re-fetching the
             # same inputs. Preserve the failed status and require exact-hash
             # review; transient transport failures keep the existing retry path.
-            if grep -Eiq 'SecurityMetaHistoryCorrectionRequired|Security metadata (historical intervals|identity) changed|exact-hash lineage review is required|Exact frozen proxy seed|proxy metadata fingerprint mismatch|historical rewrite (detected|audit missing key columns)' "${attempt_log}"; then
+            if grep -Eiq 'StNoticeEvidenceError|Daily installed input seed is incomplete|ST metadata archive|ST archive requires a portable pointer|SecurityMetaHistoryCorrectionRequired|Security metadata (historical intervals|identity) changed|exact-hash lineage review is required|Exact frozen proxy seed|proxy metadata fingerprint mismatch|historical rewrite (detected|audit missing key columns)|Factor (source|body)|[Cc]ached return basis|[Tt]rade status|[Nn]otice archive|return-basis pipeline requires|qfq/hfq return basis disagreement|Fixed anchor|Legacy.*return basis|source group stopped|Daily (raw input|trade status|provider|inputs|prepared|close|refresh|target|BaoStock)|Previous complete raw snapshot|Raw history deletion|Historical (raw-price|adjusted-price)|Adjusted history deletion|Previous adjusted candidate|Legacy cache must be migrated|Unmanifested legacy|Incomplete factor coverage|Share-count history changed|Share source/cache identity|Share source response hash|Share source receipt identity|Incomplete share-source publication|Existing share history requires|Share baseline|Share source query chain|Share candidate does not reproduce source chain|Invalid historical proxy values|Incomplete finite member returns|Member authorities changed' "${attempt_log}"; then
               echo "::error title=Microcap refresh blocked::Non-retryable lineage or frozen-history rejection; review exact hashes before another run." | tee -a realtime_state_refresh_result.txt
               break
             fi

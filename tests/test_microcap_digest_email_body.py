@@ -88,6 +88,8 @@ class MicrocapDigestEmailBodyTests(unittest.TestCase):
         }
         return {
             **identities[version],
+            "terminal_loss_policy": "delist_zero_writeoff_equal_survivors_v1",
+            "terminal_loss_policy_note": "退市日剩余价值计零并释放仓位；保守模型假设，非真实成交",
             "member_rebalance_required": "False",
             "member_rebalance_actionable": "False",
             "member_rebalance_official": "True",

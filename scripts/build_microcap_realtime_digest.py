@@ -12,6 +12,8 @@ from zoneinfo import ZoneInfo
 
 
 BJ = ZoneInfo("Asia/Shanghai")
+TERMINAL_LOSS_POLICY = "delist_zero_writeoff_equal_survivors_v1"
+TERMINAL_LOSS_POLICY_NOTE = "退市日剩余价值计零并释放仓位；保守模型假设，非真实成交"
 
 
 def now_bj() -> datetime:
@@ -312,6 +314,10 @@ def validate_strategy_identity(version: str, fields: dict[str, str]) -> tuple[bo
         return False, f"unsupported strategy version {version}"
 
     mismatches: list[str] = []
+    for key, expected in {"terminal_loss_policy": TERMINAL_LOSS_POLICY,
+                          "terminal_loss_policy_note": TERMINAL_LOSS_POLICY_NOTE}.items():
+        if first_value(fields, key) != expected:
+            mismatches.append(f"{key} missing or inconsistent with approved terminal loss model")
     for key, expected in identity["text"].items():
         actual = first_value(fields, key)
         if actual != expected:
@@ -795,6 +801,12 @@ def build_compact_digest(
                     f"{escape_markdown_inline(update.replace('名单调仓', '名单更新', 1))}；"
                     "当前及下一交易日均为空仓，无需买卖。"
                 )
+    trusted_policy_rows = [item for item in results if item["status"] == "OK"
+                           and first_value(item["fields"], "terminal_loss_policy") == TERMINAL_LOSS_POLICY
+                           and first_value(item["fields"], "terminal_loss_policy_note") == TERMINAL_LOSS_POLICY_NOTE]
+    if trusted_policy_rows:
+        policy_note = first_value(trusted_policy_rows[0]["fields"], "terminal_loss_policy_note")
+        lines += ["", f"历史计价口径：{escape_markdown_inline(policy_note)}。此说明不构成当日卖出指令。"]
     if member_background:
         lines += ["", "名单更新背景：", "", *member_background]
 
