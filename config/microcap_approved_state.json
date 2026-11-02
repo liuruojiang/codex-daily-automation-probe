@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "strategy_sha": "75dd463e0a724af0b55e0f029f0468de1feed3c2",
+  "strategy_sha": "ae0c4534c22cd043eb74f2b87ac4e879c54390da",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/top100-native-daily-20261102/microcap-native-whole-delivery-20261030.zip",
   "state_sha256": "2c673040c8d919476f8896e5596b7a693db6443304d4ad9e3f50925383c8a140",
   "state_date": "2026-10-30"
