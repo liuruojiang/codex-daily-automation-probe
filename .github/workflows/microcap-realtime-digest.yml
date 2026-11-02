@@ -112,9 +112,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
-      MICROCAP_CSV_LINE_TERMINATOR: crlf
-      MICROCAP_REVIEWED_NON_ST_BOUNDARY: 20261030-exact-v1
-      PYTHONPATH: ${{ github.workspace }}/automation/scripts/microcap_csv_compat:${{ github.workspace }}/microcap
       TZ: Asia/Shanghai
       PLANNED_BJ: "16:00 Asia/Shanghai"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -186,7 +183,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 600286d6db41feeef980a91c0169fa85496bdb86
+          ref: 75dd463e0a724af0b55e0f029f0468de1feed3c2
           path: microcap
 
       - name: Check out isolated v2.3 close-confirmed workspace
@@ -194,7 +191,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 600286d6db41feeef980a91c0169fa85496bdb86
+          ref: 75dd463e0a724af0b55e0f029f0468de1feed3c2
           path: microcap-v23
 
       - name: Check out isolated v2.5 close-confirmed workspace
@@ -202,7 +199,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 600286d6db41feeef980a91c0169fa85496bdb86
+          ref: 75dd463e0a724af0b55e0f029f0468de1feed3c2
           path: microcap-v25
 
       - name: Record microcap strategy SHA

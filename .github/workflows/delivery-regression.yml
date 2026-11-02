@@ -144,6 +144,7 @@ jobs:
             tests/test_security_meta_fail_closed_20261015.py \
             tests/test_v25_realtime_artifact_invalidation.py --junitxml=regression-core.xml
           timeout --foreground 600s python -B -X utf8 -m pytest -q -p no:cacheprovider \
+            tests/test_deferred_fixes_20261102.py tests/test_stock_return_basis.py tests/test_stock_return_basis_store.py \
             tests/test_close_confirmation_1500_20261023.py \
             tests/test_realtime_quote_integrity_20261024.py \
             tests/test_st_notice_state_machine_20261024.py \

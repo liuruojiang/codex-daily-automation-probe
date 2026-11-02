@@ -22,11 +22,10 @@ def test_csv_serialization_in_fresh_subprocess(enabled):
     expected = "\r\n" if enabled else os.linesep
     assert result == {"sep": expected, "csv": "a" + expected + "1" + expected}
 
-def test_compatibility_is_scoped_to_delivery_job():
+def test_native_daily_job_does_not_load_legacy_profile():
     workflow = yaml.safe_load((ROOT / ".github/workflows/microcap-realtime-digest.yml").read_text(encoding="utf-8"))
-    assert workflow["jobs"]["send"]["env"]["MICROCAP_CSV_LINE_TERMINATOR"] == "crlf"
-    paths = workflow["jobs"]["send"]["env"]["PYTHONPATH"].split(":")
-    assert paths == ["${{ github.workspace }}/automation/scripts/microcap_csv_compat", "${{ github.workspace }}/microcap"]
-    for name, job in workflow["jobs"].items():
-        if name != "send":
-            assert "MICROCAP_CSV_LINE_TERMINATOR" not in job.get("env", {})
+    for job in workflow["jobs"].values():
+        env = job.get("env", {})
+        assert "MICROCAP_CSV_LINE_TERMINATOR" not in env
+        assert "MICROCAP_REVIEWED_NON_ST_BOUNDARY" not in env
+        assert "microcap_csv_compat" not in env.get("PYTHONPATH", "")
