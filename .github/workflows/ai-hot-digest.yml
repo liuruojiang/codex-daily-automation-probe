@@ -5,6 +5,15 @@ on:
     # 08:15 Asia/Shanghai == 00:15 UTC.
     - cron: "15 0 * * *"
   workflow_dispatch:
+    inputs:
+      report_date:
+        description: '日报日期（YYYY-MM-DD）；留空读取今日最新日报'
+        required: false
+        type: string
+
+concurrency:
+  group: ai-hot-digest
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -21,7 +30,12 @@ jobs:
         with:
           python-version: "3.11"
       - name: Build AI HOT digest
-        run: python scripts/daily_reports.py ai-hot --out-dir artifacts
+        env:
+          REPORT_DATE: ${{ inputs.report_date }}
+        run: |
+          args=()
+          if [ -n "$REPORT_DATE" ]; then args+=(--report-date "$REPORT_DATE"); fi
+          python scripts/daily_reports.py ai-hot --out-dir artifacts "${args[@]}"
       - name: Send Gmail
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
@@ -31,7 +45,7 @@ jobs:
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
-        run: python scripts/send_report.py artifacts/metadata.json
+        run: python scripts/send_report.py artifacts/metadata.json --receipt artifacts/delivery_receipt.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:

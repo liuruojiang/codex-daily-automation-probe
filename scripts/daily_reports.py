@@ -5,6 +5,7 @@ import concurrent.futures
 import csv
 import email.utils
 import html
+import gzip
 import hashlib
 import json
 import math
@@ -259,7 +260,8 @@ def fetch_bytes(url: str, timeout: int = 30, headers: dict[str, str] | None = No
         req_headers.update(headers)
     req = urllib.request.Request(url, headers=req_headers)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return resp.read()
+        raw = resp.read()
+        return gzip.decompress(raw) if resp.headers.get("Content-Encoding", "").lower() == "gzip" else raw
 
 
 def clean_text(text: str | None, max_len: int = 900) -> str:
@@ -6432,11 +6434,12 @@ def fetch_json_with_retries(
     attempts: int = 4,
     timeout: int = 30,
     delays: tuple[float, ...] = (5.0, 15.0, 30.0),
+    headers: dict[str, str] | None = None,
 ) -> object:
     last_error: BaseException | None = None
     for attempt in range(1, attempts + 1):
         try:
-            return json.loads(fetch_bytes(url, timeout=timeout).decode("utf-8"))
+            return json.loads(fetch_bytes(url, timeout=timeout, headers=headers).decode("utf-8"))
         except (TimeoutError, OSError, urllib.error.URLError) as exc:
             last_error = exc
             if attempt == attempts:
@@ -6447,11 +6450,24 @@ def fetch_json_with_retries(
     raise RuntimeError(f"Failed to fetch JSON after {attempts} attempts: {url}") from last_error
 
 
-def build_ai(out_dir: Path) -> None:
+def build_ai(out_dir: Path, requested_date: str | None = None) -> None:
     started = now_bj()
-    base = "https://aihot.virxact.com"
-    daily = fetch_json_with_retries(f"{base}/api/public/daily")
-    date_s = str(daily.get("date") or report_date())
+    expected_date = requested_date or started.date().isoformat()
+    if date.fromisoformat(expected_date).isoformat() != expected_date:
+        raise ValueError("AI HOT report date must use YYYY-MM-DD")
+    endpoint = requested_date or "latest"
+    payload = fetch_json_with_retries(
+        f"https://aihot.news/api/v1/dailies/{endpoint}",
+        headers={"User-Agent": "aihot-api/2.0.0 codex-daily-digest", "Accept-Encoding": "gzip"},
+    )
+    if not isinstance(payload, dict) or payload.get("schemaVersion") != 1 or not isinstance(payload.get("report"), dict):
+        raise ValueError("AI HOT response requires schemaVersion=1 and a report object")
+    daily = payload["report"]
+    date_s = daily.get("date")
+    if date_s != expected_date:
+        raise ValueError(f"AI HOT report date mismatch: expected {expected_date}, received {date_s}")
+    if not daily.get("sections"):
+        raise ValueError("AI HOT report contains no sections")
     sections = daily.get("sections") or []
     lead = daily.get("lead")
     if isinstance(lead, dict):
@@ -6483,8 +6499,8 @@ def build_ai(out_dir: Path) -> None:
             global_index += 1
             title = clean_text(it.get("title") or "")
             summary = clean_text(it.get("summary") or "")
-            url = it.get("sourceUrl") or it.get("url") or ""
-            source = it.get("sourceName") or it.get("source") or ""
+            url = (it.get("links") or {}).get("original") or ""
+            source = (it.get("source") or {}).get("name") or ""
             summary = summary or "AI HOT 未提供摘要。"
             source = source or "未标注"
             plain_lines += [
@@ -6522,8 +6538,8 @@ def build_ai(out_dir: Path) -> None:
         flash_rows: list[str] = []
         for flash in flashes:
             title = clean_text(flash.get("title") or "")
-            source = clean_text(flash.get("sourceName") or flash.get("source") or "未标注")
-            url = flash.get("sourceUrl") or flash.get("url") or ""
+            source = clean_text((flash.get("source") or {}).get("name") or "未标注")
+            url = (flash.get("links") or {}).get("original") or ""
             plain_lines += [f"- {title} — {source}", f"  {url or '原文链接未提供'}"]
             link = (
                 f'<a href="{html.escape(str(url), quote=True)}" style="color:#4f46e5;text-decoration:none;">{html.escape(title)}</a>'
@@ -6580,7 +6596,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("report", choices=["life", "fat-fire", "travel", "etf", "ai-hot"])
     parser.add_argument("--out-dir", default="artifacts")
+    parser.add_argument("--report-date", help="AI HOT date to backfill (YYYY-MM-DD)")
     args = parser.parse_args()
+    if args.report_date and args.report != "ai-hot":
+        parser.error("--report-date is only supported for ai-hot")
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     if args.report == "life":
@@ -6592,7 +6611,7 @@ def main() -> int:
     elif args.report == "etf":
         build_etf(out_dir)
     elif args.report == "ai-hot":
-        build_ai(out_dir)
+        build_ai(out_dir, requested_date=args.report_date)
     return 0
 
 
