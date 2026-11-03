@@ -143,7 +143,9 @@ class WorkflowDeliveryGateTests(unittest.TestCase):
         self.assertIn("type: boolean\n        default: true", workflow)
         self.assertLess(workflow.index("name: Build US ETF"), workflow.index("name: Validate ETF delivery artifacts"))
         self.assertLess(workflow.index("name: Validate ETF delivery artifacts"), workflow.index("name: Send Gmail"))
-        guard = "if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}"
+        self.assertIn("inputs.send_email == false && 'true' || 'false'", workflow)
+        self.assertIn('--validation-only', workflow)
+        guard = "if: steps.delivery_gate.outputs.should_send == 'true'"
         for step in ("Send Gmail", "Persist digest history"):
             block = workflow.split(f"- name: {step}", 1)[1].split("\n      - ", 1)[0]
             self.assertIn(guard, block)

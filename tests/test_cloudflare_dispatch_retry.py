@@ -106,5 +106,18 @@ def test_unknown_cron_never_sends():
 def test_actual_config_keeps_both_weekday_beijing_clocks():
     config = json.loads((WORKER.parent / "wrangler.jsonc").read_text(encoding="utf-8"))
     assert config["name"] == "china-post-close-digests"
-    assert set(config["triggers"]["crons"]) == {"0 8 * * MON-FRI", "0 12 * * MON-FRI"}
+    assert set(config["triggers"]["crons"]) == {"0 8 * * MON-FRI", "0 12 * * MON-FRI", "30 21 * * *", "0 1 * * *"}
     assert config["workers_dev"] is False and config["preview_urls"] is False
+
+
+@pytest.mark.parametrize("cron,workflow", [
+    ("30 21 * * *", "etf-allocation-digest.yml"),
+    ("0 1 * * *", "ai-hot-digest.yml"),
+])
+def test_daily_digests_receive_only_their_supported_inputs(cron, workflow):
+    result = execute(cron=cron, succeedOn=1)
+    assert not result["error"]
+    assert len(result["calls"]) == 1
+    call = result["calls"][0]
+    assert call["url"].endswith(f"/{workflow}/dispatches")
+    assert call["body"] == {"ref": "main", "inputs": {"send_email": True}}

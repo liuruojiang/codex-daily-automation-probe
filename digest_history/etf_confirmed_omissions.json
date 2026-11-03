@@ -5422,6 +5422,84 @@
       "zh_summary": "发布者RSS摘要介绍五类经济护城河中的有效规模，讨论市场规模限制进入者；仅摘要，原页访问受阻。",
       "evidence_level": "publisher_rss_summary_only; original_page_blocked",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41568344946",
+      "origin_report_date": "2026-11-03",
+      "source": "Seeking Alpha ETFs",
+      "title": "Model Portfolio For Income, November 2026",
+      "zh_title": "2026年11月收益型示范组合",
+      "url": "https://seekingalpha.com/article/4961245-model-portfolio-for-income-november-2026?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-03T01:22:53+00:00",
+      "summary": "作者公开摘要列20只收入型证券，覆盖BDC、地产、债券、基建与期权，并讨论折价与现金分配。",
+      "zh_summary": "作者公开摘要列20只收入型证券，覆盖BDC、地产、债券、基建与期权，并讨论折价与现金分配。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41568344946",
+      "origin_report_date": "2026-11-03",
+      "source": "Seeking Alpha ETFs",
+      "title": "Strategies For The End Of The QQQ Bull Market",
+      "zh_title": "为QQQ牛市结束准备的策略",
+      "url": "https://seekingalpha.com/article/4961109-strategies-for-the-end-of-the-qqq-bull-market?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-02T21:11:12+00:00",
+      "summary": "作者摘要讨论260日均线加4%偏移的风险控制，承认强牛市落后持有；公开规则不等于验证过的信号。",
+      "zh_summary": "作者摘要讨论260日均线加4%偏移的风险控制，承认强牛市落后持有；公开规则不等于验证过的信号。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41568344946",
+      "origin_report_date": "2026-11-03",
+      "source": "Seeking Alpha ETFs",
+      "title": "JEPQ: Not The Highest Return, But The Most Predictable One From Here (Rating Upgrade)",
+      "zh_title": "JEPQ：作者在震荡市场条件下上调评级",
+      "url": "https://seekingalpha.com/article/4960939-jepq-not-the-highest-return-but-the-most-predictable-one-from-here?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-02T13:08:44+00:00",
+      "summary": "公开摘要讨论通过ELN间接卖出部分虚值看涨期权，强调震荡市场收入取舍及强反弹、急跌时局限。",
+      "zh_summary": "公开摘要讨论通过ELN间接卖出部分虚值看涨期权，强调震荡市场收入取舍及强反弹、急跌时局限。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41568344946",
+      "origin_report_date": "2026-11-03",
+      "source": "HKEX Market Communications",
+      "title": "香港交易所旗下衍生產品結算所現接受中國國債、政策性銀行債券及財政部債券作抵押品",
+      "zh_title": "港交所衍生品结算接受人民币债券抵押品",
+      "url": "https://www.hkex.com.hk/News/Market-Communications/2026/2611022news?sc_lang=zh-HK",
+      "published": "2026-11-02T09:17:00+00:00",
+      "summary": "官方公告：期货及期权结算开始接受合资格中国国债、政策性银行债及财政部境外债作非现金抵押品。",
+      "zh_summary": "官方公告：期货及期权结算开始接受合资格中国国债、政策性银行债及财政部境外债作非现金抵押品。",
+      "evidence_level": "official_publisher_fulltext",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41568344946",
+      "origin_report_date": "2026-11-03",
+      "source": "HKEX Market Communications",
+      "title": "香港交易所將延長衍生產品收市後交易時段",
+      "zh_title": "港交所拟延长衍生品盘后交易时段",
+      "url": "https://www.hkex.com.hk/News/Market-Communications/2026/261102news?sc_lang=zh-HK",
+      "published": "2026-11-02T08:55:00+00:00",
+      "summary": "官方公告计划2027年3月将盘后收市延至04:15，待监管批准及市场准备；后续可能延至05:15。",
+      "zh_summary": "官方公告计划2027年3月将盘后收市延至04:15，待监管批准及市场准备；后续可能延至05:15。",
+      "evidence_level": "official_publisher_fulltext",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41568344946",
+      "origin_report_date": "2026-11-03",
+      "source": "Capital Allocators",
+      "title": "Dynamic Allocation and Concentrated Conviction",
+      "zh_title": "动态资产配置与集中信念",
+      "url": "https://www.capitalallocators.com/podcast/dynamic-allocation-and-concentrated-conviction/",
+      "published": "2026-11-02T10:00:51+00:00",
+      "summary": "Zack McGuire讨论机构资本基础如何塑造投资、主题式组合、通才团队及投资关系；有节目说明，文字稿尚未提供。",
+      "zh_summary": "Zack McGuire讨论机构资本基础如何塑造投资、主题式组合、通才团队及投资关系；有节目说明，文字稿尚未提供。",
+      "evidence_level": "publisher_episode_description_only; transcript_coming_soon",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
