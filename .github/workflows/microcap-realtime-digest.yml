@@ -184,7 +184,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 193d9309fcfa0ac365d3016b5c804ff07190ecd7
+          ref: 94a0116dae3ef2d9be129e266405bb368fe02f2a
           path: microcap
 
       - name: Record microcap strategy SHA
@@ -577,8 +577,17 @@ jobs:
           path: microcap/.microcap_index_cache
           key: microcap-full-rebalance-v1-${{ runner.os }}-${{ github.run_id }}
 
+      - name: Capture shared inputs before three-version generation
+        id: shared_inputs_before
+        if: steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success' && steps.publication_mode.outputs.mode == 'close_confirmed'
+        shell: bash
+        run: |
+          python automation/scripts/check_microcap_shared_inputs.py capture \
+            --root microcap --snapshot "${RUNNER_TEMP}/microcap-shared-inputs-before.json" \
+            --expected-date "${{ steps.market_target.outputs.date }}"
+
       - name: Run v2.0 selected signal
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.shared_inputs_before.outcome == 'success')
         id: signals_v20
         working-directory: microcap
         shell: bash
@@ -601,7 +610,7 @@ jobs:
           exit 0
 
       - name: Run v2.3 selected signal
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.shared_inputs_before.outcome == 'success')
         id: signals_v23
         working-directory: microcap
         shell: bash
@@ -624,7 +633,7 @@ jobs:
           exit 0
 
       - name: Run v2.5 selected signal
-        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success'
+        if: always() && steps.delivery_gate.outputs.should_send == 'true' && steps.state_bundle.outcome == 'success' && (steps.publication_mode.outputs.mode != 'close_confirmed' || steps.shared_inputs_before.outcome == 'success')
         id: signals_v25
         working-directory: microcap
         shell: bash
@@ -646,9 +655,26 @@ jobs:
           echo "SIGNAL_V2_5_EXIT_CODE=${status}" >> "${GITHUB_ENV}"
           exit 0
 
+      - name: Check shared inputs after three-version generation
+        id: shared_inputs_after
+        if: always() && steps.publication_mode.outputs.mode == 'close_confirmed' && steps.shared_inputs_before.outcome == 'success' && steps.signals_v20.outputs.validated == 'true' && steps.signals_v23.outputs.validated == 'true' && steps.signals_v25.outputs.validated == 'true'
+        shell: bash
+        run: |
+          set +e
+          python automation/scripts/check_microcap_shared_inputs.py check \
+            --root microcap --snapshot "${RUNNER_TEMP}/microcap-shared-inputs-before.json" \
+            --expected-date "${{ steps.market_target.outputs.date }}"
+          status=$?
+          if [[ "${status}" -ne 0 ]]; then
+            for version in 0 3 5; do
+              echo "SIGNAL_V2_${version}_EXIT_CODE=shared_inputs_changed" >> "${GITHUB_ENV}"
+            done
+          fi
+          exit "${status}"
+
       - name: Verify and pack all three final deliveries
         id: whole_delivery
-        if: always() && steps.publication_mode.outputs.mode == 'close_confirmed' && steps.signals_v20.outputs.validated == 'true' && steps.signals_v23.outputs.validated == 'true' && steps.signals_v25.outputs.validated == 'true'
+        if: always() && steps.publication_mode.outputs.mode == 'close_confirmed' && steps.shared_inputs_after.outcome == 'success' && steps.signals_v20.outputs.validated == 'true' && steps.signals_v23.outputs.validated == 'true' && steps.signals_v25.outputs.validated == 'true'
         shell: bash
         run: |
           set +e

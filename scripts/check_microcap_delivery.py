@@ -9,7 +9,7 @@ import re
 import urllib.parse
 import urllib.request
 import zipfile
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -159,9 +159,34 @@ def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dic
     if (signal_day > day or (not test_id and signal_day != day) or accepted_at.tzinfo is None
             or signal_day.isoformat() != metadata.get("signal_date")
             or beijing_delivery_date(accepted_at) < signal_day
-            or accepted_at > now_utc()
-            or (not test_id and beijing_delivery_date(accepted_at) != day)):
+            or accepted_at > now_utc()):
         raise RuntimeError("BLOCKED: SMTP receipt dates do not match delivery")
+    if not test_id and beijing_delivery_date(accepted_at) != day:
+        # A long close job may cross midnight. Require GitHub's own bounded
+        # run/job/send-step interval, not dates asserted by mail metadata.
+        try:
+            def timestamp(value):
+                stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                if stamp.tzinfo is None:
+                    raise ValueError("naive timestamp")
+                return stamp
+            job = send_jobs[0]
+            send_steps = [step for step in job.get("steps", []) if step.get("name") == "Send Gmail"]
+            if len(send_steps) != 1:
+                raise ValueError("ambiguous send step")
+            run_start = timestamp(run["run_started_at"])
+            job_start = timestamp(job["started_at"])
+            job_end = timestamp(job["completed_at"])
+            send_start = timestamp(send_steps[0]["started_at"])
+            send_end = timestamp(send_steps[0]["completed_at"])
+            if (publication_mode != "close_confirmed"
+                    or beijing_delivery_date(run_start) != day
+                    or beijing_delivery_date(job_start) != day
+                    or not run_start <= job_start <= send_start <= accepted_at <= send_end <= job_end <= now_utc()
+                    or job_end - job_start > timedelta(minutes=180)):
+                raise ValueError("outside original close job")
+        except (KeyError, TypeError, ValueError, AttributeError) as exc:
+            raise RuntimeError("BLOCKED: cross-midnight receipt lacks bounded GitHub send evidence") from exc
     def valid_address(value: object) -> bool:
         return (isinstance(value, str) and value.count("@") == 1
                 and all(value.split("@")) and not any(char.isspace() for char in value)
@@ -189,6 +214,31 @@ def write_outputs(values: dict[str, str]) -> None:
         print(rendered, end="")
 
 
+def pending_previous_close(repository: str, token: str, api_url: str, now: datetime) -> date | None:
+    """Before today's close, reconcile only yesterday's unfinished send.
+
+    Merely having an old intent never authorizes another SMTP call. Full
+    receipt/run validation remains in the ordinary gate after selecting it.
+    """
+    local = now.astimezone(BJ)
+    if local.hour >= 15:
+        return None
+    previous = local.date() - timedelta(days=1)
+    marker = delivery_marker_name(previous, "close_confirmed")
+    if marker_exists(fetch_artifacts(repository, token, marker, api_url), marker):
+        return None
+    receipt = marker + "-smtp-accepted"
+    if marker_exists(fetch_artifacts(repository, token, receipt, api_url), receipt):
+        return previous
+    intent_names = [marker + "-send-intent"]
+    if previous == date(2026, 11, 2):
+        intent_names.append("microcap-close-recovery-20261102-send-intent")
+    for name in intent_names:
+        if marker_exists(fetch_artifacts(repository, token, name, api_url), name):
+            raise RuntimeError("BLOCKED: previous close SMTP intent has no completion marker; reconcile Gmail before explicit correction")
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--correction", action="store_true")
@@ -203,7 +253,13 @@ def main() -> int:
     if args.delivery_test_id and (args.correction or args.validation_only):
         parser.error("delivery test cannot be combined with correction or validation-only")
 
-    delivery_date = beijing_delivery_date(now_utc())
+    now = now_utc()
+    delivery_date = beijing_delivery_date(now)
+    if (not args.correction and not args.validation_only and not args.delivery_test_id
+            and args.publication_mode == "close_confirmed"):
+        if not args.repository or not args.token:
+            raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required for scheduled delivery checks")
+        delivery_date = pending_previous_close(args.repository, args.token, args.api_url, now) or delivery_date
     marker_name = (test_delivery_marker_name(args.delivery_test_id, args.publication_mode)
                    if args.delivery_test_id else delivery_marker_name(delivery_date, args.publication_mode))
     marker_already_exists = False
@@ -241,6 +297,13 @@ def main() -> int:
             pending = fetch_artifacts(args.repository, args.token, intent_name, args.api_url)
             if marker_exists(pending, intent_name):
                 raise RuntimeError("BLOCKED: prior SMTP send intent has no completion marker; delivery is uncertain, reconcile Gmail before explicit correction")
+            if not args.delivery_test_id and args.publication_mode == "close_confirmed" and delivery_date == date(2026, 11, 2):
+                # The completed one-off recovery used a different intent name.
+                # Keep unknown old sends fail-closed even after retiring it.
+                recovery_intent = "microcap-close-recovery-20261102-send-intent"
+                pending = fetch_artifacts(args.repository, args.token, recovery_intent, args.api_url)
+                if marker_exists(pending, recovery_intent):
+                    raise RuntimeError("BLOCKED: recovery SMTP intent has no completion marker; reconcile Gmail before explicit correction")
 
     send = should_send(
         correction=args.correction,

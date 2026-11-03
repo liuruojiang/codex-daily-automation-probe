@@ -150,6 +150,7 @@ jobs:
             tests/test_realtime_quote_integrity_20261024.py \
             tests/test_st_notice_state_machine_20261024.py \
             tests/test_st_notice_release_audit_20261024.py \
+            tests/test_exact_boundary_batch_20261103.py \
             tests/test_realtime_commit_guard_20261024.py \
             tests/test_whole_delivery_member_cache_gate_20261024.py --junitxml=regression-release.xml
           python -B -X utf8 - <<'PY'

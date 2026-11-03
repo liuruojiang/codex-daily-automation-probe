@@ -1,14 +1,16 @@
-name: Recover verified November 2 close digest
+name: Retired November 2 close recovery (already delivered)
 on:
   workflow_dispatch:
 permissions:
   contents: read
   actions: write
 concurrency:
-  group: microcap-close-recovery-20261102
+  group: microcap-realtime-digest
   cancel-in-progress: false
 jobs:
   recover:
+    # Historical evidence only. November 2 is delivered; dispatch cannot resend.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
