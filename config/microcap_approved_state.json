@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "strategy_sha": "94a0116dae3ef2d9be129e266405bb368fe02f2a",
-  "state_url": "https://github.com/liuruojiang/microcap/releases/download/top100-audit-fixes-20261103/microcap-audit-fixed-whole-delivery-20261102.zip",
-  "state_sha256": "99007407df303991522d0f499121f99ddbf8f79cbae37b1d712e753b0aebfc93",
-  "state_date": "2026-11-02"
+  "strategy_sha": "d7615a3e3383e02f2b1e0eedfadfcb499ae7317a",
+  "state_url": "https://github.com/liuruojiang/microcap/releases/download/top100-st-notice-20261103/microcap-st-notice-whole-delivery-20261103.zip",
+  "state_sha256": "c3f98e93770b98b3f1cca7d921f10d69f729e8522cc7777a3769271404913911",
+  "state_date": "2026-11-03"
 }
