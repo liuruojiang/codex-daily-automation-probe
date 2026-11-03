@@ -26,12 +26,13 @@ DAY = date(2026, 10, 7)
 
 
 def actions_eval(expression, *, holiday, manual=True, external=False,
-                 validation=False, correction=False, test_id="", calendar="success"):
+                 validation=False, correction=False, test_id="", calendar="success", recovery="off"):
     namespace = {
         "always": lambda: True, "true": True, "false": False,
         "github": SimpleNamespace(event_name="workflow_dispatch" if manual else "schedule"),
         "inputs": SimpleNamespace(external_schedule=external, validation_only=validation,
-                                  correction=correction, delivery_test_id=test_id),
+                                  correction=correction, delivery_test_id=test_id,
+                                  recovery_check=recovery),
         "needs": SimpleNamespace(
             regression=SimpleNamespace(result="success"),
             **{"check_trading_day": SimpleNamespace(result=calendar, outputs=SimpleNamespace(
@@ -60,6 +61,17 @@ def test_actual_workflow_only_explicit_maintenance_bypasses_holiday(options, exp
     assert actions_eval(workflow["jobs"]["send"]["if"], **options) is expected
     assert workflow["jobs"]["regression"]["needs"] == "check-trading-day"
     assert actions_eval(workflow["jobs"]["regression"]["if"], **options) is expected
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "require_hit"])
+@pytest.mark.parametrize("holiday", [False, True])
+def test_recovery_maintenance_runs_regression_and_restore_but_never_mail_job(mode, holiday):
+    jobs = yaml.safe_load((ROOT / ".github/workflows/microcap-realtime-digest.yml").read_text(encoding="utf-8"))["jobs"]
+    options = dict(holiday=holiday, recovery=mode)
+    assert actions_eval(jobs["send"]["if"], **options) is False
+    assert actions_eval(jobs["regression"]["if"], **options) is True
+    assert actions_eval(jobs["recovery-check"]["if"], **options) is True
+    assert actions_eval(jobs["recovery-check"]["if"], validation=True, **options) is False
 
 
 @pytest.mark.parametrize("value", ["", "short", "x\nBCC-secret", "x/../../a", "验收-20261007", "A" * 12, "a" * 65])
