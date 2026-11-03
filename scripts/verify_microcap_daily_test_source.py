@@ -120,18 +120,18 @@ def materialize(runtime_root,config_path,test_root,*,fetch_missing=False):
     require(not target.exists() and not target.is_relative_to(root) and not root.is_relative_to(target),'fresh disjoint test tree required')
     target.parent.mkdir(parents=True,exist_ok=True)
     source=proof['test_source_sha'];full_inventory=tree(root,source)
-    # Same complete executable/test dependency scope as the formal local preparation.
+    # Complete executable/test code plus the original CI's versioned output fixtures.
+    # Local preparation separately installs the authenticated whole-state fixture.
     # Historical research directories contain tracked pytest symlinks, not test inputs.
-    authority='outputs/microcap_top100_mom16_biweekly_live_v2_0_base_frozen_tail_authority.json'
     selected=[name for name in full_inventory if '/' not in name or name.split('/')[0] in
-              {'data','docs','scripts','tests','poe_bots','.github','config'} or name==authority]
+              {'data','docs','scripts','tests','poe_bots','.github','config','outputs','.microcap_index_cache'}]
     inventory={name:full_inventory[name] for name in selected}
     require(all(entry['mode']!='120000' for entry in inventory.values()),'linked executable/test archive entry')
     bindings={};case_names=set()
     git(root,'worktree','add','--detach','--no-checkout',str(target),source)
     with tempfile.TemporaryDirectory(prefix='microcap-test-archive-',dir=target.parent) as temporary:
         archive_path=Path(temporary)/'source.tar'
-        selections=sorted({name.split('/')[0] for name in selected if not name.startswith('outputs/')} | ({authority} if authority in selected else set()))
+        selections=sorted({name.split('/')[0] for name in selected})
         git(root,'-c','core.autocrlf=false','-c','core.eol=lf','archive',
             '--format=tar','--output='+str(archive_path),source,'--',*selections)
         with tarfile.open(archive_path,'r:') as archive:
@@ -154,7 +154,7 @@ def materialize(runtime_root,config_path,test_root,*,fetch_missing=False):
     require(after['runtime_sha']==proof['runtime_sha'] and after['test_source_sha']==source
             and after['config_sha256']==proof['config_sha256'] and after['actual_repo_head']==proof['actual_repo_head'],'source roles changed during materialization')
     return {**proof,'materialized_test_root':str(target),'materialized_complete_test_source':True,
-            'materialized_scope':'all_root_files_and_data_docs_scripts_tests_poe_bots_github_config_plus_formal_authority',
+            'materialized_scope':'all_root_files_and_data_docs_scripts_tests_poe_bots_github_config_versioned_outputs_and_cache',
             'materialized_source_files':bindings,'materialized_source_files_sha256':canonical(bindings),
             'runtime_head_unchanged':True,'package_or_runtime_state_modified':False}
 

@@ -26,7 +26,10 @@ def roles(tmp_path):
     git(repo,'init');git(repo,'config','user.name','fixture');git(repo,'config','user.email','fixture@example.invalid')
     git(repo,'config','core.autocrlf','false')
     git(repo,'remote','add','origin','https://github.com/liuruojiang/microcap.git')
-    for name,body in {'strategy.py':b'original runtime\n','tests/helper.py':b'old helper\n','scripts/dep.py':b'dep\n'}.items():
+    for name,body in {'strategy.py':b'original runtime\n','tests/helper.py':b'old helper\n','scripts/dep.py':b'dep\n',
+                      'outputs/base_meta.json':b'{"authentic_git_fixture":true}\n',
+                      'outputs/nested/original.csv':b'date,value\n2026-01-01,1\n',
+                      '.microcap_index_cache/original.json':b'{"versioned_cache_fixture":true}\n'}.items():
         path=repo/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(body)
     git(repo,'add','.');git(repo,'commit','-m','runtime');runtime=git(repo,'rev-parse','HEAD')
     (repo/'tests/helper.py').write_bytes(b'new helper\n')
@@ -120,6 +123,16 @@ def test_test_archive_is_independent_of_windows_repository_eol_configuration(rol
     proof=source.materialize(repo,path,tmp_path/'exact-test-source')
     assert proof['materialized_complete_test_source'] is True
     assert (tmp_path/'exact-test-source/tests/helper.py').read_bytes()==b'new helper\n'
+
+
+def test_all_versioned_git_output_fixtures_survive_complete_test_materialization(roles,tmp_path):
+    repo,path,_,runtime,test=roles
+    proof=source.materialize(repo,path,tmp_path/'with-original-fixtures')
+    for name in ('outputs/base_meta.json','outputs/nested/original.csv','.microcap_index_cache/original.json'):
+        expected=subprocess.check_output(['git','-C',str(repo),'show',runtime+':'+name])
+        assert expected==subprocess.check_output(['git','-C',str(repo),'show',test+':'+name])
+        assert (tmp_path/'with-original-fixtures'/name).read_bytes()==expected
+        assert proof['materialized_source_files'][name]==hashlib.sha256(expected).hexdigest()
 
 
 def test_optimized_cli_rejects_without_success_receipt(roles,tmp_path):

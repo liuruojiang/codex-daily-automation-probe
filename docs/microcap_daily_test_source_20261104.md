@@ -17,8 +17,10 @@ The reusable delivery regression used by both pull-request CI and the formal
 Microcap workflow keeps the production checkout at the runtime pin. It creates
 a fresh test worktree at the test pin using a raw Git archive, installing every
 root file and all `data`, `docs`, `scripts`, `tests`, `poe_bots`, `.github`, and
-`config` dependencies plus the formal frozen-tail authority. This is the local
-preparation's existing executable/test scope; historical research pytest
+`config` dependencies, plus the complete versioned Git `outputs` fixture tree
+retained by the original CI checkout (18 files, 12,020,191 bytes at these pins),
+and the versioned `.microcap_index_cache` fixture tree (6 files, 171,654 bytes).
+Local preparation instead authenticates its complete C3 output fixture. Historical research pytest
 symlinks are compared as immutable Git objects, not executed or materialized.
 The archive's raw bytes are verified against each Git object, and a complete
 source inventory is rechecked after execution. Authenticated fixture files are
