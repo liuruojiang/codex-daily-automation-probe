@@ -2,6 +2,14 @@ const REPOSITORY = "liuruojiang/codex-daily-automation-probe";
 const WORKFLOWS_BY_CRON = {
   "0 8 * * MON-FRI": ["microcap-realtime-digest.yml"],
   "0 12 * * MON-FRI": ["ic-im-v1-4-daily-digest.yml"],
+  "30 21 * * *": ["etf-allocation-digest.yml"],
+  "0 1 * * *": ["ai-hot-digest.yml"],
+};
+const INPUTS_BY_WORKFLOW = {
+  "microcap-realtime-digest.yml": { correction: false, external_schedule: true, publication_mode: "close_confirmed" },
+  "ic-im-v1-4-daily-digest.yml": { correction: false, external_schedule: true, publication_mode: "close_confirmed" },
+  "etf-allocation-digest.yml": { send_email: true },
+  "ai-hot-digest.yml": { send_email: true },
 };
 const MAX_ATTEMPTS = 3;
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504]);
@@ -27,7 +35,7 @@ async function dispatchWorkflow(env, workflow) {
         },
         body: JSON.stringify({
           ref: "main",
-          inputs: { correction: false, external_schedule: true, publication_mode: "close_confirmed" },
+          inputs: INPUTS_BY_WORKFLOW[workflow],
         }),
       });
     } catch (error) {
