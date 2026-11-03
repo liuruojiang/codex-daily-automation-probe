@@ -1,7 +1,33 @@
 {
   "schema_version": 1,
-  "strategy_sha": "94a0116dae3ef2d9be129e266405bb368fe02f2a",
-  "state_url": "https://github.com/liuruojiang/microcap/releases/download/top100-audit-fixes-20261103/microcap-audit-fixed-whole-delivery-20261102.zip",
-  "state_sha256": "99007407df303991522d0f499121f99ddbf8f79cbae37b1d712e753b0aebfc93",
-  "state_date": "2026-11-02"
+  "strategy_sha": "d7615a3e3383e02f2b1e0eedfadfcb499ae7317a",
+  "state_url": "https://github.com/liuruojiang/microcap/releases/download/top100-st-notice-20261103/microcap-st-notice-whole-delivery-20261103.zip",
+  "state_sha256": "c3f98e93770b98b3f1cca7d921f10d69f729e8522cc7777a3769271404913911",
+  "state_date": "2026-11-03",
+  "daily_test_source": {
+    "runtime_sha": "d7615a3e3383e02f2b1e0eedfadfcb499ae7317a",
+    "source_sha": "45c7e72893fcc95b23339f7e82c8feda47757c2c",
+    "allowed_changes": [
+      {
+        "path": "docs/frozen_baseline_original_evidence_hash_20261104.md",
+        "old_git_blob_sha256": null,
+        "new_git_blob_sha256": "1d29fc6022caee212dcca0acbe8a8becb65472f9931ca9a875a7b214a19d16ea"
+      },
+      {
+        "path": "tests/frozen_formal_baseline.py",
+        "old_git_blob_sha256": "450296ae265d3548a66a81597e1d92076eb65f2dbbf1a4f013c0b665cb681190",
+        "new_git_blob_sha256": "b4cb87ca035831481ce84cc19437f9e9bffc616db2527faad22c3b70a081a204"
+      },
+      {
+        "path": "tests/test_adversarial_microcap_delivery.py",
+        "old_git_blob_sha256": "b839554edace878456d45d568515d2f42154369c8adcf52fc549fd0f4e071ddc",
+        "new_git_blob_sha256": "22c4a4988ae30b59cea24f045b81e5b3aaa1f6a0241f1c8ffed5954b3bc4ea7e"
+      },
+      {
+        "path": "tests/test_frozen_formal_baseline_hash_contract_20261104.py",
+        "old_git_blob_sha256": null,
+        "new_git_blob_sha256": "9fb5184bc8b35071929ecf2f2a53d9e89b38f6bcb78d3485ab30413261b4b305"
+      }
+    ]
+  }
 }

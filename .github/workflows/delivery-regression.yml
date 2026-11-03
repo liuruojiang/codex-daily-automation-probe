@@ -89,9 +89,15 @@ jobs:
       - name: Install ICIM regression dependencies
         if: matrix.family == 'icim'
         run: python -m pip install -r strategy/requirements-poe-v1.4-server.txt 'pytest>=8,<9' hypothesis
+      - name: Verify and materialize the separate complete Microcap test source
+        if: matrix.family == 'microcap'
+        run: |
+          python -B -X utf8 automation/scripts/verify_microcap_daily_test_source.py materialize \
+            --runtime-root strategy --config automation/config/microcap_approved_state.json \
+            --test-root strategy-tests --fetch-missing --out strategy/microcap-test-source.json
       - name: Test Microcap state and cloud transport invariants
         if: matrix.family == 'microcap'
-        working-directory: strategy
+        working-directory: strategy-tests
         env:
           MICROCAP_DIGEST_SOURCE: ${{ github.workspace }}/automation/scripts/build_microcap_realtime_digest.py
           PYTHONDONTWRITEBYTECODE: '1'
@@ -144,6 +150,7 @@ jobs:
             tests/test_security_meta_fail_closed_20261015.py \
             tests/test_v25_realtime_artifact_invalidation.py --junitxml=regression-core.xml
           timeout --foreground 600s python -B -X utf8 -m pytest -q -p no:cacheprovider \
+            tests/test_share_change_source.py tests/test_share_source_transport.py tests/test_share_unchanged_tail_20261103.py \
             tests/test_deferred_fixes_20261102.py tests/test_stock_return_basis.py tests/test_stock_return_basis_store.py \
             tests/test_stock_daily_alternative.py tests/test_same_day_notice_resume.py tests/test_dated_return_replay.py tests/test_scoped_cached_replay.py tests/test_st_replay_notice_horizon.py tests/test_frozen_tail_chain_20260917.py \
             tests/test_close_confirmation_1500_20261023.py \
@@ -201,9 +208,18 @@ jobs:
           extra = ET.parse('supplemental-regression.xml').getroot()
           assert not list(extra.iter('skipped')), 'ICIM supplemental regression must not skip'
           PY
+      - name: Verify Microcap test source bytes after execution
+        if: always() && matrix.family == 'microcap'
+        run: |
+          python -B -X utf8 automation/scripts/verify_microcap_daily_test_source.py check-materialized \
+            --receipt strategy/microcap-test-source.json --out strategy/microcap-test-source-after.json
       - name: Preserve tests and actual tested strategy SHA
         if: always()
-        run: git -C strategy rev-parse HEAD > strategy/tested-sha.txt
+        run: |
+          git -C strategy rev-parse HEAD > strategy/tested-sha.txt
+          if [[ "${{ matrix.family }}" == "microcap" ]]; then
+            git -C strategy-tests rev-parse HEAD > strategy/tested-test-source-sha.txt
+          fi
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -216,6 +232,12 @@ jobs:
             strategy/daily-regression/collection.json
             strategy/daily-regression/source_before.json
             strategy/daily-regression/source_after.json
+            strategy/microcap-test-source.json
+            strategy/microcap-test-source-after.json
+            strategy/tested-test-source-sha.txt
+            strategy-tests/regression.xml
+            strategy-tests/regression-core.xml
+            strategy-tests/regression-release.xml
 
 
 
