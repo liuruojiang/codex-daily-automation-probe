@@ -25,17 +25,13 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             text.index("name: Record refresh failure for digest")
         ]
         pack = text[
-            text.index("name: Pack validated production state") :
+            text.index("name: Prepare shared publication state") :
             text.index("name: Stage validated state bundle for same-day recovery")
-        ]
-        isolated_restores = text[
-            text.index("name: Restore state into isolated v2.3 workspace") :
-            text.index("name: Save refreshed full rebalance cache")
         ]
         for step in (cached_restore, durable_restore):
             self.assertIn("scripts/realtime_state_bundle.py restore", step)
             self.assertNotIn("--max-anchor-age-days", step)
-        for step in (refresh, pack, isolated_restores):
+        for step in (refresh, pack):
             self.assertNotIn("--max-anchor-age-days", step)
         self.assertIn("steps.recovered_full_cache.outputs.validated == 'true'", refresh)
         self.assertIn("scripts/realtime_state_bundle.py validate", pack)
@@ -141,14 +137,11 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn('repository: liuruojiang/microcap', text)
         published_sha = json.loads((ROOT / 'config' / 'microcap_approved_state.json').read_text(encoding='utf-8'))['strategy_sha']
         self.assertRegex(published_sha, r'^[0-9a-f]{40}$')
-        self.assertEqual(text.count('ref: ' + published_sha), 3)
+        self.assertEqual(text.count('ref: ' + published_sha), 1)
         self.assertNotIn('ref: main', text)
-        self.assertIn("name: Check out isolated v2.3 close-confirmed workspace", text)
-        self.assertIn("name: Check out isolated v2.5 close-confirmed workspace", text)
-        self.assertIn("path: microcap-v23", text)
-        self.assertIn("path: microcap-v25", text)
-        self.assertIn("mode == 'close_confirmed' && 'microcap-v23' || 'microcap'", text)
-        self.assertIn("mode == 'close_confirmed' && 'microcap-v25' || 'microcap'", text)
+        self.assertNotIn("microcap-v23", text)
+        self.assertNotIn("microcap-v25", text)
+        self.assertIn('--root microcap --v23-root microcap --v25-root microcap', text)
         self.assertIn("--result v2.3=${v23_root}/realtime_signal_v2_3_result.txt", text)
         self.assertIn("--result v2.5=${v25_root}/realtime_signal_v2_5_result.txt", text)
         self.assertIn("--signal-csv v2.3=${v23_root}/outputs/", text)
@@ -163,11 +156,11 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             text.index("name: Run v2.0 selected signal"),
         )
         self.assertIn("steps.state_bundle.outcome == 'success'", text)
-        self.assertIn("name: Pack validated production state", text)
+        self.assertIn("name: Prepare shared publication state", text)
         self.assertIn("name: Persist validated state bundle for same-day recovery", text)
         self.assertIn("name: Preserve validated state bundle for long-gap recovery", text)
         self.assertLess(
-            text.index("name: Pack validated production state"),
+            text.index("name: Prepare shared publication state"),
             text.index("name: Persist validated state bundle for same-day recovery"),
         )
         self.assertLess(
@@ -178,16 +171,8 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
             text.index("name: Preserve validated state bundle for long-gap recovery"),
             text.index("name: Run v2.0 selected signal"),
         )
-        self.assertIn("name: Restore state into isolated v2.3 workspace", text)
-        self.assertIn("name: Restore state into isolated v2.5 workspace", text)
-        self.assertLess(
-            text.index("name: Restore state into isolated v2.3 workspace"),
-            text.index("name: Run v2.3 selected signal"),
-        )
-        self.assertLess(
-            text.index("name: Restore state into isolated v2.5 workspace"),
-            text.index("name: Run v2.5 selected signal"),
-        )
+        self.assertNotIn('steps.restore_v23', text)
+        self.assertNotIn('steps.restore_v25', text)
         self.assertIn("group: microcap-realtime-digest", text)
         self.assertIn("cancel-in-progress: false", text)
         self.assertIn("actions: write", text)
@@ -210,7 +195,7 @@ class MicrocapWorkflowRefreshGateTests(unittest.TestCase):
         self.assertIn("subject_prefix", text)
         self.assertIn("--subject-prefix", text)
         self.assertIn("name: Record refresh failure for digest", text)
-        self.assertIn('for item in "microcap:v2_0" "microcap-v23:v2_3" "microcap-v25:v2_5"', text)
+        self.assertIn('for item in "microcap:v2_0" "microcap:v2_3" "microcap:v2_5"', text)
         self.assertEqual(text.count('TOP100_REALTIME_REQUIRE_STATE: "1"'), 3)
         self.assertEqual(text.count("timeout --foreground 25m python -u microcap_top100"), 6)
         self.assertNotIn("timeout --foreground 60m python -u microcap_top100", text)

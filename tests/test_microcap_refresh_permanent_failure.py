@@ -47,7 +47,7 @@ def execute_shell(script: str, cwd: Path) -> subprocess.CompletedProcess[str]:
     return result
 
 
-def retry_decision(tmp_path: Path, diagnostic: str, status: int = 1):
+def retry_decision(tmp_path: Path, diagnostic: str, status: int = 1, attempt: int = 1):
     script = refresh_script()
     start = script.index('if [[ "${status}" -eq 0 ]]; then')
     end = script.index('sleep $(( attempt < 6 ? attempt * 20 : 120 ))', start)
@@ -56,7 +56,7 @@ def retry_decision(tmp_path: Path, diagnostic: str, status: int = 1):
     decision = script[start:end]
     (tmp_path / "attempt.log").write_text(diagnostic, encoding="utf-8")
     result = execute_shell(
-        f'status={status}\nattempt_log=attempt.log\nfor once in 1; do\n'
+        f'status={status}\nattempt={attempt}\nattempt_log=attempt.log\nfor once in 1; do\n'
         + decision + '\nprintf "retry_reached\\n"\ndone\n'
         + 'printf "exit_status=%s\\n" "${status}"\n', tmp_path,
     )
@@ -151,3 +151,17 @@ def test_actual_progress_payload_matches_refresh_exit(tmp_path, status, conclusi
     assert payload["conclusion"] == conclusion
     assert payload["output"]["title"] == title
     assert f"refresh_exit_code={status}" in payload["output"]["summary"]
+
+
+def test_actual_workflow_does_not_retry_unknown_failure(tmp_path):
+    output = retry_decision(tmp_path, 'ValueError: unexpected new failure', status=19)
+    assert 'retry_reached' not in output
+    assert 'Unknown failure' in output
+    assert 'exit_status=19' in output
+
+
+def test_actual_workflow_bounds_transient_whole_refresh_retries(tmp_path):
+    output = retry_decision(tmp_path, 'HTTPError: 503 Service Unavailable', status=1, attempt=2)
+    assert 'retry_reached' not in output
+    assert 'Two whole-refresh attempts exhausted' in output
+    assert 'exit_status=1' in output

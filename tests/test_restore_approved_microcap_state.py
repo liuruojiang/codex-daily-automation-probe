@@ -156,7 +156,7 @@ def test_production_seed_config_matches_all_strategy_checkouts():
     workflow = yaml.safe_load((ROOT / '.github/workflows/microcap-realtime-digest.yml').read_text(encoding='utf-8'))
     refs = [step['with']['ref'] for step in workflow['jobs']['send']['steps']
             if step.get('with', {}).get('repository') == 'liuruojiang/microcap']
-    assert len(refs) == 3
+    assert len(refs) == 1  # Three versions now share one exact strategy checkout.
     assert set(refs) == {config['strategy_sha']}
     assert seed.load_release_config(ROOT / 'config/microcap_approved_state.json', refs[0]) == {
         key: config[key] for key in ('state_url', 'state_sha256', 'state_date')}

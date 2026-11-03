@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "strategy_sha": "a70ee78e3d0c077f3cfaaa06fb2137e1ac992da3",
+  "strategy_sha": "193d9309fcfa0ac365d3016b5c804ff07190ecd7",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/top100-tencent-daily-20261102/microcap-tencent-whole-delivery-20261102.zip",
   "state_sha256": "9338d5536584b131d0ee0a78fcf7a604f85970c21c30a33b77c35be6902c0864",
   "state_date": "2026-11-02"
