@@ -2,9 +2,8 @@ name: US ETF & Asset Allocation Digest
 
 on:
   schedule:
-    # 05:30 Asia/Shanghai every day == 21:30 UTC on the previous calendar day.
-    # The extra 30 minutes lets the US regular-session close settle; 2.5 hours remain before the 08:00 summary.
-    - cron: "30 21 * * *"
+    # Cloudflare primary: 05:30 Beijing daily. Native fallback: 06:00 Beijing.
+    - cron: "0 22 * * *"
   workflow_dispatch:
     inputs:
       send_email:
@@ -12,8 +11,13 @@ on:
         type: boolean
         default: true
 
+concurrency:
+  group: etf-allocation-digest
+  cancel-in-progress: false
+
 permissions:
   contents: write
+  actions: read
 
 jobs:
   send:
@@ -32,8 +36,27 @@ jobs:
         run: python scripts/daily_reports.py etf --out-dir artifacts
       - name: Validate ETF delivery artifacts
         run: python scripts/validate_etf_delivery.py artifacts/metadata.json
+      - name: Check daily delivery evidence
+        id: delivery_gate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VALIDATION_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.send_email == false && 'true' || 'false' }}
+        run: |
+          args=()
+          if [ "$VALIDATION_ONLY" == "true" ]; then args+=(--validation-only); fi
+          python scripts/check_daily_digest_delivery.py --family etf --metadata artifacts/metadata.json "${args[@]}"
+      - name: Preserve send intent before SMTP
+        if: steps.delivery_gate.outputs.should_send == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: etf-send-intent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/metadata.json
+            artifacts/send_intent.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Send Gmail
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
+        if: steps.delivery_gate.outputs.should_send == 'true'
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -42,9 +65,9 @@ jobs:
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
-        run: python scripts/send_report.py artifacts/metadata.json
+        run: python scripts/send_report.py artifacts/metadata.json --receipt artifacts/delivery_receipt.json
       - name: Persist digest history
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
+        if: steps.delivery_gate.outputs.should_send == 'true'
         run: |
           if [ -n "$(git status --porcelain digest_history)" ]; then
             git config user.name "github-actions[bot]"

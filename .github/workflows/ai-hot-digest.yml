@@ -2,10 +2,14 @@ name: AI HOT Digest
 
 on:
   schedule:
-    # 08:15 Asia/Shanghai == 00:15 UTC.
-    - cron: "15 0 * * *"
+    # Cloudflare primary: 09:00 Beijing daily. Native fallback: 09:30 Beijing.
+    - cron: "30 1 * * *"
   workflow_dispatch:
     inputs:
+      send_email:
+        description: "Send email (false validates the real build without delivery)"
+        type: boolean
+        default: true
       report_date:
         description: '日报日期（YYYY-MM-DD）；留空读取今日最新日报'
         required: false
@@ -17,6 +21,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   send:
@@ -36,7 +41,27 @@ jobs:
           args=()
           if [ -n "$REPORT_DATE" ]; then args+=(--report-date "$REPORT_DATE"); fi
           python scripts/daily_reports.py ai-hot --out-dir artifacts "${args[@]}"
+      - name: Check daily delivery evidence
+        id: delivery_gate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VALIDATION_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.send_email == false && 'true' || 'false' }}
+        run: |
+          args=()
+          if [ "$VALIDATION_ONLY" == "true" ]; then args+=(--validation-only); fi
+          python scripts/check_daily_digest_delivery.py --family ai-hot --metadata artifacts/metadata.json "${args[@]}"
+      - name: Preserve send intent before SMTP
+        if: steps.delivery_gate.outputs.should_send == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-hot-send-intent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/metadata.json
+            artifacts/send_intent.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Send Gmail
+        if: steps.delivery_gate.outputs.should_send == 'true'
         env:
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
