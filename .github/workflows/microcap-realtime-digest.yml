@@ -190,7 +190,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: d7615a3e3383e02f2b1e0eedfadfcb499ae7317a
+          ref: 14b896a0915f700e5b999ff6c47676e6f8acaca1
           path: microcap
 
       - name: Record microcap strategy SHA
@@ -722,6 +722,15 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
+      - name: Verify current share-source disclosures
+        id: share_source_disclosures
+        if: steps.whole_delivery.outputs.validated == 'true' && steps.publication_mode.outputs.mode == 'close_confirmed' && steps.delivery_gate.outputs.should_send == 'true'
+        shell: bash
+        run: |
+          python -B -X utf8 microcap/scripts/sse_share_daily_unchanged_20261104.py \
+            --root microcap --expected-date "${{ steps.market_target.outputs.date }}" \
+            --out artifacts/share-source-disclosures.json
+
       - name: Build Markdown digest
         id: digest
         if: always() && steps.delivery_gate.outputs.should_send == 'true'
@@ -730,6 +739,11 @@ jobs:
           signal_suffix=realtime_signal
           v23_root=microcap
           v25_root=microcap
+          share_disclosure_args=()
+          if [[ "${{ steps.whole_delivery.outputs.validated }}" == "true" && "${{ steps.publication_mode.outputs.mode }}" == "close_confirmed" ]]; then
+            [[ "${{ steps.share_source_disclosures.outcome }}" == "success" ]] || exit 1
+            share_disclosure_args+=(--share-source-disclosures artifacts/share-source-disclosures.json)
+          fi
           if [[ "${{ steps.publication_mode.outputs.mode }}" == "close_confirmed" ]]; then
             signal_suffix=latest_signal
             v23_root=microcap
@@ -752,7 +766,8 @@ jobs:
             --subject-prefix "${{ steps.delivery_gate.outputs.subject_prefix }}" \
             --exit-code "v2.0=${SIGNAL_V2_0_EXIT_CODE:-unknown}" \
             --exit-code "v2.3=${SIGNAL_V2_3_EXIT_CODE:-unknown}" \
-            --exit-code "v2.5=${SIGNAL_V2_5_EXIT_CODE:-unknown}"
+            --exit-code "v2.5=${SIGNAL_V2_5_EXIT_CODE:-unknown}" \
+            "${share_disclosure_args[@]}"
           digest_status=$(python -c 'import json; print(json.load(open("artifacts/metadata.json", encoding="utf-8"))["status"])')
           echo "status=${digest_status}" >> "${GITHUB_OUTPUT}"
 
