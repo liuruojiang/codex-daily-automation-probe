@@ -160,10 +160,17 @@ jobs:
             tests/test_exact_boundary_batch_20261103.py tests/test_postclose_boundary_transport_20261104.py \
             tests/test_realtime_commit_guard_20261024.py \
             tests/test_whole_delivery_member_cache_gate_20261024.py --junitxml=regression-release.xml
+          timeout --foreground 180s python -B -X utf8 -m pytest -q -p no:cacheprovider \
+            tests/test_source_closure_bounded.py tests/test_flow_state_independent.py \
+            tests/test_st_history_scope_20261101.py tests/test_st_notice_incremental.py tests/test_st_notice_refresh.py \
+            tests/test_st_notice_exact_inv_removal_20261104.py tests/test_csv_state_streaming.py \
+            tests/test_release_batch.py tests/test_release_batch_independent.py \
+            tests/test_validation_source_identity.py tests/test_validation_source_recertify.py \
+            tests/test_validation_source_recertify_independent.py --junitxml=regression-flow.xml
           python -B -X utf8 - <<'PY'
           import xml.etree.ElementTree as ET
           root = ET.Element('testsuites')
-          for name in ('regression-core.xml', 'regression-release.xml'):
+          for name in ('regression-core.xml', 'regression-release.xml', 'regression-flow.xml'):
               part = ET.parse(name).getroot()
               suites = [part] if part.tag == 'testsuite' else list(part)
               if not suites or not list(part.iter('testcase')):
@@ -238,6 +245,7 @@ jobs:
             strategy-tests/regression.xml
             strategy-tests/regression-core.xml
             strategy-tests/regression-release.xml
+            strategy-tests/regression-flow.xml
 
 
 

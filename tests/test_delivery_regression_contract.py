@@ -136,6 +136,12 @@ def test_microcap_regression_covers_required_files_with_isolated_zero_skip_gate(
     assert step['run'].count('timeout --foreground 600s python -B -X utf8 -m pytest -q -p no:cacheprovider') == 2
     assert '--junitxml=regression-core.xml' in step['run']
     assert '--junitxml=regression-release.xml' in step['run']
+    assert '--junitxml=regression-flow.xml' in step['run']
+    for name in ('test_validation_source_identity.py', 'test_validation_source_recertify.py',
+                 'test_validation_source_recertify_independent.py', 'test_st_notice_exact_inv_removal_20261104.py',
+                 'test_release_batch_independent.py', 'test_flow_state_independent.py'):
+        assert name in step['run']
+    assert "'regression-flow.xml'" in step['run']
     assert "ET.ElementTree(root).write('regression.xml'" in step['run']
     assert 'mandatory group has no test cases' in step['run']
     assert 'assert not list(root.iter(\'skipped\'))' in step['run'] or "root.iter('skipped')" in step['run']
