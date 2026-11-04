@@ -6,7 +6,14 @@
   "state_date": "2026-11-04",
   "daily_test_source": {
     "runtime_sha": "5bd7e5865eb6d98b8e23445eee5d9d418e821a0d",
-    "source_sha": "88116d93defec5cd9d77c9d2e6d7423b5a77881a",
-    "allowed_changes": []
+    "source_sha": "a911fa239b995031dcd1d8324c62d03f63e77374",
+    "allowed_changes": [
+      {
+        "path": "tests/test_normal_source_receipt_transition.py",
+        "old_git_blob_sha256": "aa802deacb8f1e3d4a08894824c9f526d828cfde1589326a2b3a7f4dce70cf58",
+        "new_git_blob_sha256": "f57e1dbef0d6e5f4e9705f871a31b2be9ed36f01a83114fe6a821541e3353bd4",
+        "reason": "Keep the strict next-session regression portable in the authenticated archive checkout; original e41 failure replay remains in immutable audit evidence, without a test-time Git-history or network dependency."
+      }
+    ]
   }
 }
