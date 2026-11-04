@@ -12,8 +12,10 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import urllib.parse
 import urllib.request
 import zipfile
@@ -94,22 +96,113 @@ def restore_bundle(root: Path, bundle: Path, strategy_sha: str, not_after: str) 
     return {**identity, "restored": True}
 
 
+def repack_approved(root: Path, bundle: Path, strategy_sha: str, not_after: str, config_path: Path) -> dict:
+    """After approved bootstrap restore, rebind packaging only via native pack.
+
+    The approved original remains immutable. No refresh, signal or SMTP is run.
+    Economic/source manifest inputs and all three final streams must be exact.
+    """
+    from restore_approved_microcap_state import load_release_config
+    config_raw = config_path.read_bytes()
+    config = load_release_config(config_path, strategy_sha)
+    actual = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+    if actual != strategy_sha:
+        raise ValueError("Approved repack strategy SHA differs from actual checkout")
+    artifact_name(strategy_sha)
+    if not 0 < bundle.stat().st_size <= MAX_BYTES:
+        raise ValueError("Approved repack bundle exceeds size limit")
+    def digest(path):
+        with path.open("rb") as stream:
+            return hashlib.file_digest(stream, "sha256").hexdigest()
+    approved_sha = digest(bundle)
+    if approved_sha != config["state_sha256"].lower():
+        raise ValueError("Approved repack archive SHA-256 differs from config")
+    manifest_name = "outputs/top100_delivery_manifest.json"
+    with zipfile.ZipFile(bundle) as archive:
+        if archive.namelist().count(manifest_name) != 1:
+            raise ValueError("Approved whole manifest missing or duplicated")
+        original_raw = archive.read(manifest_name)
+    original = json.loads(original_raw)
+    old_identity = bundle_identity(bundle, original["release_sha"], not_after)
+    if old_identity["seed_date"] != config["state_date"]:
+        raise ValueError("Approved repack state date differs from config")
+    for key in ("inputs", "artifacts", "streams"):
+        if not isinstance(original.get(key), dict) or not original[key]:
+            raise ValueError("Approved whole manifest is incomplete: " + key)
+    root_manifest = root / manifest_name
+    if root_manifest.read_bytes() != original_raw:
+        raise ValueError("Restored whole manifest differs from the approved archive")
+    report = {"approved_original": {**old_identity, "source": config["state_url"]},
+              "config_sha256": hashlib.sha256(config_raw).hexdigest(),
+              "repacked": False, "freshness": "verified_archive_only_requires_current_refresh"}
+    if original["release_sha"] == strategy_sha:
+        return {**report, **old_identity, "unchanged_exact_runtime": True}
+    # A new temporary output keeps the approved ZIP intact on every failure.
+    # Retain a failed attempt directory for diagnosis, not as a recovery artifact.
+    attempt = Path(tempfile.mkdtemp(prefix="approved-repack-", dir=bundle.parent))
+    temporary = attempt / BUNDLE_NAME
+    log = attempt / "native_pack.log"
+    with log.open("wb") as stream:
+        subprocess.run([sys.executable, "-B", "-u", str(root / "scripts/top100_cloud_delivery.py"),
+                        "pack", "--root", str(root), "--v23-root", str(root), "--v25-root", str(root),
+                        "--bundle", str(temporary), "--expected-date", config["state_date"]],
+                       check=True, stdout=stream, stderr=subprocess.STDOUT)
+    identity = bundle_identity(temporary, strategy_sha, not_after)
+    with zipfile.ZipFile(temporary) as archive:
+        if archive.namelist().count(manifest_name) != 1:
+            raise ValueError("Repacked whole manifest missing or duplicated")
+        updated = json.loads(archive.read(manifest_name))
+    for key in ("expected_date", "inputs", "artifacts", "streams"):
+        if updated.get(key) != original[key]:
+            raise ValueError("Approved repack changed economic/source manifest: " + key)
+    if (root_manifest.read_bytes() != original_raw or config_path.read_bytes() != config_raw
+            or digest(bundle) != approved_sha
+            or subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip() != strategy_sha):
+        raise ValueError("Approved repack input identity changed during packing")
+    preserved = attempt / "approved-original.zip"
+    try:
+        os.link(bundle, preserved)
+    except OSError:
+        shutil.copyfile(bundle, preserved)
+    if digest(preserved) != approved_sha:
+        raise ValueError("Preserved approved archive SHA-256 differs")
+    os.replace(temporary, bundle)
+    return {**report, **identity, "repacked": True, "native_pack_log": str(log),
+            "preserved_approved_archive": str(preserved), "economic_manifest_unchanged": True}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("restore", "describe"))
+    parser.add_argument("command", choices=("restore", "describe", "repack-approved"))
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--bundle", type=Path, required=True)
     parser.add_argument("--strategy-sha", required=True)
     parser.add_argument("--not-after-date", required=True)
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--require-hit", action="store_true")
+    parser.add_argument("--config", type=Path)
     args = parser.parse_args()
     root, bundle = args.root.resolve(), args.bundle.resolve()
     actual_sha = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
     if actual_sha != args.strategy_sha:
         raise ValueError("Recovery strategy SHA differs from actual checkout")
     artifact_name(args.strategy_sha)
-    if args.command == "describe":
+    if (args.require_hit and args.command != "restore") or (args.config is not None and args.command != "repack-approved"):
+        parser.error("maintenance config and require-hit cannot be mixed with other commands")
+    if args.command == "repack-approved":
+        if args.config is None:
+            parser.error("repack-approved requires the bound approved config")
+        try:
+            report = repack_approved(root, bundle, args.strategy_sha, args.not_after_date, args.config)
+        except Exception as exc:
+            failed = {"repacked": False, "status": "failed", "error": f"{type(exc).__name__}: {exc}",
+                      "native_pack_logs": [str(p) for p in bundle.parent.glob("approved-repack-*/native_pack.log")],
+                      "freshness": "no_current_session_or_delivery_authorization"}
+            args.receipt.parent.mkdir(parents=True, exist_ok=True)
+            args.receipt.write_text(json.dumps(failed, indent=2) + "\n", encoding="utf8")
+            print(json.dumps(failed), flush=True)
+            return 1
+    elif args.command == "describe":
         report = bundle_identity(bundle, args.strategy_sha, args.not_after_date)
     else:
         token = os.environ.get("GITHUB_TOKEN", "")

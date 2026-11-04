@@ -1,12 +1,19 @@
 {
   "schema_version": 1,
-  "strategy_sha": "e41cf520167dbeb86f935010affa57b77afdff4b",
+  "strategy_sha": "5bd7e5865eb6d98b8e23445eee5d9d418e821a0d",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-validation-flow-20261105-e41cf520/microcap-validated-whole-20261104-e41cf520.zip",
   "state_sha256": "af161e0fe551458121e92a2e013625d934873ad0fba893b9a575e424250014d7",
   "state_date": "2026-11-04",
   "daily_test_source": {
-    "runtime_sha": "e41cf520167dbeb86f935010affa57b77afdff4b",
-    "source_sha": "7f6ff3f9abbd0113ae847138e56bde12b21027ee",
-    "allowed_changes": []
+    "runtime_sha": "5bd7e5865eb6d98b8e23445eee5d9d418e821a0d",
+    "source_sha": "a911fa239b995031dcd1d8324c62d03f63e77374",
+    "allowed_changes": [
+      {
+        "path": "tests/test_normal_source_receipt_transition.py",
+        "old_git_blob_sha256": "aa802deacb8f1e3d4a08894824c9f526d828cfde1589326a2b3a7f4dce70cf58",
+        "new_git_blob_sha256": "f57e1dbef0d6e5f4e9705f871a31b2be9ed36f01a83114fe6a821541e3353bd4",
+        "reason": "Keep the strict next-session regression portable in the authenticated archive checkout; original e41 failure replay remains in immutable audit evidence, without a test-time Git-history or network dependency."
+      }
+    ]
   }
 }

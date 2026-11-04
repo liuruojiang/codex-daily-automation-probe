@@ -166,7 +166,8 @@ jobs:
             tests/test_st_notice_exact_inv_removal_20261104.py tests/test_csv_state_streaming.py \
             tests/test_release_batch.py tests/test_release_batch_independent.py \
             tests/test_validation_source_identity.py tests/test_validation_source_recertify.py \
-            tests/test_validation_source_recertify_independent.py --junitxml=regression-flow.xml
+            tests/test_validation_source_recertify_independent.py \
+            tests/test_normal_source_receipt_transition.py tests/test_cloud_source_lineage_independent.py --junitxml=regression-flow.xml
           python -B -X utf8 - <<'PY'
           import xml.etree.ElementTree as ET
           root = ET.Element('testsuites')
