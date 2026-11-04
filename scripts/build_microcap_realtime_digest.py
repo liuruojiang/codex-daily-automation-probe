@@ -739,6 +739,35 @@ def escape_table_cell(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
 
 
+SSE_SHARE_REVIEW_SHA = "8ecabf6af932b1ab0c158675098087414a951936c4b30a07a359aad86998bb7a"
+SSE_SHARE_DISCLOSURE_TEXT = "603028股本来源存在分歧：本次按用户授权采用上交所标注2026-11-04的28514.52万股；东方财富历史、新浪历史及quote为28483.52万股，与已登记注销计划值相同。股本历史CSV原字节保持不变，不据此宣称注销已完成。"
+
+
+def load_share_source_disclosures(path_value: str, signal_date: str) -> list[dict[str, object]]:
+    if not path_value:
+        return []
+    value = json.loads(Path(path_value).read_text(encoding="utf-8-sig"))
+    if (value.get("schema") != "verified_share_source_disclosures_v1"
+            or value.get("signal_date") != signal_date or value.get("native_verified") is not True
+            or not isinstance(value.get("disclosures"), list) or len(value["disclosures"]) > 1):
+        raise ValueError("share-source disclosure schema/native verification/date invalid")
+    for item in value["disclosures"]:
+        selection = item.get("selection", {})
+        if (signal_date != "2026-11-04" or item.get("symbol") != "603028"
+                or item.get("signal_date") != signal_date or item.get("review_sha256") != SSE_SHARE_REVIEW_SHA
+                or item.get("text") != SSE_SHARE_DISCLOSURE_TEXT
+                or selection.get("kind") != "sse_dated_unchanged_tail_20261104_v1"
+                or selection.get("official_data_date") != signal_date
+                or selection.get("total_shares_10k") != "28514.52"
+                or selection.get("conflicting_commercial_total_shares_10k") != "28483.52"
+                or selection.get("source_conflict_disclosed") is not True
+                or selection.get("legal_cancellation_completion_not_claimed") is not True
+                or not isinstance(item.get("source_files"), dict)
+                or "603028.json" not in item["source_files"]):
+            raise ValueError("share-source disclosure is not the exact approved stock/day/authority")
+    return value["disclosures"]
+
+
 def build_compact_digest(
     results: list[dict[str, object]],
     *,
@@ -747,6 +776,7 @@ def build_compact_digest(
     strategy_sha: str,
     subject_prefix: str = "",
     publication_mode: str = "realtime",
+    share_source_disclosures: list[dict[str, object]] | None = None,
 ) -> tuple[str, str]:
     versions = "/".join(str(item["version"]) for item in results)
     tag = subject_tag(results, publication_mode)
@@ -810,6 +840,9 @@ def build_compact_digest(
         lines += ["", f"历史计价口径：{escape_markdown_inline(policy_note)}。此说明不构成当日卖出指令。"]
     if member_background:
         lines += ["", "名单更新背景：", "", *member_background]
+    if share_source_disclosures:
+        lines += ["", "## 股本来源分歧", ""]
+        lines += ["- " + str(item["text"]) for item in share_source_disclosures]
 
     warnings = [warning for item in results for warning in risk_warnings(item)]
     if date_s == "2026-09-04" and any(item["version"] == "v2.0" and item["status"] == "OK" for item in results):
@@ -819,6 +852,8 @@ def build_compact_digest(
     lines += ["", "## 需要关注", ""]
     if warnings:
         lines += [f"- **{warning.split('：', 1)[0]}：**{warning.split('：', 1)[1]}" for warning in warnings]
+    elif share_source_disclosures:
+        lines.append("除上述已披露的股本来源分歧外，本次未记录其他风险/数据异常。")
     else:
         lines.append("风险/数据异常：无")
     lines += ["", shared_data_line(results, strategy_sha, publication_mode)]
@@ -846,6 +881,7 @@ def main() -> int:
     parser.add_argument("--subject-prefix", default="")
     parser.add_argument("--delivery-test-id", default="")
     parser.add_argument("--strategy-sha", default="", help="Checked-out microcap strategy commit SHA")
+    parser.add_argument("--share-source-disclosures", default="", help="Native-verified current share-source disclosures")
     parser.add_argument(
         "--publication-mode",
         choices=("realtime", "close_confirmed"),
@@ -975,6 +1011,7 @@ def main() -> int:
     else:
         date_s = now_bj().date().isoformat()
     run_url = os.environ.get("GITHUB_RUN_URL", "")
+    share_source_disclosures = load_share_source_disclosures(args.share_source_disclosures, date_s)
     subject, digest_text = build_compact_digest(
         results,
         date_s=date_s,
@@ -982,6 +1019,7 @@ def main() -> int:
         strategy_sha=args.strategy_sha,
         subject_prefix=args.subject_prefix,
         publication_mode=args.publication_mode,
+        share_source_disclosures=share_source_disclosures,
     )
     if args.delivery_test_id:
         subject = (f"[发送验收测试][收盘确认][新版验收] 微盘股 v2.0/v2.3/v2.5 日报 - {date_s}"
@@ -1005,6 +1043,8 @@ def main() -> int:
     }
     if args.delivery_test_id:
         meta["delivery_test_id"] = args.delivery_test_id
+    if args.share_source_disclosures:
+        meta["share_source_disclosures"] = share_source_disclosures
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     return 0
 
