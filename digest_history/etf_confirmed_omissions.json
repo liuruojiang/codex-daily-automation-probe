@@ -5500,6 +5500,97 @@
       "zh_summary": "Zack McGuire讨论机构资本基础如何塑造投资、主题式组合、通才团队及投资关系；有节目说明，文字稿尚未提供。",
       "evidence_level": "publisher_episode_description_only; transcript_coming_soon",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41722402476",
+      "origin_report_date": "2026-11-04",
+      "source": "arXiv q-fin.PM",
+      "title": "Interpretable Allocation and Model-Predictive Rebalancing of Equity Portfolios, Tested on Real and Synthetic Markets",
+      "zh_title": "可解释的股票配置与模型预测再平衡：真实及合成市场检验",
+      "url": "https://arxiv.org/abs/2611.03022",
+      "published": "2026-11-03T05:00:00+00:00",
+      "summary": "373只美股，2014—2024校准、2025年1月至2026年9月检验；提前再规划通常降低回撤，却不稳定提高财富。",
+      "zh_summary": "373只美股，2014—2024校准、2025年1月至2026年9月检验；提前再规划通常降低回撤，却不稳定提高财富。",
+      "evidence_level": "original_preprint_abstract",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41722402476",
+      "origin_report_date": "2026-11-04",
+      "source": "arXiv q-fin.PM",
+      "title": "Specification LASSO and a Flexible Characteristics-Based Asset Pricing Model",
+      "zh_title": "规格LASSO与灵活的特征资产定价模型",
+      "url": "https://arxiv.org/abs/2611.03391",
+      "published": "2026-11-03T05:00:00+00:00",
+      "summary": "两阶段LASSO与自适应组LASSO同时选择变量及函数形式，研究股票特征的非线性及规模交互。",
+      "zh_summary": "两阶段LASSO与自适应组LASSO同时选择变量及函数形式，研究股票特征的非线性及规模交互。",
+      "evidence_level": "original_preprint_abstract",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41722402476",
+      "origin_report_date": "2026-11-04",
+      "source": "Seeking Alpha ETFs",
+      "title": "With A Rebalancing In November, VLUE Could Keep Beating The S&P 500",
+      "zh_title": "11月再平衡能否延续VLUE相对标普500的表现？",
+      "url": "https://seekingalpha.com/article/4961754-with-a-rebalancing-in-november-vlue-could-keep-beating-the-s-and-p-500",
+      "published": "2026-11-03T21:16:47+00:00",
+      "summary": "公开摘要称超额表现高度依赖美光，文中权重19.23%，提示价值标签下的科技及单股集中。",
+      "zh_summary": "公开摘要称超额表现高度依赖美光，文中权重19.23%，提示价值标签下的科技及单股集中。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41722402476",
+      "origin_report_date": "2026-11-04",
+      "source": "Seeking Alpha ETFs",
+      "title": "PTY: The Bull Case Has Fallen Short In 2026",
+      "zh_title": "PTY：2026年的看多理由尚未兑现",
+      "url": "https://seekingalpha.com/article/4961359-pty-the-bull-case-has-fallen-short-in-2026?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-03T10:35:39+00:00",
+      "summary": "公开摘要认为信用利差扩大压低估值，现有净值折价不足以抵消风险，作者维持中性。",
+      "zh_summary": "公开摘要认为信用利差扩大压低估值，现有净值折价不足以抵消风险，作者维持中性。",
+      "evidence_level": "publisher_public_summary_only; full_article_gated",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41722402476",
+      "origin_report_date": "2026-11-04",
+      "source": "A Wealth of Common Sense",
+      "title": "How Are U.S. Household Finances Doing?",
+      "zh_title": "美国家庭财务状况如何？",
+      "url": "https://awealthofcommonsense.com/2026/11/how-are-u-s-household-finances-doing/",
+      "published": "2026-11-03T14:30:10+00:00",
+      "summary": "作者根据美联储家庭财务调查讨论实际收入、净资产与现金分布；文章数字尚未独立重算。",
+      "zh_summary": "作者根据美联储家庭财务调查讨论实际收入、净资产与现金分布；文章数字尚未独立重算。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41722402476",
+      "origin_report_date": "2026-11-04",
+      "source": "Of Dollars And Data",
+      "title": "How Many Americans Are Millionaires?",
+      "zh_title": "美国有多少百万富翁？",
+      "url": "https://ofdollarsanddata.com/how-many-americans-are-millionaires/",
+      "published": "2026-11-03T12:45:02+00:00",
+      "summary": "区分家庭总净资产、剔除住房、剔除退休账户的不同百万富翁定义，不能把净资产当作流动投资本金。",
+      "zh_summary": "区分家庭总净资产、剔除住房、剔除退休账户的不同百万富翁定义，不能把净资产当作流动投资本金。",
+      "evidence_level": "publisher_full_article",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41722402476",
+      "origin_report_date": "2026-11-04",
+      "source": "HKEX News Releases",
+      "title": "香港交易所推出12隻新股票期貨合約",
+      "zh_title": "港交所推出12只新股票期货合约",
+      "url": "https://www.hkex.com.hk/News/News-Release/2026/261103news?sc_lang=zh-HK",
+      "published": "2026-11-03T08:00:00+00:00",
+      "summary": "官方公告计划2027年1月18日推出12只股票期货，新合约首六个月豁免证监会征费。",
+      "zh_summary": "官方公告计划2027年1月18日推出12只股票期货，新合约首六个月豁免证监会征费。",
+      "evidence_level": "official_full_release",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
