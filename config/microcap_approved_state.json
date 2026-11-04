@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "strategy_sha": "14b896a0915f700e5b999ff6c47676e6f8acaca1",
-  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-postclose-repair-20261104-14b896a0/microcap-postclose-repaired-whole-20261104.zip",
-  "state_sha256": "df235b54c0d90cab49bed1c963cd6498f9a97e07d4a15ed83587c03841abc8d6",
+  "strategy_sha": "e41cf520167dbeb86f935010affa57b77afdff4b",
+  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-validation-flow-20261105-e41cf520/microcap-validated-whole-20261104-e41cf520.zip",
+  "state_sha256": "af161e0fe551458121e92a2e013625d934873ad0fba893b9a575e424250014d7",
   "state_date": "2026-11-04",
   "daily_test_source": {
-    "runtime_sha": "14b896a0915f700e5b999ff6c47676e6f8acaca1",
-    "source_sha": "d7c411cfbd94e4fdbf3e2db60001ae86efdaf8f5",
+    "runtime_sha": "e41cf520167dbeb86f935010affa57b77afdff4b",
+    "source_sha": "7f6ff3f9abbd0113ae847138e56bde12b21027ee",
     "allowed_changes": []
   }
 }
