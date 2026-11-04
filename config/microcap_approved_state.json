@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "strategy_sha": "1794f104c5766bdc6fed4b32753ec6750fa72653",
+  "strategy_sha": "62ed737527030de1a9c5f2897b58bc8670ce1c99",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/top100-st-notice-20261103/microcap-st-notice-whole-delivery-20261103.zip",
   "state_sha256": "c3f98e93770b98b3f1cca7d921f10d69f729e8522cc7777a3769271404913911",
   "state_date": "2026-11-03",
   "daily_test_source": {
-    "runtime_sha": "1794f104c5766bdc6fed4b32753ec6750fa72653",
-    "source_sha": "81e99c95becebc7cb3866ddc8df193fc7770583a",
+    "runtime_sha": "62ed737527030de1a9c5f2897b58bc8670ce1c99",
+    "source_sha": "912bfa199001c980f0973b8e2e50de440c62bb58",
     "allowed_changes": []
   }
 }
