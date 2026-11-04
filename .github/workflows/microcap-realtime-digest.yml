@@ -190,7 +190,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: e41cf520167dbeb86f935010affa57b77afdff4b
+          ref: 5bd7e5865eb6d98b8e23445eee5d9d418e821a0d
           path: microcap
 
       - name: Record microcap strategy SHA
@@ -954,11 +954,22 @@ jobs:
             --not-after-date "${{ steps.identity.outputs.date }}" \
             --receipt microcap/whole_state_recovery.json "${args[@]}"
       - name: Restore approved bootstrap only when no recovery artifact exists
+        id: approved_bootstrap
         if: inputs.recovery_check == 'bootstrap' && steps.whole_state_restore.outputs.restored != 'true'
         run: |
           python -B -u automation/scripts/restore_approved_microcap_state.py \
             --root microcap --bundle "${RUNNER_TEMP}/microcap-whole-delivery-state.zip" \
             --config automation/config/microcap_approved_state.json
+      - name: Repack approved restored state for the exact runtime
+        id: approved_repack
+        if: github.event_name == 'workflow_dispatch' && inputs.recovery_check == 'bootstrap' && inputs.validation_only != true && inputs.correction != true && inputs.external_schedule != true && inputs.delivery_test_id == '' && inputs.publication_mode == 'close_confirmed' && steps.whole_state_restore.outcome == 'success' && steps.whole_state_restore.outputs.restored == 'false' && steps.approved_bootstrap.outcome == 'success' && steps.approved_bootstrap.outputs.restored == 'true'
+        run: |
+          python -B -u automation/scripts/microcap_whole_state_recovery.py repack-approved \
+            --root microcap --bundle "${RUNNER_TEMP}/microcap-whole-delivery-state.zip" \
+            --strategy-sha "${{ steps.identity.outputs.sha }}" \
+            --not-after-date "${{ steps.identity.outputs.date }}" \
+            --config automation/config/microcap_approved_state.json \
+            --receipt microcap/approved_repack_identity.json
       - name: Record the exact restored archive for next-run comparison
         run: |
           python -B -u automation/scripts/microcap_whole_state_recovery.py describe \
@@ -981,6 +992,8 @@ jobs:
           path: |
             microcap/whole_state_recovery.json
             microcap/recovery_archive_identity.json
+            microcap/approved_repack_identity.json
+            ${{ runner.temp }}/approved-repack-*/native_pack.log
             microcap/outputs/*_latest_signal.csv
             microcap/outputs/top100_delivery_manifest.json
           if-no-files-found: error
