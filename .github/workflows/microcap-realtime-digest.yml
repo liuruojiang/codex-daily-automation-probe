@@ -9,6 +9,11 @@ on:
         type: choice
         options: ['off', bootstrap, require_hit]
         default: 'off'
+      recovery_strategy_sha:
+        description: "Exact candidate runtime for recovery-only pre-activation acceptance; normal delivery pin stays unchanged"
+        required: false
+        type: string
+        default: ""
       validation_only:
         description: "Validate refresh, all signals and artifacts without sending email or writing delivery markers"
         required: false
@@ -77,6 +82,22 @@ jobs:
     env:
       TZ: Asia/Shanghai
     steps:
+      - name: Reject candidate runtime outside recovery-only maintenance
+        env:
+          CANDIDATE_SHA: ${{ inputs.recovery_strategy_sha }}
+          RECOVERY_MODE: ${{ inputs.recovery_check }}
+          VALIDATION_ONLY: ${{ inputs.validation_only }}
+          CORRECTION: ${{ inputs.correction }}
+          EXTERNAL_SCHEDULE: ${{ inputs.external_schedule }}
+          DELIVERY_TEST_ID: ${{ inputs.delivery_test_id }}
+          PUBLICATION_MODE: ${{ inputs.publication_mode }}
+        run: |
+          python - <<'PY'
+          import os, re
+          e = os.environ
+          if e['CANDIDATE_SHA'] and (not re.fullmatch('[0-9a-f]{40}', e['CANDIDATE_SHA']) or e['RECOVERY_MODE'] not in {'bootstrap', 'require_hit'} or any(e[k] == 'true' for k in ('VALIDATION_ONLY', 'CORRECTION', 'EXTERNAL_SCHEDULE')) or e['DELIVERY_TEST_ID'] or e['PUBLICATION_MODE'] != 'close_confirmed'):
+              raise SystemExit('Candidate runtime is allowed only for explicit no-send recovery maintenance')
+          PY
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
@@ -928,13 +949,33 @@ jobs:
           python-version: '3.11'
       - name: Resolve approved recovery strategy pin
         id: recovery_pin
+        env:
+          CANDIDATE_SHA: ${{ inputs.recovery_strategy_sha }}
         run: |
-          python -B -c 'import json, os; config=json.load(open("automation/config/microcap_approved_state.json")); open(os.environ["GITHUB_OUTPUT"],"a").write("sha=" + config["strategy_sha"] + "\n")'
+          python -B - <<'PY'
+          import hashlib, json, os, re
+          from pathlib import Path
+          source = Path('automation/config/microcap_approved_state.json').read_bytes()
+          config = json.loads(source)
+          candidate = os.environ.get('CANDIDATE_SHA', '')
+          if candidate:
+              if not re.fullmatch('[0-9a-f]{40}', candidate):
+                  raise SystemExit('Invalid exact candidate SHA')
+              config['strategy_sha'] = candidate
+          Path('recovery-config.json').write_text(json.dumps(config, indent=2) + '\n')
+          Path('recovery-config-provenance.json').write_text(json.dumps({'original_config_sha256': hashlib.sha256(source).hexdigest(), 'candidate_strategy_sha': candidate, 'scope': 'recovery_only_same_approved_seed_no_production_activation'}, indent=2))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as handle:
+              handle.write('sha=' + config['strategy_sha'] + '\n')
+          PY
       - uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
           ref: ${{ steps.recovery_pin.outputs.sha }}
           path: microcap
+          fetch-depth: 0
+      - name: Require the recovery candidate to be a published mainline commit
+        working-directory: microcap
+        run: git merge-base --is-ancestor HEAD origin/main
       - name: Install recovery dependencies
         run: python -m pip install numpy 'pandas<3' requests 'akshare==1.18.46' 'baostock==0.9.1' matplotlib
       - name: Resolve recovery identity and independent date ceiling
@@ -959,7 +1000,7 @@ jobs:
         run: |
           python -B -u automation/scripts/restore_approved_microcap_state.py \
             --root microcap --bundle "${RUNNER_TEMP}/microcap-whole-delivery-state.zip" \
-            --config automation/config/microcap_approved_state.json
+            --config recovery-config.json
       - name: Repack approved restored state for the exact runtime
         id: approved_repack
         if: github.event_name == 'workflow_dispatch' && inputs.recovery_check == 'bootstrap' && inputs.validation_only != true && inputs.correction != true && inputs.external_schedule != true && inputs.delivery_test_id == '' && inputs.publication_mode == 'close_confirmed' && steps.whole_state_restore.outcome == 'success' && steps.whole_state_restore.outputs.restored == 'false' && steps.approved_bootstrap.outcome == 'success' && steps.approved_bootstrap.outputs.restored == 'true'
@@ -968,7 +1009,7 @@ jobs:
             --root microcap --bundle "${RUNNER_TEMP}/microcap-whole-delivery-state.zip" \
             --strategy-sha "${{ steps.identity.outputs.sha }}" \
             --not-after-date "${{ steps.identity.outputs.date }}" \
-            --config automation/config/microcap_approved_state.json \
+            --config recovery-config.json \
             --receipt microcap/approved_repack_identity.json
       - name: Record the exact restored archive for next-run comparison
         run: |
@@ -990,6 +1031,8 @@ jobs:
         with:
           name: microcap-recovery-check-evidence
           path: |
+            recovery-config.json
+            recovery-config-provenance.json
             microcap/whole_state_recovery.json
             microcap/recovery_archive_identity.json
             microcap/approved_repack_identity.json
