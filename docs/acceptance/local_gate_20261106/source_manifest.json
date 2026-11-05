@@ -1,0 +1,9 @@
+{
+  "realtime_daily_gate.py": "6ad44c942d6676122c7105c218cd3159e456a951cc3dca3d506ed03aa2775fd3",
+  "test_realtime_daily_gate.py": "26281880a17cc405776b2c7de98ceb3ed579f527cf0e884a8b42e7f9e9a3c89b",
+  "gate.json": "25d6644cb0263582c967a9469707f8e0bdff7d2bc0ec37adcbfa2c66efb61ac6",
+  "active.json": "a44e0d9afe8ce26e188b8cd165286f98c803130e259b29ab252b6040e59ed149",
+  "lifecycle.json": "df0a3f74e16903b180fdb78c65bc9cdf3643d55d4e28a327f2acd433a17c6ad4",
+  "test_source_verified.json": "bbedcf9c63c425e8d2f2f3acd20f79c0d392c04910d513e6515d2bf0de20a62c",
+  "approval.json": "bc5b9bd678ae09c4fcb523f75ddd4dd9bf177fea566431f90a169c13f41e567c"
+}

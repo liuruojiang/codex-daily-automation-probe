@@ -1,0 +1,14 @@
+{
+  "prepared": "D:\\CodexDaily\\flow12",
+  "prepared_receipt_sha256": "ece44600a2e7f8e7e9c03be324029bb4a8caef3ac87ee48411b22f5f35a812d1",
+  "launcher_sha256": "53565e09ca146e88fa4bc666f302a983a89425c9e5181f91ccbb909537f0884a",
+  "worker_sha256": "f1392afe70710480f1af863f1b9967201c5c3d9e21d7c4b6f02ed2d3e1b2dad5",
+  "group_worker_sha256": "52a8f33a84b65c5b99be2131dc24a3b7d21865207090165a6f429824ad83b7ba",
+  "pytest_config_sha256": "8130bf96039af746bb8b05190f9978fb4bb60102e92a07a8c2e6e3d47dbbfd63",
+  "microcap_readiness_sha256": "5fccb4ba0113065798840b12d24a6353b099acbdb11542ab150601491b02ec2d",
+  "resident_worker_sha256": "e2f4dd13c47250195c4671844a41a107679aefacdd75bc751d9249aca1d7335f",
+  "guard_source_sha256": "7fce0a00ae6a3f56400dcfbc1aee9e4bbde03f846e47eabe7a0d9e4202d17784",
+  "config_sha256": "6520913d426042a9bdac3499f9709c50518eab5d07059bd3c0d2eb22313c5e7a",
+  "activated_at": "2026-11-06T02:06:41.546370+08:00",
+  "acceptance": "D:\\ct\\icim_gate_20261106\\flow12_acceptance"
+}

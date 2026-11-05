@@ -1,0 +1,9 @@
+{
+  "schema": "exact_unchanged_share_user_approval_v1",
+  "decision": "approved",
+  "package_sha256": "3af53c7fea86b3334321112981747560e9fcea9dba5ee7667c9f011d8a70f4ff",
+  "review_sha256": "b716606578531dbb67ed5f1ea20d91f25330cac284e5f96818d4ae65bfa4cfc9",
+  "user_reply": "批准此精确包，继续补发（推荐）",
+  "recorded_at": "2026-11-05T16:29:47.178708+00:00",
+  "scope": "301288 only, 2026-11-05 close supplemented on 2026-11-06; total shares and all history unchanged; no quote/date/send waiver"
+}

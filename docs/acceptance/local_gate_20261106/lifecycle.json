@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "id": "1e2dcc95acac4ff1b0cd15d00108c968",
+  "nonce": "2783cfb7c2bb4ff28c0f56b4f9a39aa8",
+  "workspace": "D:\\动量策略\\IC和IM滚动套利",
+  "label": "approved-301288-local-activation",
+  "state": "completed",
+  "started": 1793897805.9086576,
+  "owner": {
+    "pid": 47356,
+    "created": 1793897805.7491655
+  },
+  "root": "D:\\ct\\managed\\1e2dcc95acac4ff1b0cd15d00108c968",
+  "record": "D:\\Codex\\test-lifecycle\\records\\1e2dcc95acac4ff1b0cd15d00108c968",
+  "children": [
+    {
+      "pid": 13512,
+      "created": 1793897805.9121633
+    },
+    {
+      "pid": 63872,
+      "created": 1793897805.923946
+    },
+    {
+      "pid": 72684,
+      "created": 1793897822.347508
+    },
+    {
+      "pid": 94556,
+      "created": 1793897823.435588
+    },
+    {
+      "pid": 51160,
+      "created": 1793897823.8539853
+    },
+    {
+      "pid": 52784,
+      "created": 1793897872.8918648
+    },
+    {
+      "pid": 71256,
+      "created": 1793897886.1158888
+    },
+    {
+      "pid": 97148,
+      "created": 1793897899.1567583
+    },
+    {
+      "pid": 98000,
+      "created": 1793897899.1568341
+    },
+    {
+      "pid": 89240,
+      "created": 1793897899.1569717
+    },
+    {
+      "pid": 92768,
+      "created": 1793897899.15739
+    },
+    {
+      "pid": 89636,
+      "created": 1793897899.1575267
+    },
+    {
+      "pid": 80088,
+      "created": 1793897899.1580825
+    },
+    {
+      "pid": 92872,
+      "created": 1793897921.473591
+    },
+    {
+      "pid": 55704,
+      "created": 1793898110.2375734
+    },
+    {
+      "pid": 21420,
+      "created": 1793898175.706436
+    }
+  ],
+  "keep": false,
+  "gate_out": "D:\\ct\\icim_gate_20261106\\flow10_acceptance",
+  "command": [
+    "C:\\Python314\\python.exe",
+    "-B",
+    "-X",
+    "utf8",
+    "D:\\Codex\\home\\automations\\ic-im\\scripts\\realtime_daily_gate.py",
+    "gate",
+    "--prepared",
+    "D:\\CodexDaily\\flow10",
+    "--out",
+    "D:\\ct\\icim_gate_20261106\\flow10_acceptance"
+  ],
+  "cwd": "D:\\动量策略\\IC和IM滚动套利",
+  "exit_code": 0,
+  "ended": 1793898211.9023836,
+  "cleanup": {
+    "status": "deleted",
+    "paths": [
+      "D:\\ct\\managed\\1e2dcc95acac4ff1b0cd15d00108c968",
+      "D:\\ct\\icim_gate_20261106\\flow10_acceptance\\core30_temp",
+      "D:\\ct\\icim_gate_20261106\\flow10_acceptance\\release6_temp",
+      "D:\\ct\\icim_gate_20261106\\flow10_acceptance\\icim_hypothesis",
+      "D:\\ct\\icim_gate_20261106\\flow10_acceptance\\core30\\temp0",
+      "D:\\ct\\icim_gate_20261106\\flow10_acceptance\\core30\\temp1",
+      "D:\\ct\\icim_gate_20261106\\flow10_acceptance\\core30\\temp2",
+      "D:\\ct\\icim_gate_20261106\\flow10_acceptance\\core30\\temp3",
+      "D:\\ct\\icim_gate_20261106\\flow10_acceptance\\core30\\temp4",
+      "D:\\ct\\icim_gate_20261106\\flow10_acceptance\\core30\\temp5"
+    ],
+    "acceptance_files": 155,
+    "free_before": 23257653248,
+    "free_after": 25907040256,
+    "completed": 1793898265.8066008
+  }
+}

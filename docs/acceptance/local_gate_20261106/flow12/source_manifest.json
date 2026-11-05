@@ -1,0 +1,8 @@
+{
+  "active.json": "6717472c7cf01c7f85cdf6451bba436819c68a4f939e7e85f3de38e7c687fc55",
+  "gate.json": "02907a34cb8b505cecadd3eeeda0e26906abba65cbe85701e13f20087bd554ad",
+  "lifecycle.json": "e7d55867766b8925935c7a8116fdb435e70e2ace194335ec74d93ec273535903",
+  "realtime_daily_gate.py": "53565e09ca146e88fa4bc666f302a983a89425c9e5181f91ccbb909537f0884a",
+  "test_realtime_daily_gate.py": "67cebda94522e3c70c0f2b97c567bad2a682aee3778ea8d6deef566c6452a149",
+  "test_source_verified.json": "c005b3150f79028c83c530b9582ae06d37a959293648b68b5dc693c0a059eee7"
+}
