@@ -1,23 +1,41 @@
 {
   "schema_version": 1,
-  "strategy_sha": "b657fce0754d55596d1e6e547694145298f6e2d4",
-  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-recovery-20261105-b657fce0/microcap-recovery-whole-20261104-b657fce0.zip",
-  "state_sha256": "641cdc9276f54107cf8eef9026dca3f9bc0b97b37090c5aa4c96b7e8817be687",
+  "strategy_sha": "6fa0b9d73b12fff548200d987c953d1b1a7d74d7",
+  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-recovery-20261105-6fa0b9d7/microcap-recovery-whole-20261104-6fa0b9d7.zip",
+  "state_sha256": "6155ca0cc8ca94481cf41ce92af3f6d337549c5543a95dd9eb6e903d38944f7b",
   "state_date": "2026-11-04",
   "daily_test_source": {
-    "runtime_sha": "b657fce0754d55596d1e6e547694145298f6e2d4",
-    "source_sha": "4709a655efe526777d41d292d77d219727163c44",
+    "runtime_sha": "6fa0b9d73b12fff548200d987c953d1b1a7d74d7",
+    "source_sha": "5b9ae16f1636225a9bb44672ad2275ca9f4f6bc3",
     "allowed_changes": [
       {
         "path": "tests/test_normal_source_receipt_transition.py",
         "old_git_blob_sha256": "aa802deacb8f1e3d4a08894824c9f526d828cfde1589326a2b3a7f4dce70cf58",
         "new_git_blob_sha256": "f57e1dbef0d6e5f4e9705f871a31b2be9ed36f01a83114fe6a821541e3353bd4",
-        "reason": "Keep the strict next-session regression portable in the authenticated archive checkout; original e41 failure replay remains in immutable audit evidence, without a test-time Git-history or network dependency."
+        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
+      },
+      {
+        "path": "tests/fixtures/validation_source_identity/v20_reviewed_b657.py.gz",
+        "old_git_blob_sha256": null,
+        "new_git_blob_sha256": "e99d83ba46dbd42fe3903ba343c59bb28a799d4c86458b752a04434f030fa895",
+        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
+      },
+      {
+        "path": "tests/test_validation_source_identity.py",
+        "old_git_blob_sha256": "28aa4aa45a2d98e70153bf0f500c2849df6c546e18e4ed1b5ff7d474e2962ec0",
+        "new_git_blob_sha256": "440eb6c155e053e06087512145d95e48764a251e845d6680345f2f44b15e6d5c",
+        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
+      },
+      {
+        "path": "tests/fixtures/validation_source_identity/st_metadata_reviewed_b657.py.gz",
+        "old_git_blob_sha256": null,
+        "new_git_blob_sha256": "acf04dccac4bf7645219233755f0ee4e6ca19dc88464eb991293419d9386aac2",
+        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
       }
     ]
   },
   "recovery_readiness": {
     "path": "config/microcap_recovery_readiness.json",
-    "sha256": "36e9cc064ab476fcbf77b4d2c33b941bfc4127afa6b34e1c1e9a125f5a7af7de"
+    "sha256": "aa3728ebc55d73185f1114d117e3eb31443dd29ebc9a607189fd25d6aa993da0"
   }
 }
