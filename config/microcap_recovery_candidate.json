@@ -4,12 +4,13 @@
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-validation-flow-20261105-e41cf520/microcap-validated-whole-20261104-e41cf520.zip",
   "state_sha256": "af161e0fe551458121e92a2e013625d934873ad0fba893b9a575e424250014d7",
   "state_date": "2026-11-04",
-  "bootstrap_strategy_sha": "e41cf520167dbeb86f935010affa57b77afdff4b",
+  "bootstrap_strategy_sha": "49f43adee9df6e8947ff6924f2397a14900f1580",
   "source_repack_changes": {
     "scripts/st_notice_boundary_review.py": [
       "cf3db386ef65edc85e423d3be241f800038fafa2061dcaba931dc21c3ee5f286",
       "ca9896e8b608b4f9aeedd78fb96dcf566d817c5d7492e032847855ffae36e793"
     ]
   },
-  "review": "microcap docs/st_catalog_columns_exact_20261105.md; exact non-ST catalog metadata only; no history/source authority/parameter changes"
+  "review": "microcap docs/st_catalog_columns_exact_20261105.md; exact non-ST catalog metadata only; no history/source authority/parameter changes",
+  "bootstrap_validation": "Original normal run 41991220998 completed full approved-package restore under this runtime; package producer remains e41cf520 and unchanged."
 }
