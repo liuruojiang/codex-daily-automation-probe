@@ -13,13 +13,25 @@
   },
   "daily_test_source": {
     "runtime_sha": "22c8b6ff12e7c07182043f61a9eb9b28e052035b",
-    "source_sha": "d48213154c0721bd64ba41990655df333d4b78a7",
+    "source_sha": "cb904841414cf726da331ad3bee51275670f4461",
     "allowed_changes": [
       {
         "path": "tests/test_normal_source_receipt_transition.py",
         "old_git_blob_sha256": "aa802deacb8f1e3d4a08894824c9f526d828cfde1589326a2b3a7f4dce70cf58",
         "new_git_blob_sha256": "f57e1dbef0d6e5f4e9705f871a31b2be9ed36f01a83114fe6a821541e3353bd4",
         "reason": "Retain the already approved portable strict receipt test; original historical implementation replay remains preserved in immutable audit evidence."
+      },
+      {
+        "path": "tests/test_validation_source_identity.py",
+        "old_git_blob_sha256": "28aa4aa45a2d98e70153bf0f500c2849df6c546e18e4ed1b5ff7d474e2962ec0",
+        "new_git_blob_sha256": "bb0b8afce44c683802d9c33722858681b8816390c15cf2b621e5fcfd45592104",
+        "reason": "Use exact original b657 Git bytes for sealed historical review tests; retain all prior cases and require current runtime to reject old review authority."
+      },
+      {
+        "path": "tests/fixtures/validation_source_identity/v20_reviewed_b657.py.gz",
+        "old_git_blob_sha256": null,
+        "new_git_blob_sha256": "e99d83ba46dbd42fe3903ba343c59bb28a799d4c86458b752a04434f030fa895",
+        "reason": "Use exact original b657 Git bytes for sealed historical review tests; retain all prior cases and require current runtime to reject old review authority."
       }
     ]
   },
