@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "id": "aa2909b0850c44a6a7ce98ea7de5bd04",
+  "nonce": "4d859e86aabe48638e43985937be1f99",
+  "workspace": "D:\\动量策略\\IC和IM滚动套利",
+  "label": "flow14-request-retry-acceptance",
+  "state": "completed",
+  "started": 1793917523.4633503,
+  "owner": {
+    "pid": 79628,
+    "created": 1793917523.26288
+  },
+  "root": "D:\\ct\\managed\\aa2909b0850c44a6a7ce98ea7de5bd04",
+  "record": "D:\\Codex\\test-lifecycle\\records\\aa2909b0850c44a6a7ce98ea7de5bd04",
+  "children": [
+    {
+      "pid": 104084,
+      "created": 1793917523.4676344
+    },
+    {
+      "pid": 91588,
+      "created": 1793917523.4806976
+    },
+    {
+      "pid": 87332,
+      "created": 1793917539.9809144
+    },
+    {
+      "pid": 56840,
+      "created": 1793917541.4134696
+    },
+    {
+      "pid": 96688,
+      "created": 1793917555.8400648
+    },
+    {
+      "pid": 56484,
+      "created": 1793917555.8402476
+    },
+    {
+      "pid": 20956,
+      "created": 1793917555.840386
+    },
+    {
+      "pid": 80796,
+      "created": 1793917555.8405733
+    },
+    {
+      "pid": 103760,
+      "created": 1793917555.8407147
+    },
+    {
+      "pid": 23000,
+      "created": 1793917555.841339
+    },
+    {
+      "pid": 64432,
+      "created": 1793917579.9751341
+    },
+    {
+      "pid": 82504,
+      "created": 1793917757.7867167
+    },
+    {
+      "pid": 88828,
+      "created": 1793917816.8812642
+    }
+  ],
+  "keep": false,
+  "gate_out": "D:\\ct\\icim_gate_20261106\\flow14_acceptance",
+  "command": [
+    "C:/Python314/python.exe",
+    "-B",
+    "-X",
+    "utf8",
+    "D:/Codex/home/automations/ic-im/scripts/realtime_daily_gate.py",
+    "gate",
+    "--prepared",
+    "D:/CodexDaily/flow14",
+    "--out",
+    "D:/ct/icim_gate_20261106/flow14_acceptance",
+    "--reuse-icim-from",
+    "D:/ct/icim_gate_20261106/flow10_acceptance/gate.json"
+  ],
+  "cwd": "D:\\动量策略\\IC和IM滚动套利",
+  "exit_code": 0,
+  "ended": 1793917849.75881,
+  "cleanup": {
+    "status": "deleted",
+    "paths": [
+      "D:\\ct\\managed\\aa2909b0850c44a6a7ce98ea7de5bd04",
+      "D:\\ct\\icim_gate_20261106\\flow14_acceptance\\core30_temp",
+      "D:\\ct\\icim_gate_20261106\\flow14_acceptance\\release6_temp",
+      "D:\\ct\\icim_gate_20261106\\flow14_acceptance\\core30\\temp0",
+      "D:\\ct\\icim_gate_20261106\\flow14_acceptance\\core30\\temp1",
+      "D:\\ct\\icim_gate_20261106\\flow14_acceptance\\core30\\temp2",
+      "D:\\ct\\icim_gate_20261106\\flow14_acceptance\\core30\\temp3",
+      "D:\\ct\\icim_gate_20261106\\flow14_acceptance\\core30\\temp4",
+      "D:\\ct\\icim_gate_20261106\\flow14_acceptance\\core30\\temp5"
+    ],
+    "acceptance_files": 69,
+    "free_before": 19200180224,
+    "free_after": 21851029504,
+    "completed": 1793917908.509471
+  }
+}
