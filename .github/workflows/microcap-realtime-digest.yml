@@ -222,7 +222,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: ff1fd3c6e2c92c0694da19c97ad6f4aebd01dad0
+          ref: c8be145fcfb0eb6b2b93a405301a4c2311c35946
           path: microcap
 
       - name: Record microcap strategy SHA
@@ -517,6 +517,12 @@ jobs:
             wait "${heartbeat_pid}" 2>/dev/null || true
             cat "${attempt_log}" | tee -a realtime_state_refresh_result.txt
             if [[ "${status}" -eq 0 ]]; then
+              break
+            fi
+            # The failed share request already spent the former two-run budget.
+            # Re-entering refresh after partial input publication is not resumable.
+            if grep -Fq 'SHARE_REQUEST_RETRY_EXHAUSTED' "${attempt_log}"; then
+              echo "::error title=Microcap source stopped::Share request retry budget exhausted; preserve partial inputs, do not rerun whole refresh." | tee -a realtime_state_refresh_result.txt
               break
             fi
             # A rejected history/lineage cannot be repaired by re-fetching the

@@ -167,6 +167,14 @@ def test_actual_workflow_bounds_transient_whole_refresh_retries(tmp_path):
     assert 'exit_status=1' in output
 
 
+@pytest.mark.parametrize('terminal', ['ConnectionError: timed out', 'HTTPError: 503 Service Unavailable'])
+def test_exhausted_share_request_never_restarts_partial_refresh(tmp_path, terminal):
+    output = retry_decision(tmp_path, 'SHARE_REQUEST_RETRY_EXHAUSTED: unfiltered_1\n' + terminal, status=17)
+    assert 'retry_reached' not in output
+    assert 'Share request retry budget exhausted' in output
+    assert 'exit_status=17' in output
+
+
 @pytest.mark.parametrize("prefix", ["", "[index-history] recovered primary ConnectionError; selected_source=sina_legacy\n"])
 def test_unresolved_st_history_is_terminal_even_after_recovered_transport(tmp_path, prefix):
     error = "SecurityMetaHistoryEvidenceUnresolved: point-in-time ST history is unresolved for 300237: current ST snapshot 'ST美晨' has no verified historical interval; current_st_history_resolved=false"

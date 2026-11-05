@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "strategy_sha": "ff1fd3c6e2c92c0694da19c97ad6f4aebd01dad0",
+  "strategy_sha": "c8be145fcfb0eb6b2b93a405301a4c2311c35946",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-recovery-20261105-6fa0b9d7/microcap-recovery-whole-20261104-6fa0b9d7.zip",
   "state_sha256": "6155ca0cc8ca94481cf41ce92af3f6d337549c5543a95dd9eb6e903d38944f7b",
   "state_date": "2026-11-04",
   "daily_test_source": {
-    "runtime_sha": "ff1fd3c6e2c92c0694da19c97ad6f4aebd01dad0",
-    "source_sha": "54d140c96a98f63b7cbdae816d5005344533c546",
+    "runtime_sha": "c8be145fcfb0eb6b2b93a405301a4c2311c35946",
+    "source_sha": "880c33c2092be78216676c987fe31a1b69ae37a6",
     "allowed_changes": [
       {
         "path": "tests/fixtures/validation_source_identity/share_change_source.py.6fa.gz",
@@ -66,7 +66,7 @@
       ],
       "scripts/realtime_state_bundle.py": [
         "18e64de0cce77b65dcb8a77843baa74593c85559ad6dae518623a98724693328",
-        "4d5b7fb4641f34777a5863721a209cb545d6c7808722134530aff9fdcb312b5b"
+        "04ac107f151fb0f9b6d8df9b1da398fe1c02742bcdccc2827606820d1711d9b2"
       ],
       "scripts/share_change_source.py": [
         "2231debbff5ed1d85ecb31ac25ba5db4bfd7050d6d7f55920e0dde5299a68517",
@@ -74,7 +74,7 @@
       ],
       "scripts/share_unchanged_tail.py": [
         "cf66976ca3cea83c5fe9fa67cfe816948141479cda00320e70e6406444c1a6fd",
-        "f94a4e68a9a148dde809f4a816ed0dd68a099da7f077728c8a635eb755858c38"
+        "f4bf84f795b83817f8113c83ff649545566da51d2fbff9fcf17f194da53bf0f7"
       ],
       "scripts/sse_share_daily_unchanged_20261104.py": [
         "33b6eaf8b50e026701203d7a48b2366034462cede12865716ad06b6ada7ef0ab",
