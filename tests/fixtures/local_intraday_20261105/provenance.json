@@ -1,0 +1,37 @@
+{
+  "sample_signal_day": "2026-11-05",
+  "scope": "saved historical intraday fixture, not current inputs or production authority",
+  "entries": [
+    {
+      "file": "icim_result.json",
+      "source": "D:\\Codex\\home\\automations\\ic-im\\runs\\20261105\\daily_1415\\icim\\result.json",
+      "sha256": "ea447b581aeb36f118b65fc4a4a604295304c4e30070c7ef51dd11ff2cdffef3",
+      "mode": "exact_copy"
+    },
+    {
+      "file": "microcap_top100_mom16_biweekly_live_v2_0_realtime_signal.csv",
+      "source": "D:\\Codex\\home\\automations\\ic-im\\runs\\20261105\\daily_1415\\microcap_top100_mom16_biweekly_live_v2_0_realtime_signal.csv",
+      "sha256": "eeb08995d2a7b0a0f9c95e971d1fea4f68e45bb64003581549223d4f8b80cdc9",
+      "mode": "exact_copy"
+    },
+    {
+      "file": "microcap_top100_mom16_biweekly_live_v2_3_realtime_signal.csv",
+      "source": "D:\\Codex\\home\\automations\\ic-im\\runs\\20261105\\daily_1415\\microcap_top100_mom16_biweekly_live_v2_3_realtime_signal.csv",
+      "sha256": "432642ceac171ffd007220e691b219b1023c284ff4d63ebb25713995892fd739",
+      "mode": "exact_copy"
+    },
+    {
+      "file": "microcap_top100_mom16_biweekly_live_v2_5_realtime_signal.csv",
+      "source": "D:\\Codex\\home\\automations\\ic-im\\runs\\20261105\\daily_1415\\microcap_top100_mom16_biweekly_live_v2_5_realtime_signal.csv",
+      "sha256": "5b2d23ad51520a36d65690cb798f6adfd7636b38e49569a1bc875e0c4d5a0e93",
+      "mode": "exact_copy"
+    },
+    {
+      "file": "readiness_projection.json",
+      "source": "D:\\Codex\\home\\automations\\ic-im\\runtime\\microcap_residents\\morning_20261105_1013\\results\\66046755ad6146a38cd7d26c22700509\\readiness.json",
+      "source_sha256": "4701d4b1e74ba0ace8f541bdb3934230d5b57de8a840347450eb6a91095e8885",
+      "sha256": "58fcb661e2479620cf9855492da0af324266dbb2dc11f15cda73e6d8175b7ba9",
+      "mode": "read_only_field_projection_for_renderer_test_not_production_gate"
+    }
+  ]
+}
