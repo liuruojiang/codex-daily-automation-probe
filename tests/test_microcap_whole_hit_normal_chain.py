@@ -15,10 +15,11 @@ JOBS = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))["jobs"]
 STEPS = {step.get("name"): step for step in JOBS["send"]["steps"]}
 
 
-def condition(expression, values):
+def condition(expression, values, *, cancelled=False):
     # Evaluate only the boolean/comparison subset used by these actual gates;
     # reject unsupported syntax rather than silently treating it as successful.
     expression = expression.removeprefix("${{").removesuffix("}}").strip()
+    expression = expression.replace("!cancelled()", repr(not cancelled))
     expression = expression.replace("always()", "True").replace("&&", " and ").replace("||", " or ")
     def token(match):
         value = match.group()
@@ -32,6 +33,15 @@ def condition(expression, values):
     allowed = (ast.Expression, ast.BoolOp, ast.And, ast.Or, ast.Compare, ast.Eq, ast.NotEq, ast.Constant)
     assert all(isinstance(node, allowed) for node in ast.walk(tree)), expression
     return bool(eval(compile(tree, "<actual-workflow-condition>", "eval"), {"__builtins__": {}}, {}))
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "require_hit"])
+def test_cancelled_recovery_cannot_run_even_with_successful_regression(mode):
+    values = {"github.event_name": "workflow_dispatch", "inputs.validation_only": False,
+              "inputs.recovery_check": mode, "needs.regression.result": "success"}
+    expression = JOBS["recovery-check"]["if"]
+    assert condition(expression, values, cancelled=False)
+    assert not condition(expression, values, cancelled=True)
 
 
 def baseline():

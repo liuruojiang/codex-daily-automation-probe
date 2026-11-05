@@ -26,7 +26,7 @@ DAY = date(2026, 10, 7)
 
 
 def actions_eval(expression, *, holiday, manual=True, external=False,
-                 validation=False, correction=False, test_id="", calendar="success", recovery="off"):
+                 validation=False, correction=False, test_id="", calendar="success", recovery="off", cancelled=False):
     namespace = {
         "always": lambda: True, "true": True, "false": False,
         "github": SimpleNamespace(event_name="workflow_dispatch" if manual else "schedule"),
@@ -39,6 +39,7 @@ def actions_eval(expression, *, holiday, manual=True, external=False,
                 SHOULD_RUN_MICROCAP="false" if holiday else "true"))}),
     }
     expression = expression.replace("needs.check-trading-day", "needs.check_trading_day")
+    expression = expression.replace("!cancelled()", repr(not cancelled))
     return eval(expression.replace("&&", " and ").replace("||", " or "),
                 {"__builtins__": {}}, namespace)
 
@@ -72,6 +73,7 @@ def test_recovery_maintenance_runs_regression_and_restore_but_never_mail_job(mod
     assert actions_eval(jobs["regression"]["if"], **options) is True
     assert actions_eval(jobs["recovery-check"]["if"], **options) is True
     assert actions_eval(jobs["recovery-check"]["if"], validation=True, **options) is False
+    assert actions_eval(jobs["recovery-check"]["if"], cancelled=True, **options) is False
 
 
 @pytest.mark.parametrize("value", ["", "short", "x\nBCC-secret", "x/../../a", "验收-20261007", "A" * 12, "a" * 65])
