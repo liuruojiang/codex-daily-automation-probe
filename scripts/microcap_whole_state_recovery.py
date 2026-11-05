@@ -96,15 +96,42 @@ def restore_bundle(root: Path, bundle: Path, strategy_sha: str, not_after: str) 
     return {**identity, "restored": True}
 
 
+def _source_repack_changes(config_raw: bytes) -> dict:
+    changes = json.loads(config_raw).get("source_repack_changes", {})
+    if not isinstance(changes, dict) or len(changes) > 1:
+        raise ValueError("Source repack requires at most one exact source-file declaration")
+    for path, pair in changes.items():
+        if not re.fullmatch(r"scripts/[A-Za-z0-9_]+\.py", path):
+            raise ValueError("Source repack declaration is not a direct scripts/*.py file")
+        if (not isinstance(pair, list) or len(pair) != 2
+                or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in pair)
+                or pair[0] == pair[1]):
+            raise ValueError("Source repack requires distinct exact old/new SHA-256 values")
+    return changes
+
+
+def _verify_repack_inputs(original: dict, updated: dict, changes: dict) -> None:
+    if not isinstance(updated, dict) or original.keys() != updated.keys():
+        raise ValueError("Approved repack changed input key set")
+    actual = {path for path in original if original[path] != updated[path]}
+    if actual != set(changes):
+        raise ValueError("Approved repack input changes differ from exact source declaration")
+    for path, (old_sha, new_sha) in changes.items():
+        if original[path] != old_sha or updated[path] != new_sha:
+            raise ValueError("Approved repack source hash differs from declaration")
+
+
 def repack_approved(root: Path, bundle: Path, strategy_sha: str, not_after: str, config_path: Path) -> dict:
     """After approved bootstrap restore, rebind packaging only via native pack.
 
     The approved original remains immutable. No refresh, signal or SMTP is run.
-    Economic/source manifest inputs and all three final streams must be exact.
+    Economic inputs/final streams must be exact; only an explicitly approved,
+    exact one-file source transition may differ in the native-pack manifest.
     """
     from restore_approved_microcap_state import load_release_config
     config_raw = config_path.read_bytes()
     config = load_release_config(config_path, strategy_sha)
+    source_changes = _source_repack_changes(config_raw)
     actual = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
     if actual != strategy_sha:
         raise ValueError("Approved repack strategy SHA differs from actual checkout")
@@ -132,10 +159,20 @@ def repack_approved(root: Path, bundle: Path, strategy_sha: str, not_after: str,
     root_manifest = root / manifest_name
     if root_manifest.read_bytes() != original_raw:
         raise ValueError("Restored whole manifest differs from the approved archive")
+    def verify_declared_source():
+        for path, (old_sha, new_sha) in source_changes.items():
+            source = root / path
+            if (original['inputs'].get(path) != old_sha or source.is_symlink()
+                    or source.resolve().parent != root.resolve() / 'scripts'
+                    or hashlib.sha256(source.read_bytes().replace(b'\r\n', b'\n')).hexdigest() != new_sha):
+                raise ValueError("Approved repack actual source differs from declaration")
+    verify_declared_source()
     report = {"approved_original": {**old_identity, "source": config["state_url"]},
               "config_sha256": hashlib.sha256(config_raw).hexdigest(),
               "repacked": False, "freshness": "verified_archive_only_requires_current_refresh"}
     if original["release_sha"] == strategy_sha:
+        if source_changes:
+            raise ValueError("Same-runtime seed cannot claim a source transition")
         return {**report, **old_identity, "unchanged_exact_runtime": True}
     # A new temporary output keeps the approved ZIP intact on every failure.
     # Retain a failed attempt directory for diagnosis, not as a recovery artifact.
@@ -152,9 +189,11 @@ def repack_approved(root: Path, bundle: Path, strategy_sha: str, not_after: str,
         if archive.namelist().count(manifest_name) != 1:
             raise ValueError("Repacked whole manifest missing or duplicated")
         updated = json.loads(archive.read(manifest_name))
-    for key in ("expected_date", "inputs", "artifacts", "streams"):
+    _verify_repack_inputs(original['inputs'], updated.get('inputs'), source_changes)
+    for key in ("expected_date", "artifacts", "streams"):
         if updated.get(key) != original[key]:
             raise ValueError("Approved repack changed economic/source manifest: " + key)
+    verify_declared_source()
     if (root_manifest.read_bytes() != original_raw or config_path.read_bytes() != config_raw
             or digest(bundle) != approved_sha
             or subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip() != strategy_sha):
@@ -168,7 +207,8 @@ def repack_approved(root: Path, bundle: Path, strategy_sha: str, not_after: str,
         raise ValueError("Preserved approved archive SHA-256 differs")
     os.replace(temporary, bundle)
     return {**report, **identity, "repacked": True, "native_pack_log": str(log),
-            "preserved_approved_archive": str(preserved), "economic_manifest_unchanged": True}
+            "preserved_approved_archive": str(preserved), "economic_manifest_unchanged": True,
+            "verified_source_repack_changes": source_changes}
 
 
 def main() -> int:

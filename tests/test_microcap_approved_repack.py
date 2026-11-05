@@ -123,3 +123,94 @@ def test_actual_yaml_only_successful_approved_bootstrap_can_repack():
     describe=next(i for i,s in enumerate(steps) if 'recovery.py describe' in s.get('run',''))
     assert steps.index(step)<describe
     assert all('repack-approved' not in s.get('run','') for s in jobs['send']['steps'])
+
+
+SOURCE='scripts/st_notice_boundary_review.py'
+SOURCE_RAW=b'# synthetic approved source\nVALUE = 2\n'
+SOURCE_OLD='c'*64
+SOURCE_NEW=hashlib.sha256(SOURCE_RAW).hexdigest()
+
+
+def source_case(case,monkeypatch):
+    root,bundle,config,manifest,calls,_=case
+    manifest['inputs'][SOURCE]=SOURCE_OLD
+    write_zip(bundle,manifest);(root/MANIFEST).write_text(json.dumps(manifest))
+    (root/'scripts').mkdir();(root/SOURCE).write_bytes(SOURCE_RAW)
+    cfg=json.loads(config.read_bytes());cfg['state_sha256']=hashlib.sha256(bundle.read_bytes()).hexdigest()
+    cfg['source_repack_changes']={SOURCE:[SOURCE_OLD,SOURCE_NEW]};config.write_text(json.dumps(cfg))
+    def pack(cmd,**kw):
+        calls.append(cmd)
+        value=copy.deepcopy(manifest);value['release_sha']=NEW;value['inputs'][SOURCE]=SOURCE_NEW
+        # Native implementation, not this wrapper, authenticates ancestry.
+        value['previous_source_validation']={'synthetic':'native-return fixture'}
+        write_zip(Path(cmd[cmd.index('--bundle')+1]),value)
+    monkeypatch.setattr(recovery.subprocess,'run',pack)
+    return pack
+
+
+def test_exact_declared_source_native_pack_preserves_economics_and_original(case,monkeypatch):
+    source_case(case,monkeypatch);before=case[1].read_bytes();manifest=case[0]/MANIFEST;manifest_before=manifest.read_bytes()
+    result=run(case)
+    assert result['verified_source_repack_changes']=={SOURCE:[SOURCE_OLD,SOURCE_NEW]}
+    assert result['economic_manifest_unchanged'] and len(case[4])==1
+    assert Path(result['preserved_approved_archive']).read_bytes()==before and manifest.read_bytes()==manifest_before
+    with zipfile.ZipFile(case[1]) as z:value=json.loads(z.read(MANIFEST))
+    assert value['previous_source_validation']=={'synthetic':'native-return fixture'}
+    for key in ('artifacts','streams','expected_date'):assert value[key]==case[3][key]
+
+
+@pytest.mark.parametrize('declaration',[
+    None,[], {SOURCE:[SOURCE_OLD,SOURCE_OLD]}, {SOURCE:['bad',SOURCE_NEW]},
+    {SOURCE:[SOURCE_OLD,SOURCE_NEW,'extra']}, {SOURCE:{'old':SOURCE_OLD,'new':SOURCE_NEW}},
+    {'data/price.py':[SOURCE_OLD,SOURCE_NEW]}, {'outputs/manifest.py':[SOURCE_OLD,SOURCE_NEW]},
+    {'.microcap_index_cache/cache.py':[SOURCE_OLD,SOURCE_NEW]}, {'scripts/../data.py':[SOURCE_OLD,SOURCE_NEW]},
+    {'scripts/nested/test.py':[SOURCE_OLD,SOURCE_NEW]}, {'scripts/a.py':[SOURCE_OLD,SOURCE_NEW],SOURCE:[SOURCE_OLD,SOURCE_NEW]},
+])
+def test_invalid_source_declaration_fails_before_native_pack(case,monkeypatch,declaration):
+    source_case(case,monkeypatch);config=case[2];cfg=json.loads(config.read_bytes());cfg['source_repack_changes']=declaration;config.write_text(json.dumps(cfg))
+    before=case[1].read_bytes()
+    with pytest.raises(ValueError):run(case)
+    assert not case[4] and case[1].read_bytes()==before
+
+
+@pytest.mark.parametrize('mutation',['undeclared','extra_key','missing_key','data_change','wrong_new','missing_declared_change','artifacts','streams','expected_date'])
+def test_native_result_must_match_exact_declared_delta(case,monkeypatch,mutation):
+    pack=source_case(case,monkeypatch);original=case[1].read_bytes()
+    if mutation=='undeclared':
+        cfg=json.loads(case[2].read_bytes());cfg.pop('source_repack_changes');case[2].write_text(json.dumps(cfg))
+    def bad(cmd,**kw):
+        pack(cmd,**kw);path=Path(cmd[cmd.index('--bundle')+1])
+        with zipfile.ZipFile(path) as z:value=json.loads(z.read(MANIFEST))
+        if mutation=='extra_key':value['inputs']['scripts/extra.py']='d'*64
+        if mutation=='missing_key':value['inputs'].pop('input.csv')
+        if mutation=='data_change':value['inputs']['input.csv']='d'*64
+        if mutation=='wrong_new':value['inputs'][SOURCE]='d'*64
+        if mutation=='missing_declared_change':value['inputs'][SOURCE]=SOURCE_OLD
+        if mutation in ('artifacts','streams'):value[mutation]={'corrupt':True}
+        if mutation=='expected_date':value['expected_date']='2026-11-03'
+        write_zip(path,value)
+    monkeypatch.setattr(recovery.subprocess,'run',bad)
+    with pytest.raises(ValueError):run(case)
+    assert case[1].read_bytes()==original
+
+
+@pytest.mark.parametrize('mutation',['old_hash','new_actual_bytes','source_changes_during_pack','same_pin'])
+def test_declared_source_binds_real_bytes_old_input_and_new_runtime(case,monkeypatch,mutation):
+    pack=source_case(case,monkeypatch);before=case[1].read_bytes()
+    if mutation=='old_hash':
+        cfg=json.loads(case[2].read_bytes());cfg['source_repack_changes'][SOURCE][0]='d'*64;case[2].write_text(json.dumps(cfg))
+    elif mutation=='new_actual_bytes':(case[0]/SOURCE).write_bytes(b'tampered')
+    elif mutation=='source_changes_during_pack':
+        def changed(cmd,**kw):pack(cmd,**kw);(case[0]/SOURCE).write_bytes(b'tampered')
+        monkeypatch.setattr(recovery.subprocess,'run',changed)
+    else:
+        cfg=json.loads(case[2].read_bytes());cfg['strategy_sha']=OLD;case[2].write_text(json.dumps(cfg))
+        monkeypatch.setattr(recovery.subprocess,'check_output',lambda *a,**k:OLD)
+    with pytest.raises(ValueError):
+        recovery.repack_approved(case[0],case[1],OLD if mutation=='same_pin' else NEW,'2026-11-04',case[2])
+    assert case[1].read_bytes()==before
+
+
+def test_declared_source_uses_native_lf_hash_contract(case,monkeypatch):
+    source_case(case,monkeypatch);(case[0]/SOURCE).write_bytes(SOURCE_RAW.replace(b'\n',b'\r\n'))
+    assert run(case)['verified_source_repack_changes'][SOURCE][1]==SOURCE_NEW
