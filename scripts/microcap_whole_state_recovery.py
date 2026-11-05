@@ -101,8 +101,8 @@ def _source_repack_changes(config_raw: bytes) -> dict:
     if not isinstance(changes, dict) or len(changes) > 1:
         raise ValueError("Source repack requires at most one exact source-file declaration")
     for path, pair in changes.items():
-        if not re.fullmatch(r"scripts/[A-Za-z0-9_]+\.py", path):
-            raise ValueError("Source repack declaration is not a direct scripts/*.py file")
+        if path != "microcap_top100_mom16_biweekly_live_v2_0.py" and not re.fullmatch(r"scripts/[A-Za-z0-9_]+\.py", path):
+            raise ValueError("Source repack declaration is not an allowed execution source")
         if (not isinstance(pair, list) or len(pair) != 2
                 or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in pair)
                 or pair[0] == pair[1]):
@@ -163,7 +163,7 @@ def repack_approved(root: Path, bundle: Path, strategy_sha: str, not_after: str,
         for path, (old_sha, new_sha) in source_changes.items():
             source = root / path
             if (original['inputs'].get(path) != old_sha or source.is_symlink()
-                    or source.resolve().parent != root.resolve() / 'scripts'
+                    or source.resolve() != root.resolve() / path
                     or hashlib.sha256(source.read_bytes().replace(b'\r\n', b'\n')).hexdigest() != new_sha):
                 raise ValueError("Approved repack actual source differs from declaration")
     verify_declared_source()

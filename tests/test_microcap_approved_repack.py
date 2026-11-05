@@ -214,3 +214,37 @@ def test_declared_source_binds_real_bytes_old_input_and_new_runtime(case,monkeyp
 def test_declared_source_uses_native_lf_hash_contract(case,monkeypatch):
     source_case(case,monkeypatch);(case[0]/SOURCE).write_bytes(SOURCE_RAW.replace(b'\n',b'\r\n'))
     assert run(case)['verified_source_repack_changes'][SOURCE][1]==SOURCE_NEW
+
+
+@pytest.mark.parametrize("fault", [None, "old_hash", "new_bytes", "during_pack", "economic_change"])
+def test_exact_v20_execution_source_transition_keeps_all_bindings(case, monkeypatch, fault):
+    import sys
+    monkeypatch.setattr(sys.modules[__name__], "SOURCE", "microcap_top100_mom16_biweekly_live_v2_0.py")
+    pack = source_case(case, monkeypatch)
+    before = case[1].read_bytes()
+    if fault == "old_hash":
+        cfg=json.loads(case[2].read_bytes());cfg['source_repack_changes'][SOURCE][0]='d'*64;case[2].write_text(json.dumps(cfg))
+    elif fault == "new_bytes": (case[0]/SOURCE).write_bytes(b'changed')
+    elif fault in ("during_pack", "economic_change"):
+        def changed(cmd, **kw):
+            pack(cmd, **kw)
+            if fault == "during_pack": (case[0]/SOURCE).write_bytes(b'changed')
+            else:
+                p=Path(cmd[cmd.index('--bundle')+1])
+                with zipfile.ZipFile(p) as z: value=json.loads(z.read(MANIFEST))
+                value['inputs']['input.csv']='d'*64;write_zip(p,value)
+        monkeypatch.setattr(recovery.subprocess, 'run', changed)
+    if fault:
+        with pytest.raises(ValueError): run(case)
+        assert case[1].read_bytes()==before
+    else:
+        result=run(case)
+        assert result['verified_source_repack_changes']=={SOURCE:[SOURCE_OLD,SOURCE_NEW]}
+        assert result['economic_manifest_unchanged']
+        assert Path(result['preserved_approved_archive']).read_bytes()==before
+
+
+@pytest.mark.parametrize("path", ["analyze_top100_rebalance_frequency.py", "microcap_top100_mom16_biweekly_live_v2_3.py", "../microcap_top100_mom16_biweekly_live_v2_0.py", "outputs/microcap_top100_mom16_biweekly_live_v2_0.py"])
+def test_v20_exception_does_not_open_other_root_or_data_paths(path):
+    with pytest.raises(ValueError):
+        recovery._source_repack_changes(json.dumps({'source_repack_changes':{path:[SOURCE_OLD,SOURCE_NEW]}}).encode())

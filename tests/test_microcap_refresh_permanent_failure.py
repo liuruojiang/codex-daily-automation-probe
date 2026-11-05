@@ -165,3 +165,19 @@ def test_actual_workflow_bounds_transient_whole_refresh_retries(tmp_path):
     assert 'retry_reached' not in output
     assert 'Two whole-refresh attempts exhausted' in output
     assert 'exit_status=1' in output
+
+
+@pytest.mark.parametrize("prefix", ["", "[index-history] recovered primary ConnectionError; selected_source=sina_legacy\n"])
+def test_unresolved_st_history_is_terminal_even_after_recovered_transport(tmp_path, prefix):
+    error = "SecurityMetaHistoryEvidenceUnresolved: point-in-time ST history is unresolved for 300237: current ST snapshot 'ST美晨' has no verified historical interval; current_st_history_resolved=false"
+    output = retry_decision(tmp_path, prefix + error, status=1)
+    assert "retry_reached" not in output
+    assert "Non-retryable" in output
+    assert "exit_status=1" in output
+
+
+def test_recovered_transport_does_not_reclassify_unknown_terminal_failure(tmp_path):
+    output = retry_decision(tmp_path, "[index-history] ConnectionError, backup succeeded\nRuntimeError: unsupported new data failure\n", status=19)
+    assert "retry_reached" not in output
+    assert "Unknown failure" in output
+    assert "exit_status=19" in output

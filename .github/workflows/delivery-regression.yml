@@ -12,6 +12,9 @@ on:
       family:
         type: string
         default: all
+      recovery_strategy_sha:
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -65,17 +68,31 @@ jobs:
           python-version: '3.11'
       - name: Resolve exact published strategy pin
         id: pin
+        env:
+          RECOVERY_STRATEGY_SHA: ${{ inputs.recovery_strategy_sha || '' }}
         run: |
           python - <<'PY'
-          import os, re
+          import json, os, re
           from pathlib import Path
           workflow = Path('automation/.github/workflows') / os.environ['STRATEGY_WORKFLOW']
           pattern = r'repository: ' + re.escape(os.environ['STRATEGY_REPOSITORY']) + r'\s+ref: ([0-9a-f]{40})\b'
           pins = set(re.findall(pattern, workflow.read_text(encoding='utf-8')))
           if len(pins) != 1:
               raise SystemExit('Expected exactly one consistent immutable strategy SHA')
+          selected = pins.pop()
+          config_path = 'automation/config/microcap_approved_state.json'
+          candidate = os.environ.get('RECOVERY_STRATEGY_SHA', '')
+          if candidate:
+              if os.environ['STRATEGY_REPOSITORY'] != 'liuruojiang/microcap' or not re.fullmatch('[0-9a-f]{40}', candidate):
+                  raise SystemExit('Invalid recovery-only regression candidate')
+              config_path = 'automation/config/microcap_recovery_candidate.json'
+              config = json.loads(Path(config_path).read_bytes())
+              if config.get('strategy_sha') != candidate or config.get('daily_test_source', {}).get('runtime_sha') != candidate:
+                  raise SystemExit('Recovery regression candidate/test role mismatch')
+              selected = candidate
           with open(os.environ['GITHUB_OUTPUT'], 'a') as handle:
-              handle.write('sha=' + pins.pop() + '\n')
+              handle.write('sha=' + selected + '\n')
+              handle.write('config=' + config_path + '\n')
           PY
       - uses: actions/checkout@v6
         with:
@@ -93,7 +110,7 @@ jobs:
         if: matrix.family == 'microcap'
         run: |
           python -B -X utf8 automation/scripts/verify_microcap_daily_test_source.py materialize \
-            --runtime-root strategy --config automation/config/microcap_approved_state.json \
+            --runtime-root strategy --config "${{ steps.pin.outputs.config }}" \
             --test-root strategy-tests --fetch-missing --out strategy/microcap-test-source.json
       - name: Test Microcap state and cloud transport invariants
         if: matrix.family == 'microcap'

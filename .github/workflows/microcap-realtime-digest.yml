@@ -74,6 +74,7 @@ jobs:
     uses: ./.github/workflows/delivery-regression.yml
     with:
       family: microcap
+      recovery_strategy_sha: ${{ inputs.recovery_strategy_sha || '' }}
 
   check-trading-day:
     runs-on: ubuntu-latest
@@ -512,7 +513,7 @@ jobs:
             # A rejected history/lineage cannot be repaired by re-fetching the
             # same inputs. Preserve the failed status and require exact-hash
             # review; transient transport failures keep the existing retry path.
-            if grep -Eiq 'StNoticeEvidenceError|Daily installed input seed is incomplete|ST metadata archive|ST archive requires a portable pointer|SecurityMetaHistoryCorrectionRequired|Security metadata (historical intervals|identity) changed|exact-hash lineage review is required|Exact frozen proxy seed|proxy metadata fingerprint mismatch|historical rewrite (detected|audit missing key columns)|Factor (source|body)|[Cc]ached return basis|[Tt]rade status|[Nn]otice archive|return-basis pipeline requires|qfq/hfq return basis disagreement|Fixed anchor|Legacy.*return basis|source group stopped|Daily (raw input|trade status|provider|inputs|prepared|close|refresh|target|BaoStock)|Previous complete raw snapshot|Raw history deletion|Historical (raw-price|adjusted-price)|Adjusted history deletion|Previous adjusted candidate|Legacy cache must be migrated|Unmanifested legacy|Incomplete factor coverage|Share-count history changed|Share source/cache identity|Share source response hash|Share source receipt identity|Incomplete share-source publication|Existing share history requires|Share baseline|Share source query chain|Share candidate does not reproduce source chain|Invalid historical proxy values|Incomplete finite member returns|Member authorities changed' "${attempt_log}"; then
+            if grep -Eiq 'StNoticeEvidenceError|SecurityMetaHistoryEvidenceUnresolved|Daily installed input seed is incomplete|ST metadata archive|ST archive requires a portable pointer|SecurityMetaHistoryCorrectionRequired|Security metadata (historical intervals|identity) changed|exact-hash lineage review is required|Exact frozen proxy seed|proxy metadata fingerprint mismatch|historical rewrite (detected|audit missing key columns)|Factor (source|body)|[Cc]ached return basis|[Tt]rade status|[Nn]otice archive|return-basis pipeline requires|qfq/hfq return basis disagreement|Fixed anchor|Legacy.*return basis|source group stopped|Daily (raw input|trade status|provider|inputs|prepared|close|refresh|target|BaoStock)|Previous complete raw snapshot|Raw history deletion|Historical (raw-price|adjusted-price)|Adjusted history deletion|Previous adjusted candidate|Legacy cache must be migrated|Unmanifested legacy|Incomplete factor coverage|Share-count history changed|Share source/cache identity|Share source response hash|Share source receipt identity|Incomplete share-source publication|Existing share history requires|Share baseline|Share source query chain|Share candidate does not reproduce source chain|Invalid historical proxy values|Incomplete finite member returns|Member authorities changed' "${attempt_log}"; then
               echo "::error title=Microcap refresh blocked::Non-retryable lineage or frozen-history rejection; review exact hashes before another run." | tee -a realtime_state_refresh_result.txt
               break
             fi
@@ -520,7 +521,10 @@ jobs:
               echo "::error title=Microcap refresh stopped::Two whole-refresh attempts exhausted; preserve caches and diagnose before retry." | tee -a realtime_state_refresh_result.txt
               break
             fi
-            if ! grep -Eiq 'ReadTimeout|ConnectTimeout|ConnectionError|connection (reset|aborted)|timed out|HTTP(Error| error)?[: ]+(429|500|502|503|504)|temporary failure in name resolution' "${attempt_log}"; then
+            # A recovered earlier provider failure cannot authorize retrying a
+            # different terminal data/identity failure later in the same log.
+            terminal_diagnostic=$(awk 'NF { line=$0 } END { print line }' "${attempt_log}")
+            if ! grep -Eiq 'ReadTimeout|ConnectTimeout|ConnectionError|connection (reset|aborted)|timed out|HTTP(Error| error)?[: ]+(429|500|502|503|504)|temporary failure in name resolution' <<< "${terminal_diagnostic}"; then
               echo "::error title=Microcap refresh stopped::Unknown failure is not automatically retryable." | tee -a realtime_state_refresh_result.txt
               break
             fi

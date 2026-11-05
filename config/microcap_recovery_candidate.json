@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-recovery-20261105-b657fce0/microcap-recovery-whole-20261104-b657fce0.zip",
+  "state_sha256": "641cdc9276f54107cf8eef9026dca3f9bc0b97b37090c5aa4c96b7e8817be687",
+  "state_date": "2026-11-04",
+  "strategy_sha": "22c8b6ff12e7c07182043f61a9eb9b28e052035b",
+  "bootstrap_strategy_sha": "b657fce0754d55596d1e6e547694145298f6e2d4",
+  "source_repack_changes": {
+    "microcap_top100_mom16_biweekly_live_v2_0.py": [
+      "0cdbcc9c2338e1522815dd927b1750b32bbd4ea5891e6f5c7bf59d1ee20f8aef",
+      "e4b343d5d12148d2faeb8bcc0441e50e744679992088e47be1f319f218558612"
+    ]
+  },
+  "daily_test_source": {
+    "runtime_sha": "22c8b6ff12e7c07182043f61a9eb9b28e052035b",
+    "source_sha": "d48213154c0721bd64ba41990655df333d4b78a7",
+    "allowed_changes": [
+      {
+        "path": "tests/test_normal_source_receipt_transition.py",
+        "old_git_blob_sha256": "aa802deacb8f1e3d4a08894824c9f526d828cfde1589326a2b3a7f4dce70cf58",
+        "new_git_blob_sha256": "f57e1dbef0d6e5f4e9705f871a31b2be9ed36f01a83114fe6a821541e3353bd4",
+        "reason": "Retain the already approved portable strict receipt test; original historical implementation replay remains preserved in immutable audit evidence."
+      }
+    ]
+  },
+  "review": "docs/st_current_snapshot_inclusive_exit_20261105.md; inclusive D5 ST interval remains active; historical source certificate separated from current execution permission; economic state must remain exact"
+}
