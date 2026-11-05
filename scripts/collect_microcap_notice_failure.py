@@ -84,10 +84,11 @@ class Capture:
             stream.write(raw)
         digest = hashlib.sha256(raw).hexdigest()
         record = dict(source=relative, artifact=target.relative_to(self.out).as_posix(), bytes=len(raw), sha256=digest)
-        try:
-            json.loads(raw)
-        except (ValueError, UnicodeError) as exc:
-            record['json_error'] = type(exc).__name__  # Preserve truncated/error HTTP bodies verbatim.
+        if relative.endswith('.json'):
+            try:
+                json.loads(raw)
+            except (ValueError, UnicodeError) as exc:
+                record['json_error'] = type(exc).__name__  # Preserve truncated/error HTTP bodies verbatim.
         self.records.append(record)
         self.total += len(raw)
         return raw
@@ -200,6 +201,14 @@ def collect(root: Path, out: Path, baseline: Path, run_id: str) -> dict:
                         raise ValueError('unexpected day evidence path')
                     capture.attempt(lambda rel=relative+'/'+filename: capture.copy(rel, 'new_generations'))
     capture.attempt(work)
+    # The exact installed static snapshots explain cross-provider identity
+    # failures. Retain only these two small tables, never the whole cache.
+    for name in ('active_universe.csv', 'current_st.csv'):
+        relative = '.microcap_index_cache/' + name
+        def static_snapshot(rel=relative):
+            if safe(capture.root, rel).exists():
+                capture.copy(rel, 'static_snapshots')
+        capture.attempt(static_snapshot)
     return capture.summary('collection', run_id=run_id, new_generations=new)
 
 

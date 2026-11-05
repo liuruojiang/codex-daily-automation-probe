@@ -75,6 +75,21 @@ def test_no_new_generation_does_not_upload_whole_history(case):
     assert result['complete_capture'] and result['files']==[] and result['new_generations']==[]
 
 
+def test_exact_static_identity_snapshots_survive_failure_without_mutation(case):
+    root,out,_=case
+    snapshot(case)
+    for name in ('active_universe.csv','current_st.csv'):
+        (root/'.microcap_index_cache'/name).write_bytes(b'code,name\n000001,ST synthetic\n')
+    before=source_hashes(root)
+    result=collect(case)
+    assert result['complete_capture'] and len(result['files'])==2
+    assert source_hashes(root)==before
+    for entry in result['files']:
+        assert entry['artifact'].startswith('static_snapshots/')
+        assert 'json_error' not in entry
+        assert (out/entry['artifact']).read_bytes()==(root/entry['source']).read_bytes()
+
+
 def test_missing_source_and_missing_baseline_leave_diagnostic_summary(tmp_path):
     root=tmp_path/'missing';out=tmp_path/'out';baseline=out/'baseline.json'
     result=evidence.snapshot(root,out,baseline,'run-1')

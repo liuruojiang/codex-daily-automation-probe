@@ -285,10 +285,12 @@ def test_reviewed_non_equity_metadata_source_addition_is_bounded():
         seed.source_successor(config)
 
 
-def test_exact_dated_transition_requires_matching_package_and_complete_scope():
+@pytest.mark.parametrize('market_scope_fix',[False,True])
+def test_exact_dated_transition_requires_matching_package_and_complete_scope(market_scope_fix):
     config=exact_successor_config();t=config['approved_source_successor']
     t['approval_package_sha256']=seed.EXACT_603028_PACKAGE
     t['changes'].update({name:['c'*64,'d'*64] for name in ['scripts/st_notice_boundary_review.py','scripts/share_change_source.py']})
+    if market_scope_fix:t['changes']['microcap_top100_mom16_biweekly_live_v2_0.py']=['c'*64,'d'*64]
     assert seed.source_successor(config)==t
     t['approval_package_sha256']=seed.EXACT_301288_PACKAGE
     with pytest.raises(ValueError):seed.source_successor(config)

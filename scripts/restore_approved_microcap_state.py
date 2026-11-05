@@ -37,7 +37,9 @@ def source_successor(config: dict) -> dict | None:
             or not ((transition['approval_package_sha256'] == EXACT_301288_PACKAGE
                      and set(transition['changes']) in (EXACT_301288_PATHS, EXACT_301288_PATHS | {'scripts/st_notice_boundary_review.py'}))
                     or (transition['approval_package_sha256'] == EXACT_603028_PACKAGE
-                        and set(transition['changes']) == EXACT_301288_PATHS | {'scripts/st_notice_boundary_review.py', 'scripts/share_change_source.py'}))):
+                        and set(transition['changes']) in (
+                            EXACT_301288_PATHS | {'scripts/st_notice_boundary_review.py', 'scripts/share_change_source.py'},
+                            EXACT_301288_PATHS | {'scripts/st_notice_boundary_review.py', 'scripts/share_change_source.py', 'microcap_top100_mom16_biweekly_live_v2_0.py'})))):
         raise ValueError('Unreviewed approved-source successor')
     for pair in transition['changes'].values():
         if (not isinstance(pair, list) or len(pair) != 2 or pair[0] == pair[1]
