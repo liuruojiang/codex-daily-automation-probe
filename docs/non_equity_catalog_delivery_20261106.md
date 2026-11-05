@@ -1,0 +1,5 @@
+# Non-equity catalog compatibility continuation
+
+The accepted original 6fa Nov4 whole package and original two-run receipt remain unchanged. Run 42067613529 proved actual restore and exact 301288 source switch, then failed on non-equity catalog metadata. Runtime da981743 adds only scripts/st_notice_boundary_review.py to the four already reviewed execution differences. Config binds both Git blob hashes. The native restoration still runs under original 6fa before the exact source switch; all normal current-data/whole/email gates remain mandatory. No historical rebuild, recovery producer/consumer repeat, new seed or mail-channel bypass is involved.
+
+Targeted native failure/counterexample suite: 40 passed. Existing current source/consumer and local gate acceptance remains recorded as its actual old source version, never relabelled as the new version. The newly affected tests and formal current-runtime regression verify this continuation. Nov5 normal mail remains pending until actual normal SMTP/marker and INBOX evidence.

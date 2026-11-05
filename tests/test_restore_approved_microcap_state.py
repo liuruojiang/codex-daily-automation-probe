@@ -274,3 +274,12 @@ def test_native_original_restore_and_exact_successor_switch(tmp_path,monkeypatch
         assert len(restores)==1 and restores[0][-1]=='2026-11-04'
         assert calls[-1][-3:]==['checkout','--detach',c['strategy_sha']]
         assert any(x[-3:]==['checkout','--detach',old] for x in calls)
+
+
+def test_reviewed_non_equity_metadata_source_addition_is_bounded():
+    config = exact_successor_config()
+    config['approved_source_successor']['changes']['scripts/st_notice_boundary_review.py'] = ['c'*64,'d'*64]
+    assert seed.source_successor(config) == config['approved_source_successor']
+    config['approved_source_successor']['changes']['scripts/st_notice_refresh.py'] = ['c'*64,'d'*64]
+    with pytest.raises(ValueError, match='Unreviewed'):
+        seed.source_successor(config)

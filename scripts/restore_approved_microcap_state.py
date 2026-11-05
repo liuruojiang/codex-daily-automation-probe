@@ -34,7 +34,7 @@ def source_successor(config: dict) -> dict | None:
     if (set(transition) != {'bootstrap_sha', 'approval_package_sha256', 'changes'}
             or transition['bootstrap_sha'] != '6fa0b9d73b12fff548200d987c953d1b1a7d74d7'
             or transition['approval_package_sha256'] != EXACT_301288_PACKAGE
-            or set(transition['changes']) != EXACT_301288_PATHS):
+            or set(transition['changes']) not in (EXACT_301288_PATHS, EXACT_301288_PATHS | {'scripts/st_notice_boundary_review.py'})):
         raise ValueError('Unreviewed approved-source successor')
     for pair in transition['changes'].values():
         if (not isinstance(pair, list) or len(pair) != 2 or pair[0] == pair[1]
@@ -64,7 +64,7 @@ def restore_with_source_successor(root: Path, bundle: Path, seed_date: str, conf
     # history traversal would require an unrelated full-history download.
     changed = set(git('diff', '--name-only', previous, runtime).decode().splitlines())
     execution = {p for p in changed if not p.startswith(('tests/', 'docs/'))}
-    if execution != EXACT_301288_PATHS:
+    if execution != set(transition['changes']):
         raise ValueError('Successor contains an unrelated execution change')
     for name, pair in transition['changes'].items():
         for revision, expected in zip((previous, runtime), pair):
