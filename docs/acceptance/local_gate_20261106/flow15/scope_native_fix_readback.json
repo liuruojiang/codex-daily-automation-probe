@@ -1,0 +1,11 @@
+{
+  "pass": true,
+  "native_entry": "_current_publication_name_map with native current-ST loader redirected in isolated process",
+  "names": 5223,
+  "source_csv_sha256": {
+    "active_universe.csv": "6a5e1510cf4a4305de170bbed07d35892adab5df8e4fdf459d28cb387952f2a4",
+    "current_st.csv": "20706c3df94ee7454213136bed5dc22f5353f8955097683f648e447a2dfebe47"
+  },
+  "original_cloud_snapshot": false,
+  "scope": "actual supplement observed 2026-11-06; full Shanghai/Shenzhen A-share ST comparison retained; raw input unchanged"
+}

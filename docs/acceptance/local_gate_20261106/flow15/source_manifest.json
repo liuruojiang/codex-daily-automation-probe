@@ -1,0 +1,13 @@
+{
+  "active.json": "a753412b9e652f0d4fbfb21fdd7b74b9d6e5c05109e51d957ef509e15780dd2a",
+  "gate.json": "c6b76260b36ecd37ce6266346e52904d3cd97d1e96baed3ba1a553db02412942",
+  "lifecycle.json": "6a1e5f7ce3d1a5c19f1ef8479f8a22a0de809b5c831df6858e753e235f55a175",
+  "realtime_daily_gate.py": "4a00c799a9aa331113afd7b4352a0fe133547af2ba8051a35c6ee19db14ef884",
+  "test_realtime_daily_gate.py": "bdcb00bb1b66cb9cf3873ae60c541c6f1cea527b6488f24a6c4c274cacb0a639",
+  "test_source_verified.json": "bbedcf9c63c425e8d2f2f3acd20f79c0d392c04910d513e6515d2bf0de20a62c",
+  "scope_active_universe.csv": "6a5e1510cf4a4305de170bbed07d35892adab5df8e4fdf459d28cb387952f2a4",
+  "scope_current_st.csv": "20706c3df94ee7454213136bed5dc22f5353f8955097683f648e447a2dfebe47",
+  "scope_sources.json": "864698cb0d58fb4d715a50770b00efb8060282651bbe7b8eaff67c6c26f067b6",
+  "scope_native_fix_readback.json": "8a83a1d4b0d20d83561566bfc2acaf1412c5c4810f935fccbfc3fab523697c43",
+  "scope_result.json": "56691e816446d792a9b09ffa955fbb47bacd611a87cce32fa2b11d7913637dad"
+}

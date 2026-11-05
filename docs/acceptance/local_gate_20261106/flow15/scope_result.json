@@ -1,0 +1,968 @@
+{
+  "observed_now_not_original_cloud": true,
+  "active_rows": 5223,
+  "st_rows": 387,
+  "mismatches": [
+    {
+      "code": "838982",
+      "st_name": "ST阳光中",
+      "active_name": null
+    },
+    {
+      "code": "430208",
+      "st_name": "ST优炫",
+      "active_name": null
+    },
+    {
+      "code": "838804",
+      "st_name": "ST恒泰科",
+      "active_name": null
+    },
+    {
+      "code": "871392",
+      "st_name": "ST泽生",
+      "active_name": null
+    },
+    {
+      "code": "920575",
+      "st_name": "*ST康乐",
+      "active_name": null
+    },
+    {
+      "code": "900915",
+      "st_name": "ST中路B",
+      "active_name": null
+    },
+    {
+      "code": "920090",
+      "st_name": "*ST同辉",
+      "active_name": null
+    },
+    {
+      "code": "200488",
+      "st_name": "ST晨鸣B",
+      "active_name": null
+    },
+    {
+      "code": "920023",
+      "st_name": "*ST田野",
+      "active_name": null
+    },
+    {
+      "code": "871298",
+      "st_name": "ST华浩环",
+      "active_name": null
+    },
+    {
+      "code": "430046",
+      "st_name": "ST圣博润",
+      "active_name": null
+    },
+    {
+      "code": "200056",
+      "st_name": "*ST皇庭B",
+      "active_name": null
+    },
+    {
+      "code": "838053",
+      "st_name": "ST嘉泰数",
+      "active_name": null
+    },
+    {
+      "code": "430037",
+      "st_name": "ST联飞翔",
+      "active_name": null
+    },
+    {
+      "code": "831516",
+      "st_name": "ST金环",
+      "active_name": null
+    },
+    {
+      "code": "831478",
+      "st_name": "ST天数",
+      "active_name": null
+    },
+    {
+      "code": "832685",
+      "st_name": "ST华洋科",
+      "active_name": null
+    },
+    {
+      "code": "873841",
+      "st_name": "ST祥盛",
+      "active_name": null
+    },
+    {
+      "code": "873643",
+      "st_name": "ST富视",
+      "active_name": null
+    },
+    {
+      "code": "873602",
+      "st_name": "ST益激",
+      "active_name": null
+    },
+    {
+      "code": "873551",
+      "st_name": "ST勤成",
+      "active_name": null
+    },
+    {
+      "code": "873511",
+      "st_name": "ST金时为",
+      "active_name": null
+    },
+    {
+      "code": "873385",
+      "st_name": "ST四季青",
+      "active_name": null
+    },
+    {
+      "code": "873341",
+      "st_name": "ST仲冠",
+      "active_name": null
+    },
+    {
+      "code": "873333",
+      "st_name": "ST树拍",
+      "active_name": null
+    },
+    {
+      "code": "873237",
+      "st_name": "ST五十弦",
+      "active_name": null
+    },
+    {
+      "code": "873226",
+      "st_name": "ST聿衡",
+      "active_name": null
+    },
+    {
+      "code": "873197",
+      "st_name": "ST烜风",
+      "active_name": null
+    },
+    {
+      "code": "873148",
+      "st_name": "ST颐泰",
+      "active_name": null
+    },
+    {
+      "code": "873102",
+      "st_name": "ST曲智",
+      "active_name": null
+    },
+    {
+      "code": "873048",
+      "st_name": "ST佳农",
+      "active_name": null
+    },
+    {
+      "code": "873010",
+      "st_name": "ST海垦林",
+      "active_name": null
+    },
+    {
+      "code": "872980",
+      "st_name": "ST众事达",
+      "active_name": null
+    },
+    {
+      "code": "872890",
+      "st_name": "ST悠车位",
+      "active_name": null
+    },
+    {
+      "code": "872816",
+      "st_name": "ST毕托巴",
+      "active_name": null
+    },
+    {
+      "code": "872634",
+      "st_name": "ST宏福",
+      "active_name": null
+    },
+    {
+      "code": "872632",
+      "st_name": "ST钢劲",
+      "active_name": null
+    },
+    {
+      "code": "872556",
+      "st_name": "ST明芯",
+      "active_name": null
+    },
+    {
+      "code": "872453",
+      "st_name": "ST龙国",
+      "active_name": null
+    },
+    {
+      "code": "872388",
+      "st_name": "ST蓝水",
+      "active_name": null
+    },
+    {
+      "code": "872381",
+      "st_name": "ST富利",
+      "active_name": null
+    },
+    {
+      "code": "872380",
+      "st_name": "ST金鑫能",
+      "active_name": null
+    },
+    {
+      "code": "872379",
+      "st_name": "ST小蝉",
+      "active_name": null
+    },
+    {
+      "code": "872334",
+      "st_name": "ST科炬",
+      "active_name": null
+    },
+    {
+      "code": "872324",
+      "st_name": "ST西信",
+      "active_name": null
+    },
+    {
+      "code": "872264",
+      "st_name": "ST四宝",
+      "active_name": null
+    },
+    {
+      "code": "872220",
+      "st_name": "ST益语心",
+      "active_name": null
+    },
+    {
+      "code": "872197",
+      "st_name": "ST诺宝嘉",
+      "active_name": null
+    },
+    {
+      "code": "872175",
+      "st_name": "ST鼎餐饮",
+      "active_name": null
+    },
+    {
+      "code": "872111",
+      "st_name": "ST荣飞",
+      "active_name": null
+    },
+    {
+      "code": "872061",
+      "st_name": "ST孔明",
+      "active_name": null
+    },
+    {
+      "code": "871995",
+      "st_name": "ST陆玛",
+      "active_name": null
+    },
+    {
+      "code": "871883",
+      "st_name": "ST九峰",
+      "active_name": null
+    },
+    {
+      "code": "871799",
+      "st_name": "ST熠烁",
+      "active_name": null
+    },
+    {
+      "code": "871652",
+      "st_name": "ST宝丽嘉",
+      "active_name": null
+    },
+    {
+      "code": "871562",
+      "st_name": "ST美伦",
+      "active_name": null
+    },
+    {
+      "code": "871482",
+      "st_name": "ST南锅",
+      "active_name": null
+    },
+    {
+      "code": "871408",
+      "st_name": "ST忆文",
+      "active_name": null
+    },
+    {
+      "code": "871272",
+      "st_name": "ST理想传",
+      "active_name": null
+    },
+    {
+      "code": "871215",
+      "st_name": "ST乾丰",
+      "active_name": null
+    },
+    {
+      "code": "871200",
+      "st_name": "ST圣贤",
+      "active_name": null
+    },
+    {
+      "code": "870924",
+      "st_name": "ST安卡",
+      "active_name": null
+    },
+    {
+      "code": "870838",
+      "st_name": "ST盛金源",
+      "active_name": null
+    },
+    {
+      "code": "870818",
+      "st_name": "ST莱斯达",
+      "active_name": null
+    },
+    {
+      "code": "870558",
+      "st_name": "ST富润科",
+      "active_name": null
+    },
+    {
+      "code": "870415",
+      "st_name": "ST绿金高",
+      "active_name": null
+    },
+    {
+      "code": "870368",
+      "st_name": "ST爱尚游",
+      "active_name": null
+    },
+    {
+      "code": "870296",
+      "st_name": "ST元景",
+      "active_name": null
+    },
+    {
+      "code": "870286",
+      "st_name": "ST兴发股",
+      "active_name": null
+    },
+    {
+      "code": "870107",
+      "st_name": "ST博阳",
+      "active_name": null
+    },
+    {
+      "code": "870049",
+      "st_name": "ST华翔控",
+      "active_name": null
+    },
+    {
+      "code": "870037",
+      "st_name": "ST照耀",
+      "active_name": null
+    },
+    {
+      "code": "870021",
+      "st_name": "ST投创新",
+      "active_name": null
+    },
+    {
+      "code": "839888",
+      "st_name": "ST宏仁",
+      "active_name": null
+    },
+    {
+      "code": "839765",
+      "st_name": "ST齐心科",
+      "active_name": null
+    },
+    {
+      "code": "839633",
+      "st_name": "ST金鼎医",
+      "active_name": null
+    },
+    {
+      "code": "839468",
+      "st_name": "ST承华",
+      "active_name": null
+    },
+    {
+      "code": "839332",
+      "st_name": "ST和海益",
+      "active_name": null
+    },
+    {
+      "code": "839209",
+      "st_name": "ST海达信",
+      "active_name": null
+    },
+    {
+      "code": "839143",
+      "st_name": "ST居易",
+      "active_name": null
+    },
+    {
+      "code": "839093",
+      "st_name": "ST里定",
+      "active_name": null
+    },
+    {
+      "code": "839071",
+      "st_name": "ST久源",
+      "active_name": null
+    },
+    {
+      "code": "839038",
+      "st_name": "ST深海",
+      "active_name": null
+    },
+    {
+      "code": "838959",
+      "st_name": "ST蓝桃",
+      "active_name": null
+    },
+    {
+      "code": "838928",
+      "st_name": "ST义众实",
+      "active_name": null
+    },
+    {
+      "code": "838866",
+      "st_name": "ST基线",
+      "active_name": null
+    },
+    {
+      "code": "838796",
+      "st_name": "ST中域",
+      "active_name": null
+    },
+    {
+      "code": "838723",
+      "st_name": "ST银联信",
+      "active_name": null
+    },
+    {
+      "code": "838309",
+      "st_name": "ST京彩",
+      "active_name": null
+    },
+    {
+      "code": "838293",
+      "st_name": "ST般若",
+      "active_name": null
+    },
+    {
+      "code": "838246",
+      "st_name": "ST山谷网",
+      "active_name": null
+    },
+    {
+      "code": "838099",
+      "st_name": "ST日辉达",
+      "active_name": null
+    },
+    {
+      "code": "837620",
+      "st_name": "ST永力达",
+      "active_name": null
+    },
+    {
+      "code": "837595",
+      "st_name": "ST坦程",
+      "active_name": null
+    },
+    {
+      "code": "837591",
+      "st_name": "ST天骑",
+      "active_name": null
+    },
+    {
+      "code": "837550",
+      "st_name": "ST通泰",
+      "active_name": null
+    },
+    {
+      "code": "837487",
+      "st_name": "ST天创联",
+      "active_name": null
+    },
+    {
+      "code": "837477",
+      "st_name": "ST华语",
+      "active_name": null
+    },
+    {
+      "code": "837299",
+      "st_name": "ST小鱼",
+      "active_name": null
+    },
+    {
+      "code": "837207",
+      "st_name": "ST水发环",
+      "active_name": null
+    },
+    {
+      "code": "837185",
+      "st_name": "ST锡协",
+      "active_name": null
+    },
+    {
+      "code": "837137",
+      "st_name": "ST鼎瀚",
+      "active_name": null
+    },
+    {
+      "code": "837000",
+      "st_name": "ST特飞",
+      "active_name": null
+    },
+    {
+      "code": "836755",
+      "st_name": "ST亭联",
+      "active_name": null
+    },
+    {
+      "code": "836667",
+      "st_name": "ST乐智",
+      "active_name": null
+    },
+    {
+      "code": "836658",
+      "st_name": "ST幻响",
+      "active_name": null
+    },
+    {
+      "code": "836389",
+      "st_name": "ST新亚股",
+      "active_name": null
+    },
+    {
+      "code": "836117",
+      "st_name": "ST铁强",
+      "active_name": null
+    },
+    {
+      "code": "836115",
+      "st_name": "ST三环能",
+      "active_name": null
+    },
+    {
+      "code": "836113",
+      "st_name": "ST春泉",
+      "active_name": null
+    },
+    {
+      "code": "836058",
+      "st_name": "ST欧赛",
+      "active_name": null
+    },
+    {
+      "code": "836002",
+      "st_name": "ST乐蜀",
+      "active_name": null
+    },
+    {
+      "code": "835889",
+      "st_name": "ST开合",
+      "active_name": null
+    },
+    {
+      "code": "835834",
+      "st_name": "ST达伦",
+      "active_name": null
+    },
+    {
+      "code": "835719",
+      "st_name": "ST卡莱博",
+      "active_name": null
+    },
+    {
+      "code": "835452",
+      "st_name": "ST元一",
+      "active_name": null
+    },
+    {
+      "code": "835426",
+      "st_name": "ST西航",
+      "active_name": null
+    },
+    {
+      "code": "835383",
+      "st_name": "ST中彩股",
+      "active_name": null
+    },
+    {
+      "code": "835328",
+      "st_name": "ST百华科",
+      "active_name": null
+    },
+    {
+      "code": "835223",
+      "st_name": "ST瑞华股",
+      "active_name": null
+    },
+    {
+      "code": "834974",
+      "st_name": "ST天英",
+      "active_name": null
+    },
+    {
+      "code": "834952",
+      "st_name": "ST中化气",
+      "active_name": null
+    },
+    {
+      "code": "834939",
+      "st_name": "ST盈放",
+      "active_name": null
+    },
+    {
+      "code": "834878",
+      "st_name": "ST华尊",
+      "active_name": null
+    },
+    {
+      "code": "834802",
+      "st_name": "ST格子",
+      "active_name": null
+    },
+    {
+      "code": "834596",
+      "st_name": "ST拜特",
+      "active_name": null
+    },
+    {
+      "code": "834588",
+      "st_name": "ST光电影",
+      "active_name": null
+    },
+    {
+      "code": "834587",
+      "st_name": "ST鼎端",
+      "active_name": null
+    },
+    {
+      "code": "834426",
+      "st_name": "ST发现者",
+      "active_name": null
+    },
+    {
+      "code": "834347",
+      "st_name": "ST天畅",
+      "active_name": null
+    },
+    {
+      "code": "834288",
+      "st_name": "ST宝德生",
+      "active_name": null
+    },
+    {
+      "code": "834156",
+      "st_name": "ST有米",
+      "active_name": null
+    },
+    {
+      "code": "834111",
+      "st_name": "ST建誉",
+      "active_name": null
+    },
+    {
+      "code": "833830",
+      "st_name": "ST蓝宝",
+      "active_name": null
+    },
+    {
+      "code": "833818",
+      "st_name": "ST威克曼",
+      "active_name": null
+    },
+    {
+      "code": "833703",
+      "st_name": "ST瑞光",
+      "active_name": null
+    },
+    {
+      "code": "833662",
+      "st_name": "ST大地生",
+      "active_name": null
+    },
+    {
+      "code": "833555",
+      "st_name": "ST华南信",
+      "active_name": null
+    },
+    {
+      "code": "833503",
+      "st_name": "ST花嫁",
+      "active_name": null
+    },
+    {
+      "code": "833502",
+      "st_name": "ST联创集",
+      "active_name": null
+    },
+    {
+      "code": "833393",
+      "st_name": "ST速达科",
+      "active_name": null
+    },
+    {
+      "code": "833349",
+      "st_name": "ST鼎隆",
+      "active_name": null
+    },
+    {
+      "code": "833290",
+      "st_name": "ST瑞立达",
+      "active_name": null
+    },
+    {
+      "code": "832985",
+      "st_name": "ST熊猫传",
+      "active_name": null
+    },
+    {
+      "code": "832813",
+      "st_name": "ST瑞博检",
+      "active_name": null
+    },
+    {
+      "code": "832765",
+      "st_name": "ST唐邦",
+      "active_name": null
+    },
+    {
+      "code": "832653",
+      "st_name": "ST金点",
+      "active_name": null
+    },
+    {
+      "code": "832623",
+      "st_name": "ST铱迅",
+      "active_name": null
+    },
+    {
+      "code": "832547",
+      "st_name": "ST利策",
+      "active_name": null
+    },
+    {
+      "code": "832545",
+      "st_name": "ST三川田",
+      "active_name": null
+    },
+    {
+      "code": "832518",
+      "st_name": "ST佳汇",
+      "active_name": null
+    },
+    {
+      "code": "832508",
+      "st_name": "ST白马",
+      "active_name": null
+    },
+    {
+      "code": "832417",
+      "st_name": "ST京东汇",
+      "active_name": null
+    },
+    {
+      "code": "832255",
+      "st_name": "ST建通",
+      "active_name": null
+    },
+    {
+      "code": "831940",
+      "st_name": "ST网高",
+      "active_name": null
+    },
+    {
+      "code": "831881",
+      "st_name": "ST谦泰亨",
+      "active_name": null
+    },
+    {
+      "code": "831813",
+      "st_name": "ST广信息",
+      "active_name": null
+    },
+    {
+      "code": "831706",
+      "st_name": "ST领航科",
+      "active_name": null
+    },
+    {
+      "code": "831670",
+      "st_name": "ST捷福",
+      "active_name": null
+    },
+    {
+      "code": "831464",
+      "st_name": "ST创高智",
+      "active_name": null
+    },
+    {
+      "code": "831398",
+      "st_name": "ST东联育",
+      "active_name": null
+    },
+    {
+      "code": "831372",
+      "st_name": "ST宝成",
+      "active_name": null
+    },
+    {
+      "code": "831368",
+      "st_name": "ST阳光通",
+      "active_name": null
+    },
+    {
+      "code": "831273",
+      "st_name": "ST金视和",
+      "active_name": null
+    },
+    {
+      "code": "831181",
+      "st_name": "ST莱九",
+      "active_name": null
+    },
+    {
+      "code": "831130",
+      "st_name": "ST泓宇",
+      "active_name": null
+    },
+    {
+      "code": "831063",
+      "st_name": "ST安泰股",
+      "active_name": null
+    },
+    {
+      "code": "830955",
+      "st_name": "ST大盛",
+      "active_name": null
+    },
+    {
+      "code": "830927",
+      "st_name": "ST兆久成",
+      "active_name": null
+    },
+    {
+      "code": "830867",
+      "st_name": "ST全华",
+      "active_name": null
+    },
+    {
+      "code": "830859",
+      "st_name": "ST金旭农",
+      "active_name": null
+    },
+    {
+      "code": "430756",
+      "st_name": "ST火焰传",
+      "active_name": null
+    },
+    {
+      "code": "430734",
+      "st_name": "ST凌势",
+      "active_name": null
+    },
+    {
+      "code": "430690",
+      "st_name": "ST楚祥",
+      "active_name": null
+    },
+    {
+      "code": "430636",
+      "st_name": "ST优浚",
+      "active_name": null
+    },
+    {
+      "code": "430619",
+      "st_name": "ST格纳斯",
+      "active_name": null
+    },
+    {
+      "code": "430576",
+      "st_name": "ST泰信",
+      "active_name": null
+    },
+    {
+      "code": "430487",
+      "st_name": "ST佳信捷",
+      "active_name": null
+    },
+    {
+      "code": "430486",
+      "st_name": "ST普金科",
+      "active_name": null
+    },
+    {
+      "code": "430457",
+      "st_name": "ST三网",
+      "active_name": null
+    },
+    {
+      "code": "430452",
+      "st_name": "ST汇龙科",
+      "active_name": null
+    },
+    {
+      "code": "430362",
+      "st_name": "ST东电创",
+      "active_name": null
+    },
+    {
+      "code": "430244",
+      "st_name": "ST颂大",
+      "active_name": null
+    },
+    {
+      "code": "430239",
+      "st_name": "ST信诺达",
+      "active_name": null
+    },
+    {
+      "code": "430185",
+      "st_name": "ST华芯数",
+      "active_name": null
+    },
+    {
+      "code": "430153",
+      "st_name": "ST中金信",
+      "active_name": null
+    },
+    {
+      "code": "430152",
+      "st_name": "ST思银",
+      "active_name": null
+    },
+    {
+      "code": "430148",
+      "st_name": "ST科能腾",
+      "active_name": null
+    },
+    {
+      "code": "430099",
+      "st_name": "ST清北",
+      "active_name": null
+    },
+    {
+      "code": "430089",
+      "st_name": "ST天一众",
+      "active_name": null
+    },
+    {
+      "code": "430077",
+      "st_name": "ST道隆",
+      "active_name": null
+    },
+    {
+      "code": "430075",
+      "st_name": "ST中讯科",
+      "active_name": null
+    }
+  ],
+  "completed_at": "2026-11-05T23:13:11.649060+00:00"
+}
