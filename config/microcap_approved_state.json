@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "strategy_sha": "49f43adee9df6e8947ff6924f2397a14900f1580",
-  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-validation-flow-20261105-e41cf520/microcap-validated-whole-20261104-e41cf520.zip",
-  "state_sha256": "af161e0fe551458121e92a2e013625d934873ad0fba893b9a575e424250014d7",
+  "strategy_sha": "b657fce0754d55596d1e6e547694145298f6e2d4",
+  "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-recovery-20261105-b657fce0/microcap-recovery-whole-20261104-b657fce0.zip",
+  "state_sha256": "641cdc9276f54107cf8eef9026dca3f9bc0b97b37090c5aa4c96b7e8817be687",
   "state_date": "2026-11-04",
   "daily_test_source": {
-    "runtime_sha": "49f43adee9df6e8947ff6924f2397a14900f1580",
-    "source_sha": "c72853a92fdf0a21388a9b0821ae39cdf6aef260",
+    "runtime_sha": "b657fce0754d55596d1e6e547694145298f6e2d4",
+    "source_sha": "4709a655efe526777d41d292d77d219727163c44",
     "allowed_changes": [
       {
         "path": "tests/test_normal_source_receipt_transition.py",
@@ -15,5 +15,9 @@
         "reason": "Keep the strict next-session regression portable in the authenticated archive checkout; original e41 failure replay remains in immutable audit evidence, without a test-time Git-history or network dependency."
       }
     ]
+  },
+  "recovery_readiness": {
+    "path": "config/microcap_recovery_readiness.json",
+    "sha256": "36e9cc064ab476fcbf77b4d2c33b941bfc4127afa6b34e1c1e9a125f5a7af7de"
   }
 }

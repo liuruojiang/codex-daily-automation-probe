@@ -164,6 +164,9 @@ jobs:
           REQUESTED_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_mode || 'close_confirmed' }}
         run: python automation/scripts/resolve_cn_publication_mode.py --requested "${REQUESTED_MODE}"
 
+      - name: Verify accepted production recovery identity
+        run: python -B automation/scripts/verify_microcap_active_recovery.py --root automation
+
       - name: Check delivery marker
         id: delivery_gate
         shell: bash
@@ -211,7 +214,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 49f43adee9df6e8947ff6924f2397a14900f1580
+          ref: b657fce0754d55596d1e6e547694145298f6e2d4
           path: microcap
 
       - name: Record microcap strategy SHA

@@ -9,3 +9,4 @@ tests/fixtures/microcap/v23_identity_20261029/*.csv -text
 tests/fixtures/microcap/v23_identity_20261029/*.json -text
 tests/fixtures/microcap/terminal_policy_20261030/* -text
 scripts/microcap_csv_compat/exact_non_st_addition_certificate.json -text
+config/microcap_recovery_readiness.json -text

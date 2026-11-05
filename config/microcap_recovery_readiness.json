@@ -1,0 +1,20 @@
+{
+  "schema": "microcap_recovery_readiness_v1",
+  "pass": true,
+  "checked_at": "2026-11-05T10:59:34.767784+00:00",
+  "repository": "liuruojiang/codex-daily-automation-probe",
+  "strategy_sha": "b657fce0754d55596d1e6e547694145298f6e2d4",
+  "producer_run": 42001962979,
+  "consumer_run": 42007616166,
+  "source_artifact": 13405761083,
+  "seed_date": "2026-11-04",
+  "bundle_sha256": "641cdc9276f54107cf8eef9026dca3f9bc0b97b37090c5aa4c96b7e8817be687",
+  "bundle_bytes": 612939922,
+  "fallback_used_by_consumer": false,
+  "recovery_only": true,
+  "current_market_authorized": false,
+  "email_delivery_proven": false,
+  "evidence_directory": "D:\\Codex\\home\\automations\\ic-im\\runs\\20261105\\postclose_delay_review\\recovery_pair_readiness.evidence",
+  "verifier_sha256": "a0c26a7f6d02107f02e4ebfdbf47de99ad042965df0e96ce2a3a5eede317b609",
+  "orchestrator_sha256": "73d28ea07d13d9fb867d931668ac827ea0992f204d56e251d7cc4e8de21e463f"
+}
