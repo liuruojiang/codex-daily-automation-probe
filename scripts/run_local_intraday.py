@@ -136,10 +136,10 @@ class Run:
         self.config = read(self.home / 'scripts/realtime_daily_gate.json')
         self.micro = Path(self.config['microcap_source']).resolve()
         self.icim = Path(self.config['icim_source']).resolve()
-        active = read(self.home / 'realtime_daily_active.json')
+        self.native = load_readiness(self.home)
+        active = read(self.native._launcher().ACTIVE)
         self.out = isolated_output(out, [self.micro, self.icim, active['prepared'], self.resident])
         self.python = str(Path(python).resolve())
-        self.native = load_readiness(self.home)
         calendar = read(self.gate)['calendar']
         self.day = calendar['today']
         self.anchor = calendar['latest_completed_session']

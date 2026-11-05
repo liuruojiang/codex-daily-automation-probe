@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 import sys
 import threading
+from types import SimpleNamespace
 
 import pytest
 
@@ -222,3 +223,17 @@ def test_missing_icim_source_does_not_prevent_other_strategy(tmp_path):
     result=m.read(tmp_path/'run.json')['results']
     assert result['microcap']['status']=='ready_not_published'
     assert result['icim']['status']=='failed_or_unknown'
+
+
+def test_constructor_uses_native_active_location_and_allows_missing_other_source(tmp_path, monkeypatch):
+    home=tmp_path/'home';(home/'scripts').mkdir(parents=True)
+    native_active=home/'scripts/realtime_daily_active.json'
+    m.write(native_active, {'prepared':str(tmp_path/'prepared')})
+    m.write(home/'scripts/realtime_daily_gate.json', {'microcap_source':str(tmp_path/'micro'), 'icim_source':str(tmp_path/'icim')})
+    gate=tmp_path/'gate.json';m.write(gate,{'calendar':{'today':'2026-11-05','latest_completed_session':'2026-11-04','next_session':'2026-11-06'}})
+    monkeypatch.setattr(m,'verify_installation',lambda h:{'bound':True})
+    monkeypatch.setattr(m,'load_readiness',lambda h:SimpleNamespace(_launcher=lambda:SimpleNamespace(ACTIVE=native_active),authorize_intraday=lambda *a:{'native':True}))
+    monkeypatch.setattr(m,'clock',lambda:datetime.fromisoformat('2026-11-05T14:20:00+08:00'))
+    run=m.Run(home,gate,tmp_path/'resident',tmp_path/'missing.json',tmp_path/'result')
+    assert run.authorization=={'native':True}
+    run.authorize()
