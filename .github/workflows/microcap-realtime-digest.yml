@@ -3,6 +3,11 @@ name: Microcap Post-Close Digest
 on:
   workflow_dispatch:
     inputs:
+      catch_up_date:
+        description: "Explicit missing normal close report date; must equal independent latest completed session; original dedupe retained"
+        required: false
+        type: string
+        default: ""
       recovery_check:
         description: "Recovery-only maintenance: save an approved archive, then require the next run to restore it; no market refresh or email"
         required: false
@@ -176,9 +181,11 @@ jobs:
           VALIDATION_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.validation_only && 'true' || 'false' }}
           CORRECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.correction && 'true' || 'false' }}
           DELIVERY_TEST_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.delivery_test_id || '' }}
+          CATCH_UP_DATE: ${{ inputs.catch_up_date }}
           EXTERNAL_SCHEDULE: ${{ inputs.external_schedule == true && 'true' || 'false' }}
         run: |
           args=()
+          if [[ -n "${CATCH_UP_DATE}" ]]; then args+=(--catch-up-date "${CATCH_UP_DATE}"); fi
           if [[ "${VALIDATION_ONLY}" == "true" ]]; then
             args+=(--validation-only)
           fi
@@ -236,8 +243,10 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true'
         working-directory: microcap
         shell: bash
+        env:
+          CATCH_UP_DATE: ${{ inputs.catch_up_date }}
         run: |
-          python -c 'from scripts.exchange_calendar import latest_completed_session; print("date=" + latest_completed_session().isoformat())' >> "${GITHUB_OUTPUT}"
+          python -c 'import os,sys; from scripts.exchange_calendar import latest_completed_session; sys.path.insert(0,"../automation/scripts"); from check_microcap_refresh_target import validate_catch_up_completed; completed=latest_completed_session().isoformat(); validate_catch_up_completed(os.environ.get("CATCH_UP_DATE",""),completed); print("date=" + completed)' >> "${GITHUB_OUTPUT}"
 
       - name: Restore persistent full rebalance cache
         continue-on-error: true
@@ -795,6 +804,8 @@ jobs:
         id: digest
         if: always() && steps.delivery_gate.outputs.should_send == 'true'
         shell: bash
+        env:
+          CATCH_UP_DATE: ${{ inputs.catch_up_date }}
         run: |
           signal_suffix=realtime_signal
           v23_root=microcap
@@ -818,6 +829,7 @@ jobs:
             --signal-csv v2.5=${v25_root}/outputs/microcap_top100_mom16_biweekly_live_v2_5_${signal_suffix}.csv \
             --out-dir artifacts \
             --publication-mode "${{ steps.publication_mode.outputs.mode }}" \
+            --catch-up-date "${CATCH_UP_DATE}" \
             --expected-signal-date "${{ inputs.validation_only != true && inputs.correction != true && inputs.delivery_test_id == '' && steps.delivery_gate.outputs.delivery_date || '' }}" \
             --delivery-test-id "${{ steps.delivery_gate.outputs.delivery_test_id }}" \
             --planned "${PLANNED_BJ}" \

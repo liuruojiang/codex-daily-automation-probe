@@ -227,3 +227,23 @@ def test_last_smtp_boundary_rejects_failed_or_mislabeled_tests(tmp_path, field, 
         with pytest.raises(ValueError, match="unverified or mislabeled"):
             send_report.main()
     transport.assert_not_called()
+
+
+def test_catch_up_digest_preserves_data_day_and_discloses_actual_generation(tmp_path):
+    helper=digest_fixtures.MicrocapDigestEmailBodyTests()
+    args=['digest','--out-dir',str(tmp_path/'mail'),'--publication-mode','close_confirmed',
+          '--expected-signal-date','2026-09-30','--catch-up-date','2026-09-30']
+    for version in ('v2.0','v2.3','v2.5'):
+        row=helper.signal_fields(version)
+        row.update(date='2026-09-30',official_close_confirmed_signal='True',signal_timing='close_confirmed')
+        csv_path=tmp_path/f'{version}.csv';helper.write_csv(csv_path,row)
+        result=tmp_path/f'{version}.txt';result.write_text('signal\n',encoding='utf8')
+        args+=['--result',f'{version}={result}','--signal-csv',f'{version}={csv_path}','--exit-code',f'{version}=0']
+    with patch.object(sys,'argv',args):assert digest.main()==0
+    meta=json.loads((tmp_path/'mail/metadata.json').read_bytes())
+    assert meta['status']=='OK' and meta['signal_date']==meta['catch_up_date']=='2026-09-30'
+    assert '本邮件补发 2026-09-30 收盘日报' in meta['body'] and '不是今日盘中信号' in meta['body']
+    assert not meta.get('delivery_test_id')
+    args[-1]='v2.5=1'
+    with patch.object(sys,'argv',args):assert digest.main()==0
+    assert json.loads((tmp_path/'mail/metadata.json').read_bytes())['status'] != 'OK'

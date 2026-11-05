@@ -125,3 +125,72 @@ def test_completed_one_off_workflow_is_retired_and_uses_shared_concurrency():
     workflow = yaml.safe_load((ROOT / ".github/workflows/microcap-close-recovery.yml").read_text(encoding="utf-8"))
     assert workflow["jobs"]["recover"]["if"] == "${{ false }}"
     assert workflow["concurrency"]["group"] == "microcap-realtime-digest"
+
+
+def test_explicit_catch_up_uses_original_normal_marker_and_preserves_intent_guard(monkeypatch):
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "workflow_dispatch")
+    monkeypatch.setenv("EXTERNAL_SCHEDULE", "false")
+    output=[]
+    argv=["gate","--catch-up-date","2026-11-02","--publication-mode","close_confirmed","--repository","o/r","--token","fixture"]
+    with patch.object(gate,"now_utc",return_value=NOW), patch.object(sys,"argv",argv), patch.object(gate,"write_outputs",side_effect=output.append), patch.object(gate,"fetch_artifacts",return_value={"artifacts":[]}):
+        assert gate.main() == 0
+    assert output[0]["delivery_date"] == "2026-11-02" and output[0]["marker_name"] == MARKER
+    assert output[0]["should_send"] == "true"
+    def fetch(repo,token,name,api):
+        return {"artifacts":[{"name":name,"expired":False}]} if name == MARKER+"-send-intent" else {"artifacts":[]}
+    with patch.object(gate,"now_utc",return_value=NOW), patch.object(sys,"argv",argv), patch.object(gate,"fetch_artifacts",side_effect=fetch):
+        with pytest.raises(RuntimeError,match="prior SMTP send intent"):
+            gate.main()
+
+@pytest.mark.parametrize("fault", ["today","future","format","realtime","correction","validation","test","schedule","external"])
+def test_explicit_catch_up_never_waives_normal_identity(monkeypatch,fault):
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "workflow_dispatch")
+    monkeypatch.setenv("EXTERNAL_SCHEDULE", "false")
+    kw=dict(publication_mode="close_confirmed",correction=False,validation_only=False,test_id="")
+    day="2026-11-02"
+    if fault=="today":day="2026-11-03"
+    elif fault=="future":day="2026-11-04"
+    elif fault=="format":day="20261102"
+    elif fault=="realtime":kw['publication_mode']='realtime'
+    elif fault=="correction":kw['correction']=True
+    elif fault=="validation":kw['validation_only']=True
+    elif fault=="test":kw['test_id']='other'
+    elif fault=="schedule":monkeypatch.setenv("GITHUB_EVENT_NAME","schedule")
+    else:monkeypatch.setenv("EXTERNAL_SCHEDULE","true")
+    with pytest.raises(ValueError):gate.validate_catch_up_date(day,NOW,**kw)
+
+
+def test_catch_up_target_must_match_real_completed_calendar_before_expensive_restore():
+    from check_microcap_refresh_target import validate_catch_up_completed
+    validate_catch_up_completed("2026-11-05","2026-11-05")
+    for requested in ("2026-11-04","2026-11-06","20261105"):
+        with pytest.raises(ValueError):validate_catch_up_completed(requested,"2026-11-05")
+    workflow=yaml.safe_load((ROOT/'.github/workflows/microcap-realtime-digest.yml').read_text(encoding='utf8'))
+    steps=workflow['jobs']['send']['steps']
+    resolve=next(x for x in steps if x['name']=='Resolve independent completed session')
+    assert 'validate_catch_up_completed' in resolve['run']
+    assert 'latest_completed_session()' in resolve['run']
+    assert steps.index(resolve)<next(i for i,x in enumerate(steps) if x['name']=='Restore explicitly approved whole state')
+
+
+def test_explicit_manual_catch_up_receipt_recovers_without_resending(monkeypatch):
+    artifact,responses,payload=trusted_receipt()
+    run=json.loads(responses[0].getvalue());jobs=json.loads(responses[1].getvalue())
+    run.update(event="workflow_dispatch",run_started_at="2026-11-02T16:00:00Z")
+    jobs['jobs'][0]['started_at']="2026-11-02T16:01:00Z"
+    jobs['jobs'][0]['steps'].append({'name':'Resolve independent completed session','conclusion':'success'})
+    with zipfile.ZipFile(io.BytesIO(payload)) as z:
+        meta=json.loads(z.read('metadata.json'));receipt=json.loads(z.read('smtp-accepted.json'))
+    meta['catch_up_date']=DAY.isoformat();raw=json.dumps(meta).encode()
+    receipt['metadata_sha256']=hashlib.sha256(raw).hexdigest()
+    buffer=io.BytesIO()
+    with zipfile.ZipFile(buffer,'w') as z:
+        z.writestr('metadata.json',raw);z.writestr('smtp-accepted.json',json.dumps(receipt))
+    for event,success in [('workflow_dispatch',True),('schedule',False)]:
+        run['event']=event
+        streams=[io.BytesIO(json.dumps(v).encode()) for v in (run,jobs)]
+        with patch.object(gate,'now_utc',return_value=NOW),patch.object(gate.urllib.request,'urlopen',side_effect=streams),patch.object(helper,'download',return_value=buffer.getvalue()):
+            if success:gate.verify_smtp_receipt('o/r','fixture','https://api.github.com',artifact,DAY,'close_confirmed')
+            else:
+                with pytest.raises(RuntimeError,match='cross-midnight'):
+                    gate.verify_smtp_receipt('o/r','fixture','https://api.github.com',artifact,DAY,'close_confirmed')

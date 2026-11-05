@@ -883,6 +883,7 @@ def build_compact_digest(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build a Gmail-ready microcap realtime signal digest.")
+    parser.add_argument("--catch-up-date", default="")
     parser.add_argument(
         "--result",
         action="append",
@@ -1035,6 +1036,12 @@ def main() -> int:
         publication_mode=args.publication_mode,
         share_source_disclosures=share_source_disclosures,
     )
+    if args.catch_up_date:
+        if (args.publication_mode != "close_confirmed" or args.delivery_test_id
+                or args.catch_up_date != args.expected_signal_date or args.catch_up_date != date_s
+                or parse_strict_iso_date(date_s) >= now_bj().date()):
+            raise ValueError("Catch-up report must match its original close date and normal delivery gate")
+        digest_text = (f"本邮件补发 {date_s} 收盘日报；实际生成时间 {now_bj().isoformat()}，不是今日盘中信号。\n\n" + digest_text)
     if args.delivery_test_id:
         subject = (f"[发送验收测试][收盘确认][新版验收] 微盘股 v2.0/v2.3/v2.5 日报 - {date_s}"
                    f" - {args.delivery_test_id}")
@@ -1055,6 +1062,8 @@ def main() -> int:
         "publication_mode": args.publication_mode,
         "signal_date": date_s,
     }
+    if args.catch_up_date:
+        meta["catch_up_date"] = args.catch_up_date
     if args.delivery_test_id:
         meta["delivery_test_id"] = args.delivery_test_id
     if args.share_source_disclosures:

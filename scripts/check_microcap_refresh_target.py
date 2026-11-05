@@ -31,6 +31,11 @@ def can_reuse_static_inputs(proof: object, expected_date: str, today: str) -> bo
             and proof.get("verified_on") in (expected_date, today))
 
 
+def validate_catch_up_completed(requested: str, completed: str) -> None:
+    if requested and (date.fromisoformat(requested).isoformat() != requested or requested != completed):
+        raise ValueError("Catch-up date must equal the independent latest completed session")
+
+
 def check_report(report: dict[str, object], expected_date: str, verified_on: str) -> None:
     parsed_expected = date.fromisoformat(expected_date)
     if parsed_expected.isoformat() != expected_date:

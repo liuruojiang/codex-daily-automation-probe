@@ -179,9 +179,14 @@ def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dic
             job_end = timestamp(job["completed_at"])
             send_start = timestamp(send_steps[0]["started_at"])
             send_end = timestamp(send_steps[0]["completed_at"])
+            original_close = beijing_delivery_date(run_start) == beijing_delivery_date(job_start) == day
+            manual_catch_up = (metadata.get("catch_up_date") == day.isoformat()
+                and run.get("event") == "workflow_dispatch"
+                and steps.get("Resolve independent completed session") == "success"
+                and day < beijing_delivery_date(run_start)
+                and beijing_delivery_date(run_start) == beijing_delivery_date(job_start) == beijing_delivery_date(accepted_at))
             if (publication_mode != "close_confirmed"
-                    or beijing_delivery_date(run_start) != day
-                    or beijing_delivery_date(job_start) != day
+                    or not (original_close or manual_catch_up)
                     or not run_start <= job_start <= send_start <= accepted_at <= send_end <= job_end <= now_utc()
                     or job_end - job_start > timedelta(minutes=180)):
                 raise ValueError("outside original close job")
@@ -239,8 +244,20 @@ def pending_previous_close(repository: str, token: str, api_url: str, now: datet
     return None
 
 
+def validate_catch_up_date(value: str, now: datetime, *, publication_mode: str,
+                           correction: bool, validation_only: bool, test_id: str) -> date:
+    target = date.fromisoformat(value)
+    if (target.isoformat() != value or target >= beijing_delivery_date(now)
+            or publication_mode != "close_confirmed" or correction or validation_only or test_id
+            or os.environ.get("GITHUB_EVENT_NAME") != "workflow_dispatch"
+            or os.environ.get("EXTERNAL_SCHEDULE") == "true"):
+        raise ValueError("Catch-up requires an explicit manual prior-date normal close delivery")
+    return target
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--catch-up-date", default="")
     parser.add_argument("--correction", action="store_true")
     parser.add_argument("--validation-only", action="store_true")
     parser.add_argument("--delivery-test-id", default="")
@@ -255,7 +272,11 @@ def main() -> int:
 
     now = now_utc()
     delivery_date = beijing_delivery_date(now)
-    if (not args.correction and not args.validation_only and not args.delivery_test_id
+    if args.catch_up_date:
+        delivery_date = validate_catch_up_date(args.catch_up_date, now,
+            publication_mode=args.publication_mode, correction=args.correction,
+            validation_only=args.validation_only, test_id=args.delivery_test_id)
+    if (not args.catch_up_date and not args.correction and not args.validation_only and not args.delivery_test_id
             and args.publication_mode == "close_confirmed"):
         if not args.repository or not args.token:
             raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required for scheduled delivery checks")
