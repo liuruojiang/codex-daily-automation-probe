@@ -1,0 +1,11 @@
+{
+  "603028_approval.json": "9ad63035b2ca9f6ccde330a5487ae3860a024ac9bf60db4c6a1ea257b2f8a0a3",
+  "603028_REVIEW.md": "31cadda6c408c4a1a2fcf0769a8fb6d16c8ae5a592d25ce21694152b7ecb2695",
+  "603028_review_receipt.json": "8b511c17e4966459ad4d5ab8e5996e5250e59e7749afdfbaf43e8edf41f820ca",
+  "active.json": "6c60350e99b2521e53605c8ac4f2e368b24c1b636dd03876935906ea7493dce4",
+  "gate.json": "2c9547da737a7cb95beb66c0cd41a256d217ce3597046937162dd9d66b432d24",
+  "lifecycle.json": "23069d72689cdde8b439dd2055111b2e2e5b400014a2469a2dfc74dea52b064f",
+  "realtime_daily_gate.py": "7858d8ab8c3530a10e6960f09e8ab70dc3d7d8b0cbb690c8b5b834f40a3a3e60",
+  "test_realtime_daily_gate.py": "257eae5a71f4914912d2942f9024107dce742843ef8b29e254acebca7bb35c7b",
+  "test_source_verified.json": "a34c1e6f781068a61939ab5585461d1de8cd8bc21ffec7bb293f9e87b50f2730"
+}

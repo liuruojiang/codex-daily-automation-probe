@@ -1,0 +1,84 @@
+{
+  "schema": "microcap_daily_test_source_verification_v1",
+  "ok": true,
+  "verified": true,
+  "runtime_equivalent": true,
+  "verified_at": "2026-11-05T21:22:29.207493+00:00",
+  "repository_root": "D:\\动量策略\\微盘股对冲策略",
+  "runtime_sha": "ff1fd3c6e2c92c0694da19c97ad6f4aebd01dad0",
+  "test_source_sha": "54d140c96a98f63b7cbdae816d5005344533c546",
+  "actual_repo_head": "ff1fd3c6e2c92c0694da19c97ad6f4aebd01dad0",
+  "runtime_head_before": "ff1fd3c6e2c92c0694da19c97ad6f4aebd01dad0",
+  "runtime_head_after": "ff1fd3c6e2c92c0694da19c97ad6f4aebd01dad0",
+  "origin": "https://github.com/liuruojiang/microcap.git",
+  "verifier_sha256": "f9631f26ae9bbd9d12d55192f50b1ce43851768336037f6798e59c9595f227c6",
+  "config_sha256": "f35c4fc27cc9c61eb4be46038895e27a2d1c656d291215812b907ecb6a27bb14",
+  "changes": [
+    {
+      "path": "tests/fixtures/validation_source_identity/share_change_source.py.6fa.gz",
+      "status": "added",
+      "old_git_blob_sha256": null,
+      "new_git_blob_sha256": "b0d2131b5b7c1df61792f5d8c45f9463dac2833565d5905ab0bf97db4a6c41b8",
+      "old_git_blob_oid": null,
+      "new_git_blob_oid": "2e0f2d1b93b711bbcd6cdaa3a6ec1942910c9a78"
+    },
+    {
+      "path": "tests/fixtures/validation_source_identity/share_source_future_plan_reviews.json.6fa.gz",
+      "status": "added",
+      "old_git_blob_sha256": null,
+      "new_git_blob_sha256": "095a365ca25eced491fcf3e2c99dab29ec46351e5562af93c0b16281cc36ac0b",
+      "old_git_blob_oid": null,
+      "new_git_blob_oid": "f7729a17189b119272f787dfd08cade5a9535844"
+    },
+    {
+      "path": "tests/fixtures/validation_source_identity/share_unchanged_tail.py.6fa.gz",
+      "status": "added",
+      "old_git_blob_sha256": null,
+      "new_git_blob_sha256": "0e11ff85132892950972cec9b083dd0414adf84424d7ebb9a96d33979b597fb9",
+      "old_git_blob_oid": null,
+      "new_git_blob_oid": "b4c509307df5f43ca2b0c40fdbd8fe9c5db55434"
+    },
+    {
+      "path": "tests/fixtures/validation_source_identity/st_metadata_reviewed_b657.py.gz",
+      "status": "added",
+      "old_git_blob_sha256": null,
+      "new_git_blob_sha256": "acf04dccac4bf7645219233755f0ee4e6ca19dc88464eb991293419d9386aac2",
+      "old_git_blob_oid": null,
+      "new_git_blob_oid": "b7518cf07a67a2c9542edb8a9ad4551fb9f895a3"
+    },
+    {
+      "path": "tests/fixtures/validation_source_identity/v20_reviewed_b657.py.gz",
+      "status": "added",
+      "old_git_blob_sha256": null,
+      "new_git_blob_sha256": "e99d83ba46dbd42fe3903ba343c59bb28a799d4c86458b752a04434f030fa895",
+      "old_git_blob_oid": null,
+      "new_git_blob_oid": "478dab9683d904cd12c08d9acc5be86c7c9f9088"
+    },
+    {
+      "path": "tests/test_normal_source_receipt_transition.py",
+      "status": "modified",
+      "old_git_blob_sha256": "aa802deacb8f1e3d4a08894824c9f526d828cfde1589326a2b3a7f4dce70cf58",
+      "new_git_blob_sha256": "f57e1dbef0d6e5f4e9705f871a31b2be9ed36f01a83114fe6a821541e3353bd4",
+      "old_git_blob_oid": "545d018adc9045445bded1bf87622b8870bb4ca6",
+      "new_git_blob_oid": "b9325cd5d8c2a1abc3b754a725d4fffbf4aacd79"
+    },
+    {
+      "path": "tests/test_validation_source_identity.py",
+      "status": "modified",
+      "old_git_blob_sha256": "28aa4aa45a2d98e70153bf0f500c2849df6c546e18e4ed1b5ff7d474e2962ec0",
+      "new_git_blob_sha256": "77f189bbc50a48fe6bf5b7567b99373630cbf7b2d80ba2f416a431a1f97b0b24",
+      "old_git_blob_oid": "4c5455cd1b174a6d005ba7ee8a914d343f60d9ed",
+      "new_git_blob_oid": "41fdf6f7aabee1bb0a6a6f6bbbe452d59830aa7f"
+    }
+  ],
+  "runtime_equivalence": {
+    "all_unapproved_tree_entries_equal": true,
+    "all_non_test_doc_tree_entries_equal": true,
+    "runtime_path_count": 9411,
+    "runtime_tree_bindings_sha256": "8d742cdc9b0bd05944a20215ed8ceb35efd83d1f5381bc1fcd04d0b6c935f5cd"
+  },
+  "test_tree_bindings_sha256": "a21f9c84a1f9d4e07279a8e293c0cb1db4413e295195498dead3815c6609726f",
+  "git_objects_verified": true,
+  "runtime_or_package_author_relabelled": false,
+  "network_fetch_explicit": false
+}

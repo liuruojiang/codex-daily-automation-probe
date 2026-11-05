@@ -1,0 +1,8 @@
+{
+  "decision": "approved",
+  "package_sha256": "7fe387b7a1fbcd8548fff0533852c6421d7b3c59502cee361d0da86734b18dad",
+  "review_sha256": "fcdbad5e9ae9f1fd63b03dac362105f3d0d5031385dfab578942f9c85962a6eb",
+  "recorded_at": "2026-11-05T21:14:01.533298+00:00",
+  "user_reply": "批准此精确包，继续补发（推荐）",
+  "scope": "603028 only; append Nov5 dated SSE observation284835200; keep Nov4 and earlier; disclose provider dates and Nov6 supplementary verification; no quote or delivery waiver"
+}
