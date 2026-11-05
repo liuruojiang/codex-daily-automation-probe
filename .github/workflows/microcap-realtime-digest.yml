@@ -961,11 +961,24 @@ jobs:
           if candidate:
               if not re.fullmatch('[0-9a-f]{40}', candidate):
                   raise SystemExit('Invalid exact candidate SHA')
-              config['strategy_sha'] = candidate
+              candidate_path = Path('automation/config/microcap_recovery_candidate.json')
+              if candidate_path.exists():
+                  reviewed = json.loads(candidate_path.read_bytes())
+                  if reviewed.get('strategy_sha') != candidate or any(reviewed.get(k) != config[k] for k in ('state_url', 'state_sha256', 'state_date')):
+                      raise SystemExit('Candidate review does not bind the exact approved seed and runtime')
+                  config = reviewed
+              else:
+                  config['strategy_sha'] = candidate
           Path('recovery-config.json').write_text(json.dumps(config, indent=2) + '\n')
+          bootstrap = dict(config)
+          bootstrap['strategy_sha'] = config.get('bootstrap_strategy_sha', config['strategy_sha'])
+          if not re.fullmatch('[0-9a-f]{40}', bootstrap['strategy_sha']):
+              raise SystemExit('Invalid exact bootstrap runtime')
+          Path('recovery-bootstrap-config.json').write_text(json.dumps(bootstrap, indent=2) + '\n')
           Path('recovery-config-provenance.json').write_text(json.dumps({'original_config_sha256': hashlib.sha256(source).hexdigest(), 'candidate_strategy_sha': candidate, 'scope': 'recovery_only_same_approved_seed_no_production_activation'}, indent=2))
           with open(os.environ['GITHUB_OUTPUT'], 'a') as handle:
               handle.write('sha=' + config['strategy_sha'] + '\n')
+              handle.write('bootstrap_sha=' + bootstrap['strategy_sha'] + '\n')
           PY
       - uses: actions/checkout@v6
         with:
@@ -994,13 +1007,27 @@ jobs:
             --strategy-sha "${{ steps.identity.outputs.sha }}" \
             --not-after-date "${{ steps.identity.outputs.date }}" \
             --receipt microcap/whole_state_recovery.json "${args[@]}"
+      - name: Select the reviewed original runtime for approved bootstrap restore
+        if: inputs.recovery_check == 'bootstrap' && steps.whole_state_restore.outputs.restored != 'true'
+        working-directory: microcap
+        env:
+          BOOTSTRAP_SHA: ${{ steps.recovery_pin.outputs.bootstrap_sha }}
+        run: |
+          git merge-base --is-ancestor "$BOOTSTRAP_SHA" origin/main
+          git checkout --detach "$BOOTSTRAP_SHA"
       - name: Restore approved bootstrap only when no recovery artifact exists
         id: approved_bootstrap
         if: inputs.recovery_check == 'bootstrap' && steps.whole_state_restore.outputs.restored != 'true'
         run: |
           python -B -u automation/scripts/restore_approved_microcap_state.py \
             --root microcap --bundle "${RUNNER_TEMP}/microcap-whole-delivery-state.zip" \
-            --config recovery-config.json
+            --config recovery-bootstrap-config.json
+      - name: Return to the exact candidate after original approved restore
+        if: steps.approved_bootstrap.outputs.restored == 'true'
+        working-directory: microcap
+        env:
+          CANDIDATE_SHA: ${{ steps.recovery_pin.outputs.sha }}
+        run: git checkout --detach "$CANDIDATE_SHA"
       - name: Repack approved restored state for the exact runtime
         id: approved_repack
         if: github.event_name == 'workflow_dispatch' && inputs.recovery_check == 'bootstrap' && inputs.validation_only != true && inputs.correction != true && inputs.external_schedule != true && inputs.delivery_test_id == '' && inputs.publication_mode == 'close_confirmed' && steps.whole_state_restore.outcome == 'success' && steps.whole_state_restore.outputs.restored == 'false' && steps.approved_bootstrap.outcome == 'success' && steps.approved_bootstrap.outputs.restored == 'true'
@@ -1032,6 +1059,7 @@ jobs:
           name: microcap-recovery-check-evidence
           path: |
             recovery-config.json
+            recovery-bootstrap-config.json
             recovery-config-provenance.json
             microcap/whole_state_recovery.json
             microcap/recovery_archive_identity.json
