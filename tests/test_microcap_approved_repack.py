@@ -93,6 +93,55 @@ def test_exact_runtime_seed_is_reused_without_pack(case,monkeypatch):
     value=recovery.repack_approved(root,bundle,OLD,'2026-11-04',config)
     assert not value['repacked'] and value['unchanged_exact_runtime'] and not calls and bundle.read_bytes()==before
 
+
+@pytest.mark.parametrize('mutation', ['none', 'old_hash', 'new_actual', 'other_pair', 'third_file',
+                                    'missing_delta', 'data', 'during_pack', 'artifacts', 'streams'])
+def test_exact_metadata_continuation_pair_keeps_all_non_source_bytes(case, monkeypatch, mutation):
+    root, bundle, config, manifest, calls, _ = case
+    names = ['microcap_top100_mom16_biweekly_live_v2_0.py', 'scripts/st_metadata_refresh.py']
+    changes = {}
+    for i, name in enumerate(names):
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        raw = ('# explicit synthetic code ' + str(i) + '\n').encode()
+        path.write_bytes(raw)
+        manifest['inputs'][name] = str(i + 5) * 64
+        changes[name] = [manifest['inputs'][name], hashlib.sha256(raw).hexdigest()]
+    write_zip(bundle, manifest)
+    (root / MANIFEST).write_text(json.dumps(manifest))
+    cfg = json.loads(config.read_bytes())
+    cfg['state_sha256'] = hashlib.sha256(bundle.read_bytes()).hexdigest()
+    cfg['source_repack_changes'] = copy.deepcopy(changes)
+    if mutation == 'old_hash': cfg['source_repack_changes'][names[1]][0] = '0' * 64
+    elif mutation == 'new_actual': (root / names[1]).write_bytes(b'changed')
+    elif mutation == 'other_pair': cfg['source_repack_changes']['scripts/unreviewed.py'] = cfg['source_repack_changes'].pop(names[1])
+    elif mutation == 'third_file': cfg['source_repack_changes']['scripts/third.py'] = ['0' * 64, '1' * 64]
+    config.write_text(json.dumps(cfg))
+    original = bundle.read_bytes()
+    original_manifest = (root / MANIFEST).read_bytes()
+    def native(cmd, **kwargs):
+        calls.append(cmd)
+        assert 'pack-archive' in cmd
+        value = copy.deepcopy(manifest)
+        value['release_sha'] = NEW
+        for name, pair in changes.items(): value['inputs'][name] = pair[1]
+        if mutation == 'missing_delta': value['inputs'][names[1]] = changes[names[1]][0]
+        elif mutation == 'data': value['inputs']['input.csv'] = '0' * 64
+        elif mutation == 'during_pack': (root / names[1]).write_bytes(b'changed during packing')
+        elif mutation in ('artifacts', 'streams'): value[mutation] = {'changed': True}
+        write_zip(Path(cmd[cmd.index('--bundle') + 1]), value)
+    monkeypatch.setattr(recovery.subprocess, 'run', native)
+    if mutation == 'none':
+        result = run(case)
+        assert result['verified_source_repack_changes'] == changes
+        assert result['economic_manifest_unchanged'] and len(calls) == 1
+        assert Path(result['preserved_approved_archive']).read_bytes() == original
+    else:
+        with pytest.raises(ValueError): run(case)
+        assert bundle.read_bytes() == original
+        if mutation in ('old_hash', 'new_actual', 'other_pair', 'third_file'): assert not calls
+    assert (root / MANIFEST).read_bytes() == original_manifest
+
 @pytest.mark.parametrize('mutation',['config','root','checkout'])
 def test_concurrent_identity_changes_leave_old_zip(case,monkeypatch,mutation):
     original=case[1].read_bytes()

@@ -973,7 +973,7 @@ jobs:
     # Explicit maintenance publishes only an already-approved verified archive.
     # It never runs the mail/delivery-marker job or claims current-market freshness.
     needs: [check-trading-day, regression]
-    if: always() && github.event_name == 'workflow_dispatch' && inputs.validation_only != true && (inputs.recovery_check == 'bootstrap' || inputs.recovery_check == 'require_hit') && needs.regression.result == 'success'
+    if: always() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.validation_only != true && (inputs.recovery_check == 'bootstrap' || inputs.recovery_check == 'require_hit') && needs.regression.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:

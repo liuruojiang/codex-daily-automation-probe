@@ -98,8 +98,10 @@ def restore_bundle(root: Path, bundle: Path, strategy_sha: str, not_after: str) 
 
 def _source_repack_changes(config_raw: bytes) -> dict:
     changes = json.loads(config_raw).get("source_repack_changes", {})
-    if not isinstance(changes, dict) or len(changes) > 1:
-        raise ValueError("Source repack requires at most one exact source-file declaration")
+    paired_sources = {"microcap_top100_mom16_biweekly_live_v2_0.py", "scripts/st_metadata_refresh.py"}
+    if (not isinstance(changes, dict) or len(changes) > 2
+            or (len(changes) == 2 and set(changes) != paired_sources)):
+        raise ValueError("Source repack requires one exact source or the reviewed metadata continuation pair")
     for path, pair in changes.items():
         if path != "microcap_top100_mom16_biweekly_live_v2_0.py" and not re.fullmatch(r"scripts/[A-Za-z0-9_]+\.py", path):
             raise ValueError("Source repack declaration is not an allowed execution source")
@@ -126,7 +128,7 @@ def repack_approved(root: Path, bundle: Path, strategy_sha: str, not_after: str,
 
     The approved original remains immutable. No refresh, signal or SMTP is run.
     Economic inputs/final streams must be exact; only an explicitly approved,
-    exact one-file source transition may differ in the native-pack manifest.
+    exact source transition may differ in the native-pack manifest.
     """
     from restore_approved_microcap_state import load_release_config
     config_raw = config_path.read_bytes()

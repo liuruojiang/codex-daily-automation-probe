@@ -3,37 +3,47 @@
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-recovery-20261105-b657fce0/microcap-recovery-whole-20261104-b657fce0.zip",
   "state_sha256": "641cdc9276f54107cf8eef9026dca3f9bc0b97b37090c5aa4c96b7e8817be687",
   "state_date": "2026-11-04",
-  "strategy_sha": "22c8b6ff12e7c07182043f61a9eb9b28e052035b",
+  "strategy_sha": "6fa0b9d73b12fff548200d987c953d1b1a7d74d7",
   "bootstrap_strategy_sha": "b657fce0754d55596d1e6e547694145298f6e2d4",
   "source_repack_changes": {
     "microcap_top100_mom16_biweekly_live_v2_0.py": [
       "0cdbcc9c2338e1522815dd927b1750b32bbd4ea5891e6f5c7bf59d1ee20f8aef",
       "e4b343d5d12148d2faeb8bcc0441e50e744679992088e47be1f319f218558612"
+    ],
+    "scripts/st_metadata_refresh.py": [
+      "26537556d2cc58d899052ca0027f575b9f6d64fe03ca75651bf9f5f9a17dd0e8",
+      "5ecf65d6124310a777f62f3c8ac76c72000acce6482b99ce2359f52ffc34a992"
     ]
   },
   "daily_test_source": {
-    "runtime_sha": "22c8b6ff12e7c07182043f61a9eb9b28e052035b",
-    "source_sha": "cb904841414cf726da331ad3bee51275670f4461",
+    "runtime_sha": "6fa0b9d73b12fff548200d987c953d1b1a7d74d7",
+    "source_sha": "5b9ae16f1636225a9bb44672ad2275ca9f4f6bc3",
     "allowed_changes": [
       {
         "path": "tests/test_normal_source_receipt_transition.py",
         "old_git_blob_sha256": "aa802deacb8f1e3d4a08894824c9f526d828cfde1589326a2b3a7f4dce70cf58",
         "new_git_blob_sha256": "f57e1dbef0d6e5f4e9705f871a31b2be9ed36f01a83114fe6a821541e3353bd4",
-        "reason": "Retain the already approved portable strict receipt test; original historical implementation replay remains preserved in immutable audit evidence."
-      },
-      {
-        "path": "tests/test_validation_source_identity.py",
-        "old_git_blob_sha256": "28aa4aa45a2d98e70153bf0f500c2849df6c546e18e4ed1b5ff7d474e2962ec0",
-        "new_git_blob_sha256": "bb0b8afce44c683802d9c33722858681b8816390c15cf2b621e5fcfd45592104",
-        "reason": "Use exact original b657 Git bytes for sealed historical review tests; retain all prior cases and require current runtime to reject old review authority."
+        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
       },
       {
         "path": "tests/fixtures/validation_source_identity/v20_reviewed_b657.py.gz",
         "old_git_blob_sha256": null,
         "new_git_blob_sha256": "e99d83ba46dbd42fe3903ba343c59bb28a799d4c86458b752a04434f030fa895",
-        "reason": "Use exact original b657 Git bytes for sealed historical review tests; retain all prior cases and require current runtime to reject old review authority."
+        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
+      },
+      {
+        "path": "tests/test_validation_source_identity.py",
+        "old_git_blob_sha256": "28aa4aa45a2d98e70153bf0f500c2849df6c546e18e4ed1b5ff7d474e2962ec0",
+        "new_git_blob_sha256": "440eb6c155e053e06087512145d95e48764a251e845d6680345f2f44b15e6d5c",
+        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
+      },
+      {
+        "path": "tests/fixtures/validation_source_identity/st_metadata_reviewed_b657.py.gz",
+        "old_git_blob_sha256": null,
+        "new_git_blob_sha256": "acf04dccac4bf7645219233755f0ee4e6ca19dc88464eb991293419d9386aac2",
+        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
       }
     ]
   },
-  "review": "docs/st_current_snapshot_inclusive_exit_20261105.md; inclusive D5 ST interval remains active; historical source certificate separated from current execution permission; economic state must remain exact"
+  "review": "docs/st_semantic_metadata_tail_20261105.md and exact successor review; original historical data, source authority and strategy parameters unchanged; native incremental tail only after full transaction/semantic proof"
 }

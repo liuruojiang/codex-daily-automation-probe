@@ -110,3 +110,18 @@ def test_producer_consumer_names_match_and_production_reads_whole_before_legacy(
     for step in probe["steps"]:
         assert "send_report.py" not in step.get("run", "")
         assert "realtime_state_bundle.py refresh" not in step.get("run", "")
+
+
+@pytest.mark.parametrize('cancelled', [False, True])
+@pytest.mark.parametrize('mode', ['bootstrap', 'require_hit', 'off'])
+def test_actual_recovery_job_condition_honors_cancellation(cancelled, mode):
+    import yaml
+    workflow = Path(__file__).resolve().parents[1] / '.github/workflows/microcap-realtime-digest.yml'
+    expression = yaml.safe_load(workflow.read_text(encoding='utf8'))['jobs']['recovery-check']['if']
+    substitutions = {'always()': 'True', '!cancelled()': repr(not cancelled),
+                     'github.event_name': repr('workflow_dispatch'), 'inputs.validation_only': 'False',
+                     'inputs.recovery_check': repr(mode), 'needs.regression.result': repr('success'),
+                     'true': 'True', ' && ': ' and ', ' || ': ' or '}
+    for source, target in substitutions.items(): expression = expression.replace(source, target)
+    permitted = eval(expression, {'__builtins__': {}}, {})
+    assert permitted is (not cancelled and mode in ('bootstrap', 'require_hit'))
