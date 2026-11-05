@@ -5591,6 +5591,71 @@
       "zh_summary": "官方公告计划2027年1月18日推出12只股票期货，新合约首六个月豁免证监会征费。",
       "evidence_level": "official_full_release",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41916714303",
+      "origin_report_date": "2026-11-05",
+      "source": "arXiv q-fin.ST",
+      "title": "Are LLM Research Agents Reliable Judges of Predictability? Evidence from Planted-Signal Worlds",
+      "zh_title": "大模型研究代理能可靠判断可预测性吗？",
+      "url": "https://arxiv.org/abs/2611.04070",
+      "published": "2026-11-04T05:00:00+00:00",
+      "summary": "植入信号的模拟实验显示研究代理假阳性偏高，需代理外固定规则和封存留出集。",
+      "zh_summary": "植入信号的模拟实验显示研究代理假阳性偏高，需代理外固定规则和封存留出集。",
+      "evidence_level": "原文摘要",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41916714303",
+      "origin_report_date": "2026-11-05",
+      "source": "arXiv q-fin.ST",
+      "title": "Aggregate Calibration Can Mask Stress-State Undercoverage: Bounded-Memory Forecast Intervals under Recurrent Financial Stress",
+      "zh_title": "总体校准可能掩盖压力期覆盖不足",
+      "url": "https://arxiv.org/abs/2611.04223",
+      "published": "2026-11-04T05:00:00+00:00",
+      "summary": "固定预测模型和记忆预算时，仅保留近期残差可在总体达标而高波动状态覆盖不足。",
+      "zh_summary": "固定预测模型和记忆预算时，仅保留近期残差可在总体达标而高波动状态覆盖不足。",
+      "evidence_level": "原文摘要",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41916714303",
+      "origin_report_date": "2026-11-05",
+      "source": "Seeking Alpha ETFs",
+      "title": "SPMO: A Winning Combination Of Momentum, Earnings Growth, And Attractive Valuation",
+      "zh_title": "SPMO：动量、盈利增长与估值的组合",
+      "url": "https://seekingalpha.com/article/4962264-spmo-a-winning-combination-of-momentum-earnings-growth-and-attractive-valuation?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-04T16:53:37+00:00",
+      "summary": "作者报告动量基金构建、半年度再平衡与估值，属于ETF因子配置研究，未读取付费全文。",
+      "zh_summary": "作者报告动量基金构建、半年度再平衡与估值，属于ETF因子配置研究，未读取付费全文。",
+      "evidence_level": "发布者公开摘要",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41916714303",
+      "origin_report_date": "2026-11-05",
+      "source": "Seeking Alpha ETFs",
+      "title": "SCHD's Outperformance Won't Last",
+      "zh_title": "SCHD的超额表现会持续吗？",
+      "url": "https://seekingalpha.com/article/4961640-schds-outperformance-wont-last?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-03T17:54:29+00:00",
+      "summary": "作者认为近期表现依赖能源、医疗等持仓，维持长期谨慎判断，属股息因子持续性研究。",
+      "zh_summary": "作者认为近期表现依赖能源、医疗等持仓，维持长期谨慎判断，属股息因子持续性研究。",
+      "evidence_level": "发布者公开摘要",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "41916714303",
+      "origin_report_date": "2026-11-05",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Job Openings Are Rising, but Hiring Is the Slowest Since 2013. But How?",
+      "zh_title": "职位空缺增加，为何招聘仍缓慢？",
+      "url": "https://247wallst.com/investing/2026/11/04/job-openings-are-rising-but-hiring-is-the-slowest-since-2013-but-how/?.tsrc=rss",
+      "published": "2026-11-04T18:08:29+00:00",
+      "summary": "作者区分月末职位空缺存量与全月招聘流量，指出年度招聘均值疲弱，单月增长未必统计显著。",
+      "zh_summary": "作者区分月末职位空缺存量与全月招聘流量，指出年度招聘均值疲弱，单月增长未必统计显著。",
+      "evidence_level": "媒体正文全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
