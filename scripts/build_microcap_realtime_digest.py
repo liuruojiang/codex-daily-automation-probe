@@ -751,8 +751,22 @@ def load_share_source_disclosures(path_value: str, signal_date: str) -> list[dic
             or value.get("signal_date") != signal_date or value.get("native_verified") is not True
             or not isinstance(value.get("disclosures"), list) or len(value["disclosures"]) > 1):
         raise ValueError("share-source disclosure schema/native verification/date invalid")
+    if signal_date == "2026-11-05" and len(value["disclosures"]) != 1:
+        raise ValueError("Nov5 supplemented report requires the approved 301288 disclosure")
     for item in value["disclosures"]:
         selection = item.get("selection", {})
+        if signal_date == "2026-11-05":
+            text = "301288：11/06补充核验11/05公告事件，总股本108010000股不变；不声称11/05收盘前已取得该公告。"
+            if (item.get("symbol") != "301288" or item.get("signal_date") != signal_date
+                    or item.get("review_sha256") != "b716606578531dbb67ed5f1ea20d91f25330cac284e5f96818d4ae65bfa4cfc9"
+                    or item.get("text") != text or selection.get("disclosure") != text
+                    or selection.get("review_sha256") != item["review_sha256"]
+                    or selection.get("package_sha256") != "3af53c7fea86b3334321112981747560e9fcea9dba5ee7667c9f011d8a70f4ff"
+                    or selection.get("signal_day") != signal_date
+                    or selection.get("supplemental_verification_day") != "2026-11-06"
+                    or not isinstance(item.get("source_files"), dict) or "301288.json" not in item["source_files"]):
+                raise ValueError("share-source disclosure is not the exact approved late unchanged event")
+            continue
         if (signal_date != "2026-11-04" or item.get("symbol") != "603028"
                 or item.get("signal_date") != signal_date or item.get("review_sha256") != SSE_SHARE_REVIEW_SHA
                 or item.get("text") != SSE_SHARE_DISCLOSURE_TEXT

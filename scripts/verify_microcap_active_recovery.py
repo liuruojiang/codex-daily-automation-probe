@@ -28,8 +28,14 @@ def verify(root):
     if hashlib.sha256(raw).hexdigest() != binding['sha256']:
         raise ValueError('Recovery acceptance bytes changed')
     receipt = json.loads(raw)
+    try:
+        from restore_approved_microcap_state import source_successor
+    except ModuleNotFoundError:
+        from scripts.restore_approved_microcap_state import source_successor
+    transition = source_successor(config)
+    accepted_runtime = transition['bootstrap_sha'] if transition else config['strategy_sha']
     required = {'schema': 'microcap_recovery_readiness_v1', 'pass': True,
-                'strategy_sha': config['strategy_sha'], 'seed_date': config['state_date'],
+                'strategy_sha': accepted_runtime, 'seed_date': config['state_date'],
                 'bundle_sha256': config['state_sha256'],
                 'repository': 'liuruojiang/codex-daily-automation-probe',
                 'fallback_used_by_consumer': False, 'recovery_only': True,
@@ -59,7 +65,8 @@ def verify(root):
             or set(pins) != {config['strategy_sha']}):
         raise ValueError('Delivery workflow differs from accepted runtime')
     return {'pass': True, 'strategy_sha': config['strategy_sha'],
-            'recovery_acceptance_sha256': binding['sha256'], 'current_session_verified': False}
+            'recovery_acceptance_sha256': binding['sha256'], 'current_session_verified': False,
+            'accepted_restore_runtime': accepted_runtime, 'approved_source_successor': transition}
 
 
 if __name__ == '__main__':

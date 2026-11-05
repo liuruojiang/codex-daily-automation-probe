@@ -65,3 +65,28 @@ def test_normal_workflow_requires_native_success_before_build_and_original_smtp_
     assert 'steps.share_source_disclosures.outcome' in build['run'] and '|| exit 1' in build['run']
     assert '--share-source-disclosures artifacts/share-source-disclosures.json' in build['run']
     assert "steps.digest.outputs.status == 'OK'" in byname['Persist normal-send intent before SMTP']['if']
+
+
+def late_disclosure_value():
+    text='301288：11/06补充核验11/05公告事件，总股本108010000股不变；不声称11/05收盘前已取得该公告。'
+    review='b716606578531dbb67ed5f1ea20d91f25330cac284e5f96818d4ae65bfa4cfc9'
+    selection={'disclosure':text,'review_sha256':review,'package_sha256':'3af53c7fea86b3334321112981747560e9fcea9dba5ee7667c9f011d8a70f4ff',
+        'signal_day':'2026-11-05','supplemental_verification_day':'2026-11-06'}
+    return {'schema':'verified_share_source_disclosures_v1','signal_date':'2026-11-05','native_verified':True,
+        'disclosures':[{'symbol':'301288','signal_date':'2026-11-05','review_sha256':review,'text':text,
+        'source_files':{'301288.json':'test-structural-evidence'},'selection':selection}]}
+
+
+@pytest.mark.parametrize('fault',[None,'date','text','package','source','missing','unverified'])
+def test_301288_supplement_cannot_lose_late_verification(tmp_path,fault):
+    value=late_disclosure_value();item=value['disclosures'][0]
+    if fault=='date':item['selection']['supplemental_verification_day']='2026-11-05'
+    elif fault=='text':item['text']='same-day verified'
+    elif fault=='package':item['selection']['package_sha256']='0'*64
+    elif fault=='source':item['source_files']={}
+    elif fault=='missing':value['disclosures']=[]
+    elif fault=='unverified':value['native_verified']=False
+    path=tmp_path/'source.json';path.write_text(json.dumps(value),encoding='utf8')
+    if fault:
+        with pytest.raises(ValueError):digest.load_share_source_disclosures(str(path),'2026-11-05')
+    else:assert digest.load_share_source_disclosures(str(path),'2026-11-05')==value['disclosures']

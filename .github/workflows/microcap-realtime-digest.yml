@@ -215,7 +215,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: liuruojiang/microcap
-          ref: 6fa0b9d73b12fff548200d987c953d1b1a7d74d7
+          ref: 2e35d1738b110e82e63b37b8f36f4b3f21937fdb
           path: microcap
 
       - name: Record microcap strategy SHA

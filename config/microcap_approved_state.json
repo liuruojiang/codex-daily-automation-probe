@@ -1,41 +1,75 @@
 {
   "schema_version": 1,
-  "strategy_sha": "6fa0b9d73b12fff548200d987c953d1b1a7d74d7",
+  "strategy_sha": "2e35d1738b110e82e63b37b8f36f4b3f21937fdb",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-recovery-20261105-6fa0b9d7/microcap-recovery-whole-20261104-6fa0b9d7.zip",
   "state_sha256": "6155ca0cc8ca94481cf41ce92af3f6d337549c5543a95dd9eb6e903d38944f7b",
   "state_date": "2026-11-04",
   "daily_test_source": {
-    "runtime_sha": "6fa0b9d73b12fff548200d987c953d1b1a7d74d7",
-    "source_sha": "5b9ae16f1636225a9bb44672ad2275ca9f4f6bc3",
+    "runtime_sha": "2e35d1738b110e82e63b37b8f36f4b3f21937fdb",
+    "source_sha": "85e3e39a311e86fc722e63b7dc426e7009e6773c",
     "allowed_changes": [
       {
-        "path": "tests/test_normal_source_receipt_transition.py",
-        "old_git_blob_sha256": "aa802deacb8f1e3d4a08894824c9f526d828cfde1589326a2b3a7f4dce70cf58",
-        "new_git_blob_sha256": "f57e1dbef0d6e5f4e9705f871a31b2be9ed36f01a83114fe6a821541e3353bd4",
-        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
-      },
-      {
-        "path": "tests/fixtures/validation_source_identity/v20_reviewed_b657.py.gz",
+        "path": "tests/fixtures/validation_source_identity/share_source_future_plan_reviews.json.6fa.gz",
         "old_git_blob_sha256": null,
-        "new_git_blob_sha256": "e99d83ba46dbd42fe3903ba343c59bb28a799d4c86458b752a04434f030fa895",
-        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
+        "new_git_blob_sha256": "095a365ca25eced491fcf3e2c99dab29ec46351e5562af93c0b16281cc36ac0b",
+        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
       },
       {
-        "path": "tests/test_validation_source_identity.py",
-        "old_git_blob_sha256": "28aa4aa45a2d98e70153bf0f500c2849df6c546e18e4ed1b5ff7d474e2962ec0",
-        "new_git_blob_sha256": "440eb6c155e053e06087512145d95e48764a251e845d6680345f2f44b15e6d5c",
-        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
+        "path": "tests/fixtures/validation_source_identity/share_unchanged_tail.py.6fa.gz",
+        "old_git_blob_sha256": null,
+        "new_git_blob_sha256": "0e11ff85132892950972cec9b083dd0414adf84424d7ebb9a96d33979b597fb9",
+        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
       },
       {
         "path": "tests/fixtures/validation_source_identity/st_metadata_reviewed_b657.py.gz",
         "old_git_blob_sha256": null,
         "new_git_blob_sha256": "acf04dccac4bf7645219233755f0ee4e6ca19dc88464eb991293419d9386aac2",
-        "reason": "Retain complete authenticated portable tests; historical exact-review assertions use original b657 source bytes, current four-source successor has independent mandatory cases."
+        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
+      },
+      {
+        "path": "tests/fixtures/validation_source_identity/v20_reviewed_b657.py.gz",
+        "old_git_blob_sha256": null,
+        "new_git_blob_sha256": "e99d83ba46dbd42fe3903ba343c59bb28a799d4c86458b752a04434f030fa895",
+        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
+      },
+      {
+        "path": "tests/test_normal_source_receipt_transition.py",
+        "old_git_blob_sha256": "aa802deacb8f1e3d4a08894824c9f526d828cfde1589326a2b3a7f4dce70cf58",
+        "new_git_blob_sha256": "f57e1dbef0d6e5f4e9705f871a31b2be9ed36f01a83114fe6a821541e3353bd4",
+        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
+      },
+      {
+        "path": "tests/test_validation_source_identity.py",
+        "old_git_blob_sha256": "28aa4aa45a2d98e70153bf0f500c2849df6c546e18e4ed1b5ff7d474e2962ec0",
+        "new_git_blob_sha256": "72ca5a7761ef4540abf46b10942e274591abc905b91825adb4d7acf7d7defdde",
+        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
       }
     ]
   },
   "recovery_readiness": {
     "path": "config/microcap_recovery_readiness.json",
     "sha256": "aa3728ebc55d73185f1114d117e3eb31443dd29ebc9a607189fd25d6aa993da0"
+  },
+  "approved_source_successor": {
+    "bootstrap_sha": "6fa0b9d73b12fff548200d987c953d1b1a7d74d7",
+    "approval_package_sha256": "3af53c7fea86b3334321112981747560e9fcea9dba5ee7667c9f011d8a70f4ff",
+    "changes": {
+      "data/share_source_future_plan_reviews.json": [
+        "db9799bfc30a2108a523f3b7654db7de4cad326b232d7e72828f8b11be437f7a",
+        "c23994a80008f413d7211caf48d24dde66335e2e149d7c9120c3a7187fb940f7"
+      ],
+      "scripts/realtime_state_bundle.py": [
+        "18e64de0cce77b65dcb8a77843baa74593c85559ad6dae518623a98724693328",
+        "f4387540953e3c0c9b0821b150ac4cf0267cc59f08bf0783300e10f0d95dbe7c"
+      ],
+      "scripts/share_unchanged_tail.py": [
+        "cf66976ca3cea83c5fe9fa67cfe816948141479cda00320e70e6406444c1a6fd",
+        "d06f70d2961d662bdcdfd414402e47eb32b311cb22edd1ea9796e92f42788d0a"
+      ],
+      "scripts/sse_share_daily_unchanged_20261104.py": [
+        "33b6eaf8b50e026701203d7a48b2366034462cede12865716ad06b6ada7ef0ab",
+        "61c3d294a7437289558fbd231af370601b82239dd5fa4b2aa4d9a21c891347a1"
+      ]
+    }
   }
 }

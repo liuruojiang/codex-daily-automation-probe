@@ -87,3 +87,18 @@ def test_other_yaml_forms_cannot_hide_unreviewed_checkout(tmp_path, extra):
     path.write_text(path.read_text() + extra)
     with pytest.raises(ValueError, match='workflow differs'):
         module.verify(tmp_path)
+
+
+def test_exact_source_successor_keeps_original_pair_identity(tmp_path):
+    install(tmp_path,strategy_sha='6fa0b9d73b12fff548200d987c953d1b1a7d74d7')
+    from scripts.restore_approved_microcap_state import EXACT_301288_PATHS, EXACT_301288_PACKAGE
+    path=tmp_path/'config/microcap_approved_state.json';c=json.loads(path.read_bytes())
+    c['approved_source_successor']={'bootstrap_sha':'6fa0b9d73b12fff548200d987c953d1b1a7d74d7',
+        'approval_package_sha256':EXACT_301288_PACKAGE,'changes':{p:['a'*64,'b'*64] for p in EXACT_301288_PATHS}}
+    path.write_text(json.dumps(c))
+    result=module.verify(tmp_path)
+    assert result['pass'] and not result['current_session_verified']
+    assert result['accepted_restore_runtime']=='6fa0b9d73b12fff548200d987c953d1b1a7d74d7'
+    assert result['strategy_sha']=='a'*40
+    c['approved_source_successor']['approval_package_sha256']='0'*64;path.write_text(json.dumps(c))
+    with pytest.raises(ValueError):module.verify(tmp_path)

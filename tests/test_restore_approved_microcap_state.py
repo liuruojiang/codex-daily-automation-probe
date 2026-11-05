@@ -225,3 +225,52 @@ def test_missing_output_numeric_coercion_regression_and_all_exit_gates():
         assert not re.search(r"outputs\.exit_code\s*(==|!=)", condition)
         for producer in re.findall(r'steps\.(\w+)\.outputs\.validated', condition):
             assert 'if [[ "${status}" -eq 0 ]]; then echo "validated=true"' in by_id[producer]['run']
+
+
+def exact_successor_config():
+    return {'strategy_sha':'a'*40, 'approved_source_successor':{
+        'bootstrap_sha':'6fa0b9d73b12fff548200d987c953d1b1a7d74d7',
+        'approval_package_sha256':seed.EXACT_301288_PACKAGE,
+        'changes':{p:[hashlib.sha256(b'old').hexdigest(),hashlib.sha256(b'new').hexdigest()] for p in seed.EXACT_301288_PATHS}}}
+
+
+@pytest.mark.parametrize('fault',['package','old_pin','extra','missing','equal','bad_hash'])
+def test_exact_source_successor_rejects_unreviewed_scope(fault):
+    c=exact_successor_config();t=c['approved_source_successor'];name=sorted(t['changes'])[0]
+    if fault=='package':t['approval_package_sha256']='0'*64
+    elif fault=='old_pin':t['bootstrap_sha']='0'*40
+    elif fault=='extra':t['changes']['strategy.py']=['a'*64,'b'*64]
+    elif fault=='missing':t['changes'].pop(name)
+    elif fault=='equal':t['changes'][name]=['a'*64,'a'*64]
+    else:t['changes'][name]=['bad','b'*64]
+    with pytest.raises(ValueError):seed.source_successor(c)
+
+
+@pytest.mark.parametrize('fault',[None,'restore','source','unrelated','dirty'])
+def test_native_original_restore_and_exact_successor_switch(tmp_path,monkeypatch,fault):
+    c=exact_successor_config();old=c['approved_source_successor']['bootstrap_sha'];calls=[]
+    for path in seed.EXACT_301288_PATHS:
+        p=tmp_path/path;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(b'new')
+    def read(cmd,**kw):
+        args=cmd[3:]
+        if args==['rev-parse','HEAD']:return (c['strategy_sha']+'\n').encode()
+        if args in (['diff','--name-only'],['diff','--cached','--name-only']):return b'scripts/dirty.py\n' if fault=='dirty' else b''
+        if args[:2]==['diff','--name-only']:
+            return ('\n'.join(sorted(seed.EXACT_301288_PATHS))+('\nstrategy.py' if fault=='unrelated' else '')).encode()
+        if args[0]=='show':
+            return b'tampered' if fault=='source' else b'old' if args[1].startswith(old+':') else b'new'
+        raise AssertionError(args)
+    def run(cmd,**kw):
+        calls.append(cmd)
+        if 'restore' in cmd and fault=='restore':raise seed.subprocess.CalledProcessError(1,cmd)
+    monkeypatch.setattr(seed.subprocess,'check_output',read);monkeypatch.setattr(seed.subprocess,'run',run)
+    if fault:
+        with pytest.raises((ValueError,seed.subprocess.CalledProcessError)):
+            seed.restore_with_source_successor(tmp_path,tmp_path/'seed.zip','2026-11-04',c)
+    else:seed.restore_with_source_successor(tmp_path,tmp_path/'seed.zip','2026-11-04',c)
+    restores=[x for x in calls if 'restore' in x]
+    if fault in ('dirty','source','unrelated'):assert not restores
+    else:
+        assert len(restores)==1 and restores[0][-1]=='2026-11-04'
+        assert calls[-1][-3:]==['checkout','--detach',c['strategy_sha']]
+        assert any(x[-3:]==['checkout','--detach',old] for x in calls)
