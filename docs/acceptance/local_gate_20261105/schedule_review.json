@@ -1,0 +1,94 @@
+{
+  "old_sha256": "aeeb2b63218f71177e94ae064f9b4eb0b4310263610f09b160671dfeac57a9a1",
+  "new_sha256": "52a8f33a84b65c5b99be2131dc24a3b7d21865207090165a6f429824ad83b7ba",
+  "executable_ast_unchanged": true,
+  "all_nodes_exactly_once": true,
+  "plan": {
+    "strategy": "module_affinity_lpt",
+    "hint_source": {
+      "current_full_collection": 963,
+      "observed_completed_nodes": 959,
+      "progress_files": [
+        {
+          "path": "D:\\ct\\g1104c\\core30\\shard0\\progress.jsonl",
+          "sha256": "ee2ca21467fcbd0095a7516ebb58fcaaa4b17d4789f7032aa2e03e5850d714a4"
+        },
+        {
+          "path": "D:\\ct\\g1104c\\core30\\shard1\\progress.jsonl",
+          "sha256": "28cf8305f481c5b58dab83cf0da202bdd4f44010dce6648664ba1c36b3707bf6"
+        },
+        {
+          "path": "D:\\ct\\g1104c\\core30\\shard2\\progress.jsonl",
+          "sha256": "3d8dae35e2db87bddf78ec94d14a81fb77e9451a18162cedeba3697d2dec4498"
+        },
+        {
+          "path": "D:\\ct\\g1104c\\core30\\shard3\\progress.jsonl",
+          "sha256": "38a02221a5d45aebd3aa0d731dafefc007ae49a0a74b12da3c33891dfeebf4b9"
+        },
+        {
+          "path": "D:\\ct\\g1104c\\core30\\shard4\\progress.jsonl",
+          "sha256": "61e8e92ff33e7acf6fe41d246de712a1c772fdcda6d1f513246ebff75040fc30"
+        },
+        {
+          "path": "D:\\ct\\g1104c\\core30\\shard5\\progress.jsonl",
+          "sha256": "c85dd02d04ea850f0b3f18edf8381bc3d244ef477b3fa65c52d6e50876fb9d0e"
+        },
+        {
+          "path": "D:\\ct\\g1104c\\core30\\shard6\\progress.jsonl",
+          "sha256": "d1539df5e8c7ba477ad065b354c5c202d0b7fae16195701e73a80c3716a9a632"
+        },
+        {
+          "path": "D:\\ct\\g1104c\\core30\\shard7\\progress.jsonl",
+          "sha256": "8a1f103729f69fb8c77b7ef4e4012d52da5f779f95b8ed98e0fea3774a9ea999"
+        }
+      ],
+      "purpose": "latest actual durations for scheduling only; no reuse of test outcomes",
+      "runtime_source": "d7615a3e3383e02f2b1e0eedfadfcb499ae7317a",
+      "test_source": "45c7e72893fcc95b23339f7e82c8feda47757c2c"
+    },
+    "estimated_seconds": [
+      213.36077630000818,
+      213.360894500059,
+      213.36054999991777,
+      213.35113030003552,
+      213.35095669999708,
+      213.36058109968602
+    ],
+    "modules_per_shard": [
+      11,
+      10,
+      7,
+      10,
+      8,
+      9
+    ],
+    "observed_nodes": 956,
+    "full_nodes": 1081
+  },
+  "sources": [
+    {
+      "path": "D:\\ct\\icim_gate_20261105\\flow9_acceptance\\core30\\shard0\\progress.jsonl",
+      "sha256": "2f482e32508b0cb7b80511889dc55ae8d380989881a026d7d6cd28e2db27609f"
+    },
+    {
+      "path": "D:\\ct\\icim_gate_20261105\\flow9_acceptance\\core30\\shard1\\progress.jsonl",
+      "sha256": "b8bbb38a6dbd77a80631ac9eed83610d363ed5ad5a361d3f2bd19a275ee7c68e"
+    },
+    {
+      "path": "D:\\ct\\icim_gate_20261105\\flow9_acceptance\\core30\\shard2\\progress.jsonl",
+      "sha256": "e8af4eb98ac17891184e01449148b6da3b62dbf33ac68ea010c53233a9ca7384"
+    },
+    {
+      "path": "D:\\ct\\icim_gate_20261105\\flow9_acceptance\\core30\\shard3\\progress.jsonl",
+      "sha256": "db2a6f00cb9b4e8ca76610e30ff4530c7bbd86aa8e9f83c9ed538123919f00ff"
+    },
+    {
+      "path": "D:\\ct\\icim_gate_20261105\\flow9_acceptance\\core30\\shard4\\progress.jsonl",
+      "sha256": "f486cbb409355152568dc96678cbe6070b0cc87245bc9b159e50bb8937403d9d"
+    },
+    {
+      "path": "D:\\ct\\icim_gate_20261105\\flow9_acceptance\\core30\\shard5\\progress.jsonl",
+      "sha256": "2157ee874502d1218221e246b844094fdc8c59a225b157d1c3017525d4550cc3"
+    }
+  ]
+}

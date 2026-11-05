@@ -1,0 +1,16 @@
+{
+  "gate": "D:\\ct\\icim_gate_20261105\\flow9_acceptance\\gate.json",
+  "gate_sha256": "c6a354c5731737a4f3eec2086359d7d2f00a7faa175fb030ed0c970c584d804a",
+  "old_launcher_sha256": "abc0e0787e31642dd03d50c1088982082800792550a2bb5e17c0fca6cb36ed56",
+  "lifecycle_record": "D:\\Codex\\test-lifecycle\\records\\dc101208aa6f4f4bbb2d4675e92bb7e2",
+  "lifecycle_sha256": {
+    "run.json": "a835de942bd9f43990a03fa438cf0cb284bbc410e962f69d19fc36a00aa0bd8c",
+    "evidence-manifest.json": "047105e4a3d1f4b900d00b1b024d5dd26d06aff649c01d1b029f61e5935b78bb",
+    "acceptance.zip": "2d07fa36e95e53ae7a080ccd2fd7b6bef05977682ea8b3768bdc2cbe8b1bdbd7"
+  },
+  "evidence_files": 144,
+  "scheduling_only_worker_change": {
+    "before": "aeeb2b63218f71177e94ae064f9b4eb0b4310263610f09b160671dfeac57a9a1",
+    "after": "52a8f33a84b65c5b99be2131dc24a3b7d21865207090165a6f429824ad83b7ba"
+  }
+}
