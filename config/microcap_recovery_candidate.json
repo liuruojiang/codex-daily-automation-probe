@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "strategy_sha": "e8c55c773f4e9b04a923aacbdac15ca4948eddb4",
+  "strategy_sha": "b657fce0754d55596d1e6e547694145298f6e2d4",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-validation-flow-20261105-e41cf520/microcap-validated-whole-20261104-e41cf520.zip",
   "state_sha256": "af161e0fe551458121e92a2e013625d934873ad0fba893b9a575e424250014d7",
   "state_date": "2026-11-04",

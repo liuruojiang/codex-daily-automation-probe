@@ -36,7 +36,7 @@ def case(tmp_path,monkeypatch):
     def pack(cmd,**kwargs):
         calls.append(cmd)
         assert cmd[cmd.index('--root')+1]==cmd[cmd.index('--v23-root')+1]==cmd[cmd.index('--v25-root')+1]==str(root)
-        assert 'pack' in cmd and not any(x in cmd for x in ('refresh','sync','restore','实时信号'))
+        assert 'pack-archive' in cmd and not any(x in cmd for x in ('pack','refresh','sync','restore','实时信号'))
         value=copy.deepcopy(manifest);value['release_sha']=NEW
         write_zip(Path(cmd[cmd.index('--bundle')+1]),value)
     monkeypatch.setattr(recovery.subprocess,'run',pack)

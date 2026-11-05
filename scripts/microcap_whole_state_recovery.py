@@ -181,7 +181,7 @@ def repack_approved(root: Path, bundle: Path, strategy_sha: str, not_after: str,
     log = attempt / "native_pack.log"
     with log.open("wb") as stream:
         subprocess.run([sys.executable, "-B", "-u", str(root / "scripts/top100_cloud_delivery.py"),
-                        "pack", "--root", str(root), "--v23-root", str(root), "--v25-root", str(root),
+                        "pack-archive", "--root", str(root), "--v23-root", str(root), "--v25-root", str(root),
                         "--bundle", str(temporary), "--expected-date", config["state_date"]],
                        check=True, stdout=stream, stderr=subprocess.STDOUT)
     identity = bundle_identity(temporary, strategy_sha, not_after)
