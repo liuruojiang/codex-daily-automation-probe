@@ -749,12 +749,30 @@ def load_share_source_disclosures(path_value: str, signal_date: str) -> list[dic
     value = json.loads(Path(path_value).read_text(encoding="utf-8-sig"))
     if (value.get("schema") != "verified_share_source_disclosures_v1"
             or value.get("signal_date") != signal_date or value.get("native_verified") is not True
-            or not isinstance(value.get("disclosures"), list) or len(value["disclosures"]) > 1):
+            or not isinstance(value.get("disclosures"), list) or len(value["disclosures"]) > (2 if signal_date == "2026-11-05" else 1)):
         raise ValueError("share-source disclosure schema/native verification/date invalid")
-    if signal_date == "2026-11-05" and len(value["disclosures"]) != 1:
-        raise ValueError("Nov5 supplemented report requires the approved 301288 disclosure")
+    if signal_date == "2026-11-05" and (len(value["disclosures"]) != 2 or
+            {item.get("symbol") for item in value["disclosures"]} != {"301288", "603028"}):
+        raise ValueError("Nov5 supplemented report requires both approved source disclosures")
     for item in value["disclosures"]:
         selection = item.get("selection", {})
+        if signal_date == "2026-11-05" and item.get("symbol") == "603028":
+            text = "603028：按精确批准新增上交所11/05数据日股本284835200股，较11/04批准观测减少310000股；保留11/04及以前记录。东方财富/新浪事件日期为11/04，本次不据此追改旧观测或断言法律生效日。11/06补充核验。"
+            if (item.get("signal_date") != signal_date or item.get("text") != text
+                    or item.get("review_sha256") != "fcdbad5e9ae9f1fd63b03dac362105f3d0d5031385dfab578942f9c85962a6eb"
+                    or selection.get("review_sha256") != item["review_sha256"]
+                    or selection.get("package_sha256") != "7fe387b7a1fbcd8548fff0533852c6421d7b3c59502cee361d0da86734b18dad"
+                    or selection.get("kind") != "sse_dated_transition_20261105_v1"
+                    or selection.get("official_data_date") != signal_date or selection.get("signal_day") != signal_date
+                    or selection.get("total_shares_10k") != "28483.52" or selection.get("previous_total_shares_10k") != "28514.52"
+                    or selection.get("provider_event_date") != "2026-11-04"
+                    or selection.get("supplemental_verification_day") != "2026-11-06"
+                    or selection.get("historical_prefix_preserved") is not True
+                    or selection.get("legal_effective_date_not_claimed") is not True
+                    or selection.get("disclosure") != text or not isinstance(item.get("source_files"), dict)
+                    or "603028.json" not in item["source_files"]):
+                raise ValueError("share-source disclosure is not the exact approved dated transition")
+            continue
         if signal_date == "2026-11-05":
             text = "301288：11/06补充核验11/05公告事件，总股本108010000股不变；不声称11/05收盘前已取得该公告。"
             if (item.get("symbol") != "301288" or item.get("signal_date") != signal_date

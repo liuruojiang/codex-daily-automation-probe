@@ -22,6 +22,7 @@ from pathlib import Path
 MAX_BUNDLE_BYTES = 2 * 1024 * 1024 * 1024
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024
 EXACT_301288_PACKAGE = '3af53c7fea86b3334321112981747560e9fcea9dba5ee7667c9f011d8a70f4ff'
+EXACT_603028_PACKAGE = '7fe387b7a1fbcd8548fff0533852c6421d7b3c59502cee361d0da86734b18dad'
 EXACT_301288_PATHS = {'scripts/share_unchanged_tail.py', 'data/share_source_future_plan_reviews.json',
                        'scripts/realtime_state_bundle.py', 'scripts/sse_share_daily_unchanged_20261104.py'}
 
@@ -33,8 +34,10 @@ def source_successor(config: dict) -> dict | None:
         return None
     if (set(transition) != {'bootstrap_sha', 'approval_package_sha256', 'changes'}
             or transition['bootstrap_sha'] != '6fa0b9d73b12fff548200d987c953d1b1a7d74d7'
-            or transition['approval_package_sha256'] != EXACT_301288_PACKAGE
-            or set(transition['changes']) not in (EXACT_301288_PATHS, EXACT_301288_PATHS | {'scripts/st_notice_boundary_review.py'})):
+            or not ((transition['approval_package_sha256'] == EXACT_301288_PACKAGE
+                     and set(transition['changes']) in (EXACT_301288_PATHS, EXACT_301288_PATHS | {'scripts/st_notice_boundary_review.py'}))
+                    or (transition['approval_package_sha256'] == EXACT_603028_PACKAGE
+                        and set(transition['changes']) == EXACT_301288_PATHS | {'scripts/st_notice_boundary_review.py', 'scripts/share_change_source.py'}))):
         raise ValueError('Unreviewed approved-source successor')
     for pair in transition['changes'].values():
         if (not isinstance(pair, list) or len(pair) != 2 or pair[0] == pair[1]

@@ -283,3 +283,12 @@ def test_reviewed_non_equity_metadata_source_addition_is_bounded():
     config['approved_source_successor']['changes']['scripts/st_notice_refresh.py'] = ['c'*64,'d'*64]
     with pytest.raises(ValueError, match='Unreviewed'):
         seed.source_successor(config)
+
+
+def test_exact_dated_transition_requires_matching_package_and_complete_scope():
+    config=exact_successor_config();t=config['approved_source_successor']
+    t['approval_package_sha256']=seed.EXACT_603028_PACKAGE
+    t['changes'].update({name:['c'*64,'d'*64] for name in ['scripts/st_notice_boundary_review.py','scripts/share_change_source.py']})
+    assert seed.source_successor(config)==t
+    t['approval_package_sha256']=seed.EXACT_301288_PACKAGE
+    with pytest.raises(ValueError):seed.source_successor(config)

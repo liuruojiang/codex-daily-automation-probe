@@ -72,9 +72,21 @@ def late_disclosure_value():
     review='b716606578531dbb67ed5f1ea20d91f25330cac284e5f96818d4ae65bfa4cfc9'
     selection={'disclosure':text,'review_sha256':review,'package_sha256':'3af53c7fea86b3334321112981747560e9fcea9dba5ee7667c9f011d8a70f4ff',
         'signal_day':'2026-11-05','supplemental_verification_day':'2026-11-06'}
-    return {'schema':'verified_share_source_disclosures_v1','signal_date':'2026-11-05','native_verified':True,
+    value = {'schema':'verified_share_source_disclosures_v1','signal_date':'2026-11-05','native_verified':True,
         'disclosures':[{'symbol':'301288','signal_date':'2026-11-05','review_sha256':review,'text':text,
         'source_files':{'301288.json':'test-structural-evidence'},'selection':selection}]}
+    text='603028：按精确批准新增上交所11/05数据日股本284835200股，较11/04批准观测减少310000股；保留11/04及以前记录。东方财富/新浪事件日期为11/04，本次不据此追改旧观测或断言法律生效日。11/06补充核验。'
+    review='fcdbad5e9ae9f1fd63b03dac362105f3d0d5031385dfab578942f9c85962a6eb'
+    selection={'kind':'sse_dated_transition_20261105_v1','review_sha256':review,
+        'package_sha256':'7fe387b7a1fbcd8548fff0533852c6421d7b3c59502cee361d0da86734b18dad',
+        'official_data_date':'2026-11-05','signal_day':'2026-11-05','total_shares_10k':'28483.52',
+        'previous_total_shares_10k':'28514.52','provider_event_date':'2026-11-04',
+        'supplemental_verification_day':'2026-11-06','historical_prefix_preserved':True,
+        'legal_effective_date_not_claimed':True,'disclosure':text}
+    value['disclosures'].append({'symbol':'603028','signal_date':'2026-11-05','review_sha256':review,
+        'text':text,'source_files':{'603028.json':'synthetic-structural-test'},'selection':selection})
+    return value
+
 
 
 @pytest.mark.parametrize('fault',[None,'date','text','package','source','missing','unverified'])
@@ -90,3 +102,17 @@ def test_301288_supplement_cannot_lose_late_verification(tmp_path,fault):
     if fault:
         with pytest.raises(ValueError):digest.load_share_source_disclosures(str(path),'2026-11-05')
     else:assert digest.load_share_source_disclosures(str(path),'2026-11-05')==value['disclosures']
+
+
+@pytest.mark.parametrize('fault',['remove603028','duplicate','history','date','count','package','legal'])
+def test_both_d5_disclosures_and_precise_transition_required(tmp_path,fault):
+    value=late_disclosure_value();item=value['disclosures'][1]
+    if fault=='remove603028':value['disclosures'].pop()
+    elif fault=='duplicate':value['disclosures'][1]=value['disclosures'][0]
+    elif fault=='history':item['selection']['historical_prefix_preserved']=False
+    elif fault=='date':item['selection']['official_data_date']='2026-11-04'
+    elif fault=='count':item['selection']['total_shares_10k']='28514.52'
+    elif fault=='package':item['selection']['package_sha256']='0'*64
+    else:item['selection']['legal_effective_date_not_claimed']=False
+    path=tmp_path/'source.json';path.write_text(json.dumps(value),encoding='utf-8')
+    with pytest.raises(ValueError):digest.load_share_source_disclosures(str(path),'2026-11-05')

@@ -1,48 +1,54 @@
 {
   "schema_version": 1,
-  "strategy_sha": "534a9781e46a6b10805f8ddc5d09dfb1abc89400",
+  "strategy_sha": "ff1fd3c6e2c92c0694da19c97ad6f4aebd01dad0",
   "state_url": "https://github.com/liuruojiang/microcap/releases/download/microcap-recovery-20261105-6fa0b9d7/microcap-recovery-whole-20261104-6fa0b9d7.zip",
   "state_sha256": "6155ca0cc8ca94481cf41ce92af3f6d337549c5543a95dd9eb6e903d38944f7b",
   "state_date": "2026-11-04",
   "daily_test_source": {
-    "runtime_sha": "534a9781e46a6b10805f8ddc5d09dfb1abc89400",
-    "source_sha": "03bf5be3f09b686d9f8e42f24fed7bffa2cadbc4",
+    "runtime_sha": "ff1fd3c6e2c92c0694da19c97ad6f4aebd01dad0",
+    "source_sha": "54d140c96a98f63b7cbdae816d5005344533c546",
     "allowed_changes": [
+      {
+        "path": "tests/fixtures/validation_source_identity/share_change_source.py.6fa.gz",
+        "old_git_blob_sha256": null,
+        "new_git_blob_sha256": "b0d2131b5b7c1df61792f5d8c45f9463dac2833565d5905ab0bf97db4a6c41b8",
+        "reason": "Keep authentic pre-transition fixture roles; current runtime and exact approved D5 append tested separately."
+      },
       {
         "path": "tests/fixtures/validation_source_identity/share_source_future_plan_reviews.json.6fa.gz",
         "old_git_blob_sha256": null,
         "new_git_blob_sha256": "095a365ca25eced491fcf3e2c99dab29ec46351e5562af93c0b16281cc36ac0b",
-        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
+        "reason": "Keep authentic pre-transition fixture roles; current runtime and exact approved D5 append tested separately."
       },
       {
         "path": "tests/fixtures/validation_source_identity/share_unchanged_tail.py.6fa.gz",
         "old_git_blob_sha256": null,
         "new_git_blob_sha256": "0e11ff85132892950972cec9b083dd0414adf84424d7ebb9a96d33979b597fb9",
-        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
+        "reason": "Keep authentic pre-transition fixture roles; current runtime and exact approved D5 append tested separately."
       },
       {
         "path": "tests/fixtures/validation_source_identity/st_metadata_reviewed_b657.py.gz",
         "old_git_blob_sha256": null,
         "new_git_blob_sha256": "acf04dccac4bf7645219233755f0ee4e6ca19dc88464eb991293419d9386aac2",
-        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
+        "reason": "Keep authentic pre-transition fixture roles; current runtime and exact approved D5 append tested separately."
       },
       {
         "path": "tests/fixtures/validation_source_identity/v20_reviewed_b657.py.gz",
         "old_git_blob_sha256": null,
         "new_git_blob_sha256": "e99d83ba46dbd42fe3903ba343c59bb28a799d4c86458b752a04434f030fa895",
-        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
+        "reason": "Keep authentic pre-transition fixture roles; current runtime and exact approved D5 append tested separately."
       },
       {
         "path": "tests/test_normal_source_receipt_transition.py",
         "old_git_blob_sha256": "aa802deacb8f1e3d4a08894824c9f526d828cfde1589326a2b3a7f4dce70cf58",
         "new_git_blob_sha256": "f57e1dbef0d6e5f4e9705f871a31b2be9ed36f01a83114fe6a821541e3353bd4",
-        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
+        "reason": "Keep authentic pre-transition fixture roles; current runtime and exact approved D5 append tested separately."
       },
       {
         "path": "tests/test_validation_source_identity.py",
         "old_git_blob_sha256": "28aa4aa45a2d98e70153bf0f500c2849df6c546e18e4ed1b5ff7d474e2962ec0",
-        "new_git_blob_sha256": "72ca5a7761ef4540abf46b10942e274591abc905b91825adb4d7acf7d7defdde",
-        "reason": "Preserve original authenticated validation fixtures; exact 301288 successor remains separately mandatory."
+        "new_git_blob_sha256": "77f189bbc50a48fe6bf5b7567b99373630cbf7b2d80ba2f416a431a1f97b0b24",
+        "reason": "Keep authentic pre-transition fixture roles; current runtime and exact approved D5 append tested separately."
       }
     ]
   },
@@ -52,23 +58,27 @@
   },
   "approved_source_successor": {
     "bootstrap_sha": "6fa0b9d73b12fff548200d987c953d1b1a7d74d7",
-    "approval_package_sha256": "3af53c7fea86b3334321112981747560e9fcea9dba5ee7667c9f011d8a70f4ff",
+    "approval_package_sha256": "7fe387b7a1fbcd8548fff0533852c6421d7b3c59502cee361d0da86734b18dad",
     "changes": {
       "data/share_source_future_plan_reviews.json": [
         "db9799bfc30a2108a523f3b7654db7de4cad326b232d7e72828f8b11be437f7a",
-        "c23994a80008f413d7211caf48d24dde66335e2e149d7c9120c3a7187fb940f7"
+        "972825f752eb59d274c14e6a009f1b92cbed2e4a3f45ad5adce027f3b174e2e1"
       ],
       "scripts/realtime_state_bundle.py": [
         "18e64de0cce77b65dcb8a77843baa74593c85559ad6dae518623a98724693328",
-        "f4387540953e3c0c9b0821b150ac4cf0267cc59f08bf0783300e10f0d95dbe7c"
+        "4d5b7fb4641f34777a5863721a209cb545d6c7808722134530aff9fdcb312b5b"
+      ],
+      "scripts/share_change_source.py": [
+        "2231debbff5ed1d85ecb31ac25ba5db4bfd7050d6d7f55920e0dde5299a68517",
+        "98f8fd4ab69a62bc8b340875fbb9d1f71ff5f974d5310c392419561450225df3"
       ],
       "scripts/share_unchanged_tail.py": [
         "cf66976ca3cea83c5fe9fa67cfe816948141479cda00320e70e6406444c1a6fd",
-        "d06f70d2961d662bdcdfd414402e47eb32b311cb22edd1ea9796e92f42788d0a"
+        "f94a4e68a9a148dde809f4a816ed0dd68a099da7f077728c8a635eb755858c38"
       ],
       "scripts/sse_share_daily_unchanged_20261104.py": [
         "33b6eaf8b50e026701203d7a48b2366034462cede12865716ad06b6ada7ef0ab",
-        "61c3d294a7437289558fbd231af370601b82239dd5fa4b2aa4d9a21c891347a1"
+        "7c01646d6bb4d7888745ce4d1b233f7f2aa64f526aa725dc71dcc815538fb64c"
       ],
       "scripts/st_notice_boundary_review.py": [
         "ca9896e8b608b4f9aeedd78fb96dcf566d817c5d7492e032847855ffae36e793",
