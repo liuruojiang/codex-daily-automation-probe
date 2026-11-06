@@ -10,6 +10,7 @@ import argparse
 import csv
 import hashlib
 import io
+import importlib
 import json
 import math
 import re
@@ -19,9 +20,17 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import build_ic_im_v1_4_digest as icim
-import build_microcap_realtime_digest as micro
 import ic_im_v1_4_delivery_contract as contract
 import ic_im_v1_4_put_display as puts
+
+
+class _MicroConsumer:
+    """Load the legacy microcap renderer only when that component is rendered."""
+    def __getattr__(self, name):
+        return getattr(importlib.import_module('build_microcap_realtime_digest'), name)
+
+
+micro = _MicroConsumer()
 
 BJ = ZoneInfo("Asia/Shanghai")
 VERSIONS = ("v2.0", "v2.3", "v2.5")

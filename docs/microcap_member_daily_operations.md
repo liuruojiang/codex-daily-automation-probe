@@ -40,3 +40,10 @@ deployment flag, the existing 16:00 Microcap route remains active and the new
 09:00/15:10 entries dispatch nothing. IC/IM 20:00 and other existing routes are
 unchanged. Enable only after the exact runtime/seed and no-send daily acceptance
 are verified. There must be one Microcap 16:00 sender, not both workflows.
+
+Local IC/IM uses `run_icim_local_independent.py gate` and `run` with the existing
+authenticated IC/IM snapshot. Its original 47-file native suite and independent
+five-file suite, source pin, isolated test state and migration-required research
+runner remain. It does not authorize through a Microcap resident or consumer.
+An unsuccessful runner's current diagnostic can be delivered as partial
+information without fabricating a complete signal or modifying the ledger.
