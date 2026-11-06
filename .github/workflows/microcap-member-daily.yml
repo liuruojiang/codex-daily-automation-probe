@@ -130,7 +130,10 @@ jobs:
         run: python -B microcap/scripts/collect_member_daily_inputs.py --root microcap --checkpoint checkpoint/checkpoint.json --date '${{ steps.session.outputs.date }}' --mode '${{ inputs.publication_mode == 'realtime' && 'intraday' || 'close_confirmed' }}' --out daily-inputs
       - name: Compute three member daily signals
         if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == '' && steps.previous.outputs.same_day != 'true'
-        run: python -B microcap/scripts/member_daily_signal.py --root microcap --checkpoint checkpoint/checkpoint.json --quotes daily-inputs/quotes.json --hedge daily-inputs/hedge.json --date '${{ steps.session.outputs.date }}' --mode '${{ inputs.publication_mode == 'realtime' && 'intraday' || 'close_confirmed' }}' --out daily-result
+        run: |
+          data_args=(--quotes daily-inputs/quotes.json --hedge daily-inputs/hedge.json)
+          if [[ -f daily-inputs/replay_manifest.json ]]; then data_args=(--replay-manifest daily-inputs/replay_manifest.json); fi
+          python -B microcap/scripts/member_daily_signal.py --root microcap --checkpoint checkpoint/checkpoint.json "${data_args[@]}" --date '${{ steps.session.outputs.date }}' --mode '${{ inputs.publication_mode == 'realtime' && 'intraday' || 'close_confirmed' }}' --out daily-result
       - name: Render already confirmed same-day checkpoint
         if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == '' && steps.previous.outputs.same_day == 'true' && inputs.publication_mode == 'close_confirmed'
         run: python -B microcap/scripts/member_daily_signal.py --root microcap --checkpoint checkpoint/checkpoint.json --date '${{ steps.session.outputs.date }}' --mode close_confirmed --out daily-result --from-checkpoint
@@ -227,6 +230,7 @@ jobs:
           path: |
             artifacts
             daily-result
+            daily-result_replay
             daily-inputs
           if-no-files-found: warn
           retention-days: 90

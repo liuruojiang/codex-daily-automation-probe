@@ -1,6 +1,7 @@
 {
   "schema": "member_daily_seed_v1",
-  "strategy_sha": "77aee8b69fb74065c028e78d22e24f60300d8dbe",
+  "strategy_sha": "11e194787507b0ec8538adb0cfa25216cdd6d356",
   "url": "https://github.com/liuruojiang/microcap/releases/download/member-daily-20261106-77aee8b6/member-checkpoint-20261106.zip",
-  "sha256": "35f91d8dd84488c4a4232aec4610a933526f1b3ec8577555bdfc29b8baf5becd"
+  "sha256": "35f91d8dd84488c4a4232aec4610a933526f1b3ec8577555bdfc29b8baf5becd",
+  "seed_data_producer_sha": "77aee8b69fb74065c028e78d22e24f60300d8dbe"
 }

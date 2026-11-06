@@ -60,6 +60,12 @@ def render(result: dict, *, expected_date: str) -> dict:
     timing = "收盘确认" if result["publication_mode"] == "close_confirmed" else "盘中预估，待收盘确认"
     body = f"微盘股每日研究报告｜{expected_date}｜{timing}\n\n"
     body += "\n".join(f"{row['version']} [{row['revision']}] {row['text']}" for row in rows)
+    body += ("\n\n成员行情覆盖：" + str(result.get('quote_coverage', '未提供'))
+             + "；历史计算锚点：" + str(result.get('anchor_date', '未提供'))
+             + "；本次结果生成：" + str(result.get('generated_at', '未提供')) + "。")
+    missing = result.get('missing_member_symbols')
+    if isinstance(missing, list) and missing:
+        body += "\n行情缺项：" + "、".join(map(str, missing)) + "。"
     warnings = result.get("warnings", [])
     if not isinstance(warnings, list) or not all(isinstance(x, str) for x in warnings):
         raise ValueError("Warnings must be explicit strings")
