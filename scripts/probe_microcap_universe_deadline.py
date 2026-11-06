@@ -15,12 +15,12 @@ a.out.mkdir(parents=True, exist_ok=True)
 spec = importlib.util.spec_from_file_location('native_bounded_market', a.source)
 native = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(native)
-result = dict(diagnostic_only=True, provider='stock_zh_a_spot_em', timeout_seconds=240,
+result = dict(diagnostic_only=True, provider='stock_zh_a_spot_em', timeout_seconds=360,
               collected_at=datetime.now(timezone.utc).isoformat(),
               source_sha256=hashlib.sha256(a.source.read_bytes()).hexdigest())
 started = time.monotonic()
 try:
-    frame = native.fetch_akshare_frame(result['provider'], timeout=240)
+    frame = native.fetch_akshare_frame(result['provider'], timeout=result['timeout_seconds'])
     frame.to_json(a.out/'frame.json', orient='split', force_ascii=False)
     result.update(ok=True, rows=len(frame), columns=list(frame.columns),
                   frame_sha256=hashlib.sha256((a.out/'frame.json').read_bytes()).hexdigest())

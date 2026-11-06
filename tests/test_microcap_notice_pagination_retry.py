@@ -109,7 +109,7 @@ def test_universe_deadline_retries_only_failed_provider_once():
 
 def test_universe_timeout_limit():
     calls = []
-    def fetch(provider):
+    def fetch(provider, **kwargs):
         calls.append(provider)
         raise TimeoutError('deadline exceeded')
     with pytest.raises(TimeoutError):
@@ -120,9 +120,19 @@ def test_universe_timeout_limit():
 @pytest.mark.parametrize('provider,error', [('stock_zh_a_st_em', TimeoutError('deadline')), ('stock_zh_a_spot_em', ValueError('invalid table')), ('stock_zh_a_spot_em', RuntimeError('HTTP 403'))])
 def test_universe_does_not_retry_other_failures(provider, error):
     calls = []
-    def fetch(provider):
+    def fetch(provider, **kwargs):
         calls.append(provider)
         raise error
     with pytest.raises(type(error)):
         m.retry_universe_timeout(fetch, lambda _: None, provider)
     assert len(calls) == 1
+
+
+def test_only_em_universe_native_default_has_measured_pagination_budget():
+    calls = []
+    def fetch(provider, **kwargs):
+        calls.append((provider, kwargs))
+        return 1
+    for provider in ('stock_zh_a_spot_em', 'stock_zh_a_spot', 'stock_zh_a_st_em'):
+        assert m.retry_universe_timeout(fetch, lambda _: None, provider) == 1
+    assert calls == [('stock_zh_a_spot_em', {'timeout': 360}), ('stock_zh_a_spot', {}), ('stock_zh_a_st_em', {})]

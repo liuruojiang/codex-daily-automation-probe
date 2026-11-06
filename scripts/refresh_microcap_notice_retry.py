@@ -22,6 +22,11 @@ def retry_notice_refresh(refresh, error_type, log_phase, **kwargs):
 
 
 def retry_universe_timeout(fetch, log_phase, provider, **kwargs):
+    # Actual 2026-11-06 cloud trace: 55/59 pages after 240 seconds.
+    # Keep the caller's explicit deadline; only the native default needs room
+    # for this paginated all-market source to finish, without accepting a tail.
+    if provider == 'stock_zh_a_spot_em' and 'timeout' not in kwargs:
+        kwargs = {**kwargs, 'timeout': 360}
     try:
         return fetch(provider, **kwargs)
     except TimeoutError:
