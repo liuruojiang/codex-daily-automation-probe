@@ -4,5 +4,8 @@
   "url": "https://github.com/liuruojiang/microcap/releases/download/member-daily-audit-20261106-ab214c20/member-checkpoint-20261106-audited.zip",
   "sha256": "bfcec2d07b45d1d161d75c2f3bb6d2ab0e83eb922b38351439baa82c2f936f18",
   "seed_data_producer_sha": "77aee8b69fb74065c028e78d22e24f60300d8dbe",
-  "seed_repair_source_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028"
+  "seed_repair_source_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+  "superseded_history_sha256": [
+    "b95271d386c98b5aa16bc14c4a907e068417ef0211b35c611e131cb3c3d79b14"
+  ]
 }

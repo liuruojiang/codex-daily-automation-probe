@@ -34,6 +34,13 @@ def github_environment():
     return env
 
 
+def reusable_checkpoint(path, policy):
+    if path is None:return None
+    value=json.loads(Path(path).read_bytes())
+    if value.get('history',{}).get('sha256') in policy.get('superseded_history_sha256',[]):return None
+    return Path(path).resolve()
+
+
 def main():
     p=argparse.ArgumentParser()
     p.add_argument('--root',type=Path,required=True)
@@ -66,14 +73,18 @@ def main():
         if process.returncode:
             raise RuntimeError(f'Member local stage {number} failed; see saved exit code and logs')
     py=sys.executable
-    if args.checkpoint is None:
+    seed_policy=json.loads((auto/'config/microcap_member_checkpoint.json').read_bytes())
+    cached=reusable_checkpoint(args.checkpoint,seed_policy)
+    if args.checkpoint is not None and cached is None:
+        (out/'superseded_checkpoint.json').write_text(json.dumps({'cached_checkpoint':str(args.checkpoint),'reason':'exact superseded history serialization; original retained; use reviewed small seed'}),encoding='utf8')
+    if cached is None:
         sys.path.insert(0,str(strategy))
         from scripts.exchange_calendar import latest_completed_session
         not_after=latest_completed_session().isoformat()
         run([py,'-B',str(auto/'scripts/restore_microcap_member_checkpoint.py'),'--strategy-sha',runtime,'--seed-config',str(auto/'config/microcap_member_checkpoint.json'),'--not-after-date',not_after,'--out',str(out/'checkpoint')],github_environment())
         cp=out/'checkpoint/checkpoint.json'
     else:
-        cp=args.checkpoint.resolve()
+        cp=cached
     run([py,'-B',str(strategy/'scripts/member_period_handoff.py'),'verify','--checkpoint',str(cp)])
     if args.prepare_only:
         print(json.dumps({'status':'prepared','checkpoint':str(cp),'market_quotes_collected':False}))
