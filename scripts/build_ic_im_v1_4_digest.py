@@ -15,6 +15,7 @@ import ic_im_v1_4_put_display as put_display
 import ic_im_option_maintenance_notice as maintenance_notice
 import ic_im_v1_4_delivery_contract as delivery_contract
 import ic_im_put_execution_contract as put_execution_contract
+import ic_im_intraday_observations as observations
 
 
 JIU_REFERENCE_FIELDS = frozenset({
@@ -937,6 +938,8 @@ def product_card(product: str, signal: dict[str, Any], actionable: bool) -> str:
 
 
 def build_success_html(payload: dict[str, Any], run_url: str) -> str:
+    if observations.matches(payload):
+        return observations.build_html(payload)
     signals = {p: {**s, **jiu_reference_fields(payload)} for p, s in payload.get("signals", {}).items()}
     if set(signals) != {"IC", "IM"}:
         raise ValueError("result must contain IC and IM signals")
@@ -1111,6 +1114,9 @@ def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
 
 
 def validate_success_payload(payload: dict[str, Any]) -> None:
+    if observations.matches(payload):
+        observations.validate(payload)
+        return
     import math
     from check_ic_im_v1_4_delivery import expected_identity_for_day
     from prepare_ic_im_v1_4_marker import marker_name
@@ -1269,6 +1275,8 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
 
 
 def build_success(payload: dict[str, Any], run_url: str, subject_prefix: str) -> tuple[str, str, bool]:
+    if observations.matches(payload):
+        return observations.build(payload, subject_prefix)
     validate_success_payload(payload)
     signals = {p: {**s, **jiu_reference_fields(payload)} for p, s in payload.get("signals", {}).items()}
     if set(signals) != {"IC", "IM"}:
@@ -1433,10 +1441,19 @@ def source_provenance(path: str, expected_sha: str) -> dict[str, Any] | None:
     proof = json.loads(Path(path).read_text(encoding="utf-8"))
     files = proof.get("source_sha256")
     from hashlib import sha256
-    expected_raw = (Path(__file__).resolve().parents[1] / "docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json").read_bytes()
-    expected_files = json.loads(expected_raw)["files"]
+    release_manifests = {
+        "20261023-redteam-repairs-v3-r3": "docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json",
+        "20261106-intraday-observations-v1": "docs/ic_im_intraday_observation_20261106_manifest.json",
+    }
+    relative = release_manifests.get(proof.get("release"))
+    if relative is None:
+        raise ValueError("source provenance does not match this run's execution inventory")
+    expected_raw = (Path(__file__).resolve().parents[1] / relative).read_bytes()
+    expected_manifest = json.loads(expected_raw)
+    expected_files = expected_manifest["files"]
     if (proof.get("status") != "verified" or proof.get("strategy_sha") != expected_sha
-            or proof.get("release") != "20261023-redteam-repairs-v3-r3"
+            or proof.get("release") != expected_manifest.get("release")
+            or expected_manifest.get("schema") != "icim_audited_daily_release_v1"
             or not re.fullmatch(r"[0-9a-f]{64}", str(proof.get("manifest_sha256", "")))
             or not isinstance(files, dict) or len(files) != 29
             or "run_ic_im_v1_4_github_digest.py" not in files
@@ -1462,7 +1479,8 @@ def main() -> int:
     proof = source_provenance(args.source_provenance, args.expected_source_sha)
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
-    if str(payload.get("strategy_revision")) != "r1":
+    observation = observations.matches(payload)
+    if not observation and str(payload.get("strategy_revision")) != "r1":
         raise ValueError("digest requires strategy_revision=r1")
     from datetime import date
     from check_ic_im_v1_4_delivery import expected_identity_for_day
@@ -1470,7 +1488,7 @@ def main() -> int:
     if str(payload.get("build", "")) != expected_build or str(payload.get("delivery_revision", "")) != expected_delivery:
         raise ValueError("digest build/revision does not match signal-day identity")
     run_url = os.environ.get("GITHUB_RUN_URL", "")
-    if payload.get("status") in {"ok", "partial"} and payload.get("signals"):
+    if observation or (payload.get("status") in {"ok", "partial"} and payload.get("signals")):
         subject, body, _ = build_success(payload, run_url, args.subject_prefix)
         html_body = build_success_html(payload, run_url)
         attachment = required_success_report(Path(args.result), args.report, payload)

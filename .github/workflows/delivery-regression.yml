@@ -37,7 +37,7 @@ jobs:
         run: |
           case "${TEST_FAMILY}" in
             microcap) suites=(tests/test_microcap_*.py tests/test_v23_identity_adversarial.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_cloudflare_dispatch_retry.py tests/test_restore_approved_microcap_state.py) ;;
-            icim) suites=(tests/test_ic_im_v1_4_*.py tests/test_ic_im_v1_3_*.py tests/test_ic_im_r7_spread.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_adversarial_delivery.py tests/test_cloudflare_dispatch_retry.py) ;;
+            icim) suites=(tests/test_ic_im_v1_4_*.py tests/test_ic_im_v1_3_*.py tests/test_ic_im_r7_spread.py tests/test_cn_publication_mode.py tests/test_delivery_regression_contract.py tests/test_adversarial_delivery.py tests/test_cloudflare_dispatch_retry.py tests/test_icim_intraday_observations_20261106.py tests/test_observation_cross_repo_integration_20261106.py tests/test_observation_audit_boundaries_20261106.py tests/test_local_intraday_report.py) ;;
             all) suites=(tests) ;;
             *) echo "Unknown test family"; exit 1 ;;
           esac

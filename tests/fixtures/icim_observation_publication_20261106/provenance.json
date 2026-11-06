@@ -1,0 +1,14 @@
+{
+  "canonical_json_sha256": "fd9804ead8d14ab46cfcc58ddb13bc98bff2554f425766bb9d45693ab9d9e031",
+  "generated_at": "2026-11-06T15:51:49.558475+08:00",
+  "kind": "synthetic_offline_software_fixture",
+  "not_live_data": true,
+  "producer_sources_sha256": {
+    "poe_ic_im_mainline_v1_4_bot.py": "afcfda3898086c7ce71c83e90cc6e52fe7cc4ecab46a6fb8291910b539431287",
+    "poe_ic_im_v1_4_state.py": "394b9bc00476f8c6cec9a2e6feea3f474369936977e7369f10c11ff008acbf37",
+    "run_ic_im_v1_4_github_digest.py": "a60d17708b7c2b2e1ccd1b913b51933357b2e59c27b02fda9cebd276422db3e8",
+    "test_icim_new_put_calendar_partial_20261106.py": "e5aa694f6604f3800c67d2e45b65cb0e521d57688aa4de567e5662e3b0f09551"
+  },
+  "purpose": "Freeze native builder -> state -> runner output for independent AUTO consumer tests without requiring a second repository or absolute worktree.",
+  "schema": 1
+}

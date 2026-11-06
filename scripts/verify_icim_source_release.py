@@ -15,7 +15,8 @@ def verify(root, expected):
     observed = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
     if observed != expected:
         raise ValueError('strategy checkout does not match the production pin')
-    relative = 'docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json'
+    forward = 'docs/ic_im_intraday_observation_20261106_manifest.json'
+    relative = forward if (root / forward).is_file() else 'docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json'
     raw = (root / relative).read_bytes()
     committed = subprocess.check_output(['git', '-C', str(root), 'show', expected + ':' + relative])
     if raw != committed:

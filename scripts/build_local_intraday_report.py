@@ -22,6 +22,7 @@ import build_ic_im_v1_4_digest as icim
 import build_microcap_realtime_digest as micro
 import ic_im_v1_4_delivery_contract as contract
 import ic_im_v1_4_put_display as puts
+import ic_im_intraday_observations as observations
 
 BJ = ZoneInfo("Asia/Shanghai")
 VERSIONS = ("v2.0", "v2.3", "v2.5")
@@ -167,6 +168,12 @@ def _micro_rows(paths, readiness, mode, signal_day, anchor_day, next_session, in
 
 
 def _icim_rows(payload, signal_day, anchor_day, next_session):
+    if observations.matches(payload):
+        if (payload.get("market_date") != signal_day or payload.get("completed_day") != anchor_day
+                or payload.get("next_trade_day") != next_session):
+            raise ValueError("ICIM observation does not match requested sessions")
+        _, body, _ = observations.build(payload)
+        return observations.rows(payload), body
     if payload.get("status") not in {"ok", "partial"} or payload.get("publication_mode") != "realtime":
         raise ValueError("local intraday renderer requires a successful/partial realtime ICIM result")
     if (payload.get("market_date") != signal_day or payload.get("completed_day") != anchor_day
@@ -193,23 +200,37 @@ def _icim_rows(payload, signal_day, anchor_day, next_session):
 
 def render(*, mode, signal_day, anchor_day, next_session, icim_result=None, microcap_csv=None, microcap_readiness=None):
     if mode not in {"intraday", "replay"}: raise ValueError("unsupported mode")
-    _calendar(signal_day, anchor_day, next_session)
+    inputs, rows, bodies = {}, [], []
+    payload = _read_json(icim_result, inputs) if icim_result else None
+    if (mode == "intraday" and isinstance(payload, dict) and observations.matches(payload)
+            and (payload.get("saved_diagnostic_rerender") is True
+                 or payload.get("signal_timing") == "saved_intraday_diagnostic_rerender")):
+        raise ValueError("saved diagnostic rerender requires replay mode; no new intraday publication eligibility")
+    if (next_session is None and not microcap_csv and payload is not None
+            and observations.matches(payload) and payload.get("next_trade_day") is None
+            and payload.get("calendar_warning")):
+        observations.validate(payload)
+        day, anchor = date.fromisoformat(signal_day), date.fromisoformat(anchor_day)
+        if (not contract.is_session(day) or contract.adjacent_session(day, -1) != anchor
+                or payload.get("market_date") != signal_day or payload.get("completed_day") != anchor_day):
+            raise ValueError("observation signal/anchor sessions remain independently required")
+    else:
+        _calendar(signal_day, anchor_day, next_session)
     now = now_bj()
     if mode == "intraday" and now.date().isoformat() != signal_day:
         raise ValueError("live local report must use today's actual date")
-    inputs, rows, bodies = {}, [], []
     if microcap_csv:
         if not microcap_readiness: raise ValueError("microcap readiness receipt is required")
         readiness = _read_json(microcap_readiness, inputs)
         rr, body = _micro_rows(microcap_csv, readiness, mode, signal_day, anchor_day, next_session, inputs, now)
         rows += rr; bodies += ["## 微盘股", body]
     if icim_result:
-        rr, body = _icim_rows(_read_json(icim_result, inputs), signal_day, anchor_day, next_session)
+        rr, body = _icim_rows(payload, signal_day, anchor_day, next_session)
         rows += rr; bodies += ["## IC / IM", body]
     if not rows: raise ValueError("at least one strategy result is required")
     banner = ("历史盘中快照只读重渲染；不是新的盘中信号，不具有今日发布资格。" if mode == "replay"
               else "盘中待收盘确认的下一交易日研究目标，非已完成交易或下单指令。文件生成不等于实际发布。")
-    lines = [f"# {signal_day} 本地研究日报", "", banner, "", f"数据锚点 {anchor_day}；下一实际交易日 {next_session}。", "",
+    lines = [f"# {signal_day} 本地研究日报", "", banner, "", f"数据锚点 {anchor_day}；下一实际交易日 {next_session or 'N/A（正式日历未确认）'}。", "",
              "|策略|当前→目标|动作/状态|快照/生成证据|覆盖或Put保护|", "|---|---|---|---|---|"]
     for row in rows:
         if row["strategy"] in VERSIONS:
@@ -242,7 +263,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--mode", choices=("intraday", "replay"), required=True)
     p.add_argument("--signal-day", required=True); p.add_argument("--anchor-day", required=True)
-    p.add_argument("--next-session", required=True); p.add_argument("--icim-result")
+    p.add_argument("--next-session"); p.add_argument("--icim-result")
     p.add_argument("--microcap-csv", action="append", default=[]); p.add_argument("--microcap-readiness")
     p.add_argument("--out", type=Path, required=True)
     args = p.parse_args()
