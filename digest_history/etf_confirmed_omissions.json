@@ -5656,6 +5656,58 @@
       "zh_summary": "作者区分月末职位空缺存量与全月招聘流量，指出年度招聘均值疲弱，单月增长未必统计显著。",
       "evidence_level": "媒体正文全文",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42113249438",
+      "origin_report_date": "2026-11-06",
+      "source": "A Wealth of Common Sense",
+      "title": "Is it Realistic to Live Off Your Dividends?",
+      "zh_title": "只靠股息退休是否现实？",
+      "url": "https://awealthofcommonsense.com/2026/11/is-it-realistic-to-live-off-your-dividends/",
+      "published": "2026-11-05T14:15:15+00:00",
+      "summary": "作者区分股息收入与本金风险，指出主要持有股票却期望回撤仅10%至15%并不现实；分红不是免费收益。",
+      "zh_summary": "作者区分股息收入与本金风险，指出主要持有股票却期望回撤仅10%至15%并不现实；分红不是免费收益。",
+      "evidence_level": "个人博客全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42113249438",
+      "origin_report_date": "2026-11-06",
+      "source": "Seeking Alpha ETFs",
+      "title": "MTUM: The 20% Plunge Is Too Much Momentum Damage (Rating Upgrade)",
+      "zh_title": "MTUM：跌逾20%后，作者上调动量ETF评级",
+      "url": "https://seekingalpha.com/article/4963070-mtum-the-20-percent-plunge-is-too-much-momentum-damage-rating-upgrade?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-05T15:37:59+00:00",
+      "summary": "作者认为动量ETF科技集中带来回撤，预期再平衡转向周期和价值；这些是作者判断，非已核实持仓变化。",
+      "zh_summary": "作者认为动量ETF科技集中带来回撤，预期再平衡转向周期和价值；这些是作者判断，非已核实持仓变化。",
+      "evidence_level": "发布者公开摘要及截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42113249438",
+      "origin_report_date": "2026-11-06",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Gold Just Had Its Best Day Since August, Back Above $4,000",
+      "zh_title": "黄金重返4000美元上方：文章回顾前一交易日反弹",
+      "url": "https://247wallst.com/investing/2026/11/05/gold-just-had-its-best-day-since-august-back-above-4000/?.tsrc=rss",
+      "published": "2026-11-05T19:22:47+00:00",
+      "summary": "文章讨论美元、利率及选举后的黄金反弹，包含前一交易日叙事；不能作为本日报收盘行情的替代来源。",
+      "zh_summary": "文章讨论美元、利率及选举后的黄金反弹，包含前一交易日叙事；不能作为本日报收盘行情的替代来源。",
+      "evidence_level": "媒体全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42113249438",
+      "origin_report_date": "2026-11-06",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Nvidia Is the Biggest Bet in Your Index Fund. Here’s What Its Drop Just Cost You",
+      "zh_title": "英伟达下跌如何穿透指数基金持仓",
+      "url": "https://247wallst.com/investing/etf/2026/11/05/nvidia-is-the-biggest-bet-in-your-index-fund-heres-what-its-drop-just-cost-you/?.tsrc=rss",
+      "published": "2026-11-05T16:33:35+00:00",
+      "summary": "原文按旧持仓测算SPY、QQQ和SMH的英伟达暴露，提示组合重复持有与行业集中风险；旧持仓不能代表当日精确归因。",
+      "zh_summary": "原文按旧持仓测算SPY、QQQ和SMH的英伟达暴露，提示组合重复持有与行业集中风险；旧持仓不能代表当日精确归因。",
+      "evidence_level": "媒体全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
