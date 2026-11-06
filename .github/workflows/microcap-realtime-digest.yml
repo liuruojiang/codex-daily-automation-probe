@@ -495,7 +495,7 @@ jobs:
             # completion update below; IDs assigned in the heartbeat subshell
             # do not propagate back to this process.
             publish_progress_check "attempt=${attempt}; elapsed_seconds=0; initializing refresh"
-            python -u scripts/realtime_state_bundle.py refresh \
+            python -u ../automation/scripts/refresh_microcap_notice_retry.py refresh \
               --root . \
               --max-workers 4 \
               "${static_refresh_args[@]}" > "${attempt_log}" 2>&1 &
