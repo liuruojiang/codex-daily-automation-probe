@@ -68,6 +68,7 @@ def test_cli_forwards_native_arguments_and_retries_only_notice(tmp_path):
     package.mkdir()
     (package / '__init__.py').write_text('')
     (package / 'st_notice_evidence.py').write_text('class StNoticeEvidenceError(Exception): pass\n')
+    (package / 'bounded_market_data.py').write_text('def fetch_akshare_frame(provider): return provider\n')
     (package / 'st_notice_refresh.py').write_text('''from scripts.st_notice_evidence import StNoticeEvidenceError
 calls=0
 def refresh_notice_archive(**kwargs):
@@ -91,3 +92,37 @@ def main(argv):
     assert result.stdout.count('native_cli_completed_once') == 1
     assert 'retry_notice_pagination_1_of_2' in result.stdout
     assert {p.name:p.read_bytes() for p in package.iterdir()} == before
+
+
+def test_universe_deadline_retries_only_failed_provider_once():
+    calls, phases = [], []
+    result = object()
+    def fetch(provider, **kwargs):
+        calls.append((provider, kwargs))
+        if len(calls) == 1:
+            raise TimeoutError('stock_zh_a_spot_em exceeded its 90s total deadline')
+        return result
+    assert m.retry_universe_timeout(fetch, phases.append, 'stock_zh_a_spot_em', timeout=90) is result
+    assert calls == [('stock_zh_a_spot_em', {'timeout': 90})] * 2
+    assert phases == ['retry_universe_timeout_stock_zh_a_spot_em_1_of_1']
+
+
+def test_universe_timeout_limit():
+    calls = []
+    def fetch(provider):
+        calls.append(provider)
+        raise TimeoutError('deadline exceeded')
+    with pytest.raises(TimeoutError):
+        m.retry_universe_timeout(fetch, lambda _: None, 'stock_zh_a_spot_em')
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize('provider,error', [('stock_zh_a_st_em', TimeoutError('deadline')), ('stock_zh_a_spot_em', ValueError('invalid table')), ('stock_zh_a_spot_em', RuntimeError('HTTP 403'))])
+def test_universe_does_not_retry_other_failures(provider, error):
+    calls = []
+    def fetch(provider):
+        calls.append(provider)
+        raise error
+    with pytest.raises(type(error)):
+        m.retry_universe_timeout(fetch, lambda _: None, provider)
+    assert len(calls) == 1
