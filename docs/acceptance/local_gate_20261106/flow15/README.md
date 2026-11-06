@@ -1,3 +1,5 @@
+> 最终状态：正常补发与本地D5整包同步均已完成；见[最终交付验收](normal_delivery/README.md)。以下运行中描述是此前验收时点记录。
+
 # flow15 ST市场范围修复验收
 
 runtime ad4de441d35442616f91aa613146ffdf8cd479f3；test05fd1ae961f726b7efe71acc2f5eb43ab55ac25d；AUTO152f6ecfa40ab495d94e7e4de42b6ac0d3aa6669。

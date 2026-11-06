@@ -1,0 +1,146 @@
+{
+  "checked_at": "2026-11-06T02:19:28.146617+00:00",
+  "normal_run": 42128741954,
+  "source_runtime": "ad4de441d35442616f91aa613146ffdf8cd479f3",
+  "auto_execution": "152f6ecfa40ab495d94e7e4de42b6ac0d3aa6669",
+  "local_readback": {
+    "ok": true,
+    "checked_at": "2026-11-06T02:18:57.740492+00:00",
+    "runtime": "ad4de441d35442616f91aa613146ffdf8cd479f3",
+    "state_date": "2026-11-05",
+    "whole_manifest_complete": true,
+    "native_restore_exit": 0,
+    "native_restore_start": "2026-11-06T01:02:54.900231+00:00",
+    "native_restore_end": "2026-11-06T02:18:33.767100+00:00",
+    "native_restore_report": {
+      "ok": true,
+      "expected_date": "2026-11-05",
+      "backup": "D:\\动量策略\\微盘股对冲策略\\.codex_backups\\cloud_restore_20261106_012147_612976",
+      "restore_source": "verified_cloud_delivery",
+      "signal_ready": false,
+      "next": "same-day preflight then whole-delivery check"
+    },
+    "csv_comparison": {
+      "v2.0": {
+        "sha256": "0f71f02086ab066a36858a342629483c7e8c8ebaa03fcdc1cfe04640c5de2cc8",
+        "cloud_bytes_identical": true,
+        "fields": {
+          "date": "2026-11-05",
+          "strategy_revision": "plain_mom16_fixed1_20260904",
+          "current_holding": "cash",
+          "next_holding": "cash",
+          "current_execution_scale": "0.0",
+          "next_session_target_scale": "0.0",
+          "trade_state": "hold",
+          "signal_timing": "close_confirmed",
+          "official_close_confirmed_signal": "True",
+          "member_rebalance_signal_date": "2026-10-29",
+          "member_rebalance_execution_date": "2026-10-30",
+          "member_rebalance_actionable": "False"
+        }
+      },
+      "v2.3": {
+        "sha256": "94ebf680d734c1bfda872159f40cf79f198992fdabeb3763c82f1ef9a990fa12",
+        "cloud_bytes_identical": true,
+        "fields": {
+          "date": "2026-11-05",
+          "strategy_revision": "plain_lb25_hl2p5_r2off_no_overheat_20261029",
+          "current_holding": "cash",
+          "next_holding": "cash",
+          "current_execution_scale": "0.0",
+          "next_session_target_scale": "0.0",
+          "trade_state": "hold",
+          "signal_timing": "close_confirmed",
+          "official_close_confirmed_signal": "True",
+          "member_rebalance_signal_date": "2026-10-29",
+          "member_rebalance_execution_date": "2026-10-30",
+          "member_rebalance_actionable": "False"
+        }
+      },
+      "v2.5": {
+        "sha256": "46bbba24a6ce52741668588088bab904651a38a6411558060e89f2a1e54b2832",
+        "cloud_bytes_identical": true,
+        "fields": {
+          "date": "2026-11-05",
+          "strategy_revision": "plain_lb20_hl3_entry0_exit0_20260905",
+          "current_holding": "cash",
+          "next_holding": "cash",
+          "current_execution_scale": "0.0",
+          "next_session_target_scale": "0.0",
+          "trade_state": "hold",
+          "signal_timing": "close_confirmed",
+          "official_close_confirmed_signal": "True",
+          "member_rebalance_signal_date": "2026-10-29",
+          "member_rebalance_execution_date": "2026-10-30",
+          "member_rebalance_actionable": "False"
+        }
+      }
+    },
+    "mail_already_delivered": true,
+    "gmail_id": "1a1ae46fa10497d9",
+    "smtp_accepted_at": "2026-11-06T00:34:10+00:00",
+    "history_rebuilt": false,
+    "local_signal_generated": false,
+    "local_smtp_called": false,
+    "today_intraday_ready_claim": false
+  },
+  "download": {
+    "run": 42128741954,
+    "artifact": 13466685699,
+    "original_zip_sha256": "84e9e968e323517d391ff637b0fc91bf4e6252db957f9a3f381ee2b21b3338aa",
+    "bundle": "D:\\Codex\\home\\automations\\ic-im\\runs\\20261105\\postclose_delay_review\\normal_42128741954\\microcap-whole-delivery-state.zip",
+    "bundle_sha256": "b2a241bf6a87017104989c203b6262d921c48c32530a9685e6b226f3cfa84060",
+    "bundle_bytes": 617206632,
+    "native_restore_completed": false
+  },
+  "regression": [
+    {
+      "artifact": 13462905448,
+      "name": "automation-regression-42128741954",
+      "sha256": "6416623ed87e38665b6a7facbac415f4884d774fa6e8a615746174af0f4c6dbe",
+      "junit": {
+        "automation-tests.xml": {
+          "tests": 718,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    },
+    {
+      "artifact": 13462791343,
+      "name": "strategy-regression-microcap-42128741954",
+      "sha256": "40ff159901c2deb78a0da46346afe761c9f83a5f1398a92c9c4b0eedbb8d6593",
+      "junit": {
+        "strategy-tests/regression.xml": {
+          "tests": 1922,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "strategy-tests/regression-core.xml": {
+          "tests": 1100,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "strategy-tests/regression-release.xml": {
+          "tests": 584,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "strategy-tests/regression-flow.xml": {
+          "tests": 238,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    }
+  ],
+  "normal_intent_matches": true,
+  "normal_marker_matches": true,
+  "smtp_message_id_matches_inbox": true,
+  "inbox_body_matches": true
+}
