@@ -129,7 +129,8 @@ def microcap_writer_lock(root):
 
 
 class Run:
-    def __init__(self, home, gate, resident, ledger_source, out, python=sys.executable):
+    def __init__(self, home, gate, resident, ledger_source, out, python=sys.executable, strategy='both'):
+        self.strategy = strategy
         self.home, self.gate, self.resident = map(lambda p: Path(p).resolve(), (home, gate, resident))
         self.installation = verify_installation(self.home)
         self.ledger_source = Path(ledger_source).resolve()
@@ -289,9 +290,12 @@ class Run:
 
     def execute(self):
         results = {}
-        with ThreadPoolExecutor(max_workers=2) as pool:
-            futures = {pool.submit(fn): label for label, fn in
-                       [('icim', self.run_icim), ('microcap', self.run_microcap)]}
+        jobs = [('icim', self.run_icim), ('microcap', self.run_microcap)]
+        selection = getattr(self, 'strategy', 'both')
+        if selection != 'both':
+            jobs = [(label, fn) for label, fn in jobs if label == selection]
+        with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
+            futures = {pool.submit(fn): label for label, fn in jobs}
             for future in as_completed(futures):
                 label = futures[future]
                 try:
@@ -312,10 +316,11 @@ def main(argv=None):
     for name in ('automation-home', 'gate', 'resident', 'ledger-source', 'out'):
         parser.add_argument('--' + name, required=True, type=Path)
     parser.add_argument('--python', default=sys.executable)
+    parser.add_argument('--strategy', choices=('both', 'icim', 'microcap'), default='both')
     args = parser.parse_args(argv)
     if sys.flags.optimize:
         parser.error('optimized Python is not permitted')
-    return Run(args.automation_home, args.gate, args.resident, args.ledger_source, args.out, args.python).execute()
+    return Run(args.automation_home, args.gate, args.resident, args.ledger_source, args.out, args.python, args.strategy).execute()
 
 
 if __name__ == '__main__':

@@ -1,0 +1,232 @@
+name: Microcap Member Daily
+on:
+  workflow_dispatch:
+    inputs:
+      validation_only:
+        type: boolean
+        default: true
+      external_schedule:
+        type: boolean
+        default: false
+      reviewed_result_url:
+        type: string
+        default: ''
+      reviewed_result_sha256:
+        type: string
+        default: ''
+      publication_mode:
+        type: choice
+        options: [close_confirmed, realtime]
+        default: close_confirmed
+permissions:
+  contents: read
+  actions: write
+concurrency:
+  group: microcap-realtime-digest
+  cancel-in-progress: false
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TZ: Asia/Shanghai
+      PYTHONDONTWRITEBYTECODE: '1'
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Read exact strategy runtime
+        id: runtime
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json,re
+          value=json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha']
+          assert re.fullmatch('[0-9a-f]{40}',value)
+          print('sha='+value)
+          PY
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: ${{ steps.runtime.outputs.sha }}
+          path: microcap
+      - name: Install daily runtime
+        run: python -m pip install numpy 'pandas<3' requests matplotlib 'akshare==1.18.46'
+      - name: Validate publication clock and recovery inputs
+        env:
+          MODE: ${{ inputs.publication_mode }}
+          REPORT_URL: ${{ inputs.reviewed_result_url }}
+          REPORT_SHA: ${{ inputs.reviewed_result_sha256 }}
+          EXTERNAL: ${{ inputs.external_schedule }}
+        run: |
+          python automation/scripts/resolve_cn_publication_mode.py --requested "$MODE"
+          python - <<'PY'
+          import os
+          e=os.environ
+          if bool(e['REPORT_URL']) != bool(e['REPORT_SHA']):
+              raise ValueError('Reviewed report URL and SHA must be supplied together')
+          if e['REPORT_URL'] and (e['EXTERNAL']=='true' or e['MODE']!='close_confirmed'):
+              raise ValueError('Saved report recovery is explicit manual close-only')
+          PY
+      - name: Resolve independent completed session
+        id: session
+        working-directory: microcap
+        env:
+          MODE: ${{ inputs.publication_mode }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          from scripts.exchange_calendar import sessions_for_day, latest_completed_session
+          import os
+          today=datetime.now(ZoneInfo('Asia/Shanghai')).date()
+          sessions={x.date() if hasattr(x,'date') else x for x in sessions_for_day(today)}
+          print('trading='+str(today in sessions).lower())
+          target=latest_completed_session() if os.environ['MODE']=='close_confirmed' else today
+          if today in sessions and target != today:
+              raise ValueError('Daily close cannot use an earlier completed session')
+          print('date='+target.isoformat())
+          PY
+      - name: Check delivery marker
+        id: gate
+        if: steps.session.outputs.trading == 'true'
+        env:
+          MODE: ${{ inputs.publication_mode }}
+          VALIDATE: ${{ inputs.validation_only }}
+          EXTERNAL_SCHEDULE: ${{ inputs.external_schedule }}
+        run: |
+          args=()
+          if [[ "$VALIDATE" == 'true' ]]; then args+=(--validation-only); fi
+          python automation/scripts/check_microcap_delivery.py --publication-mode "$MODE" "${args[@]}"
+      - name: Recover delivery marker from accepted SMTP receipt
+        if: inputs.validation_only != true && steps.gate.outputs.recover_marker == 'true'
+        run: |
+          mkdir -p delivery-marker
+          printf '%s\n' "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > delivery-marker/run-url.txt
+      - name: Mark recovered digest delivered
+        if: inputs.validation_only != true && steps.gate.outputs.recover_marker == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.gate.outputs.marker_name }}
+          path: delivery-marker/run-url.txt
+      - name: Restore small member checkpoint
+        if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == ''
+        run: python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha '${{ steps.runtime.outputs.sha }}' --seed-config automation/config/microcap_member_checkpoint.json --out checkpoint
+      - name: Verify member checkpoint
+        id: previous
+        if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == ''
+        run: |
+          python -B microcap/scripts/member_period_handoff.py verify --checkpoint checkpoint/checkpoint.json
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          cp=json.load(open('checkpoint/checkpoint.json'))
+          print('same_day='+str(cp['as_of_date']=='${{ steps.session.outputs.date }}').lower())
+          PY
+      - name: Collect only member daily inputs
+        if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == '' && steps.previous.outputs.same_day != 'true'
+        run: python -B microcap/scripts/collect_member_daily_inputs.py --root microcap --checkpoint checkpoint/checkpoint.json --date '${{ steps.session.outputs.date }}' --mode '${{ inputs.publication_mode == 'realtime' && 'intraday' || 'close_confirmed' }}' --out daily-inputs
+      - name: Compute three member daily signals
+        if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == '' && steps.previous.outputs.same_day != 'true'
+        run: python -B microcap/scripts/member_daily_signal.py --root microcap --checkpoint checkpoint/checkpoint.json --quotes daily-inputs/quotes.json --hedge daily-inputs/hedge.json --date '${{ steps.session.outputs.date }}' --mode '${{ inputs.publication_mode == 'realtime' && 'intraday' || 'close_confirmed' }}' --out daily-result
+      - name: Render already confirmed same-day checkpoint
+        if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == '' && steps.previous.outputs.same_day == 'true' && inputs.publication_mode == 'close_confirmed'
+        run: python -B microcap/scripts/member_daily_signal.py --root microcap --checkpoint checkpoint/checkpoint.json --date '${{ steps.session.outputs.date }}' --mode close_confirmed --out daily-result --from-checkpoint
+      - name: Restore exact reviewed report for send-only recovery
+        if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url != ''
+        env:
+          REPORT_URL: ${{ inputs.reviewed_result_url }}
+          REPORT_SHA: ${{ inputs.reviewed_result_sha256 }}
+        run: python -B automation/scripts/restore_microcap_member_report.py --config automation/config/microcap_member_reports.json --url "$REPORT_URL" --sha256 "$REPORT_SHA" --strategy-sha '${{ steps.runtime.outputs.sha }}' --date '${{ steps.session.outputs.date }}' --out daily-result
+      - name: Verify close checkpoint candidate
+        id: checkpoint
+        if: inputs.publication_mode == 'close_confirmed' && steps.gate.outputs.should_send == 'true'
+        run: |
+          if [[ -f daily-result/checkpoint.json ]]; then
+            python -B microcap/scripts/member_period_handoff.py verify --checkpoint daily-result/checkpoint.json
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publish verified member checkpoint
+        if: inputs.validation_only != true && steps.checkpoint.outputs.ready == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-member-checkpoint-v1-${{ steps.runtime.outputs.sha }}
+          path: |
+            daily-result/checkpoint.json
+            daily-result/period.json
+            daily-result/history.csv
+            daily-result/turnover.csv
+            daily-result/version_state.json
+            daily-result/member_prices.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Build member digest
+        if: steps.gate.outputs.should_send == 'true'
+        run: python -B automation/scripts/build_microcap_member_digest.py --result daily-result/result.json --expected-date '${{ steps.session.outputs.date }}' --out artifacts
+      - name: Choose independent complete or partial send transaction
+        id: transaction
+        if: steps.gate.outputs.should_send == 'true'
+        env:
+          VALIDATE: ${{ inputs.validation_only }}
+        run: |
+          args=()
+          if [[ "$VALIDATE" == 'true' ]]; then args+=(--validation-only); fi
+          python automation/scripts/check_microcap_member_send.py --metadata artifacts/metadata.json --normal-marker '${{ steps.gate.outputs.marker_name }}' "${args[@]}"
+      - name: Recover partial-information delivered marker
+        if: inputs.validation_only != true && steps.transaction.outputs.recover_marker == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.transaction.outputs.marker_name }}
+          path: artifacts/metadata.json
+          retention-days: 30
+      - name: Persist normal-send intent before SMTP
+        id: intent
+        if: inputs.validation_only != true && steps.transaction.outputs.should_send == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.transaction.outputs.marker_name }}-send-intent
+          path: artifacts/metadata.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Send Gmail
+        if: inputs.validation_only != true && steps.intent.outcome == 'success'
+        env:
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
+        run: python automation/scripts/send_report.py artifacts/metadata.json --receipt artifacts/smtp-accepted.json
+      - name: Preserve accepted SMTP receipt
+        id: receipt
+        if: inputs.validation_only != true && steps.intent.outcome == 'success' && success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.transaction.outputs.marker_name }}-smtp-accepted
+          path: |
+            artifacts/metadata.json
+            artifacts/smtp-accepted.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Mark digest delivered
+        if: inputs.validation_only != true && steps.receipt.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.transaction.outputs.marker_name }}
+          path: artifacts/metadata.json
+          retention-days: 30
+      - name: Preserve member report and source evidence
+        if: always() && steps.gate.outputs.should_send == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-member-daily-report
+          path: |
+            artifacts
+            daily-result
+            daily-inputs
+          if-no-files-found: warn
+          retention-days: 90

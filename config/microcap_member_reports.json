@@ -1,0 +1,10 @@
+{
+  "schema": "member_daily_reviewed_reports_v1",
+  "reports": {
+    "2026-11-06": {
+      "url": "https://github.com/liuruojiang/microcap/releases/download/member-daily-20261106-77aee8b6/member-report-20261106.zip",
+      "sha256": "29b541f6b9bb4740a06e610785752d5cdc1c73295d15fb1f1c67e821c7ab0551",
+      "strategy_sha": "77aee8b69fb74065c028e78d22e24f60300d8dbe"
+    }
+  }
+}

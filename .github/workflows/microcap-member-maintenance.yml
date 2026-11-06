@@ -1,0 +1,134 @@
+name: Microcap Independent Maintenance
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        type: choice
+        options: [maintenance, rebalance]
+        default: maintenance
+permissions:
+  contents: read
+  actions: write
+concurrency:
+  group: microcap-independent-maintenance
+  cancel-in-progress: false
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      TZ: Asia/Shanghai
+      PYTHONDONTWRITEBYTECODE: '1'
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Read exact strategy runtime
+        id: runtime
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json,re
+          value=json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha']
+          assert re.fullmatch('[0-9a-f]{40}',value)
+          print('sha='+value)
+          legacy=json.load(open('automation/config/microcap_approved_state.json'))['strategy_sha']
+          assert re.fullmatch('[0-9a-f]{40}',legacy)
+          print('legacy_sha='+legacy)
+          PY
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: ${{ steps.runtime.outputs.sha }}
+          path: microcap
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: ${{ steps.runtime.outputs.legacy_sha }}
+          path: legacy
+      - name: Install maintenance runtime
+        run: python -m pip install numpy 'pandas<3' requests matplotlib 'akshare==1.18.46' 'baostock==0.9.1'
+      - name: Resolve original rebalance calendar
+        id: schedule
+        env:
+          TASK: ${{ inputs.task }}
+        run: |
+          day=$(date '+%Y-%m-%d')
+          python -B microcap/scripts/member_period_handoff.py schedule --root legacy --date "$day" --out schedule.json
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json,os
+          s=json.load(open('schedule.json'))
+          print('run='+str(s['is_trading_day'] and (os.environ['TASK']=='maintenance' or s['is_rebalance'])).lower())
+          print('date='+s['date'])
+          print('next='+s['next_session'])
+          PY
+      # This heavy legacy recovery belongs only to maintenance. The daily
+      # signal workflow never invokes it or waits for this job.
+      - name: Restore maintenance baseline
+        if: steps.schedule.outputs.run == 'true'
+        working-directory: legacy
+        run: |
+          target=$(python -c 'from scripts.exchange_calendar import latest_completed_session;print(latest_completed_session().isoformat())')
+          python -B ../automation/scripts/microcap_whole_state_recovery.py restore --root . --bundle "$RUNNER_TEMP/whole.zip" --strategy-sha '${{ steps.runtime.outputs.legacy_sha }}' --not-after-date "$target" --receipt maintenance-restore.json
+      - name: Refresh maintenance inputs
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'maintenance'
+        working-directory: legacy
+        run: python -B ../automation/scripts/refresh_microcap_notice_retry.py refresh --root .
+      - name: Preserve maintenance inputs
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'maintenance' && success()
+        uses: actions/cache/save@v4
+        with:
+          path: legacy/.microcap_index_cache
+          key: microcap-member-maintenance-v1-${{ steps.runtime.outputs.sha }}-${{ github.run_id }}
+      - name: Restore prepared maintenance inputs for rebalance
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        uses: actions/cache/restore@v4
+        with:
+          path: legacy/.microcap_index_cache
+          key: microcap-member-maintenance-v1-${{ steps.runtime.outputs.sha }}-${{ github.run_id }}
+          restore-keys: microcap-member-maintenance-v1-${{ steps.runtime.outputs.sha }}-
+      - name: Build original close rebalance and three final streams
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        working-directory: legacy
+        run: python -B scripts/top100_delivery.py refresh-all
+      - name: Check original complete rebalance delivery
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        working-directory: legacy
+        run: python -B scripts/top100_delivery.py check
+      - name: Export confirmed rebalance candidate
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        run: python -B microcap/scripts/member_period_handoff.py bootstrap --root legacy --out candidate
+      - name: Restore previous daily checkpoint for handoff
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        run: python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha '${{ steps.runtime.outputs.sha }}' --seed-config automation/config/microcap_member_checkpoint.json --out previous
+      - name: Bind close event to next-session membership
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        run: python -B microcap/scripts/member_period_handoff.py handoff --current previous/checkpoint.json --candidate candidate/checkpoint.json --session '${{ steps.schedule.outputs.date }}' --next-session '${{ steps.schedule.outputs.next }}' --out handoff
+      - name: Verify rebalance checkpoint
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        run: python -B microcap/scripts/member_period_handoff.py verify --checkpoint handoff/checkpoint.json
+      - name: Publish verified member checkpoint
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance' && success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-member-checkpoint-v1-${{ steps.runtime.outputs.sha }}
+          path: handoff/*
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve maintenance status and source evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-independent-maintenance-${{ inputs.task }}
+          path: |
+            schedule.json
+            legacy/maintenance-restore.json
+            legacy/.microcap_index_cache/st_notice_sources
+            legacy/.microcap_index_cache/st_notice_archive_pointer.json
+            candidate
+            handoff
+          if-no-files-found: warn
+          retention-days: 90

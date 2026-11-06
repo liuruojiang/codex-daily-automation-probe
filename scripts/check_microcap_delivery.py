@@ -125,7 +125,8 @@ def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dic
         raise RuntimeError("BLOCKED: SMTP receipt has no verifiable workflow artifact")
     with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}", token), timeout=30) as response:
         run = json.loads(response.read().decode("utf-8"))
-    if run.get("path") != ".github/workflows/microcap-realtime-digest.yml":
+    workflow_path = run.get("path")
+    if workflow_path not in {".github/workflows/microcap-realtime-digest.yml", ".github/workflows/microcap-member-daily.yml"}:
         raise RuntimeError("BLOCKED: SMTP receipt belongs to an unexpected workflow")
     with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}/jobs?per_page=100", token), timeout=30) as response:
         jobs = json.loads(response.read().decode("utf-8"))
@@ -148,7 +149,10 @@ def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dic
     _, receipt = values["smtp-accepted.json"]
     if not isinstance(metadata, dict) or not isinstance(receipt, dict):
         raise RuntimeError("BLOCKED: invalid SMTP receipt document")
-    if (metadata.get("status") != "OK" or metadata.get("publication_mode") != publication_mode
+    member_report = (workflow_path == ".github/workflows/microcap-member-daily.yml"
+                     and metadata.get("schema") == "member_daily_report_v1"
+                     and metadata.get("status") in {"OK", "PARTIAL"} and not test_id)
+    if ((metadata.get("status") != "OK" and not member_report) or metadata.get("publication_mode") != publication_mode
             or metadata.get("delivery_test_id", "") != test_id):
         raise RuntimeError("BLOCKED: SMTP receipt metadata identity does not match delivery")
     try:

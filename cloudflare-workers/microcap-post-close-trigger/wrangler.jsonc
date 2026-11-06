@@ -5,7 +5,7 @@
   "workers_dev": false,
   "preview_urls": false,
   "triggers": {
-    "crons": ["0 8 * * MON-FRI", "0 12 * * MON-FRI", "30 21 * * *", "0 1 * * *"]
+    "crons": ["0 8 * * MON-FRI", "0 12 * * MON-FRI", "30 21 * * *", "0 1 * * *", "0 1 * * MON-FRI", "10 7 * * MON-FRI"]
   },
   "observability": { "enabled": true }
 }

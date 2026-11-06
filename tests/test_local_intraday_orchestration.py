@@ -84,6 +84,17 @@ def test_components_run_independently_not_serially(tmp_path):
     assert r.execute() == 0
 
 
+def test_icim_selection_never_invokes_old_microcap_pipeline(tmp_path):
+    r = bare_run(tmp_path)
+    r.strategy = 'icim'
+    r.run_icim = lambda: {'actual_publication': False}
+    def forbidden():
+        raise AssertionError('Old microcap path must not run after member-daily cutover')
+    r.run_microcap = forbidden
+    assert r.execute() == 0
+    assert set(m.read(tmp_path/'run.json')['results']) == {'icim'}
+
+
 def test_child_nonzero_recorded_no_retry_and_no_shell(tmp_path, monkeypatch):
     r = bare_run(tmp_path)
     monkeypatch.setattr(m, 'require_window', lambda *a: None)

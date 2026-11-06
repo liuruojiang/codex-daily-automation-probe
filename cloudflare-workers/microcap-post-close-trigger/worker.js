@@ -10,13 +10,14 @@ const INPUTS_BY_WORKFLOW = {
   "ic-im-v1-4-daily-digest.yml": { correction: false, external_schedule: true, publication_mode: "close_confirmed" },
   "etf-allocation-digest.yml": { send_email: true },
   "ai-hot-digest.yml": { send_email: true },
+  "microcap-member-daily.yml": { validation_only: false, external_schedule: true, publication_mode: "close_confirmed" },
 };
 const MAX_ATTEMPTS = 3;
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504]);
 
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-async function dispatchWorkflow(env, workflow) {
+async function dispatchWorkflow(env, workflow, inputs = INPUTS_BY_WORKFLOW[workflow]) {
   if (!env.GITHUB_TOKEN) throw new Error("Missing GITHUB_TOKEN secret");
   const url = `https://api.github.com/repos/${REPOSITORY}/actions/workflows/${workflow}/dispatches`;
   let lastError;
@@ -35,7 +36,7 @@ async function dispatchWorkflow(env, workflow) {
         },
         body: JSON.stringify({
           ref: "main",
-          inputs: INPUTS_BY_WORKFLOW[workflow],
+          inputs,
         }),
       });
     } catch (error) {
@@ -65,8 +66,18 @@ async function dispatchWorkflow(env, workflow) {
 
 export default {
   async scheduled(controller, env, ctx) {
+    // Activation follows a verified seed and no-send acceptance. The existing
+    // 16:00 route remains the sole route until this explicit deployment flag.
+    if (controller.cron === "0 1 * * MON-FRI" || controller.cron === "10 7 * * MON-FRI") {
+      if (env.MEMBER_DAILY_ENABLED !== "true") return;
+      const task = controller.cron === "0 1 * * MON-FRI" ? "maintenance" : "rebalance";
+      ctx.waitUntil(dispatchWorkflow(env, "microcap-member-maintenance.yml", { task }));
+      return;
+    }
     const workflows = WORKFLOWS_BY_CRON[controller.cron] ?? [];
     if (workflows.length === 0) throw new Error(`Unexpected cron trigger: ${controller.cron}`);
-    ctx.waitUntil(Promise.all(workflows.map((workflow) => dispatchWorkflow(env, workflow))));
+    ctx.waitUntil(Promise.all(workflows.map((workflow) => dispatchWorkflow(env,
+      workflow === "microcap-realtime-digest.yml" && env.MEMBER_DAILY_ENABLED === "true"
+        ? "microcap-member-daily.yml" : workflow))));
   },
 };
