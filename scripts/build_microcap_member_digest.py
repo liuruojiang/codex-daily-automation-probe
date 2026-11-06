@@ -256,8 +256,17 @@ def main():
         for version in REVISIONS:
             path=(args.context_root or args.result.parent)/(version.replace('.','_')+'_signal.csv')
             if path.is_file():archive.write(path,path.name)
+        for key in ('quotes','hedge'):
+            if key in context:
+                path=(args.context_root or args.result.parent)/(key+'.json')
+                if path.is_file():archive.write(path,path.name)
+        prices=context.get('quotes',{}).get('rows',[])
+        if prices:
+            buf=io.StringIO(newline='');writer=csv.DictWriter(buf,fieldnames=sorted({k for row in prices for k in row}))
+            writer.writeheader();writer.writerows(prices)
+            archive.writestr('member_quotes.csv',buf.getvalue().encode('utf-8-sig'))
     metadata['attachment']=str(attachment.resolve())
-    metadata['body']+='\n附件：当次结果、已保存的三版CSV及本期名单。\n'
+    metadata['body']+='\n附件：当次结果、已保存的三版CSV、本期名单及成员行情明细。\n'
     metadata['html_body']=html_document(metadata['body'])
     (args.out / "metadata.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (args.out / "report.md").write_text(metadata["body"], encoding="utf-8")
