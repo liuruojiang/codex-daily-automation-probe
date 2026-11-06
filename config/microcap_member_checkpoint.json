@@ -1,7 +1,8 @@
 {
   "schema": "member_daily_seed_v1",
-  "strategy_sha": "11e194787507b0ec8538adb0cfa25216cdd6d356",
-  "url": "https://github.com/liuruojiang/microcap/releases/download/member-daily-20261106-77aee8b6/member-checkpoint-20261106.zip",
-  "sha256": "35f91d8dd84488c4a4232aec4610a933526f1b3ec8577555bdfc29b8baf5becd",
-  "seed_data_producer_sha": "77aee8b69fb74065c028e78d22e24f60300d8dbe"
+  "strategy_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+  "url": "https://github.com/liuruojiang/microcap/releases/download/member-daily-audit-20261106-ab214c20/member-checkpoint-20261106-audited.zip",
+  "sha256": "bfcec2d07b45d1d161d75c2f3bb6d2ab0e83eb922b38351439baa82c2f936f18",
+  "seed_data_producer_sha": "77aee8b69fb74065c028e78d22e24f60300d8dbe",
+  "seed_repair_source_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028"
 }

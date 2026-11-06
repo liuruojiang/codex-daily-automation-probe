@@ -103,18 +103,22 @@ jobs:
         run: python -B microcap/scripts/member_period_handoff.py bootstrap --root legacy --out candidate
       - name: Restore previous daily checkpoint for handoff
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
-        run: python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha '${{ steps.runtime.outputs.sha }}' --seed-config automation/config/microcap_member_checkpoint.json --out previous
+        run: python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha '${{ steps.runtime.outputs.sha }}' --seed-config automation/config/microcap_member_checkpoint.json --not-after-date '${{ steps.schedule.outputs.date }}' --out previous
       - name: Bind close event to next-session membership
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
         run: python -B microcap/scripts/member_period_handoff.py handoff --current previous/checkpoint.json --candidate candidate/checkpoint.json --session '${{ steps.schedule.outputs.date }}' --next-session '${{ steps.schedule.outputs.next }}' --out handoff
       - name: Verify rebalance checkpoint
+        id: checkpoint
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
-        run: python -B microcap/scripts/member_period_handoff.py verify --checkpoint handoff/checkpoint.json
+        run: |
+          python -B microcap/scripts/member_period_handoff.py verify --checkpoint handoff/checkpoint.json
+          artifact_name=$(python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha '${{ steps.runtime.outputs.sha }}' --describe-checkpoint handoff/checkpoint.json)
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
       - name: Publish verified member checkpoint
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance' && success()
         uses: actions/upload-artifact@v7
         with:
-          name: microcap-member-checkpoint-v1-${{ steps.runtime.outputs.sha }}
+          name: ${{ steps.checkpoint.outputs.artifact_name }}
           path: handoff/*
           if-no-files-found: error
           retention-days: 90

@@ -114,7 +114,7 @@ jobs:
           path: delivery-marker/run-url.txt
       - name: Restore small member checkpoint
         if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == ''
-        run: python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha '${{ steps.runtime.outputs.sha }}' --seed-config automation/config/microcap_member_checkpoint.json --out checkpoint
+        run: python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha '${{ steps.runtime.outputs.sha }}' --seed-config automation/config/microcap_member_checkpoint.json --not-after-date '${{ steps.session.outputs.date }}' --out checkpoint
       - name: Verify member checkpoint
         id: previous
         if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == ''
@@ -129,15 +129,18 @@ jobs:
         if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == '' && steps.previous.outputs.same_day != 'true'
         run: python -B microcap/scripts/collect_member_daily_inputs.py --root microcap --checkpoint checkpoint/checkpoint.json --date '${{ steps.session.outputs.date }}' --mode '${{ inputs.publication_mode == 'realtime' && 'intraday' || 'close_confirmed' }}' --out daily-inputs
       - name: Compute three member daily signals
+        id: compute
         if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == '' && steps.previous.outputs.same_day != 'true'
         run: |
           data_args=(--quotes daily-inputs/quotes.json --hedge daily-inputs/hedge.json)
           if [[ -f daily-inputs/replay_manifest.json ]]; then data_args=(--replay-manifest daily-inputs/replay_manifest.json); fi
           python -B microcap/scripts/member_daily_signal.py --root microcap --checkpoint checkpoint/checkpoint.json "${data_args[@]}" --date '${{ steps.session.outputs.date }}' --mode '${{ inputs.publication_mode == 'realtime' && 'intraday' || 'close_confirmed' }}' --out daily-result
       - name: Render already confirmed same-day checkpoint
+        id: saved
         if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url == '' && steps.previous.outputs.same_day == 'true' && inputs.publication_mode == 'close_confirmed'
         run: python -B microcap/scripts/member_daily_signal.py --root microcap --checkpoint checkpoint/checkpoint.json --date '${{ steps.session.outputs.date }}' --mode close_confirmed --out daily-result --from-checkpoint
       - name: Restore exact reviewed report for send-only recovery
+        id: reviewed
         if: steps.gate.outputs.should_send == 'true' && inputs.reviewed_result_url != ''
         env:
           REPORT_URL: ${{ inputs.reviewed_result_url }}
@@ -145,17 +148,22 @@ jobs:
         run: python -B automation/scripts/restore_microcap_member_report.py --config automation/config/microcap_member_reports.json --url "$REPORT_URL" --sha256 "$REPORT_SHA" --strategy-sha '${{ steps.runtime.outputs.sha }}' --date '${{ steps.session.outputs.date }}' --out daily-result
       - name: Verify close checkpoint candidate
         id: checkpoint
+        continue-on-error: true
         if: inputs.publication_mode == 'close_confirmed' && steps.gate.outputs.should_send == 'true'
         run: |
           if [[ -f daily-result/checkpoint.json ]]; then
             python -B microcap/scripts/member_period_handoff.py verify --checkpoint daily-result/checkpoint.json
+            artifact_name=$(python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha '${{ steps.runtime.outputs.sha }}' --describe-checkpoint daily-result/checkpoint.json)
+            echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
             echo 'ready=true' >> "$GITHUB_OUTPUT"
           fi
       - name: Publish verified member checkpoint
+        id: checkpoint_upload
+        continue-on-error: true
         if: inputs.validation_only != true && steps.checkpoint.outputs.ready == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: microcap-member-checkpoint-v1-${{ steps.runtime.outputs.sha }}
+          name: ${{ steps.checkpoint.outputs.artifact_name }}
           path: |
             daily-result/checkpoint.json
             daily-result/period.json
@@ -166,8 +174,24 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Build member digest
-        if: steps.gate.outputs.should_send == 'true'
-        run: python -B automation/scripts/build_microcap_member_digest.py --result daily-result/result.json --expected-date '${{ steps.session.outputs.date }}' --out artifacts
+        if: always() && steps.gate.outputs.should_send == 'true' && (steps.compute.outcome == 'success' || steps.saved.outcome == 'success' || steps.reviewed.outcome == 'success')
+        env:
+          CHECKPOINT_VERIFY_OUTCOME: ${{ steps.checkpoint.outcome }}
+          CHECKPOINT_UPLOAD_OUTCOME: ${{ steps.checkpoint_upload.outcome }}
+        run: |
+          mkdir -p artifacts
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          value=json.loads(Path('daily-result/result.json').read_bytes())
+          persistence={key:os.environ.get(variable,'') for key,variable in (
+              ('verification','CHECKPOINT_VERIFY_OUTCOME'),('upload','CHECKPOINT_UPLOAD_OUTCOME'))}
+          value['checkpoint_persistence']=persistence
+          if 'failure' in persistence.values():
+              value['warnings']=[*value.get('warnings',[]),'\u65e5\u5e38\u68c0\u67e5\u70b9\u6821\u9a8c\u6216\u4fdd\u5b58\u5931\u8d25\uff1b\u672c\u6b21\u5df2\u751f\u6210\u7684\u4fe1\u53f7\u7167\u5e38\u62a5\u544a\uff0c\u4e0b\u4e00\u65e5\u72b6\u6001\u5c1a\u672a\u6301\u4e45\u5316\uff0c\u8bf7\u5904\u7406\u4fdd\u5b58\u56de\u6267\u3002']
+          Path('artifacts/delivery_result.json').write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding='utf8')
+          PY
+          python -B automation/scripts/build_microcap_member_digest.py --result artifacts/delivery_result.json --context-root daily-result --context-checkpoint checkpoint/checkpoint.json --expected-date '${{ steps.session.outputs.date }}' --out artifacts
       - name: Choose independent complete or partial send transaction
         id: transaction
         if: steps.gate.outputs.should_send == 'true'

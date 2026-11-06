@@ -27,7 +27,7 @@ def result():
 def test_complete_preserves_cash_zero_and_does_not_claim_maintenance_verified():
     value=result(); before=copy.deepcopy(value)
     meta=render(value,expected_date='2026-11-06')
-    assert meta['status']=='OK' and 'cash → cash；目标尺度 0' in meta['body']
+    assert meta['status']=='OK' and '空仓 → 空仓；目标尺度 0' in meta['body']
     assert '未核验' in meta['body'] and value==before
 
 

@@ -67,7 +67,10 @@ def main():
             raise RuntimeError(f'Member local stage {number} failed; see saved exit code and logs')
     py=sys.executable
     if args.checkpoint is None:
-        run([py,'-B',str(auto/'scripts/restore_microcap_member_checkpoint.py'),'--strategy-sha',runtime,'--seed-config',str(auto/'config/microcap_member_checkpoint.json'),'--out',str(out/'checkpoint')],github_environment())
+        sys.path.insert(0,str(strategy))
+        from scripts.exchange_calendar import latest_completed_session
+        not_after=latest_completed_session().isoformat()
+        run([py,'-B',str(auto/'scripts/restore_microcap_member_checkpoint.py'),'--strategy-sha',runtime,'--seed-config',str(auto/'config/microcap_member_checkpoint.json'),'--not-after-date',not_after,'--out',str(out/'checkpoint')],github_environment())
         cp=out/'checkpoint/checkpoint.json'
     else:
         cp=args.checkpoint.resolve()
@@ -78,7 +81,7 @@ def main():
     validate_local_window(args.date,False)
     run([py,'-B',str(strategy/'scripts/collect_member_daily_inputs.py'),'--root',str(strategy),'--checkpoint',str(cp),'--date',args.date,'--mode','intraday','--out',str(out/'inputs')])
     run([py,'-B',str(strategy/'scripts/member_daily_signal.py'),'--root',str(strategy),'--checkpoint',str(cp),'--quotes',str(out/'inputs/quotes.json'),'--hedge',str(out/'inputs/hedge.json'),'--date',args.date,'--mode','intraday','--out',str(out/'result')])
-    run([py,'-B',str(auto/'scripts/build_microcap_member_digest.py'),'--result',str(out/'result/result.json'),'--expected-date',args.date,'--out',str(out/'report')])
+    run([py,'-B',str(auto/'scripts/build_microcap_member_digest.py'),'--result',str(out/'result/result.json'),'--context-checkpoint',str(cp),'--expected-date',args.date,'--out',str(out/'report')])
     # A completed intraday calculation must still be published before cutoff.
     validate_local_window(args.date,False)
     print(json.dumps({'status':'report_ready_not_published','report':str(out/'report/report.md'),'result':str(out/'result/result.json'),'smtp':False}))
