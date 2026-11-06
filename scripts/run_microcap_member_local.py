@@ -49,6 +49,9 @@ def main():
         raise ValueError('Local reporting cannot overwrite production outputs')
     out.mkdir(parents=True,exist_ok=False)
     runtime=json.loads((auto/'config/microcap_member_runtime.json').read_bytes())['strategy_sha']
+    actual=subprocess.run(['git','-C',str(strategy),'rev-parse','HEAD'],capture_output=True,text=True,check=True).stdout.strip()
+    if actual!=runtime:
+        raise ValueError('Local member runtime differs from the pinned strategy commit')
     commands=[]
     env=os.environ.copy();env['PYTHONDONTWRITEBYTECODE']='1'
     def run(command, child_env=env):

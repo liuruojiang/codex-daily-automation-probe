@@ -68,11 +68,16 @@ export default {
   async scheduled(controller, env, ctx) {
     // Activation follows a verified seed and no-send acceptance. The existing
     // 16:00 route remains the sole route until this explicit deployment flag.
-    if (controller.cron === "0 1 * * MON-FRI" || controller.cron === "10 7 * * MON-FRI") {
+    if (controller.cron === "10 7 * * MON-FRI") {
       if (env.MEMBER_DAILY_ENABLED !== "true") return;
-      const task = controller.cron === "0 1 * * MON-FRI" ? "maintenance" : "rebalance";
-      ctx.waitUntil(dispatchWorkflow(env, "microcap-member-maintenance.yml", { task }));
+      ctx.waitUntil(dispatchWorkflow(env, "microcap-member-maintenance.yml", { task: "rebalance" }));
       return;
+    }
+    if (controller.cron === "0 1 * * *" && env.MEMBER_DAILY_ENABLED === "true") {
+      const weekday = new Date(controller.scheduledTime).getUTCDay();
+      if (weekday >= 1 && weekday <= 5) {
+        ctx.waitUntil(dispatchWorkflow(env, "microcap-member-maintenance.yml", { task: "maintenance" }));
+      }
     }
     const workflows = WORKFLOWS_BY_CRON[controller.cron] ?? [];
     if (workflows.length === 0) throw new Error(`Unexpected cron trigger: ${controller.cron}`);

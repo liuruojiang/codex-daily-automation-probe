@@ -31,7 +31,7 @@ const worker = (await import('data:text/javascript;base64,' +
 const work = [];
 let error = '';
 try {
-  await worker.scheduled({cron: scenario.cron},
+  await worker.scheduled({cron: scenario.cron, scheduledTime: scenario.scheduledTime || Date.parse('2026-11-06T01:00:00Z')},
     scenario.missingToken ? {} : {GITHUB_TOKEN: 'isolated-test-only', MEMBER_DAILY_ENABLED: scenario.memberDaily ? 'true' : 'false'},
     {waitUntil: promise => work.push(promise)});
   await Promise.all(work);
@@ -106,17 +106,16 @@ def test_unknown_cron_never_sends():
 def test_actual_config_keeps_both_weekday_beijing_clocks():
     config = json.loads((WORKER.parent / "wrangler.jsonc").read_text(encoding="utf-8"))
     assert config["name"] == "china-post-close-digests"
-    assert set(config["triggers"]["crons"]) == {"0 8 * * MON-FRI", "0 12 * * MON-FRI", "30 21 * * *", "0 1 * * *", "0 1 * * MON-FRI", "10 7 * * MON-FRI"}
+    assert set(config["triggers"]["crons"]) == {"0 8 * * MON-FRI", "0 12 * * MON-FRI", "30 21 * * *", "0 1 * * *", "10 7 * * MON-FRI"}
     assert config["workers_dev"] is False and config["preview_urls"] is False
 
 
-@pytest.mark.parametrize('cron', ['0 1 * * MON-FRI', '10 7 * * MON-FRI'])
+@pytest.mark.parametrize('cron', ['10 7 * * MON-FRI'])
 def test_unactivated_new_maintenance_crons_do_not_dispatch(cron):
     assert execute(cron=cron)['calls'] == []
 
 
 @pytest.mark.parametrize('cron,workflow,inputs', [
-    ('0 1 * * MON-FRI', 'microcap-member-maintenance.yml', {'task': 'maintenance'}),
     ('10 7 * * MON-FRI', 'microcap-member-maintenance.yml', {'task': 'rebalance'}),
     ('0 8 * * MON-FRI', 'microcap-member-daily.yml', {'validation_only': False, 'external_schedule': True, 'publication_mode': 'close_confirmed'}),
     ('0 12 * * MON-FRI', 'ic-im-v1-4-daily-digest.yml', {'correction': False, 'external_schedule': True, 'publication_mode': 'close_confirmed'}),
@@ -139,3 +138,12 @@ def test_daily_digests_receive_only_their_supported_inputs(cron, workflow):
     call = result["calls"][0]
     assert call["url"].endswith(f"/{workflow}/dispatches")
     assert call["body"] == {"ref": "main", "inputs": {"send_email": True}}
+
+
+@pytest.mark.parametrize('stamp,count', [('2026-11-06T01:00:00Z',2),('2026-11-07T01:00:00Z',1)])
+def test_maintenance_reuses_nine_am_trigger_without_changing_ai_digest(stamp,count):
+    value=execute(cron='0 1 * * *',memberDaily=True,scheduledTime=stamp,succeedOn=1)
+    assert not value['error'] and len(value['calls'])==count
+    assert value['calls'][-1]['url'].endswith('/ai-hot-digest.yml/dispatches')
+    if count==2:
+        assert value['calls'][0]['body']['inputs']=={'task':'maintenance'}
