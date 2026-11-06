@@ -32,7 +32,7 @@ const work = [];
 let error = '';
 try {
   await worker.scheduled({cron: scenario.cron},
-    scenario.missingToken ? {} : {GITHUB_TOKEN: 'isolated-test-only'},
+    scenario.missingToken ? {} : {GITHUB_TOKEN: 'isolated-test-only', MEMBER_DAILY_ENABLED: scenario.memberDaily ? 'true' : 'false'},
     {waitUntil: promise => work.push(promise)});
   await Promise.all(work);
 } catch (failure) { error = String(failure.message); }
@@ -106,8 +106,26 @@ def test_unknown_cron_never_sends():
 def test_actual_config_keeps_both_weekday_beijing_clocks():
     config = json.loads((WORKER.parent / "wrangler.jsonc").read_text(encoding="utf-8"))
     assert config["name"] == "china-post-close-digests"
-    assert set(config["triggers"]["crons"]) == {"0 8 * * MON-FRI", "0 12 * * MON-FRI", "30 21 * * *", "0 1 * * *"}
+    assert set(config["triggers"]["crons"]) == {"0 8 * * MON-FRI", "0 12 * * MON-FRI", "30 21 * * *", "0 1 * * *", "0 1 * * MON-FRI", "10 7 * * MON-FRI"}
     assert config["workers_dev"] is False and config["preview_urls"] is False
+
+
+@pytest.mark.parametrize('cron', ['0 1 * * MON-FRI', '10 7 * * MON-FRI'])
+def test_unactivated_new_maintenance_crons_do_not_dispatch(cron):
+    assert execute(cron=cron)['calls'] == []
+
+
+@pytest.mark.parametrize('cron,workflow,inputs', [
+    ('0 1 * * MON-FRI', 'microcap-member-maintenance.yml', {'task': 'maintenance'}),
+    ('10 7 * * MON-FRI', 'microcap-member-maintenance.yml', {'task': 'rebalance'}),
+    ('0 8 * * MON-FRI', 'microcap-member-daily.yml', {'validation_only': False, 'external_schedule': True, 'publication_mode': 'close_confirmed'}),
+    ('0 12 * * MON-FRI', 'ic-im-v1-4-daily-digest.yml', {'correction': False, 'external_schedule': True, 'publication_mode': 'close_confirmed'}),
+])
+def test_activated_split_dispatches_exactly_one_workflow(cron, workflow, inputs):
+    value=execute(cron=cron,memberDaily=True,succeedOn=1)
+    assert not value['error'] and len(value['calls']) == 1
+    assert value['calls'][0]['url'].endswith('/'+workflow+'/dispatches')
+    assert value['calls'][0]['body']=={'ref':'main','inputs':inputs}
 
 
 @pytest.mark.parametrize("cron,workflow", [
