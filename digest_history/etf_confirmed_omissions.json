@@ -5708,6 +5708,45 @@
       "zh_summary": "原文按旧持仓测算SPY、QQQ和SMH的英伟达暴露，提示组合重复持有与行业集中风险；旧持仓不能代表当日精确归因。",
       "evidence_level": "媒体全文",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42297322981",
+      "origin_report_date": "2026-11-07",
+      "source": "Seeking Alpha ETFs",
+      "title": "The Case For A Rising Dollar Index And UUP Is Not Dollar Strength, But Euro Weakness",
+      "zh_title": "美元指数与UUP走强：作者强调欧元疲弱",
+      "url": "https://seekingalpha.com/article/4964258-the-case-for-a-rising-dollar-index-and-uup-is-not-dollar-strength-but-euro-weakness?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-06T19:17:46+00:00",
+      "summary": "作者以欧元疲弱解释美元指数表现，讨论UUP费用及结构，属配置相关观点。",
+      "zh_summary": "作者以欧元疲弱解释美元指数表现，讨论UUP费用及结构，属配置相关观点。",
+      "evidence_level": "发布者公开摘要及截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42297322981",
+      "origin_report_date": "2026-11-07",
+      "source": "Seeking Alpha ETFs",
+      "title": "Vanguard's VXUS Vs. VEU: Buy The One Without Small Caps",
+      "zh_title": "VXUS与VEU：作者为何偏好不含小盘股的版本",
+      "url": "https://seekingalpha.com/article/4964073-vanguards-vxus-vs-veu-buy-one-without-small-caps?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-06T15:55:17+00:00",
+      "summary": "作者比较约91%共同持仓与VXUS约9%国际小盘暴露，讨论费用和回报差别。",
+      "zh_summary": "作者比较约91%共同持仓与VXUS约9%国际小盘暴露，讨论费用和回报差别。",
+      "evidence_level": "发布者公开摘要及截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42297322981",
+      "origin_report_date": "2026-11-07",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "George Kamel Says Skip the $250,000 Annuity. His Alternative Could Pay $676,000",
+      "zh_title": "25万美元年金与股票替代方案：复利和照护时点风险",
+      "url": "https://247wallst.com/investing/2026/11/06/george-kamel-says-skip-the-250000-annuity-his-alternative-could-pay-676000/?.tsrc=rss",
+      "published": "2026-11-06T14:17:10+00:00",
+      "summary": "原文纠正25万美元按10%复利十年约64.84万美元而非67.6万美元；讨论护理资金的序列风险、费用和流动性。",
+      "zh_summary": "原文纠正25万美元按10%复利十年约64.84万美元而非67.6万美元；讨论护理资金的序列风险、费用和流动性。",
+      "evidence_level": "媒体全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
