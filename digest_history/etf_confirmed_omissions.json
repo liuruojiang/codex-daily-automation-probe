@@ -5747,6 +5747,97 @@
       "zh_summary": "原文纠正25万美元按10%复利十年约64.84万美元而非67.6万美元；讨论护理资金的序列风险、费用和流动性。",
       "evidence_level": "媒体全文",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42416201626",
+      "origin_report_date": "2026-11-08",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Charlie Bilello Says “Some Sanity Has Returned to the Market.” What That Means for Your Portfolio",
+      "zh_title": "投机板块降温后，如何看集中度与再平衡",
+      "url": "https://247wallst.com/investing/2026/11/06/charlie-bilello-says-some-sanity-has-returned-to-the-market-what-that-means-for-your-portfolio/?.tsrc=rss",
+      "published": "2026-11-06T22:07:28+00:00",
+      "summary": "原文讨论高贝塔、动量、迷因股风险，穿透组合集中度及规则再平衡。",
+      "zh_summary": "原文讨论高贝塔、动量、迷因股风险，穿透组合集中度及规则再平衡。",
+      "evidence_level": "媒体全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42416201626",
+      "origin_report_date": "2026-11-08",
+      "source": "Seeking Alpha ETFs",
+      "title": "SCHD And SCHG: 3 Years Later, This Two-ETF Combination Still Makes Sense",
+      "zh_title": "SCHD与SCHG：三年后再看双ETF组合",
+      "url": "https://seekingalpha.com/article/4964394-schd-and-schg-3-years-later-this-two-etf-combination-still-makes-sense?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-06T22:46:42+00:00",
+      "summary": "作者比较50/50股息与增长ETF的选择流程、因子暴露和15年相关性0.63；仅为作者分析，未读付费全文。",
+      "zh_summary": "作者比较50/50股息与增长ETF的选择流程、因子暴露和15年相关性0.63；仅为作者分析，未读付费全文。",
+      "evidence_level": "发布者公开摘要及截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42416201626",
+      "origin_report_date": "2026-11-08",
+      "source": "Seeking Alpha ETFs",
+      "title": "Top 20 S&P 500 Ranked By PEG Ratio After Massive Tech Route",
+      "zh_title": "科技下跌后，用PEG比较标普大型公司的估值",
+      "url": "https://seekingalpha.com/article/4964280-top-20-s-and-p-500-ranked-by-peg-ratio-after-massive-tech-route?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-06T19:52:58+00:00",
+      "summary": "作者以市盈率及盈利增长构造PEG并取倒数，比较大型股增长调整估值；不是债券收益率，未独立验证因子效果。",
+      "zh_summary": "作者以市盈率及盈利增长构造PEG并取倒数，比较大型股增长调整估值；不是债券收益率，未独立验证因子效果。",
+      "evidence_level": "发布者公开摘要及截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42416201626",
+      "origin_report_date": "2026-11-08",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Consumers Are Now Worried About an AI Bubble, Michigan Survey Says",
+      "zh_title": "消费者开始担忧AI泡沫：调查时间与持股差异",
+      "url": "https://247wallst.com/investing/2026/11/07/consumers-are-now-worried-about-an-ai-bubble-michigan-survey-says/?.tsrc=rss",
+      "published": "2026-11-07T13:26:41+00:00",
+      "summary": "报道密歇根调查持股最多家庭情绪走弱、其他家庭改善；AI担忧来自开放回答，无比例；调查10月20日至11月2日，早于选举与后续下跌。",
+      "zh_summary": "报道密歇根调查持股最多家庭情绪走弱、其他家庭改善；AI担忧来自开放回答，无比例；调查10月20日至11月2日，早于选举与后续下跌。",
+      "evidence_level": "媒体全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42416201626",
+      "origin_report_date": "2026-11-08",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Jim Cramer Says the AI Sell-Off “Is Not Like 2000.” Here’s His Case",
+      "zh_title": "克莱默称AI下跌不同于2000年，债务是风险",
+      "url": "https://247wallst.com/investing/2026/11/06/jim-cramer-says-the-ai-sell-off-is-not-like-2000-heres-his-case/?.tsrc=rss",
+      "published": "2026-11-07T00:09:10+00:00",
+      "summary": "讨论盈利企业估值过高与新云服务商债务、建设延期、现金缓冲；为节目观点的媒体转述，非见底判断。",
+      "zh_summary": "讨论盈利企业估值过高与新云服务商债务、建设延期、现金缓冲；为节目观点的媒体转述，非见底判断。",
+      "evidence_level": "媒体全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42416201626",
+      "origin_report_date": "2026-11-08",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Investors Pulled $7 Billion From Three Cash Funds In A Month. Where Did It Go?",
+      "zh_title": "三个现金基金流出约70亿美元，不能追踪到同一笔股票买入",
+      "url": "https://www.trefis.com/stock/amd/articles/623130/investors-pulled-7-billion-from-three-cash-funds-in-a-month-where-did-it-go/2026-11-07?.tsrc=rss",
+      "published": "2026-11-07T09:15:00+00:00",
+      "summary": "Trefis比较BIL/IQMM/SHV与股票芯片基金资金流，并承认不能追踪同一美元；讨论现金底线和穿透行业集中度。",
+      "zh_summary": "Trefis比较BIL/IQMM/SHV与股票芯片基金资金流，并承认不能追踪同一美元；讨论现金底线和穿透行业集中度。",
+      "evidence_level": "商业研究全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42416201626",
+      "origin_report_date": "2026-11-08",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "The S&P 500 Is Up 75% In 3 Years. Priced In Gold, It Is Down 14%. Which Is Real?",
+      "zh_title": "标普美元收益与黄金计价收益为何相反",
+      "url": "https://www.trefis.com/stock/nvda/articles/623129/the-s-p-500-is-up-75-in-3-years-priced-in-gold-it-is-down-14-which-is-real/2026-11-07?.tsrc=rss",
+      "published": "2026-11-07T09:14:54+00:00",
+      "summary": "Trefis比较美元和黄金计价的股票总回报及长周期；黄金本身也有长达多年回撤，换计价单位不等于实际消费通胀。",
+      "zh_summary": "Trefis比较美元和黄金计价的股票总回报及长周期；黄金本身也有长达多年回撤，换计价单位不等于实际消费通胀。",
+      "evidence_level": "商业研究全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
