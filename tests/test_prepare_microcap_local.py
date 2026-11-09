@@ -47,6 +47,14 @@ def test_bj_is_not_admitted_and_current_st_holding_is_retained():
     assert next(r for r in result['candidates'] if r['symbol'] == '000001')['current_st_reference']
 
 
+def test_source_risk_name_fills_gap_in_reference_list():
+    data = [row(n) for n in range(1, 501)]
+    data[0]['SECURITY_NAME_ABBR'] = 'ST帕瓦'
+    result = prep.select_pool(data, [f'{n:06d}' for n in range(401, 501)], set())
+    assert '000001' not in {r['symbol'] for r in result['candidates']}
+    assert result['candidate_count'] == 300
+
+
 def page(data, count=5001, pages=2):
     return prep.encode(dict(success=True, result=dict(data=data, count=count, pages=pages)))
 

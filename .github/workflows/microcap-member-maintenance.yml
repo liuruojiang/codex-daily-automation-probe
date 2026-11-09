@@ -29,9 +29,15 @@ jobs:
           python-version: '3.11'
       - name: Read exact strategy runtime
         id: runtime
+        env:
+          TASK: ${{ inputs.task }}
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
-          import json,re
+          import json,re,sys,os
+          sys.path.insert(0,'automation/scripts')
+          from restore_microcap_scoped_inputs import load_config
+          host=load_config('automation/config/microcap_local_maintenance.json')
+          print('host_enabled='+str(os.environ['TASK']!='maintenance' or host['owner']=='cloud').lower())
           value=json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha']
           assert re.fullmatch('[0-9a-f]{40}',value)
           print('sha='+value)
@@ -43,18 +49,22 @@ jobs:
           print('maintenance_sha='+maintenance['runtime_sha'])
           PY
       - uses: actions/checkout@v6
+        if: steps.runtime.outputs.host_enabled == 'true'
         with:
           repository: liuruojiang/microcap
           ref: ${{ steps.runtime.outputs.sha }}
           path: microcap
       - uses: actions/checkout@v6
+        if: steps.runtime.outputs.host_enabled == 'true'
         with:
           repository: liuruojiang/microcap
           ref: ${{ steps.runtime.outputs.legacy_sha }}
           path: legacy
       - name: Install maintenance runtime
+        if: steps.runtime.outputs.host_enabled == 'true'
         run: python -m pip install numpy 'pandas<3' requests matplotlib 'akshare==1.18.46' 'baostock==0.9.1'
       - name: Resolve original rebalance calendar
+        if: steps.runtime.outputs.host_enabled == 'true'
         id: schedule
         env:
           TASK: ${{ inputs.task }}
@@ -96,6 +106,9 @@ jobs:
           path: legacy/.microcap_index_cache
           key: microcap-member-maintenance-v1-${{ steps.runtime.outputs.maintenance_sha }}-${{ github.run_id }}
           restore-keys: microcap-member-maintenance-v1-${{ steps.runtime.outputs.maintenance_sha }}-
+      - name: Restore verified locally maintained sources for rebalance
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        run: python -B automation/scripts/restore_microcap_scoped_inputs.py --root legacy --config automation/config/microcap_local_maintenance.json --not-after-date '${{ steps.schedule.outputs.date }}' --out local-source-restore
       - name: Build original close rebalance and three final streams
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
         working-directory: legacy
@@ -135,6 +148,7 @@ jobs:
           name: microcap-independent-maintenance-${{ inputs.task }}
           path: |
             schedule.json
+            local-source-restore/receipt.json
             legacy/maintenance-restore.json
             legacy/maintenance-runtime.json
             legacy/.microcap_index_cache/st_notice_sources

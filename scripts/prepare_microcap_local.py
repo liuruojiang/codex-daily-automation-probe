@@ -20,7 +20,7 @@ import sys
 import uuid
 
 URL = 'https://datacenter-web.eastmoney.com/api/data/v1/get'
-FIELDS = 'SECURITY_CODE,SECUCODE,TRADE_DATE,TOTAL_SHARES,TOTAL_MARKET_CAP,CLOSE_PRICE'
+FIELDS = 'SECURITY_CODE,SECUCODE,SECURITY_NAME_ABBR,TRADE_DATE,TOTAL_SHARES,TOTAL_MARKET_CAP,CLOSE_PRICE'
 PAGE_SIZE = 5000
 SCHEMA = 'microcap_local_screen_preparation_v1'
 
@@ -190,7 +190,12 @@ def select_pool(rows, members, st_symbols, size=300):
         raise ValueError('Current members lack valid dated source rows: ' + ','.join(missing))
     # Existing holdings remain mandatory even if a new risk flag is present.
     chosen = set(members)
-    eligible = [(cap, symbol, row) for cap, symbol, row in ranked if symbol not in st_symbols]
+    def risk_name(row):
+        # This source name is a screen reference, never point-in-time ST proof.
+        name = str(row.get('SECURITY_NAME_ABBR') or '').strip().upper()
+        return bool(re.match(r'^(?:\*?ST|SST|PT)', name))
+    eligible = [(cap, symbol, row) for cap, symbol, row in ranked
+                if symbol not in st_symbols and not risk_name(row)]
     for _, symbol, _ in eligible:
         if len(chosen) >= size:
             break
@@ -252,7 +257,7 @@ def main(argv=None):
         run.mkdir()
         atomic(run / 'st-reference.csv', st_raw)
         try:
-            rows = fetch_snapshot(folder / 'source', args.as_of)
+            rows = fetch_snapshot(folder / 'source-v2-name', args.as_of)
             pool = select_pool(rows, members, st_symbols)
             atomic(run / 'candidates.json', encode(pool))
             result = dict(schema=SCHEMA, status='PREPARATION_VERIFIED',
