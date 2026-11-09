@@ -50,6 +50,57 @@ class DeliveryGateTests(unittest.TestCase):
         self.metadata["body"] += "被改动的报告"
         self.assertTrue(any("body_sha256" in e for e in validate(self.metadata, self.manifest)))
 
+    def partial_market(self):
+        self.manifest["market_data"] = {
+            "included": True, "us_expected_session": "2026-11-09",
+            "us_reference_timestamp": 1_794_258_000,
+            "us_strategy_expected_count": 2,
+            "us_strategy_expected_codes": ["QQQM", "VGLT"],
+            "us_strategy_rows": [{"code": "QQQM", "date": "2026-11-09"}],
+            "us_strategy_missing_codes": ["VGLT"],
+            "us_mover_session": "2026-11-09", "us_mover_row_count": 20,
+        }
+        marker = "策略行情缺项（2026-11-09）：VGLT"
+        self.metadata["body"] += marker
+        self.metadata["html_body"] += f"<p>{marker}</p>"
+        self.manifest["body_sha256"] = hashlib.sha256(self.metadata["body"].encode()).hexdigest()
+        return self.manifest["market_data"]
+
+    def test_disclosed_partial_strategy_market_passes(self):
+        self.partial_market()
+        self.assertEqual(validate(self.metadata, self.manifest), [])
+
+    def test_partial_market_requires_plain_and_html_disclosure(self):
+        self.partial_market()
+        self.metadata["html_body"] = "<html></html>"
+        self.assertTrue(any("both email bodies" in e for e in validate(self.metadata, self.manifest)))
+        self.metadata["html_body"] += "策略行情缺项（2026-11-09）：VGLT"
+        self.metadata["body"] = self.metadata["body"].replace("策略行情缺项", "未披露缺项")
+        self.manifest["body_sha256"] = hashlib.sha256(self.metadata["body"].encode()).hexdigest()
+        self.assertTrue(any("both email bodies" in e for e in validate(self.metadata, self.manifest)))
+
+    def test_partial_market_still_blocks_stale_delivered_row(self):
+        market = self.partial_market()
+        market["us_strategy_rows"][0]["date"] = "2026-11-06"
+        self.assertTrue(any("strategy ETF rows" in e for e in validate(self.metadata, self.manifest)))
+
+    def test_partial_market_cannot_hide_or_duplicate_configured_symbols(self):
+        import copy
+        good = copy.deepcopy(self.partial_market())
+        mutations = [
+            {"us_strategy_missing_codes": []},
+            {"us_strategy_expected_codes": ["QQQM", "VGLT", "IBIT"]},
+            {"us_strategy_missing_codes": ["VGLT", "VGLT"]},
+            {"us_strategy_rows": [{"code": "QQQM", "date": "2026-11-09"}] * 2},
+            {"us_strategy_rows": [{"code": "VGLT", "date": "2026-11-09"}]},
+            {"us_strategy_rows": [{"code": "OTHER", "date": "2026-11-09"}]},
+            {"us_strategy_expected_codes": None},
+        ]
+        for mutation in mutations:
+            with self.subTest(mutation=mutation):
+                self.manifest["market_data"] = {**copy.deepcopy(good), **mutation}
+                self.assertTrue(validate(self.metadata, self.manifest))
+
     def test_selection_hidden_by_section_cap_is_blocked(self):
         self.manifest["selected_items"].append({"url": "https://example.com/fifth-research"})
         self.assertTrue(any("selected_items differs" in e for e in validate(self.metadata, self.manifest)))

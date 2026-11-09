@@ -6064,6 +6064,7 @@ def _build_etf(out_dir: Path) -> None:
     spy_quote_timestamp = 0
     market_session_date = ""
     stale_quote_count = 0
+    missing_us_strategy_codes: list[str] = []
     if include_market_summary:
         strategy_assets = A_STRATEGY_ASSETS + ADK_STRATEGY_ASSETS + B_STRATEGY_ASSETS + D_STRATEGY_ASSETS
         broad_universe = broad_etf_movers.fetch_universe()
@@ -6143,14 +6144,12 @@ def _build_etf(out_dir: Path) -> None:
             spy_quote_timestamp,
             started,
         )
-        if len(yahoo_strategy_rows) != len(B_STRATEGY_ASSETS):
-            missing = sorted(
-                {asset.code for asset in B_STRATEGY_ASSETS}
-                - {row["asset"].code for row in yahoo_strategy_rows if isinstance(row.get("asset"), MarketAsset)}
-            )
-            raise RuntimeError(
-                f"US strategy ETF close quotes are incomplete for {us_session_date}: {missing}"
-            )
+        # A rejected individual quote is a disclosed data gap, not a reason to
+        # discard all other market rows and the independent research digest.
+        missing_us_strategy_codes = sorted(
+            {asset.code for asset in B_STRATEGY_ASSETS}
+            - {row["asset"].code for row in yahoo_strategy_rows if isinstance(row.get("asset"), MarketAsset)}
+        )
         strategy_rows.extend(yahoo_strategy_rows)
         strategy_order = {asset.code: index for index, asset in enumerate(strategy_assets)}
         strategy_rows.sort(
@@ -6195,6 +6194,11 @@ def _build_etf(out_dir: Path) -> None:
         f"# 美股 ETF 与资产配置日报 - {date_s}",
         "",
     ]
+    if missing_us_strategy_codes:
+        lines += [
+            f"> 策略行情缺项（{us_session_date}）：{', '.join(missing_us_strategy_codes)}。未取得通过校验的收盘数据，相关行情已略去，未用旧价或零涨跌填补；其余行情和资讯正常提供。",
+            "",
+        ]
     if include_market_summary:
         lines += [
             f"> 数据日期：最新可取得的收盘数据截至 {data_date_s or '数据不足'}；涨跌幅为收盘价相对上一交易日的价格涨跌，不含分红再投资。",
@@ -6412,6 +6416,8 @@ def _build_etf(out_dir: Path) -> None:
                 "us_reference_symbol": "SPY" if include_market_summary else None,
                 "us_reference_timestamp": spy_quote_timestamp or None,
                 "us_strategy_expected_count": len(B_STRATEGY_ASSETS) if include_market_summary else 0,
+                "us_strategy_expected_codes": [asset.code for asset in B_STRATEGY_ASSETS] if include_market_summary else [],
+                "us_strategy_missing_codes": missing_us_strategy_codes,
                 "us_strategy_rows": [
                     {"code": row["asset"].code, "date": row["date"]}
                     for row in strategy_rows

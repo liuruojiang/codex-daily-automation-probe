@@ -70,10 +70,34 @@ def validate(metadata: dict, manifest: dict, history_before: dict | None = None,
         expected_count = market_data.get("us_strategy_expected_count")
         if not isinstance(expected_session, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", expected_session):
             errors.append("market_data.us_expected_session must be an exact trading date")
-        if not isinstance(strategy_rows, list) or len(strategy_rows) != expected_count:
-            errors.append("all configured US strategy ETFs must have close-aligned rows")
+        if not isinstance(strategy_rows, list):
+            errors.append("US strategy ETF rows must be an explicit list")
         elif any(not isinstance(row, dict) or row.get("date") != expected_session for row in strategy_rows):
             errors.append("US strategy ETF rows must match the completed US session")
+        expected_codes = market_data.get("us_strategy_expected_codes")
+        missing_codes = market_data.get("us_strategy_missing_codes", [])
+        # Legacy complete manifests remain valid. Partial delivery requires an
+        # exact accounting of every configured symbol and visible disclosure.
+        if expected_codes is not None or missing_codes:
+            def symbol_list(value: object) -> bool:
+                return (isinstance(value, list)
+                        and all(isinstance(code, str) and bool(code) for code in value)
+                        and len(value) == len(set(value)))
+
+            row_codes = [row.get("code") if isinstance(row, dict) else None
+                         for row in strategy_rows] if isinstance(strategy_rows, list) else None
+            if not all(symbol_list(value) for value in (expected_codes, missing_codes, row_codes)):
+                errors.append("strategy ETF expected, delivered and missing codes must be unique symbol lists")
+            elif (type(expected_count) is not int or expected_count != len(expected_codes)
+                  or set(row_codes) & set(missing_codes)
+                  or set(row_codes) | set(missing_codes) != set(expected_codes)):
+                errors.append("strategy ETF delivered and missing codes must partition the configured symbols")
+            if symbol_list(missing_codes) and missing_codes:
+                marker = f"策略行情缺项（{expected_session}）：{', '.join(sorted(missing_codes))}"
+                if marker not in body or marker not in (html or ""):
+                    errors.append("missing strategy ETF quotes must be disclosed in both email bodies")
+        elif isinstance(strategy_rows, list) and len(strategy_rows) != expected_count:
+            errors.append("all configured US strategy ETFs must have close-aligned rows or disclosed missing codes")
         if market_data.get("us_mover_session") != expected_session:
             errors.append("US mover session must match the completed US session")
         if not isinstance(market_data.get("us_mover_row_count"), int) or market_data["us_mover_row_count"] <= 0:
@@ -105,6 +129,7 @@ def main() -> int:
     args = parser.parse_args()
     manifest_path = args.manifest or args.metadata.with_name("collection_manifest.json")
     candidate_result = None
+    market_warnings: list[str] = []
     try:
         metadata = json.loads(args.metadata.read_text(encoding="utf-8-sig"))
         manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
@@ -113,19 +138,26 @@ def main() -> int:
         if not isinstance(metadata, dict) or not isinstance(manifest, dict):
             raise ValueError("metadata and manifest must be JSON objects")
         errors = validate(metadata, manifest, history_before, require_candidate_audit=True)
+        market_data = manifest.get("market_data")
+        missing_codes = market_data.get("us_strategy_missing_codes") if isinstance(market_data, dict) else None
+        if isinstance(missing_codes, list):
+            market_warnings = [code for code in missing_codes if isinstance(code, str)]
         candidate_result = audit_candidates(manifest, history_before)
         args.metadata.with_name("candidate_audit.json").write_text(json.dumps(candidate_result, ensure_ascii=False, indent=2), encoding="utf-8")
     except (OSError, ValueError, TypeError) as exc:
         errors = [f"cannot validate delivery artifacts: {exc}"]
     warnings = candidate_result["failures"] + candidate_result["gaps"] if candidate_result else []
-    status = "FAILED" if errors else "PASS_WITH_WARNINGS" if warnings else "PASS"
+    status = "FAILED" if errors else "PASS_WITH_WARNINGS" if warnings or market_warnings else "PASS"
     print(json.dumps({"status": status, "errors": errors,
                       "candidate_audit_status": candidate_result["status"] if candidate_result else None,
-                      "warning_count": len(warnings)}, ensure_ascii=False, indent=2))
+                      "warning_count": len(warnings) + len(market_warnings),
+                      "missing_strategy_etfs": market_warnings}, ensure_ascii=False, indent=2))
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary_path:
         with open(summary_path, "a", encoding="utf-8") as summary:
             summary.write(f"## ETF delivery validation: {status}\n\n")
+            if market_warnings:
+                summary.write(f"Missing strategy quotes (disclosed, omitted): {', '.join(market_warnings)}\n\n")
             if candidate_result:
                 summary.write(f"Content audit: **{candidate_result['status']}**; {len(warnings)} findings. Disclosed content warnings do not block delivery.\n\n")
                 for row in candidate_result["failures"]:
