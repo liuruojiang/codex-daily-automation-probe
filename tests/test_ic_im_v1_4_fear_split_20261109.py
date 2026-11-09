@@ -17,6 +17,9 @@ def test_both_metrics_visible_with_actual_dates_and_roles():
     signal = dict(fear_greed_index=18.97, fear_data_date='2026-11-06',
                   fear_data_status='close_previous_session',
                   fear_source_warning='旧版六项情绪18.97，用于网格；新增综合恐贪10.01，数据日2026-11-06，仅观察；页面更新时间2026-11-07T06:19+08:00')
+    signal['fear_composite_reference'] = dict(value=10.01, data_date='2026-11-06', role='reference_only',
+        page_updated_at='2026-11-07T06:19+08:00', retrieved_at='2026-11-09T14:22:26+08:00',
+        selected_source='csv', cross_validation='matched', source_values={'csv':10.01, 'page':10.01})
     value = digest.fear_observation_text(dict(status='ok', market_date='2026-11-09', signals={'IC': signal}))
     for text in ('18.97', '10.01', '2026-11-06', '仅观察', '沿用上一交易日', '2026-11-07T06:19'):
         assert text in value
