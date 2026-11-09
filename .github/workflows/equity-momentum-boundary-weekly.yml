@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: equity-momentum-boundary-${{ github.ref }}
@@ -48,16 +49,14 @@ jobs:
         run: python -m unittest discover -p "test_*.py"
 
       - name: Restore previous delivered report
-        uses: actions/cache/restore@v4
-        with:
-          path: .monitor-state/report.json
-          key: equity-boundary-report-v1-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: equity-boundary-report-v1-${{ github.ref_name }}-
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python monitoring/equity_momentum_boundary/restore_previous.py --repository "$GITHUB_REPOSITORY" --output-dir .monitor-state
 
       - name: Build weekly report metadata
         env:
           REPORT_LABEL: ${{ github.event_name == 'push' && '审计修订重发' || '' }}
-        run: python monitoring/equity_momentum_boundary/monitor.py --output-dir artifacts --previous-report .monitor-state/report.json --report-label "$REPORT_LABEL"
+        run: python monitoring/equity_momentum_boundary/monitor.py --output-dir artifacts --previous-report .monitor-state/report.json --previous-status .monitor-state/restore.json --report-label "$REPORT_LABEL"
 
       - name: Send through the existing daily-report mailer
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
@@ -70,19 +69,6 @@ jobs:
           MAIL_TO: ${{ secrets.MAIL_TO }}
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
         run: python scripts/send_report.py artifacts/metadata.json --receipt artifacts/delivery-receipt.json
-
-      - name: Prepare delivered snapshot
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
-        run: |
-          mkdir -p .monitor-state
-          cp artifacts/report.json .monitor-state/report.json
-
-      - name: Save delivered snapshot
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
-        uses: actions/cache/save@v4
-        with:
-          path: .monitor-state/report.json
-          key: equity-boundary-report-v1-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload weekly report artifact
         if: always()

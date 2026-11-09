@@ -124,18 +124,16 @@ class WorkflowDeliveryAuditTests(unittest.TestCase):
         self.assertIn("group: equity-momentum-boundary-${{ github.ref }}", block.group(1))
         self.assertIn("cancel-in-progress: false", block.group(1))
 
-    def test_snapshot_restore_and_save_have_unique_run_attempt_keys(self):
+    def test_snapshot_restore_uses_durable_artifacts_with_read_only_actions_permission(self):
         restore = self.step("Restore previous delivered report")
-        save = self.step("Save delivered snapshot")
-        expected = "equity-boundary-report-v1-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}"
-        self.assertIn("key: " + expected, restore)
-        self.assertIn("key: " + expected, save)
-        self.assertIn("restore-keys: equity-boundary-report-v1-${{ github.ref_name }}-", restore)
-        for block in (restore, save):
-            self.assertIn("path: .monitor-state/report.json", block)
+        self.assertIn("restore_previous.py", restore)
+        self.assertIn("GH_TOKEN: ${{ github.token }}", restore)
+        self.assertIn("actions: read", self.workflow)
+        self.assertNotIn("actions/cache/", self.workflow)
+        self.assertIn("retention-days: 90", self.step("Upload weekly report artifact"))
 
     def test_validation_only_never_sends_or_advances_delivered_snapshot(self):
-        names = ("Send through the existing daily-report mailer", "Prepare delivered snapshot", "Save delivered snapshot")
+        names = ("Send through the existing daily-report mailer",)
         condition = "if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}"
         for name in names:
             with self.subTest(step=name):
@@ -146,6 +144,8 @@ class WorkflowDeliveryAuditTests(unittest.TestCase):
         positions = [self.workflow.index("- name: " + name) for name in names]
         self.assertEqual(positions, sorted(positions))
         self.assertIn("scripts/send_report.py artifacts/metadata.json", self.step(names[0]))
+        self.assertIn("--receipt artifacts/delivery-receipt.json", self.step(names[0]))
+        self.assertIn("--previous-status .monitor-state/restore.json", self.step("Build weekly report metadata"))
 
     def test_ci_runs_real_unit_tests_on_python311_before_building_or_sending(self):
         self.assertIn('python-version: "3.11"', self.workflow)
