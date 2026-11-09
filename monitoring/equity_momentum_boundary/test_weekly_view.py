@@ -111,6 +111,23 @@ class DurableSnapshotTests(unittest.TestCase):
             self.assertFalse((Path(folder) / "report.json").exists())
             self.assertTrue((Path(folder) / "restore.json").exists())
 
+    def test_malformed_snapshot_dates_and_components_are_rejected(self):
+        now = datetime(2026, 10, 26, 6, 30, tzinfo=timezone.utc)
+        for change in ({"generated_at_utc": None}, {"core": {"cape_boundary_10y": None}}, {"sources": [None]}):
+            report = sample()
+            report.update(change)
+            # Build the damaged archive independently of the current renderer.
+            with zipfile.ZipFile(io.BytesIO(self.archive())) as source:
+                entries = {name: source.read(name) for name in source.namelist()}
+            report["method_version"] = METHOD_VERSION
+            entries["report.json"] = json.dumps(report).encode()
+            out = io.BytesIO()
+            with zipfile.ZipFile(out, "w") as archive:
+                for name, data in entries.items():
+                    archive.writestr(name, data)
+            with self.assertRaises(ValueError):
+                verified_report(out.getvalue(), now, METHOD_VERSION)
+
 
 if __name__ == "__main__":
     unittest.main()

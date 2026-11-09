@@ -23,6 +23,8 @@ def api(endpoint, binary=False):
 
 
 def timestamp(value):
+    if not isinstance(value, str):
+        raise ValueError("timestamp must be a string")
     result = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if result.tzinfo is None:
         raise ValueError("timezone missing")
@@ -40,6 +42,8 @@ def verified_report(payload, now, method_version):
     report, meta, receipt = (json.loads(files[name]) for name in ("report.json", "metadata.json", "delivery-receipt.json"))
     if not all(isinstance(value, dict) for value in (report, meta, receipt)):
         raise ValueError("invalid archive objects")
+    if not all(isinstance(meta.get(key), str) for key in ("subject", "body", "html_body")):
+        raise ValueError("invalid delivered content")
     if receipt.get("status") != "smtp_accepted" or not re.fullmatch(r"<[^<>\s]+@[^<>\s]+>", receipt.get("message_id", "")):
         raise ValueError("no SMTP acceptance evidence")
     for field, data in (("metadata_sha256", files["metadata.json"]),
@@ -61,6 +65,10 @@ def verified_report(payload, now, method_version):
         raise ValueError("report timestamp not in delivered body")
     if not isinstance(report.get("core"), dict) or not isinstance(report.get("supplemental"), dict):
         raise ValueError("invalid report data")
+    if (not all(isinstance(value, dict) for value in report["core"].values())
+            or not isinstance(report.get("sources"), list)
+            or not all(isinstance(source, dict) for source in report["sources"])):
+        raise ValueError("invalid report components or sources")
     return report, files["report.json"]
 
 

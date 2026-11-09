@@ -14,7 +14,7 @@ def market_lines(report, previous=None):
     prior = mapping(mapping((previous or {}).get("supplemental")).get("sp500_price_momentum"))
     lines = []
     price, delta = market.get("price"), market.get("weekly_change")
-    if number(price) and number(delta) and price - delta > 0:
+    if number(price) and price > 0 and number(delta) and price - delta > 0:
         lines.append(f"标普500截至{market.get('as_of')}：本周涨跌{delta / (price - delta):+.2%}"
                      "（相对约7日前可用收盘）；价格指数，不含股息。")
     else:
