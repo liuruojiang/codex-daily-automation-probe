@@ -148,6 +148,17 @@ C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109
 股本、复权的有效来源仍可复用。已在真实完成回执上重放次日 09:00 计划输入，
 确认返回 due；这是受控时钟检查，不是实际定时触发或开机补跑验收。
 
+资料包已发布至 [11 月 9 日来源预发布](https://github.com/liuruojiang/codex-daily-automation-probe/releases/tag/microcap-local-sources-20261109-63c7b16d)，
+经公开 HTTPS 重新下载，整包 SHA 相同，20,927 个已原生验证的暂存对象再次逐项
+核对通过，没有重复执行已成功的 300 只语义检查。下载回执为
+`exports/remote-verification-20261109.json`。
+
+准备分支同步了 main 已发布的成员传输修复及 `4774966d…` 成员日更器配置，
+原生来源生产者仍为独立的 `63c7b16d…`。对当前正式随库小种子重新校验后，
+确认 11 月 9 日的 100 只成员与本次维护名单的成员完全相同；保留本次最初
+检查点的原始来源身份，不改写其证明。另有 64 项检查点传输/发布/日期冲突回归
+通过，凭据为 `seed/current-member-seed-4774966d-compatibility.json`。
+
 ## 已完成的真实验收（2026-11-09）
 
 - 本周维护名单 300 只，含现有成员 100/100；名单 SHA-256 为
