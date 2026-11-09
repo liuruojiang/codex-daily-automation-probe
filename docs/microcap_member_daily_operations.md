@@ -14,6 +14,17 @@ available. There is no whole-state fallback. The checkpoint producer artifact
 name is bound to the helper runtime; the checkpoint itself retains its actual
 economic source identity. These are different fields and must not be relabeled.
 
+The reviewed 2026-11-06 seed is also shipped verbatim as
+`config/microcap_member_seed_20261106_ab214c20.zip` (85,744 bytes). The optional
+`bundled_path` is a single ZIP filename relative to the seed configuration;
+the original exact runtime and SHA-256 checks still apply. Published completed
+checkpoints remain first choice. Only the initial no-matching-checkpoint path
+uses the bundle, so a new helper runtime no longer needs a Release download to
+start its first next-session daily report. A missing/corrupt configured bundle
+fails closed. Legacy configurations without a bundle retry only transient
+download failures, at most three attempts; 403/404 and hash mismatches are not
+retried. No all-market/whole-state recovery is added.
+
 The original normal date/mode marker remains the complete report transaction.
 A partial information report uses the suffix `-partial-information`, including
 its own intent and SMTP receipt. It can be sent once and does not occupy the

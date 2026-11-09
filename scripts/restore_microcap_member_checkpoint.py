@@ -6,12 +6,15 @@ from datetime import date, datetime
 from decimal import Decimal, DecimalException
 import io
 import hashlib
+from http.client import IncompleteRead
 import json
 import math
 import os
 import re
 import stat
 import sys
+from time import sleep
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
@@ -233,9 +236,33 @@ def seed_download(path: Path, sha: str) -> bytes:
             or not url.startswith("https://github.com/liuruojiang/microcap/releases/download/")
             or re.fullmatch(r"[0-9a-f]{64}", expected) is None):
         raise ValueError("Member seed config identity is not approved")
-    opener = urllib.request.build_opener(StripCrossOriginAuthRedirectHandler())
-    with opener.open(url, timeout=60) as response:
-        raw = response.read(MAX_BYTES + 1)
+    bundled = config.get('bundled_path')
+    if bundled is not None:
+        if not isinstance(bundled, str) or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*\.zip', bundled) is None:
+            raise ValueError('Invalid bundled seed path')
+        source = path.resolve().parent / bundled
+        if source.resolve().parent != path.resolve().parent:
+            raise ValueError('Invalid bundled seed path')
+        # The reviewed bytes travel with the exact configuration/checkout. A
+        # missing or corrupt bundle is an integrity failure, not a reason to
+        # silently replace it with an unrelated checkpoint or remote response.
+        with source.open('rb') as stream:
+            raw = stream.read(MAX_BYTES + 1)
+    else:
+        opener = urllib.request.build_opener(StripCrossOriginAuthRedirectHandler())
+        for attempt in range(3):
+            try:
+                with opener.open(url, timeout=60) as response:
+                    raw = response.read(MAX_BYTES + 1)
+                break
+            except urllib.error.HTTPError as exc:
+                if exc.code not in {408, 429, 500, 502, 503, 504} or attempt == 2:
+                    raise
+            except (urllib.error.URLError, TimeoutError, ConnectionError, IncompleteRead):
+                if attempt == 2:
+                    raise
+            print(f'Retrying reviewed seed download after transient transport failure ({attempt + 1}/2)', file=sys.stderr)
+            sleep(2 ** attempt)
     if len(raw) > MAX_BYTES or hashlib.sha256(raw).hexdigest() != expected:
         raise ValueError("Member seed archive size/SHA mismatch")
     return raw
