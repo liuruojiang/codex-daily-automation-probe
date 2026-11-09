@@ -63,14 +63,17 @@ maintenance dependency. The daily pins remain unchanged. Multiple missing
 sessions are renewed sequentially under one symbol lock; each native adjacent
 proof is retained, and retries resume at the first missing session.
 
-The operational maintenance pin remains a01ada18, matching the actual complete
-acceptance run and its saved-input cache identity. The 8fc595d9 successor changes
-one test file only, correcting Git CRLF/LF transport of extracted document text
-while retaining the original reviewed digest. The independent Linux test job
-verifies the complete exact Git diff, both original/portable test hashes and all
-four execution source hashes before materializing that test-only successor.
-It records a separate test-source receipt and never changes operational files
-or makes prepared maintenance data depend on a test-only commit.
+Run 42558613202 reached 301288 after the preceding repairs and rejected a
+NOTICE_DATE Nov6 in the already-approved Nov5 zero-total event. The newly
+observed entire row equals the sealed approved row exactly. The native repair
+now qualifies that exact next-session reobservation against the original
+approval, old candidate, exact full EM row and original Sina Nov5 row. New
+events, changed rows/shares and other dates remain blocked. The earlier v1
+source review is retained; a separate v2 review binds the exact successor to
+the same unchanged Nov5 input identity.
+
+The new runtime includes the portable document-text test correction directly.
+The independent Linux test job uses that exact runtime without a test overlay.
 
 Rollback: revert the workflow/config/activation change together. The original
 baseline pin, approved seed and successful historical recovery artifact are
