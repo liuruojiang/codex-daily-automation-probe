@@ -521,7 +521,7 @@ def grid_reason(product: str, signal: dict[str, Any]) -> str:
             f"{signal.get('grid_entry_source_target', 'N/A')}，"
             f"原因{signal.get('grid_transition_reason', 'N/A')}。"
             "恐慌入场按≥50退出，估值入场按原估值线退出；网格不配Put或Call。"
-            + str(signal.get("fear_source_warning") or "") + jiu_reference_text(signal)
+            + fear_source_note(signal) + jiu_reference_text(signal)
         )
     entry, exit_ = ((0.5, 1.0) if product == "IC" else (1.6, 2.0))
     score = signal.get("score")
@@ -851,6 +851,68 @@ def iv_warning_html(signal: dict[str, Any]) -> str:
     return f'<div style="margin:12px 0;padding:10px;border:2px solid {color};color:{color};font-weight:700;">{escaped(iv_warning_text(signal))}</div>'
 
 
+def split_metric_layout(signal: dict[str, Any]) -> bool:
+    return ("fear_composite_reference" in signal or "fear_strategy_metric" in signal
+            or str(signal.get("market_date", ""))[:10] >= "2026-11-07")
+
+
+def fear_source_note(signal: dict[str, Any]) -> str:
+    if not split_metric_layout(signal):
+        return str(signal.get("fear_source_warning") or "")
+    # Structured metrics are authoritative. Old prose can contain stale values.
+    errors = signal.get("fear_source_errors") or {}
+    return (f"旧六项来源验证：{signal.get('fear_cross_validation', 'unavailable')}；"
+            + ("来源缺项：" + str(errors) + "；" if errors else "")
+            + "源站修订值不回写历史账本。")
+
+
+def composite_reference_view(signal: dict[str, Any], market_day: str) -> dict[str, Any]:
+    from datetime import datetime, timezone
+    try:
+        ref = signal.get("fear_composite_reference")
+        if not isinstance(ref, dict) or ref.get("role") != "reference_only":
+            raise ValueError("新增指标缺少只读观察身份")
+        value = ref.get("value")
+        if value is None:
+            raise ValueError("新增指标未取得合格读数：" + str(ref.get("errors") or "源缺项"))
+        if isinstance(value, bool) or not isinstance(value, Real) or not math.isfinite(value) or not 0 <= value <= 100:
+            raise ValueError("新增指标读数非法")
+        day = date.fromisoformat(str(ref.get("data_date")))
+        if day > date.fromisoformat(market_day): raise ValueError("新增指标数据日在信号日之后")
+        retrieved = datetime.fromisoformat(str(ref.get("retrieved_at")))
+        if retrieved.tzinfo is None or retrieved > datetime.now(timezone.utc) or day > retrieved.date():
+            raise ValueError("新增指标采集时间未核验")
+        if ref.get("page_updated_at") is not None:
+            updated = datetime.fromisoformat(str(ref["page_updated_at"]))
+            if updated.tzinfo is None or updated > retrieved or day > updated.date():
+                raise ValueError("新增指标页面更新时间未核验")
+        values = ref.get("source_values")
+        if (not isinstance(values, dict) or not values or not set(values) <= {"csv", "page"}
+                or ref.get("selected_source") not in values
+                or any(isinstance(v, bool) or not isinstance(v, Real) or not math.isfinite(v) or not 0 <= v <= 100 for v in values.values())
+                or not math.isclose(value, values[ref["selected_source"]], rel_tol=0, abs_tol=.005)):
+            raise ValueError("新增指标读数与来源快照不一致")
+        expected = "single_source" if len(values) == 1 else "matched" if max(values.values()) - min(values.values()) <= .005 else "mismatch"
+        if ref.get("cross_validation") != expected: raise ValueError("新增指标双侧验证状态不一致")
+        return {"value": value, "data_date": day.isoformat(), "updated": ref.get("page_updated_at"),
+                "retrieved": ref["retrieved_at"], "quality": expected, "error": None}
+    except (ValueError, TypeError) as exc:
+        return {"value": None, "error": str(exc)}
+
+
+def composite_reference_text(payload: dict[str, Any]) -> str:
+    signals = payload.get("signals") or {"observation": payload}
+    if not split_metric_layout(payload) and not any(split_metric_layout(s) for s in signals.values()): return ""
+    refs = [composite_reference_view(s, str(payload.get("market_date", ""))) for s in signals.values()]
+    errors = [r["error"] for r in refs if r["error"]]
+    if not errors and any(r != refs[0] for r in refs[1:]): errors.append("IC/IM新增综合观察不一致")
+    if errors: return "新增综合恐贪：N/A（" + "；".join(dict.fromkeys(errors)) + "），仅观察，不参与网格；旧六项及其它已核验资料继续展示。"
+    r = refs[0]
+    return (f"新增综合恐贪：{decimal(r['value'])}；数据日{r['data_date']}；"
+            f"页面更新时间{r['updated'] or 'N/A'}；采集{r['retrieved']}；"
+            f"双侧状态{r['quality']}；仅观察，不参与网格。")
+
+
 def fear_observation_text(payload: dict[str, Any]) -> str:
     day = str(payload.get("market_date", "未知日期"))
     if day < "2026-10-08":
@@ -869,10 +931,10 @@ def fear_observation_text(payload: dict[str, Any]) -> str:
         "intraday_previous_session", "close_previous_session"
     } else ""
     title = f"信号日{day}的恐慌输入" if basis else f"当日恐慌指数（{day}）"
-    signal = {**((payload.get("signals") or {}).get("IC") or payload), **jiu_reference_fields(payload)}
-    warning = signal.get("fear_source_warning") or ("百分位CSV与网页已完成双侧验证。" if signal.get("fear_cross_validation") == "matched" else "")
+    signal = {"market_date": day, **((payload.get("signals") or {}).get("IC") or payload), **jiu_reference_fields(payload)}
+    warning = fear_source_note(signal) or ("百分位CSV与网页已完成双侧验证。" if signal.get("fear_cross_validation") == "matched" else "")
     reference = jiu_reference_text(signal)
-    extra = " ".join(x for x in (warning, reference) if x)
+    extra = " ".join(x for x in (warning, composite_reference_text(payload), reference) if x)
     return f"{title}：{value}；数据日 {data_day}；状态 {status}{basis}。" + (" " + extra if extra else "")
 
 
@@ -1169,6 +1231,7 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
                   "fear_intraday_policy_revision", "fear_close_policy_revision", "fear_fallback_applied",
                   "fear_previous_exchange_date", "fear_fallback_reason", "fear_fallback_timing",
                   "fear_source_policy_revision", "fear_available_sources", "fear_selected_source",
+                  "fear_strategy_metric",
                   "fear_cross_validation", "fear_page_updated_at", "fear_page_data_date", "fear_page_value",
                   "fear_csv_latest_date", "fear_csv_latest_value", "fear_csv_observations")
         if any(signals["IC"].get(field) != signals["IM"].get(field) for field in shared):
@@ -1176,6 +1239,8 @@ def validate_success_payload(payload: dict[str, Any]) -> None:
     for product, signal in signals.items():
         if not isinstance(signal, dict):
             raise ValueError(f"invalid {product} signal")
+        if signal.get("fear_strategy_metric") not in {None, "legacy_six_component_sentiment"}:
+            raise ValueError(f"{product} old Fear strategy metric identity is invalid")
         for field, expected in (
             ("product", product),
             ("strategy_version", "1.4"),
@@ -1436,6 +1501,7 @@ def source_provenance(path: str, expected_sha: str) -> dict[str, Any] | None:
     releases = {
         "20261023-redteam-repairs-v3-r3": "docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json",
         "20261109-fear-source-split-v1": "docs/ic_im_fear_source_split_20261109_manifest.json",
+        "20261109-fear-source-adversarial-v2": "docs/ic_im_fear_source_adversarial_20261109_manifest.json",
     }
     relative = releases.get(proof.get("release"))
     if relative is None:
