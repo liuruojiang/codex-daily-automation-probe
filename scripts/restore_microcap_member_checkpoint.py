@@ -103,6 +103,11 @@ def checkpoint_identity(raw):
         if cp.get('schema')!='member_daily_checkpoint_v1':
             raise ValueError('Unpublishable checkpoint schema')
         anchor=date.fromisoformat(cp['as_of_date']).isoformat()
+        next_day=cp.get('next_trade_date')
+        if next_day is not None:
+            if (not isinstance(next_day,str) or date.fromisoformat(next_day).isoformat()!=next_day
+                    or next_day<=anchor):
+                raise ValueError('Checkpoint next execution date must be canonical and after its close')
         payload={}
         for key in ('period','history','turnover','version_state','prices'):
             spec=cp[key];p=PurePosixPath(spec['path'])
@@ -140,7 +145,9 @@ def checkpoint_identity(raw):
             raise ValueError('Checkpoint version-state date invalid')
         raw_basis=sorted([[r['symbol'],r['previous_raw_date'],_semantic(r['previous_raw_close'])] for r in basis])
         economic_period={key:period.get(key) for key in ('anchor_day','effective_from','effective_members','target_members','rebalance_events')}
-        fingerprint=hashlib.sha256(json.dumps([semantic,_semantic(economic_period),raw_basis,_semantic(versions),
+        # A different execution clock is a conflicting state, even when every
+        # member, price and model value agrees. Missing legacy clocks stay None.
+        fingerprint=hashlib.sha256(json.dumps([semantic,_semantic(economic_period),raw_basis,_semantic(versions),next_day,
                             _turnover_semantic(payload['turnover'])],sort_keys=True).encode()).hexdigest()
         return dict(as_of_date=anchor,period_status=state,period_sha=cp['period']['sha256'],fingerprint=fingerprint)
 
