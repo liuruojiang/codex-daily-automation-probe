@@ -25,6 +25,27 @@ fails closed. Legacy configurations without a bundle retry only transient
 download failures, at most three attempts; 403/404 and hash mismatches are not
 retried. No all-market/whole-state recovery is added.
 
+The 2026-11-09 adversarial follow-up also retries each failed checkpoint/marker
+GET and response-body read, at most three attempts, without repeating completed
+pages or hiding unknown states as missing. Permission/rate-limit rejection,
+invalid content, date/version conflicts and SMTP transactions keep their guards.
+The exact member runtime has its own CI transport/continuation tests, separate
+from the legacy full-state test-source role. After a member runtime change, an
+explicit manual `validation_only=true, persist_checkpoint=true` close run may
+publish its natively verified checkpoint while every email/intent/receipt/marker
+write remains disabled. External schedules cannot request this acceptance mode;
+normal scheduled runs retain their original behavior.
+
+The follow-up helper runtime `4774966da38f0b5af18617f73cc67c39c9e41a8e`
+changes member transport only. Its approved bundled seed is the original
+85,009-byte checkpoint ZIP from 2026-11-09 normal run `42588400092`, artifact
+`13659634947`, with archive SHA-256
+`3fa87b093e46f81651a17a2c6de23ad4cf3e46d1853744211c1ff191c6d67c50`.
+The original producer `ab214c20` and economic source identity remain in evidence;
+they are not relabeled as the new consumer. Frozen real-input recomputation
+matched every signal field and the historical prefix; JSON files differ only
+by platform newline encoding. The published seed bytes themselves are unchanged.
+
 The original normal date/mode marker remains the complete report transaction.
 A partial information report uses the suffix `-partial-information`, including
 its own intent and SMTP receipt. It can be sent once and does not occupy the

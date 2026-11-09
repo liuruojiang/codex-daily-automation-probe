@@ -1,10 +1,11 @@
 {
   "schema": "member_daily_seed_v1",
-  "strategy_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
-  "url": "https://github.com/liuruojiang/microcap/releases/download/member-daily-audit-20261106-ab214c20/member-checkpoint-20261106-audited.zip",
-  "sha256": "bfcec2d07b45d1d161d75c2f3bb6d2ab0e83eb922b38351439baa82c2f936f18",
-  "bundled_path": "microcap_member_seed_20261106_ab214c20.zip",
-  "seed_data_producer_sha": "77aee8b69fb74065c028e78d22e24f60300d8dbe",
+  "strategy_sha": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
+  "url": "https://github.com/liuruojiang/microcap/releases/download/member-daily-audit-20261109-4774966d/member-checkpoint-20261109-verified.zip",
+  "sha256": "3fa87b093e46f81651a17a2c6de23ad4cf3e46d1853744211c1ff191c6d67c50",
+  "bundled_path": "microcap_member_seed_20261109_4774966d.zip",
+  "seed_data_producer_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+  "seed_consumer_verified_sha": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
   "seed_repair_source_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
   "superseded_history_sha256": [
     "b95271d386c98b5aa16bc14c4a907e068417ef0211b35c611e131cb3c3d79b14"

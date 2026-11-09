@@ -20,6 +20,50 @@ permissions:
   contents: read
 
 jobs:
+  member-daily-tests:
+    # Exercise the actual member helper pin, independently of the legacy core
+    # test-source role. This CI-only job is not a daily delivery dependency.
+    if: ${{ inputs.family != 'icim' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Resolve exact member daily runtime
+        id: member
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json,re
+          value=json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha']
+          assert re.fullmatch('[0-9a-f]{40}',value)
+          print('sha='+value)
+          PY
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: ${{ steps.member.outputs.sha }}
+          path: member
+          persist-credentials: false
+      - run: python -m pip install numpy 'pandas<3' requests matplotlib 'akshare==1.18.46' 'pytest>=8,<9'
+      - name: Test native member transport and next-session guards
+        working-directory: member
+        run: |
+          python -B -X utf8 -m pytest -q -p no:cacheprovider \
+            tests/test_member_daily_transport_20261109.py tests/test_stock_daily_alternative.py \
+            tests/test_collect_member_daily_inputs.py tests/test_member_daily_signal.py \
+            tests/test_member_period_handoff.py tests/test_member_split_replay_audit.py \
+            tests/test_member_split_rebalance_audit.py --junitxml=member-daily-tests.xml
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: member-daily-regression-${{ github.run_id }}
+          path: member/member-daily-tests.xml
+
   maintenance-native-tests:
     # Push/manual full regression only. Independent maintenance must not add a
     # dependency to either existing family-specific daily delivery gate.

@@ -30,6 +30,30 @@ V2_PREFIX = 'microcap-member-checkpoint-v2-'
 MAX_LEGACY_READS = 8
 
 
+def retry_checkpoint_read(read, label, *, pause=None):
+    """Retry only the failed idempotent read; never select an older state."""
+    for attempt in range(3):
+        try:
+            return read()
+        except urllib.error.HTTPError as exc:
+            # Permission/rate-limit responses and missing objects require an
+            # explicit diagnosis. They must not become a seed/older-state read.
+            if exc.code not in {408, 500, 502, 503, 504} or attempt == 2:
+                raise
+        except (urllib.error.URLError, TimeoutError, ConnectionError, IncompleteRead):
+            if attempt == 2:
+                raise
+        print(f'Retrying {label} after transient transport failure ({attempt + 1}/2)', file=sys.stderr)
+        (sleep if pause is None else pause)(2 ** attempt)
+
+
+def checkpoint_json(request):
+    def read():
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.load(response)
+    return retry_checkpoint_read(read, 'checkpoint metadata request')
+
+
 def _semantic(value):
     """Canonical scalar representation, with no numerical tolerance."""
     if isinstance(value,dict):return {k:_semantic(v) for k,v in sorted(value.items())}
@@ -169,8 +193,7 @@ def fetch_latest(repository: str, token: str, sha: str, not_after_date=None):
     old_name="microcap-member-checkpoint-v1-"+sha
     modern=[];legacy=[]
     for page in range(1,101):
-        with urllib.request.urlopen(api_request(f"{base}/artifacts?per_page=100&page={page}",token),timeout=30) as response:
-            items=json.load(response)["artifacts"]
+        items=checkpoint_json(api_request(f"{base}/artifacts?per_page=100&page={page}",token))["artifacts"]
         for item in items:
             if item.get('expired'):continue
             match=v2.fullmatch(item.get('name',''))
@@ -195,15 +218,15 @@ def fetch_latest(repository: str, token: str, sha: str, not_after_date=None):
         key=(declared['as_of_date'],declared['period_status']=='current') if declared else None
         if best_key is not None and key is not None and key<best_key:break
         run_id=artifact['workflow_run']['id']
-        with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}",token),timeout=30) as response:run=json.load(response)
+        run=checkpoint_json(api_request(f"{base}/runs/{run_id}",token))
         if run.get('head_branch')!='main' or run.get('status')!='completed' or run.get('path','').split('@',1)[0] not in WORKFLOWS:continue
-        with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}/jobs?per_page=100",token),timeout=30) as response:jobs=json.load(response)['jobs']
+        jobs=checkpoint_json(api_request(f"{base}/runs/{run_id}/jobs?per_page=100",token))['jobs']
         if not any(any(s.get('name')=='Publish verified member checkpoint' and s.get('conclusion')=='success' for s in j.get('steps',[])) for j in jobs):continue
         if artifact.get('archive_download_url')!=f"{base}/artifacts/{artifact['id']}/zip":
             raise ValueError('Unexpected member checkpoint download URL')
-        # Network/API errors deliberately propagate; only a malformed payload is
-        # rejected in favour of another already verified candidate.
-        raw=download(artifact,token)
+        # Exhausted transport failures propagate; they never downgrade state.
+        # Only a malformed payload is rejected in favour of a verified one.
+        raw=retry_checkpoint_read(lambda: download(artifact,token), 'checkpoint archive request')
         try:
             identity=checkpoint_identity(raw)
             if ceiling and identity['as_of_date']>ceiling:raise ValueError('Checkpoint is later than permitted market session')
