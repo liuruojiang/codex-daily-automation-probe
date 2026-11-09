@@ -36,6 +36,11 @@ def bound(root, relative):
     path = (root / relative).resolve()
     if Path(relative).is_absolute() or not path.is_relative_to(root):
         raise ValueError('Source path escaped the declared root')
+    # Native recovery closures can exceed Win32's ordinary path length. Keep
+    # the confinement check above, then use the same extended path convention
+    # as the native verifier for actual file I/O.
+    if os.name=='nt' and len(str(path))>=248 and not str(path).startswith('\\\\?\\'):
+        return Path('\\\\?\\'+str(path))
     return path
 
 

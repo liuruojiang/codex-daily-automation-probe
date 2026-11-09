@@ -163,6 +163,14 @@ def test_source_paths_cannot_escape_runtime(tmp_path, relative):
     with pytest.raises(ValueError): local.bound(tmp_path, relative)
 
 
+def test_deep_native_recovery_source_paths_roundtrip_without_changing_identity(tmp_path):
+    relative=local.CACHE+'share_sources/providers/dual_source_dated_window_v1/002566/'+('a'*64)+'/transport_recovery_'+('b'*64)+'/quote.raw'
+    path=local.bound(tmp_path,relative);path.parent.mkdir(parents=True,exist_ok=True)
+    path.write_bytes(b'actual source bytes fixture')
+    assert local.hashes(tmp_path,[relative])=={relative:local.sha(b'actual source bytes fixture')}
+    assert local.bound(tmp_path,relative).read_bytes()==b'actual source bytes fixture'
+
+
 def test_bound_trade_evidence_rejects_content_mismatch(tmp_path):
     (tmp_path / 'raw.json').write_bytes(b'raw')
     ref = {'path': 'raw.json', 'sha256': local.sha(b'raw')}
