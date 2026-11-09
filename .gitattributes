@@ -10,3 +10,5 @@ tests/fixtures/microcap/v23_identity_20261029/*.json -text
 tests/fixtures/microcap/terminal_policy_20261030/* -text
 scripts/microcap_csv_compat/exact_non_st_addition_certificate.json -text
 config/microcap_recovery_readiness.json -text
+docs/ic_im_fear_source_split_20261109_manifest.json -text
+tests/fixtures/icim/maintenance_20261016/result.json -text
