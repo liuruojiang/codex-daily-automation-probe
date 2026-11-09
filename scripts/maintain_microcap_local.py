@@ -22,7 +22,7 @@ import uuid
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 
-RUNTIME = '0692d2307943b4bf32c2c0e3f3a82942896eafb8'
+RUNTIME = 'c8d15e418c7003021866cd2aa4984e3e9a7103b6'
 BOOTSTRAP_RUNTIMES = {RUNTIME, 'a4adeacca194d5add4cfea0456c27e9da5444e45'}
 CACHE = '.microcap_index_cache/'
 
@@ -340,6 +340,44 @@ def refresh_metadata(root, freq, symbol, target):
             else: namespace.pop(n, None)
 
 
+def scoped_metadata_marker(root, scope_sha):
+    if len(scope_sha)!=64 or any(c not in '0123456789abcdef' for c in scope_sha):
+        raise ValueError('Invalid metadata roster identity')
+    relative=CACHE+'local_metadata_scopes/'+scope_sha+'/transaction.json'
+    # The native writer expects its marker parent to exist. Its default marker
+    # lives directly in the cache, while this scoped marker has a new parent.
+    bound(root,relative).parent.mkdir(parents=True,exist_ok=True)
+    return relative
+
+
+def current_names_proof(root, target):
+    """Current name cross-check only; native notice history still proves PIT ST."""
+    name=CACHE+'current_st.csv';receipt=CACHE+'local_current_names/'+target+'.json'
+    record=json.loads(bound(root,receipt).read_bytes())
+    observed=datetime.fromisoformat(record['observed_at'])
+    earliest=datetime.fromisoformat(target+'T15:00:00+08:00')
+    rows=list(csv.DictReader(io.StringIO(bound(root,name).read_text(encoding='utf-8-sig'))))
+    if (record.get('target')!=target or observed.tzinfo is None
+            or not earliest<=observed<=datetime.now(timezone.utc)
+            or record.get('cache_sha256')!=sha(bound(root,name).read_bytes())
+            or record.get('native_source_sha256')!=sha(bound(root,'microcap_top100_mom16_biweekly_live_v2_0.py').read_bytes().replace(b'\r\n',b'\n'))
+            or not rows or record.get('count')!=len(rows)
+            or len({r['code'] for r in rows})!=len(rows)):
+        raise ValueError('Current-name native snapshot identity or observation differs')
+    return hashes(root,[name,receipt])
+
+
+def refresh_current_names(root, target, native_fetch):
+    native_fetch(force_refresh=True)
+    raw=bound(root,CACHE+'current_st.csv').read_bytes()
+    rows=list(csv.DictReader(io.StringIO(raw.decode('utf-8-sig'))))
+    atomic(bound(root,CACHE+'local_current_names/'+target+'.json'),encode(dict(
+        target=target,observed_at=datetime.now(timezone.utc).isoformat(),count=len(rows),
+        cache_sha256=sha(raw),native_source_sha256=sha(bound(root,
+            'microcap_top100_mom16_biweekly_live_v2_0.py').read_bytes().replace(b'\r\n',b'\n')),
+        semantics='native_current_name_cross_check_not_PIT_ST_certification')))
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('action', choices=('bootstrap', 'run'))
@@ -391,6 +429,8 @@ def main(argv=None):
             else:
                 refresh_notice_archive(root=root, target=args.as_of)
         notice = journal.run('notice', notice_action, notice_verify)
+        current_names=journal.run('current-names',lambda:refresh_current_names(root,args.as_of,
+            v2.base_mod.fetch_mod.fetch_current_st_codes),lambda:current_names_proof(root,args.as_of))
         # Native approved Tencent route has explicit suspension/status evidence.
         # No empty-response fallback or inferred suspension is introduced here.
         os.environ.setdefault('MICROCAP_DAILY_STOCK_PROVIDER', 'tencent')
@@ -415,7 +455,7 @@ def main(argv=None):
                         or not freq._notice_horizon_covers(meta, pd.Timestamp(args.as_of))):
                     raise ValueError('Scoped metadata authority/horizon differs: ' + s)
             return hashes(root, [CACHE + 'security_meta/' + s + '.json' for s in available] +
-                          [CACHE + 'st_notice_archive_pointer.json'])
+                          [CACHE + 'st_notice_archive_pointer.json',CACHE+'current_st.csv'])
         def metadata_action():
             from scripts import st_metadata_refresh as metadata_native
             baseline = json.loads((state / 'bootstrap.json').read_bytes())
@@ -425,16 +465,16 @@ def main(argv=None):
             try:
                 # A completed transaction belongs to one roster, while raw
                 # source history can remain cached across weekly roster changes.
-                metadata_native.MARKER = CACHE + 'local_metadata_scopes/' + scope_sha + '/transaction.json'
+                metadata_native.MARKER = scoped_metadata_marker(root,scope_sha)
                 metadata_native.refresh_metadata_after_notice(root=root, freq_mod=freq_scope, target=args.as_of,
                     notice_result={'authority_changed': True}, consumed_through=baseline['reference_consumed_through'])
             finally:
                 metadata_native.MARKER = original_marker
-        metadata = journal.run('metadata', metadata_action, metadata_verify) if notice['status'] == 'complete' else {'status': 'waiting_for_notice'}
-        progress.update(status='complete' if not failures and notice['status'] == metadata['status'] == 'complete' else 'incomplete',
+        metadata = journal.run('metadata', metadata_action, metadata_verify) if notice['status'] == current_names['status'] == 'complete' else {'status': 'waiting_for_notice_or_current_names'}
+        progress.update(status='complete' if not failures and notice['status'] == current_names['status'] == metadata['status'] == 'complete' else 'incomplete',
                         completed_at=datetime.now(timezone.utc).isoformat(), context=context,
                         symbols=symbols,
-                        metadata_status=metadata['status'], full_strategy_delivery=False, email_sent=False, orders_placed=False)
+                        metadata_status=metadata['status'],current_names_status=current_names['status'], full_strategy_delivery=False, email_sent=False, orders_placed=False)
         atomic(state / 'runs' / args.as_of / 'result.json', encode(progress))
         print(json.dumps({k:v for k,v in progress.items() if k != 'failures'}))
         return 0 if progress['status'] == 'complete' else 1

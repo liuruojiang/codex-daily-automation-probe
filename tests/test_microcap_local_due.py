@@ -42,10 +42,10 @@ def test_true_completed_receipts_skip_collection_but_changed_bytes_do_not(tmp_pa
     symbols = [f'{n:06d}' for n in range(1, 301)]
     context = {'date': '2026-11-06'}
     record = dict(status='complete', context=context, files=local.hashes(root, ['source']))
-    for key in ['notice', 'metadata', *[s + '-' + stage for s in symbols for stage in ('price', 'share', 'ratio')]]:
+    for key in ['notice', 'metadata', 'current-names', *[s + '-' + stage for s in symbols for stage in ('price', 'share', 'ratio')]]:
         (directory / (key + '.json')).write_bytes(local.encode(record))
     result = dict(status='complete', target='2026-11-06', total=300, complete=300,
-                  failures={}, notice_status='complete', metadata_status='complete', context=context, symbols=symbols)
+                  failures={}, notice_status='complete', metadata_status='complete',current_names_status='complete', context=context, symbols=symbols)
     (directory / 'result.json').write_bytes(local.encode(result))
     now = datetime.fromisoformat('2026-11-09T10:00:00+08:00')
     assert due.plan(now, SESSIONS, tmp_path, root)['status'] == 'already_complete'

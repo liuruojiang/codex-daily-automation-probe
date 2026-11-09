@@ -57,6 +57,10 @@ C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109
    先原生读回复用；失败只重跑受影响步骤。两个数据进程处理独立证券，价格写入
    串行，股本/复权仍受原并发限制。一只失败继续其他证券；全部 300 只以及公告、
    ST 事务通过才产生 complete 回执。运行目录保留每次尝试、原始错误及字节哈希。
+   另由原生入口强制刷新一次当前 ST 名称交叉检查，保存实际观察时间、原生源码
+   哈希及 CSV 哈希。它是当前名称安全检查，不能冒充目标日期的 PIT-ST 证明。
+   903 项阶段回执包含 900 项逐股来源、公告、当前名称和 ST 事务；实际字节仍须
+   重新读回。ST 事务的名单专属目录先创建，再交给原生事务写入器。
 4. 软件错误由当次 Codex 定位、修复、运行对应测试并继续；网络故障沿用有界
    请求和已验证备用源。真实来源冲突、历史迁移或权限阻断不能用填零、改日、
    改指纹或移除门槛绕过。能继续的证券继续处理，缺失必需项不标为全部完成。
@@ -92,6 +96,8 @@ C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109
 报价交叉核对，正常的认证边界后股本变化可以接续，历史字节不改。原有 STOP 与
 两只精确批准证券的历史路线保留。交易日历内存缓存为 32 个日期，避免递归校验
 六个交易日时重复下载相同日历；来源、参数、超时和日期校验保持原样。
+八组冻结真实来源同时覆盖五次新增股本变化、一次限售结构转换以及一次目标日
+之后观察到的未来计划；未来计划保留原观察/提供方日期，不进入目标日股本曲线。
 
 ```powershell
 C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109\scripts\microcap_local_due.py --root D:\Codex\microcap-local-maintenance\runtime --state-root D:\Codex\microcap-local-maintenance

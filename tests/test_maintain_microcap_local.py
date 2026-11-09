@@ -50,6 +50,45 @@ def test_completed_source_is_semantically_verified_once_and_hash_read_back(tmp_p
     assert len(calls)==1
 
 
+def test_native_scoped_metadata_marker_has_an_existing_parent(tmp_path):
+    relative=local.scoped_metadata_marker(tmp_path,'a'*64)
+    path=local.bound(tmp_path,relative)
+    assert path.parent.is_dir() and not path.exists()
+    path.write_bytes(b'native transaction marker')
+    assert local.scoped_metadata_marker(tmp_path,'a'*64)==relative
+    assert path.read_bytes()==b'native transaction marker'
+
+
+def test_current_names_use_native_force_refresh_and_preserve_observation_receipt(tmp_path):
+    source=tmp_path/'microcap_top100_mom16_biweekly_live_v2_0.py'
+    source.write_bytes(b'# source identity fixture')
+    calls=[]
+    def fetch(**kwargs):
+        calls.append(kwargs)
+        path=local.bound(tmp_path,local.CACHE+'current_st.csv');path.parent.mkdir(parents=True)
+        path.write_bytes(b'code,name\n000001,ST example\n')
+    local.refresh_current_names(tmp_path,'2000-01-04',fetch)
+    assert calls==[{'force_refresh':True}]
+    assert len(local.current_names_proof(tmp_path,'2000-01-04'))==2
+    (tmp_path/local.CACHE/'current_st.csv').write_bytes(b'changed')
+    with pytest.raises((ValueError,KeyError)):local.current_names_proof(tmp_path,'2000-01-04')
+
+
+@pytest.mark.parametrize('fault',['future','target','code'])
+def test_current_name_receipt_cannot_be_redated_or_reused_with_unknown_source(tmp_path,fault):
+    source=tmp_path/'microcap_top100_mom16_biweekly_live_v2_0.py';source.write_bytes(b'original')
+    name=local.bound(tmp_path,local.CACHE+'current_st.csv');name.parent.mkdir(parents=True)
+    name.write_bytes(b'code,name\n000001,ST example\n')
+    local.refresh_current_names(tmp_path,'2000-01-04',lambda **kw:None)
+    receipt=local.bound(tmp_path,local.CACHE+'local_current_names/2000-01-04.json')
+    value=json.loads(receipt.read_bytes())
+    if fault=='future':value['observed_at']='2099-01-01T00:00:00+00:00'
+    elif fault=='target':value['target']='2000-01-05'
+    else:source.write_bytes(b'unknown source')
+    receipt.write_bytes(local.encode(value))
+    with pytest.raises(ValueError):local.current_names_proof(tmp_path,'2000-01-04')
+
+
 def test_corrupt_completed_stage_does_not_refresh_over_the_evidence(tmp_path):
     root = tmp_path / 'runtime';root.mkdir()
     (root / 'data').write_bytes(b'correct')

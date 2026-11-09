@@ -35,13 +35,13 @@ def completed(directory, root, target, files_out=None):
     if (result.get('status') != 'complete' or result.get('target') != target
             or result.get('total') != 300 or result.get('complete') != 300
             or result.get('failures') or result.get('notice_status') != 'complete'
-            or result.get('metadata_status') != 'complete'):
+            or result.get('metadata_status') != 'complete' or result.get('current_names_status')!='complete'):
         return False
     records = [directory / (symbol + '-' + stage + '.json')
                for symbol in result.get('symbols', []) for stage in ('price', 'share', 'ratio')]
     if len(records) != 900 or len(set(result['symbols'])) != 300:
         return False
-    records += [directory / 'notice.json', directory / 'metadata.json']
+    records += [directory / 'notice.json', directory / 'metadata.json',directory/'current-names.json']
     context = result['context']
     all_files = {}
     for record_path in records:
