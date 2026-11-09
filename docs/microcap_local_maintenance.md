@@ -90,8 +90,10 @@ C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109
 
 ## 第二阶段固定入口
 
-原生资料运行版本固定于 `config/microcap_local_runtime.json`，与既有云端
-`config/microcap_maintenance_runtime.json` 分开；更改本地 pin 不会悄悄切换生产。
+原生资料生产者固定于 `config/microcap_local_producer_runtime.json`，角色仅为
+`source_preparation_only`，逐项绑定原生计算源码。`config/microcap_local_runtime.json`
+保留第二阶段完整旧状态验证器的精确配置；两者与既有云端
+`config/microcap_maintenance_runtime.json` 分开，更改准备 pin 不会切换生产。
 本地运行目录为 `D:\Codex\microcap-local-maintenance\runtime`。
 启用的完整股本日期窗口逐日要求实际市值原始行，并与 Sina 历史、完整事件清单和
 报价交叉核对，正常的认证边界后股本变化可以接续，历史字节不改。原有 STOP 与
@@ -102,17 +104,49 @@ C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109
 
 ```powershell
 C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109\scripts\microcap_local_due.py --root D:\Codex\microcap-local-maintenance\runtime --state-root D:\Codex\microcap-local-maintenance
-C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109\scripts\maintain_microcap_local.py run --root D:\Codex\microcap-local-maintenance\runtime --protected-root D:\动量策略\微盘股对冲策略 --state-root D:\Codex\microcap-local-maintenance --pool D:\Codex\microcap-local-maintenance\screens\2026-11-06\latest.json --as-of 2026-11-06
+C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109\scripts\maintain_microcap_local.py run --root D:\Codex\microcap-local-maintenance\runtime --protected-root D:\动量策略\微盘股对冲策略 --state-root D:\Codex\microcap-local-maintenance --pool D:\Codex\microcap-local-maintenance\screens\2026-11-09\latest.json --as-of 2026-11-09
 ```
 
-命令中的日期仅复现本次周一早上应维护的 11 月 6 日收盘，不可复制为其他日期的
-“当前数据”。每周名单重选必须使用当期正式成员检查点；旧候选缓存保留但不必
+命令中的固定日期仅用于本次 11 月 9 日收盘的晚间准备；实际早晨任务使用 due
+给定的上一完成 session，不把晚间准备冒充次日 09:00 的公告观察。原 11 月 6 日
+验收保留其冻结代码及资料包，不用已推进至 11 月 9 日的可变缓存倒退重抓。
+每周名单重选必须使用当期正式成员检查点；旧候选缓存保留但不必
 每天刷新。报价、股本、交易状态、复权及 ST 的任何必需证明缺失都不能标记完成。
 
 资料包只含选中证券的原始输入及来源闭包、生产者版本/计算代码身份和证券主档
 证据；没有 NAV、信号、策略源码、ST 生产权限或凭据。GitHub release 的受限链接、
 整包/逐文件哈希、日期和运行版本先核验，再在接收端重新跑原生来源证明。
 包发布、接收成功、原生采用及三版交付分别验收。
+
+## 新一周名单与 11 月 9 日晚间实跑
+
+本次名单日期为 11 月 9 日，基于同日正式小检查点和 5,579 行、2 页的真实
+市值快照。维护范围仍为 300 只，含成员 100/100；新加入
+`002802/300789/301503/600463`，本期移出 `300786/301027/600148/688078`。
+已初始化的累计 304 只缓存保留，实际本轮只维护指定的 300 只。
+
+实际 `runs/2026-11-09/result.json` 已为 complete：900 项来源及公告、当前名称、
+原生 300 只 ST 事务共 903 项通过，最后续接复用 899 项来源。生产者固定于
+`63c7b16d77600c4aa9dadf58b86d31e034477e44`，导出器为
+`9768539f82329558d786a0621abf128140e34480`。来源包 72,217,253 字节、20,927 个
+来源对象，SHA-256 为
+`a03731bd5d5757ae4a195714bae0e342ca07cab5018c77a1179543be7d9bcdab`。
+
+独立接收端以相同原生计算身份读回全部 300 只。前后完整 16,315 项原基础输入
+指纹一致；全局 ST 元数据、公告指针、当前名称及三版旧 NAV 字节均保持不变。
+接收仅为 staged，仍明确要求原生 late adoption、原调仓资格/边界证明及当前
+三版交付；未切换生产所有者，本地任务仍暂停。
+
+本轮修复包括：周更新增候选的真实 ST 旧归档前缀核验；已收齐公告 generation
+在原 HTTP 时钟下恢复；精确审核的 IPO 注册补录和未来零总股本流通结构记录；
+报价四次无响应后保留原失败、冷却 30 分钟再给一次有限恢复；Windows 较深来源
+路径的安全读回。来源与历史保护回归 316 项、公告恢复/边界回归 96 项、执行器
+及资料传输回归 101 项通过。旧审批记录、历史曲线和策略参数不修改。
+
+早晨去重同时要求公告及当前名称均为本次北京时间 09:00 后的真实观察；旧观察
+按内容哈希留存。本次晚间准备不能让 11 月 10 日早晨跳过 ST/名称观察，价格、
+股本、复权的有效来源仍可复用。已在真实完成回执上重放次日 09:00 计划输入，
+确认返回 due；这是受控时钟检查，不是实际定时触发或开机补跑验收。
 
 ## 已完成的真实验收（2026-11-09）
 
