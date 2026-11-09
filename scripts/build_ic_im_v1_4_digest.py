@@ -866,7 +866,8 @@ def fear_source_note(signal: dict[str, Any]) -> str:
             + "源站修订值不回写历史账本。")
 
 
-def composite_reference_view(signal: dict[str, Any], market_day: str) -> dict[str, Any]:
+def composite_reference_view(signal: dict[str, Any], market_day: str,
+                             report_completed_at: Any = None) -> dict[str, Any]:
     from datetime import datetime, timezone
     try:
         ref = signal.get("fear_composite_reference")
@@ -882,6 +883,12 @@ def composite_reference_view(signal: dict[str, Any], market_day: str) -> dict[st
         retrieved = datetime.fromisoformat(str(ref.get("retrieved_at")))
         if retrieved.tzinfo is None or retrieved > datetime.now(timezone.utc) or day > retrieved.date():
             raise ValueError("新增指标采集时间未核验")
+        if report_completed_at is not None:
+            completed = datetime.fromisoformat(str(report_completed_at))
+            if completed.tzinfo is None or completed > datetime.now(timezone.utc):
+                raise ValueError("报告完成时间未核验")
+            if retrieved > completed:
+                raise ValueError("新增指标采集时间晚于报告完成时间")
         if ref.get("page_updated_at") is not None:
             updated = datetime.fromisoformat(str(ref["page_updated_at"]))
             if updated.tzinfo is None or updated > retrieved or day > updated.date():
@@ -903,7 +910,14 @@ def composite_reference_view(signal: dict[str, Any], market_day: str) -> dict[st
 def composite_reference_text(payload: dict[str, Any]) -> str:
     signals = payload.get("signals") or {"observation": payload}
     if not split_metric_layout(payload) and not any(split_metric_layout(s) for s in signals.values()): return ""
-    refs = [composite_reference_view(s, str(payload.get("market_date", ""))) for s in signals.values()]
+    completed = payload.get("report_generated_at")
+    if completed is None and payload.get("status") in {"ok", "partial"}:
+        # Sparse successful archives display generated_at as report completion.
+        completed = payload.get("generated_at")
+    # Failed generated_at is query start: its independent observation may be
+    # collected later. Without an actual completion field, do not invent a cap.
+    refs = [composite_reference_view(s, str(payload.get("market_date", "")), completed)
+            for s in signals.values()]
     errors = [r["error"] for r in refs if r["error"]]
     if not errors and any(r != refs[0] for r in refs[1:]): errors.append("IC/IM新增综合观察不一致")
     if errors: return "新增综合恐贪：N/A（" + "；".join(dict.fromkeys(errors)) + "），仅观察，不参与网格；旧六项及其它已核验资料继续展示。"
@@ -1486,6 +1500,22 @@ def required_success_report(result_path: Path, report_arg: str, payload: dict[st
         raise FileNotFoundError("successful IC/IM digest requires report_file")
     if not Path(report).is_file():
         raise FileNotFoundError(f"successful IC/IM digest report is missing: {report}")
+    raw = Path(report).read_bytes()
+    if "report_sha256" in payload:
+        from hashlib import sha256
+        expected = payload["report_sha256"]
+        if (not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected)
+                or sha256(raw).hexdigest() != expected):
+            raise ValueError("successful IC/IM digest report hash does not match result")
+    elif payload.get("publication_mode") == "close_confirmed":
+        # Historical producers did not save a report hash. Their native close
+        # report still identifies the exact verified ledger record, not just T.
+        text = raw.decode("utf-8-sig")
+        fields = (("已核验日期", "verified_day"), ("账本序号", "sequence"), ("账本摘要", "digest"))
+        if any(payload.get(key) is None
+               or re.findall(r"^- " + label + r"：`([^`\r\n]+)`\r?$", text, re.M) != [str(payload[key])]
+               for label, key in fields):
+            raise ValueError("successful IC/IM close report ledger identity does not match result")
     return report
 
 
@@ -1499,6 +1529,7 @@ def source_provenance(path: str, expected_sha: str) -> dict[str, Any] | None:
     files = proof.get("source_sha256")
     from hashlib import sha256
     releases = {
+        "20261109-fear-source-round2-v3": "docs/ic_im_fear_source_round2_20261109_manifest.json",
         "20261023-redteam-repairs-v3-r3": "docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json",
         "20261109-fear-source-split-v1": "docs/ic_im_fear_source_split_20261109_manifest.json",
         "20261109-fear-source-adversarial-v2": "docs/ic_im_fear_source_adversarial_20261109_manifest.json",
@@ -1535,6 +1566,9 @@ def main() -> int:
     proof = source_provenance(args.source_provenance, args.expected_source_sha)
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
+    if (proof and proof.get("release") == "20261109-fear-source-round2-v3"
+            and payload.get("status") in {"ok", "partial"} and "report_sha256" not in payload):
+        raise ValueError("current IC/IM producer requires report_sha256")
     if str(payload.get("strategy_revision")) != "r1":
         raise ValueError("digest requires strategy_revision=r1")
     from datetime import date
