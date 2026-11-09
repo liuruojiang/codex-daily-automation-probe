@@ -264,7 +264,7 @@ def restore(repository, output_dir, now, method_version):
                           binding="sha256", run_started_at=started.isoformat(), run_attempt=attempt_number)
             break
         if result["status"] == "missing" and legacy_rejected:
-            result["reason"] = "旧报告缺少数据绑定，未作为比较基线；本期建立新的可验证基线。"
+            result["reason"] = "旧报告缺少数据绑定，未作为比较基线；需在新绑定报告正常发送后建立可比基线。"
         if result["status"] == "missing" and result["run_search_capped"]:
             result["reason"] += " 已达最近300次运行的检索上限，未断言更早记录不存在。"
         if result["status"] == "missing" and result.get("artifact_search_capped"):
