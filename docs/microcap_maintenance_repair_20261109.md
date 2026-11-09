@@ -63,6 +63,15 @@ maintenance dependency. The daily pins remain unchanged. Multiple missing
 sessions are renewed sequentially under one symbol lock; each native adjacent
 proof is retained, and retries resume at the first missing session.
 
+The operational maintenance pin remains a01ada18, matching the actual complete
+acceptance run and its saved-input cache identity. The 8fc595d9 successor changes
+one test file only, correcting Git CRLF/LF transport of extracted document text
+while retaining the original reviewed digest. The independent Linux test job
+verifies the complete exact Git diff, both original/portable test hashes and all
+four execution source hashes before materializing that test-only successor.
+It records a separate test-source receipt and never changes operational files
+or makes prepared maintenance data depend on a test-only commit.
+
 Rollback: revert the workflow/config/activation change together. The original
 baseline pin, approved seed and successful historical recovery artifact are
 unchanged. A rollback would again block at the unreviewed catalog boundary;

@@ -50,6 +50,36 @@ jobs:
           ref: ${{ steps.maintenance.outputs.sha }}
           path: maintenance
           persist-credentials: false
+      - name: Verify exact portable maintenance test successor
+        working-directory: maintenance
+        run: |
+          python - <<'PY'
+          import hashlib, json, subprocess
+          from pathlib import Path
+          runtime = 'a01ada18efe234f717625ef69a478f0466d9c7e5'
+          successor = '8fc595d973a0f11c34bd938e1b7d3d309b1fd64b'
+          test = 'tests/test_maintenance_boundary_20261109.py'
+          def git(*args):
+              return subprocess.check_output(['git', *args])
+          config = json.loads(Path('../automation/config/microcap_maintenance_runtime.json').read_bytes())
+          assert config['runtime_sha'] == runtime == git('rev-parse', 'HEAD').decode().strip()
+          subprocess.run(['git', 'fetch', '--no-tags', '--depth=1', 'origin', successor], check=True)
+          assert git('diff', '--name-only', runtime, successor).decode().splitlines() == [test]
+          original = git('show', runtime + ':' + test)
+          portable = git('show', successor + ':' + test)
+          assert hashlib.sha256(original).hexdigest() == '40025958334fc09a5b48e00866fcaf1d4fcd716ff82fb4dfecbb46ce8fa017d6'
+          assert hashlib.sha256(portable).hexdigest() == '875b04e2c5fc9cf8eba15ab704f9ae6de2fd056a020f1943a88947e056ad5bea'
+          execution = {}
+          for name, pair in config['changes'].items():
+              digest = hashlib.sha256(Path(name).read_bytes().replace(b'\r\n', b'\n')).hexdigest()
+              assert digest == pair[1]
+              execution[name] = digest
+          Path(test).write_bytes(portable)
+          assert git('diff', '--name-only').decode().splitlines() == [test]
+          Path('maintenance-test-source.json').write_text(json.dumps(dict(runtime_sha=runtime,
+              test_successor_sha=successor, changed_tests=[test], execution_hashes=execution,
+              execution_source_equivalent=True), indent=2))
+          PY
       - run: python -m pip install numpy 'pandas<3' requests 'akshare==1.18.46' matplotlib 'pytest>=8,<9'
       - name: Test real maintenance evidence and unchanged source guards
         working-directory: maintenance
@@ -63,7 +93,9 @@ jobs:
         if: always()
         with:
           name: maintenance-native-regression-${{ github.run_id }}
-          path: maintenance/maintenance-tests.xml
+          path: |
+            maintenance/maintenance-tests.xml
+            maintenance/maintenance-test-source.json
 
   automation-tests:
     runs-on: ubuntu-latest
