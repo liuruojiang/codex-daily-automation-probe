@@ -29,9 +29,12 @@ MAX_BYTES = 1024 * 1024 * 1024
 
 def permitted(name):
     p = PurePosixPath(name)
+    baseline_binary=(len(p.parts)==5 and p.parts[:3]==('.microcap_index_cache','share_sources','baselines')
+        and len(p.parts[3])==64 and all(c in '0123456789abcdef' for c in p.parts[3])
+        and p.parts[4]=='accepted_issuer_evidence.bin')
     return (isinstance(name, str) and '\\' not in name and not p.is_absolute()
             and '..' not in p.parts and ':' not in name and p.as_posix() == name
-            and name.startswith(PREFIXES) and p.suffix in ('.json', '.csv', '.js', '.raw')
+            and name.startswith(PREFIXES) and (p.suffix in ('.json', '.csv', '.js', '.raw') or baseline_binary)
             and not any(part in ('locks', 'incomplete', 'failures') for part in p.parts))
 
 

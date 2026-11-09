@@ -38,6 +38,9 @@ def test_original_native_raw_responses_are_retained_by_transport(tmp_path):
     assert package.permitted(package.CACHE+'trade_status/raw/000001.json')
     assert not package.permitted(package.CACHE+'share_sources/locks/000001.lock')
     assert not package.permitted(package.CACHE+'share_sources/payload.py')
+    assert package.permitted(package.CACHE+'share_sources/baselines/'+'a'*64+'/accepted_issuer_evidence.bin')
+    assert not package.permitted(package.CACHE+'share_sources/baselines/'+'a'*64+'/other.bin')
+    assert not package.permitted(package.CACHE+'prices_raw/000001.bin')
 
 
 @pytest.mark.parametrize('kind',['parent','absolute','code','other_issuer','hash','extra','future','runtime','partial'])
