@@ -38,6 +38,7 @@ def _valid_core(item):
 
 
 def build_advisory(report, previous=None):
+    from weekly_view import market_lines, monthly_update, valid_market, valid_vix
     core = _mapping(report.get("core"))
     context = _mapping(report.get("supplemental"))
     market = _mapping(context.get("sp500_price_momentum"))
@@ -97,10 +98,7 @@ def build_advisory(report, previous=None):
     except (KeyError, TypeError, ValueError, UnboundLocalError):
         pass
     usable = complete and core_fresh and market_fresh and all(number(v) and v > -1 for v in (m1, m3, m12)) and number(market.get("price")) and market["price"] > 0
-    vix_aligned = (vix_fresh and vix.get("as_of") == market.get("as_of")
-                   and number(vix.get("value")) and vix["value"] > 0
-                   and number(vix.get("weekly_change")) and vix["value"] - vix["weekly_change"] > 0
-                   and number(vix.get("one_year_percentile")) and 0 <= vix["one_year_percentile"] <= 1)
+    vix_aligned = valid_vix(report, market, vix)
     stress = vix_aligned and vix["one_year_percentile"] >= .8
     reversal = number(m1) and number(m12) and m1 * m12 < 0
     if not usable:
@@ -128,7 +126,8 @@ def build_advisory(report, previous=None):
         conclusion += "估值方向存在分歧，不作一致高估或低估判断。"
     if usable and not vix_aligned:
         conclusion += "波动证据缺失、异常或日期不齐，不能确认风险已经缓和。"
-    evidence = []
+    evidence = ["月度慢指标：先对月度数据取12个月平均，再与过去10年/20年比较；不随本周涨跌即时更新。"
+                "100%表示平滑估值位于窗口最高位置，不是下跌概率；只要仍居最高，数值就可能持续为100%。"]
     for key in VARIANTS:
         item = _mapping(core.get(key))
         if not validity[key]["valid"]:
@@ -146,13 +145,10 @@ def build_advisory(report, previous=None):
         role = "当前判定" if validity[key]["current"] else "历史背景，未用于当前判定"
         evidence.append(f"{label} {item.get('window_years')}年窗口（截至{item.get('as_of')}，{role}）："
                         f"估值分位{vp}，{direction}；期限利差分位{sp}。"
-                        "分位基于12个月均值；两个组件取平方后的总分不表示涨跌方向。")
-    if all(number(v) for v in (m1, m3, m12)):
-        evidence.append(f"S&P 500截至{market.get('as_of')}：1个月{m1:+.2%}、3个月{m3:+.2%}、12个月{m12:+.2%}；"
-                        + ("长短期方向相反，存在反转警示。" if reversal else "长短期未出现反向组合。"))
-    if vix_aligned:
-        evidence.append(f"VIX截至{vix.get('as_of')}为{vix['value']:.2f}，较约一周前{vix['weekly_change']:+.2f}点；"
-                        + (f"一年分位{vix['one_year_percentile']:.1%}。" if number(vix.get("one_year_percentile")) else "一年分位缺失。"))
+                        f"估值MA12={item['valuation_ma12']:.3f}；"
+                        + monthly_update(item, _mapping(_mapping((previous or {}).get('core')).get(key)))
+                        + "。分位基于12个月均值；两个组件取平方后的总分不表示涨跌方向。")
+    monthly_evidence, evidence = evidence, []
     for key, label in (("term_spread_10y3m", "10年减3个月期限利差"),
                        ("term_spread_10y2y", "10年减2年期限利差"), ("baa_minus_10y", "Baa减10年国债信用利差")):
         item = _mapping(context.get(key))
@@ -178,14 +174,21 @@ def build_advisory(report, previous=None):
             if now.get("as_of") != old.get("as_of"):
                 changes.append(f"{label}参考月从{old.get('as_of')}变为{now.get('as_of')}，属于参考期更新，不将全部差额解释为本周市场变化。")
             elif any(now.get(k) != old.get(k) for k in ("valuation_ma12", "term_spread_ma12", "boundary_score_0_to_2", "valuation_percentile", "term_spread_percentile", "extreme_components", "state", "method")):
-                changes.append(f"{label}参考月未变但读数改变，可能为历史修订或口径变化，不视为新增月份信号。")
+                component = "估值分量" if any(now.get(k) != old.get(k) for k in ("valuation_ma12", "valuation_percentile")) else "期限利差或合成分数"
+                changes.append(f"{label}参考月未变但{component}读数改变，可能为历史修订或口径变化，不视为新增月份信号。")
             else:
                 changes.append(f"{label}月度核心读数未变。")
         changes.append(f"核心状态标签：{previous.get('overall_state', '未知')} → {current_state}（本期仅计有效同月核心）。")
     else:
         changes.append("没有有效的上期报告快照，暂不判断核心状态是否较上周升级；本期作为后续比较基线。")
+        detail = _mapping(report.get("previous_snapshot")).get("reason")
+        if detail:
+            changes.append("快照状态：" + str(detail))
+    provenance = _mapping(report.get("previous_snapshot"))
+    if previous and provenance.get("run_url"):
+        changes.append("上期已发送归档：" + provenance["run_url"])
     price, delta = market.get("price"), market.get("weekly_change")
-    if number(price) and number(delta) and price - delta > 0:
+    if valid_market(report, market) and number(delta) and number(price - delta) and price - delta > 0:
         changes.append(f"S&P 500较约7日前可用交易日变化{delta / (price - delta):+.2%}。")
     changes.append("日频的一年分位与核心10年/20年月度分位不同，不可替换或混用。")
 
@@ -228,7 +231,8 @@ def build_advisory(report, previous=None):
     quality.append("10Y−3M与10Y−2Y需分别解读；曲线变陡或变平本身不直接等于利好或衰退。")
     quality.append("期限利差使用公开代理，FRED与H.15口径差异会影响可比性；详细来源与错误信息见文末。")
     return {"stance": stance, "conclusion": conclusion, "current_core_state": current_state, "validity": validity, "sections": [
-        ("关键依据", evidence), ("相较上期与本周变化", changes),
+        ("本周市场变化（快指标）", market_lines(report, previous) + evidence), ("相较上期与本周变化", changes),
+        ("估值与期限利差（月度慢指标）", monthly_evidence),
         ("可参考的应对建议", suggestions), ("下周观察与改变判断的条件", triggers),
         ("结论的证据限制", quality)]}
 

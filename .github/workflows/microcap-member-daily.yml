@@ -5,6 +5,10 @@ on:
       validation_only:
         type: boolean
         default: true
+      persist_checkpoint:
+        description: 'Explicit no-send checkpoint acceptance after a runtime update'
+        type: boolean
+        default: false
       external_schedule:
         type: boolean
         default: false
@@ -61,11 +65,15 @@ jobs:
           REPORT_URL: ${{ inputs.reviewed_result_url }}
           REPORT_SHA: ${{ inputs.reviewed_result_sha256 }}
           EXTERNAL: ${{ inputs.external_schedule }}
+          VALIDATE: ${{ inputs.validation_only }}
+          PERSIST_CHECKPOINT: ${{ inputs.persist_checkpoint }}
         run: |
           python automation/scripts/resolve_cn_publication_mode.py --requested "$MODE"
           python - <<'PY'
           import os
           e=os.environ
+          if e['PERSIST_CHECKPOINT']=='true' and (e['VALIDATE']!='true' or e['EXTERNAL']=='true' or e['MODE']!='close_confirmed' or e['REPORT_URL']):
+              raise ValueError('Checkpoint acceptance is explicit manual no-send close-only without saved-report substitution')
           if bool(e['REPORT_URL']) != bool(e['REPORT_SHA']):
               raise ValueError('Reviewed report URL and SHA must be supplied together')
           if e['REPORT_URL'] and (e['EXTERNAL']=='true' or e['MODE']!='close_confirmed'):
@@ -160,7 +168,7 @@ jobs:
       - name: Publish verified member checkpoint
         id: checkpoint_upload
         continue-on-error: true
-        if: inputs.validation_only != true && steps.checkpoint.outputs.ready == 'true'
+        if: (inputs.validation_only != true || inputs.persist_checkpoint == true) && steps.checkpoint.outputs.ready == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.checkpoint.outputs.artifact_name }}

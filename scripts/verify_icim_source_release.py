@@ -15,12 +15,21 @@ def verify(root, expected):
     observed = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
     if observed != expected:
         raise ValueError('strategy checkout does not match the production pin')
-    relative = 'docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json'
+    releases = {
+        'docs/ic_im_fear_source_round2_20261109_manifest.json': '20261109-fear-source-round2-v3',
+        'docs/ic_im_fear_source_adversarial_20261109_manifest.json': '20261109-fear-source-adversarial-v2',
+        'docs/ic_im_fear_source_split_20261109_manifest.json': '20261109-fear-source-split-v1',
+        'docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json': '20261023-redteam-repairs-v3-r3',
+    }
+    relative = next((name for name in releases if (root / name).is_file()), None)
+    if relative is None: raise ValueError('missing registered source manifest')
     raw = (root / relative).read_bytes()
     committed = subprocess.check_output(['git', '-C', str(root), 'show', expected + ':' + relative])
     if raw != committed:
         raise ValueError('release manifest differs from the pinned commit')
     manifest = json.loads(raw)
+    if manifest.get('release') != releases[relative]:
+        raise ValueError('unregistered source release')
     files = manifest.get('files')
     if (manifest.get('schema') != 'icim_audited_daily_release_v1' or not isinstance(files, dict)
             or len(files) != 29 or 'run_ic_im_v1_4_github_digest.py' not in files

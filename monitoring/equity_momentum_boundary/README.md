@@ -59,9 +59,30 @@ python monitoring/equity_momentum_boundary/monitor.py --output-dir artifacts/equ
 
 报告会写入 `artifacts/equity_momentum_boundary/`。GitHub Actions 会把该目录作为保留期90天的构件上传。
 
-在 GitHub Actions 中，工作流将输出目录设为 `artifacts/`，随后执行 `python scripts/send_report.py artifacts/metadata.json`，从而沿用现有日报的邮件通道。手动触发时可将 `send_email` 设为 `false`，只收集并验证报告。
+在 GitHub Actions 中，输出目录为 `artifacts/`，周报专用 `weekly_delivery.py` 先核对持久发送记录，再调用既有 `scripts/send_report.py`。其他邮件族的共享发送器和规则未改。手动触发时可将 `send_email` 设为 `false`，只收集并验证报告。
 
-## 数据边界
+## 每周邮件与上期比较
+
+- 邮件先列本周标普500涨跌、1/3/6/12个月价格动量、20日年化实现波动和VIX；动量及实现波动列明相对上期的百分点变化。
+- CAPE、股息率及核心期限利差明确标为月度慢指标。估值逐项显示数据月及“本期未更新”“参考月变化”“同月读数修订”；没有可比快照时明确无法确认更新状态。
+- 估值分位基于12个月均值，100%表示窗口最高位置，不是下跌概率，也不衡量本周涨跌幅度。计算方法和核心判定规则未变。
+- 上期基线从本工作流 `main` 分支已结束运行的90天归档恢复，由有效SMTP接受凭据确认实际发送，不把最终job状态等同于发送状态。仅选择北京时间本周一之前、距本次不超过14天且计算口径一致的报告；同周重跑不会挤掉上周基线。
+- 新报告的精确JSON字节哈希写入邮件元数据，再由SMTP回执绑定元数据；恢复同时验证该绑定及正文一致性。旧归档没有此绑定时明确排除，不能补造历史凭据：它们仍可证明已发送、用于防重复，但不作为新的数值比较基线。完整的新基线需在后续正常发送后建立。
+- 恢复失败时继续生成本期独立可验证内容，并明确原因；不把缺失当成零变化。`report.json` 的 `previous_snapshot` 保留来源运行、归档ID及校验记录，供后续核查。
+- 2026-11-09 排障：当日旧流程日志明确 `Cache not found`，11月2日已发送归档仍完整。改用归档解决临时缓存与周频调度间的持久性缺口，不改发送时间或原邮件通道。
+
+### 2026-11-09 多智能体审计修复
+
+- 快指标与综合结论共用新鲜度、观察截止及VIX有效性门禁；过期或异常数据不再作为本周证据，上期观察日不得晚于自己的报告生成日。
+- 20日实现波动需要21个有限正价格和20个连续有限日收益；完整窗口的原计算公式不变。
+- 损坏压缩流、单个候选的网络/JSON/ID异常逐项隔离；全局认证或限流失败有界降级。运行、归档分页均有上限和截断说明。
+- 归档名包含run和attempt：`equity-momentum-boundary-<run_id>-<attempt>`；恢复以对应attempt的开始时间核对并排序，支持隔日重跑。
+- 周报发送采用独立Git标签命名空间 `equity-boundary-delivery-v1/` 保存原子claim与接受回执。正常身份由北京时间ISO周、仓库和规范化信封地址决定，正文变化不产生新发送许可。
+- claim先于SMTP持久保存；发送结果未知、回执不符或最终持久化失败时保留claim，不自动再发。正常成功重跑会跳过；这提供至多一次尝试，不承诺在未知结果下自动保证送达。
+- 旧发送记录会检查所有状态及attempt，旧成功SMTP凭据用于阻止本周重复发送。历史不可读或查找不完整时不把未知当成未发送。
+- 修订重发仍需新的当日请求：request的audited_commit等于push的before，before/after差异只能包含请求文件，使用独立一次性request身份；旧10月请求不能授权未来重发。
+- `send_email=false` 默认不创建发送claim。只有显式同时设置 `verify_delivery_store=true`，才在独立 `validation-only-no-mail` 身份中检查持久记录创建和完成；该检查不调用SMTP、不产生实际发送凭据。
+- 周报job新增的Contents写权限仅用于上述持久事务；Actions保持只读，checkout不保留凭据。回退时保留已存在事务和真实发送证据，不能通过删除claim强行重试未知发送。
 
 ### 2026-10-19对抗审计修订
 
@@ -71,6 +92,8 @@ python monitoring/equity_momentum_boundary/monitor.py --output-dir artifacts/equ
 - 快照加入计算版本标记，修订前快照不与修订后数值直接比较。旧数据、未来日期、缺失分位不得形成确定的当前综合判断。
 - 同分支运行串行化，避免较旧报告晚结束后覆盖新比较基线；发送保留SMTP接受回执。
 - 重发请求仅在main分支的 `monitoring/equity_momentum_boundary/replay_request.json` 变动时触发同一任务。请求内容不作为命令或路径读取，邮件主题标注“审计修订重发”。该入口不改变周一定时运行，也不触发其他监控。
+
+## 数据边界
 
 - Shiller 官网的 CAPE 和股息数据可能在最近月份出现尚未填充的盈利/股息字段；报告会保留数据日期并标注缺口。
 - FRED 图表端点在某些 GitHub runner 网络环境可能超时；期限利差会切换到官方 H.15，S&P 500 与 VIX 会切换到明确标注为 proxy 的 Yahoo Finance chart API。Baa−10Y 没有配置第二个来源时会显示缺失，不会静默填充。

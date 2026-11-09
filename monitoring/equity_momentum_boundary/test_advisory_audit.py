@@ -59,7 +59,7 @@ class AdvisoryAuditTests(unittest.TestCase):
                 report['supplemental']['vix'].update(changes)
                 result = build_advisory(report)
                 self.assertNotIn('警戒升温', result['stance'])
-                self.assertIn('放缓追涨', result['sections'][2][1][0])
+                self.assertIn('放缓追涨', dict(result['sections'])['可参考的应对建议'][0])
                 self.assertIn('不能确认风险已经缓和', result['conclusion'])
 
     def test_percentile_only_revision_is_not_reported_as_unchanged(self):
@@ -75,7 +75,7 @@ class AdvisoryAuditTests(unittest.TestCase):
             item.update(valuation_percentile=.95, extreme_components=1)
         result = build_advisory(report)
         self.assertIn('估值方向存在分歧', result['conclusion'])
-        self.assertIn('放缓追涨', result['sections'][2][1][0])
+        self.assertIn('放缓追涨', dict(result['sections'])['可参考的应对建议'][0])
 
     def test_current_month_is_not_claimed_as_final_month_end(self):
         report = self.neutral()
@@ -94,7 +94,7 @@ class AdvisoryAuditTests(unittest.TestCase):
         text = render_advisory_text(result)
         self.assertIn('全部是研究启发式', text)
         self.assertIn('未证明能改善收益或回撤', text)
-        self.assertIn('+0.28%', result['sections'][3][1][0])
+        self.assertIn('+0.28%', dict(result['sections'])['下周观察与改变判断的条件'][0])
 
 
 if __name__ == '__main__':

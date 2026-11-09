@@ -6,12 +6,15 @@ from datetime import date, datetime
 from decimal import Decimal, DecimalException
 import io
 import hashlib
+from http.client import IncompleteRead
 import json
 import math
 import os
 import re
 import stat
 import sys
+from time import sleep
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
@@ -25,6 +28,30 @@ WORKFLOWS = {".github/workflows/microcap-member-daily.yml", ".github/workflows/m
 MAX_BYTES = 64 * 1024 * 1024
 V2_PREFIX = 'microcap-member-checkpoint-v2-'
 MAX_LEGACY_READS = 8
+
+
+def retry_checkpoint_read(read, label, *, pause=None):
+    """Retry only the failed idempotent read; never select an older state."""
+    for attempt in range(3):
+        try:
+            return read()
+        except urllib.error.HTTPError as exc:
+            # Permission/rate-limit responses and missing objects require an
+            # explicit diagnosis. They must not become a seed/older-state read.
+            if exc.code not in {408, 500, 502, 503, 504} or attempt == 2:
+                raise
+        except (urllib.error.URLError, TimeoutError, ConnectionError, IncompleteRead):
+            if attempt == 2:
+                raise
+        print(f'Retrying {label} after transient transport failure ({attempt + 1}/2)', file=sys.stderr)
+        (sleep if pause is None else pause)(2 ** attempt)
+
+
+def checkpoint_json(request):
+    def read():
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.load(response)
+    return retry_checkpoint_read(read, 'checkpoint metadata request')
 
 
 def _semantic(value):
@@ -76,6 +103,11 @@ def checkpoint_identity(raw):
         if cp.get('schema')!='member_daily_checkpoint_v1':
             raise ValueError('Unpublishable checkpoint schema')
         anchor=date.fromisoformat(cp['as_of_date']).isoformat()
+        next_day=cp.get('next_trade_date')
+        if next_day is not None:
+            if (not isinstance(next_day,str) or date.fromisoformat(next_day).isoformat()!=next_day
+                    or next_day<=anchor):
+                raise ValueError('Checkpoint next execution date must be canonical and after its close')
         payload={}
         for key in ('period','history','turnover','version_state','prices'):
             spec=cp[key];p=PurePosixPath(spec['path'])
@@ -113,7 +145,9 @@ def checkpoint_identity(raw):
             raise ValueError('Checkpoint version-state date invalid')
         raw_basis=sorted([[r['symbol'],r['previous_raw_date'],_semantic(r['previous_raw_close'])] for r in basis])
         economic_period={key:period.get(key) for key in ('anchor_day','effective_from','effective_members','target_members','rebalance_events')}
-        fingerprint=hashlib.sha256(json.dumps([semantic,_semantic(economic_period),raw_basis,_semantic(versions),
+        # A different execution clock is a conflicting state, even when every
+        # member, price and model value agrees. Missing legacy clocks stay None.
+        fingerprint=hashlib.sha256(json.dumps([semantic,_semantic(economic_period),raw_basis,_semantic(versions),next_day,
                             _turnover_semantic(payload['turnover'])],sort_keys=True).encode()).hexdigest()
         return dict(as_of_date=anchor,period_status=state,period_sha=cp['period']['sha256'],fingerprint=fingerprint)
 
@@ -166,8 +200,7 @@ def fetch_latest(repository: str, token: str, sha: str, not_after_date=None):
     old_name="microcap-member-checkpoint-v1-"+sha
     modern=[];legacy=[]
     for page in range(1,101):
-        with urllib.request.urlopen(api_request(f"{base}/artifacts?per_page=100&page={page}",token),timeout=30) as response:
-            items=json.load(response)["artifacts"]
+        items=checkpoint_json(api_request(f"{base}/artifacts?per_page=100&page={page}",token))["artifacts"]
         for item in items:
             if item.get('expired'):continue
             match=v2.fullmatch(item.get('name',''))
@@ -192,15 +225,15 @@ def fetch_latest(repository: str, token: str, sha: str, not_after_date=None):
         key=(declared['as_of_date'],declared['period_status']=='current') if declared else None
         if best_key is not None and key is not None and key<best_key:break
         run_id=artifact['workflow_run']['id']
-        with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}",token),timeout=30) as response:run=json.load(response)
+        run=checkpoint_json(api_request(f"{base}/runs/{run_id}",token))
         if run.get('head_branch')!='main' or run.get('status')!='completed' or run.get('path','').split('@',1)[0] not in WORKFLOWS:continue
-        with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}/jobs?per_page=100",token),timeout=30) as response:jobs=json.load(response)['jobs']
+        jobs=checkpoint_json(api_request(f"{base}/runs/{run_id}/jobs?per_page=100",token))['jobs']
         if not any(any(s.get('name')=='Publish verified member checkpoint' and s.get('conclusion')=='success' for s in j.get('steps',[])) for j in jobs):continue
         if artifact.get('archive_download_url')!=f"{base}/artifacts/{artifact['id']}/zip":
             raise ValueError('Unexpected member checkpoint download URL')
-        # Network/API errors deliberately propagate; only a malformed payload is
-        # rejected in favour of another already verified candidate.
-        raw=download(artifact,token)
+        # Exhausted transport failures propagate; they never downgrade state.
+        # Only a malformed payload is rejected in favour of a verified one.
+        raw=retry_checkpoint_read(lambda: download(artifact,token), 'checkpoint archive request')
         try:
             identity=checkpoint_identity(raw)
             if ceiling and identity['as_of_date']>ceiling:raise ValueError('Checkpoint is later than permitted market session')
@@ -233,9 +266,33 @@ def seed_download(path: Path, sha: str) -> bytes:
             or not url.startswith("https://github.com/liuruojiang/microcap/releases/download/")
             or re.fullmatch(r"[0-9a-f]{64}", expected) is None):
         raise ValueError("Member seed config identity is not approved")
-    opener = urllib.request.build_opener(StripCrossOriginAuthRedirectHandler())
-    with opener.open(url, timeout=60) as response:
-        raw = response.read(MAX_BYTES + 1)
+    bundled = config.get('bundled_path')
+    if bundled is not None:
+        if not isinstance(bundled, str) or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*\.zip', bundled) is None:
+            raise ValueError('Invalid bundled seed path')
+        source = path.resolve().parent / bundled
+        if source.resolve().parent != path.resolve().parent:
+            raise ValueError('Invalid bundled seed path')
+        # The reviewed bytes travel with the exact configuration/checkout. A
+        # missing or corrupt bundle is an integrity failure, not a reason to
+        # silently replace it with an unrelated checkpoint or remote response.
+        with source.open('rb') as stream:
+            raw = stream.read(MAX_BYTES + 1)
+    else:
+        opener = urllib.request.build_opener(StripCrossOriginAuthRedirectHandler())
+        for attempt in range(3):
+            try:
+                with opener.open(url, timeout=60) as response:
+                    raw = response.read(MAX_BYTES + 1)
+                break
+            except urllib.error.HTTPError as exc:
+                if exc.code not in {408, 429, 500, 502, 503, 504} or attempt == 2:
+                    raise
+            except (urllib.error.URLError, TimeoutError, ConnectionError, IncompleteRead):
+                if attempt == 2:
+                    raise
+            print(f'Retrying reviewed seed download after transient transport failure ({attempt + 1}/2)', file=sys.stderr)
+            sleep(2 ** attempt)
     if len(raw) > MAX_BYTES or hashlib.sha256(raw).hexdigest() != expected:
         raise ValueError("Member seed archive size/SHA mismatch")
     return raw

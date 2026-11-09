@@ -11,10 +11,20 @@ import urllib.request
 import zipfile
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from time import sleep
 from zoneinfo import ZoneInfo
+
+from restore_microcap_member_checkpoint import retry_checkpoint_read
 
 
 BJ = ZoneInfo("Asia/Shanghai")
+
+
+def delivery_json(request):
+    def read():
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.loads(response.read().decode("utf-8"))
+    return retry_checkpoint_read(read, 'delivery metadata request', pause=sleep)
 
 
 def now_utc() -> datetime:
@@ -67,8 +77,7 @@ def legacy_marker_mode(repository: str, token: str, api_url: str, artifact: dict
     if not isinstance(run_id, int) or run_id <= 0:
         raise RuntimeError("BLOCKED: legacy marker has no verifiable workflow run")
     base = f"{api_url.rstrip('/')}/repos/{repository}/actions"
-    with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}/artifacts?per_page=100", token), timeout=30) as response:
-        payload = json.loads(response.read().decode("utf-8"))
+    payload = delivery_json(api_request(f"{base}/runs/{run_id}/artifacts?per_page=100", token))
     reports = [item for item in payload.get("artifacts", []) if isinstance(item, dict)
                and item.get("name") == "microcap-realtime-digest" and item.get("expired") is not True]
     if len(reports) != 1:
@@ -76,7 +85,8 @@ def legacy_marker_mode(repository: str, token: str, api_url: str, artifact: dict
     report = reports[0]
     if report.get("archive_download_url") != f"{base}/artifacts/{report.get('id')}/zip":
         raise RuntimeError("BLOCKED: unexpected legacy digest artifact URL")
-    with zipfile.ZipFile(io.BytesIO(download(report, token))) as archive:
+    raw = retry_checkpoint_read(lambda: download(report, token), 'delivery report archive request', pause=sleep)
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         entries = [item for item in archive.infolist() if item.filename in {"artifacts/metadata.json", "metadata.json"}]
         if len(entries) != 1 or entries[0].file_size > 1024 * 1024:
             raise RuntimeError("BLOCKED: legacy digest metadata missing, ambiguous or too large")
@@ -105,8 +115,7 @@ def fetch_artifacts(
             "User-Agent": "microcap-delivery-gate",
         },
     )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        payload = json.loads(response.read().decode("utf-8"))
+    payload = delivery_json(request)
     if not isinstance(payload, dict) or not isinstance(payload.get("artifacts"), list):
         raise RuntimeError("GitHub artifacts response must contain an artifacts list")
     return payload
@@ -123,20 +132,19 @@ def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dic
     if (not isinstance(run_id, int) or run_id <= 0 or not isinstance(artifact_id, int)
             or artifact_id <= 0 or artifact.get("archive_download_url") != f"{base}/artifacts/{artifact_id}/zip"):
         raise RuntimeError("BLOCKED: SMTP receipt has no verifiable workflow artifact")
-    with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}", token), timeout=30) as response:
-        run = json.loads(response.read().decode("utf-8"))
+    run = delivery_json(api_request(f"{base}/runs/{run_id}", token))
     workflow_path = run.get("path")
     if workflow_path not in {".github/workflows/microcap-realtime-digest.yml", ".github/workflows/microcap-member-daily.yml"}:
         raise RuntimeError("BLOCKED: SMTP receipt belongs to an unexpected workflow")
-    with urllib.request.urlopen(api_request(f"{base}/runs/{run_id}/jobs?per_page=100", token), timeout=30) as response:
-        jobs = json.loads(response.read().decode("utf-8"))
+    jobs = delivery_json(api_request(f"{base}/runs/{run_id}/jobs?per_page=100", token))
     send_jobs = [job for job in jobs.get("jobs", []) if job.get("name") == "send"]
     if len(send_jobs) != 1:
         raise RuntimeError("BLOCKED: SMTP receipt has no unique send job")
     steps = {step.get("name"): step.get("conclusion") for step in send_jobs[0].get("steps", [])}
     if any(steps.get(name) != "success" for name in ("Send Gmail", "Preserve accepted SMTP receipt")):
         raise RuntimeError("BLOCKED: workflow did not confirm SMTP acceptance and receipt upload")
-    with zipfile.ZipFile(io.BytesIO(download(artifact, token))) as archive:
+    raw = retry_checkpoint_read(lambda: download(artifact, token), 'SMTP receipt archive request', pause=sleep)
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         values = {}
         for basename, limit in (("metadata.json", 1024 * 1024), ("smtp-accepted.json", 64 * 1024)):
             matches = [entry for entry in archive.infolist()

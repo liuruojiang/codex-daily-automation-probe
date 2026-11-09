@@ -11,6 +11,7 @@ Ibbotson long-bond series is not distributed as a live feed here.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import math
@@ -431,8 +432,12 @@ def _build_sp500_context(series: pd.Series, source: SourceResult) -> dict[str, A
         "momentum_6m": _safe_float(latest / series.iloc[-127] - 1) if len(series) >= 127 else None,
         "momentum_12m": _safe_float(latest / series.iloc[-253] - 1) if len(series) >= 253 else None,
     }
-    log_return = (series / series.shift(1)).apply(lambda x: math.log(x) if x > 0 else float("nan"))
-    result["realized_vol_20d_annualized"] = _safe_float(log_return.tail(20).std(ddof=1) * math.sqrt(252)) if len(log_return) >= 20 else None
+    log_return = (series / series.shift(1)).apply(lambda x: math.log(x) if pd.notna(x) and math.isfinite(float(x)) and x > 0 else float("nan"))
+    price_window, return_window = series.tail(21), log_return.tail(20)
+    complete_window = (len(price_window) == 21 and len(return_window) == 20
+                       and all(pd.notna(value) and math.isfinite(float(value)) and value > 0 for value in price_window)
+                       and all(pd.notna(value) and math.isfinite(float(value)) for value in return_window))
+    result["realized_vol_20d_annualized"] = _safe_float(return_window.std(ddof=1) * math.sqrt(252)) if complete_window else None
     result["recent_reversal_flag"] = bool(
         result["momentum_12m"] is not None
         and result["momentum_1m"] is not None
@@ -715,6 +720,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=MONITOR_NAME)
     parser.add_argument("--output-dir", type=Path, default=Path("artifacts/equity_momentum_boundary"))
     parser.add_argument("--previous-report", type=Path, default=None)
+    parser.add_argument("--previous-status", type=Path, default=None)
     parser.add_argument("--report-label", default="")
     return parser.parse_args(argv)
 
@@ -730,6 +736,14 @@ def main(argv: Iterable[str] | None = None) -> int:
     if args.report_label:
         report["warnings"].append("审计修订重算：已修复Shiller十月日期解析和连续月历窗口；与此前旧算法读数的差异不应解释为本周市场变化。")
     previous = None
+    report["previous_snapshot"] = {"status": "missing", "reason": "未提供可用的上期快照。"}
+    if args.previous_status:
+        try:
+            status = json.loads(args.previous_status.read_text(encoding="utf-8"))
+            if isinstance(status, dict):
+                report["previous_snapshot"] = status
+        except (OSError, ValueError):
+            report["previous_snapshot"]["reason"] = "上期快照恢复记录不可读。"
     if args.previous_report and args.previous_report.exists():
         try:
             candidate = json.loads(args.previous_report.read_text(encoding="utf-8"))
@@ -748,17 +762,21 @@ def main(argv: Iterable[str] | None = None) -> int:
             age_days = (current_time - prior_time).total_seconds() / 86400
             if candidate.get("monitor") == MONITOR_NAME and 0 < age_days <= 14:
                 previous = candidate
+                report["previous_snapshot"].update(status="restored", generated_at_utc=candidate["generated_at_utc"])
             else:
                 report["warnings"].append("Previous snapshot has wrong monitor/date or is older than 14 days; comparison omitted")
+                report["previous_snapshot"].update(status="rejected", reason="上期快照日期、报告身份异常或超过14天，已拒绝比较。")
         except (ValueError, TypeError, KeyError, OSError):
             report["warnings"].append("Previous snapshot is unreadable; comparison omitted")
+            report["previous_snapshot"].update(status="rejected", reason="上期快照内容异常或计算口径不同，已拒绝比较。")
     report["advisory"] = build_advisory(report, previous)
     report["overall_state"] = report["advisory"]["current_core_state"]
     text_body = render_text(report)
     html_body = render_html(report)
-    (args.output_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    (args.output_dir / "report.txt").write_text(text_body, encoding="utf-8")
-    (args.output_dir / "report.html").write_text(html_body, encoding="utf-8")
+    report_json = json.dumps(report, ensure_ascii=False, indent=2)
+    (args.output_dir / "report.json").write_text(report_json, encoding="utf-8", newline="\n")
+    (args.output_dir / "report.txt").write_text(text_body, encoding="utf-8", newline="\n")
+    (args.output_dir / "report.html").write_text(html_body, encoding="utf-8", newline="\n")
     (args.output_dir / "metadata.json").write_text(
         json.dumps(
             {
@@ -766,12 +784,14 @@ def main(argv: Iterable[str] | None = None) -> int:
                 "body": text_body,
                 "html_body": html_body,
                 "attachment": None,
+                "report_sha256": hashlib.sha256(report_json.encode("utf-8")).hexdigest(),
             },
             ensure_ascii=False,
             indent=2,
         )
         + "\n",
         encoding="utf-8",
+        newline="\n",
     )
     print(text_body)
     return 0
