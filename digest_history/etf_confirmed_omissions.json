@@ -5838,6 +5838,32 @@
       "zh_summary": "Trefis比较美元和黄金计价的股票总回报及长周期；黄金本身也有长达多年回撤，换计价单位不等于实际消费通胀。",
       "evidence_level": "商业研究全文",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42525569152",
+      "origin_report_date": "2026-11-09",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "A 70-Year-Old Swapped O for ADC in a $1.03 Million Income Portfolio. Here’s What Happened to Her $5,650 Monthly Paycheck",
+      "zh_title": "退休收入组合由O换到ADC：当期现金减少与股息增长的取舍",
+      "url": "https://247wallst.com/personal-finance/2026/11/08/a-70-year-old-swapped-o-for-adc-in-a-1-03-million-income-portfolio-heres-what-happened-to-her-5650-monthly-paycheck/?.tsrc=rss",
+      "published": "2026-11-08T20:21:53+00:00",
+      "summary": "作者以103万美元、月需5650美元的组合说明将15% O仓位换为ADC后，估计月收入从6344降至6233美元；讨论股息增长、AFFO覆盖、融资及税务。页内ADC收益率出现4.7%与约5%口径差异，非真实账户审计。",
+      "zh_summary": "作者以103万美元、月需5650美元的组合说明将15% O仓位换为ADC后，估计月收入从6344降至6233美元；讨论股息增长、AFFO覆盖、融资及税务。页内ADC收益率出现4.7%与约5%口径差异，非真实账户审计。",
+      "evidence_level": "媒体全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42525569152",
+      "origin_report_date": "2026-11-09",
+      "source": "Seeking Alpha ETFs",
+      "title": "Introducing The S&P Kaiko Digital Asset Indices",
+      "zh_title": "标普Kaiko数字资产指数：参考价框架整合",
+      "url": "https://seekingalpha.com/article/4964603-introducing-sp-kaiko-digital-asset-indices?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-07T13:50:00+00:00",
+      "summary": "S&P DJI介绍9月宣布将旗下数字资产指数与Kaiko框架整合，10月提供单资产参考价及基准参考价两类；未取得完整方法论，不推断投资回报。",
+      "zh_summary": "S&P DJI介绍9月宣布将旗下数字资产指数与Kaiko框架整合，10月提供单资产参考价及基准参考价两类；未取得完整方法论，不推断投资回报。",
+      "evidence_level": "发布者公开摘要及截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
