@@ -16,6 +16,7 @@ def verify(root, expected):
     if observed != expected:
         raise ValueError('strategy checkout does not match the production pin')
     releases = {
+        'docs/ic_im_fear_source_round2_20261109_manifest.json': '20261109-fear-source-round2-v3',
         'docs/ic_im_fear_source_adversarial_20261109_manifest.json': '20261109-fear-source-adversarial-v2',
         'docs/ic_im_fear_source_split_20261109_manifest.json': '20261109-fear-source-split-v1',
         'docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json': '20261023-redteam-repairs-v3-r3',

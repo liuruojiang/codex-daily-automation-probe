@@ -160,7 +160,7 @@ class IndependentRun(shared.Run):
 
     def command(self, label, args, cwd, env=None, check_window=True):
         try:
-            return super().command(label, args, cwd, env, check_window)
+            return super().command(label, args, cwd, env, check_window=check_window)
         except RuntimeError:
             record_path = self.out / (label + ".command.json")
             record = shared.read(record_path) if record_path.exists() else {}
