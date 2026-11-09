@@ -10,8 +10,9 @@ in the strategy repository's `docs/maintenance_notice_boundary_20261109.md`.
 Keep `microcap_approved_state.json` and the native restore identity unchanged.
 After that restore succeeds, `activate_microcap_maintenance_runtime.py` verifies
 the original receipt, clean source checkout, complete Git tree difference and
-both exact source hashes in `microcap_maintenance_runtime.json`. Only the native
-notice-boundary adapter may change; tests/docs may accompany it. An unrelated
+all exact source hashes in `microcap_maintenance_runtime.json`. Only the native
+notice-boundary adapter and the paired dated-share verifier/source-compatibility
+review may change; tests/docs may accompany them. An unrelated
 execution change aborts before checkout. The original restore receipt and all
 economic/source data remain intact. The separate activation receipt grants no
 current-data freshness or historical migration.
@@ -37,6 +38,30 @@ unrelated code, dirty source, unsuccessful restoration and receipt overwrite.
 Existing maintenance isolation, period-handoff, member-daily and bounded-retry
 tests remain. A live native notice refresh advanced Nov5 to Nov6 in an isolated
 root; this is component acceptance, not complete maintenance or daily delivery.
+
+Run 42551243114 then passed notice and current-ST checks but failed because
+002316's live quote was Nov9, while maintenance requested Nov6. The 09:00 task
+retains its complete prior-session maintenance responsibility. No other daily
+full-base updater replaces it; no schedule or scope change is made.
+
+The reviewed native repair additionally collects exact-date historical raw
+TOTAL_SHARES from Eastmoney's existing public daily valuation report, checks
+both adjacent sessions against the old authenticated boundary and preserves
+all original quote/dual-inventory/Sina/document/time/history guards. The original
+later quote is retained as a later observation. Historical evidence is never
+created by changing a quote timestamp. Actual 002316 observations, negative
+tests and the narrowly bound Nov5 source-only compatibility review are in
+`docs/maintenance_historical_share_close_20261109.md` in the strategy repository.
+All 100 actual current members passed the historical-source precheck; the native
+002316 full source chain passed renewal/readback without changing the old share
+CSV or primary evidence. Complete maintenance still needs its real remote run.
+
+The push/manual full delivery regression also checks out the exact maintenance runtime
+and runs its new/old share and notice guards separately from the existing daily
+runtime/test-source role. Family-specific daily calls do not acquire this
+maintenance dependency. The daily pins remain unchanged. Multiple missing
+sessions are renewed sequentially under one symbol lock; each native adjacent
+proof is retained, and retries resume at the first missing session.
 
 Rollback: revert the workflow/config/activation change together. The original
 baseline pin, approved seed and successful historical recovery artifact are

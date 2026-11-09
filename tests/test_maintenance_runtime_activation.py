@@ -13,7 +13,7 @@ import activate_microcap_maintenance_runtime as runtime
 
 
 @pytest.fixture
-def prepared(tmp_path):
+def prepared(tmp_path, request):
     root = tmp_path / "repo"
     root.mkdir()
     def git(*args):
@@ -21,30 +21,34 @@ def prepared(tmp_path):
     git("init", "-q")
     git("config", "user.email", "test@example.invalid")
     git("config", "user.name", "Isolated test")
-    source = root / runtime.SOURCE
-    source.parent.mkdir()
-    source.write_bytes(b"original source\n")
+    sources = sorted(runtime.DATED_SHARE_SOURCES) if getattr(request, 'param', False) else [runtime.SOURCE]
+    for name in sources:
+        source = root / name
+        source.parent.mkdir(exist_ok=True)
+        source.write_bytes(("original " + name + "\n").encode())
     (root / "outputs").mkdir()
     (root / "outputs/nav.csv").write_bytes(b"approved history\n")
     git("add", ".")
     git("commit", "-qm", "baseline")
     old = git("rev-parse", "HEAD")
-    old_hash = hashlib.sha256(source.read_bytes()).hexdigest()
-    source.write_bytes(b"reviewed source\n")
+    old_hashes = {name: hashlib.sha256((root/name).read_bytes()).hexdigest() for name in sources}
+    for name in sources:
+        (root/name).write_bytes(("reviewed " + name + "\n").encode())
     git("add", ".")
     git("commit", "-qm", "reviewed fix")
     new = git("rev-parse", "HEAD")
-    new_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+    new_hashes = {name: hashlib.sha256((root/name).read_bytes()).hexdigest() for name in sources}
     git("remote", "add", "origin", str(root))
     git("checkout", "--detach", old)
     config = tmp_path / "config.json"
     config.write_text(json.dumps(dict(schema_version=1, baseline_sha=old, runtime_sha=new,
-                                      changes={runtime.SOURCE: [old_hash, new_hash]})), encoding="utf8")
+                                      changes={name: [old_hashes[name], new_hashes[name]] for name in sources})), encoding="utf8")
     restored = tmp_path / "restore.json"
     restored.write_text(json.dumps(dict(restored=True, strategy_sha=old)), encoding="utf8")
     return root, config, restored, tmp_path / "activation.json", git
 
 
+@pytest.mark.parametrize('prepared', [False, True], indirect=True)
 def test_verified_source_switch_preserves_data_and_original_receipt(prepared):
     root, config, restored, receipt, git = prepared
     original = restored.read_bytes()
@@ -57,8 +61,9 @@ def test_verified_source_switch_preserves_data_and_original_receipt(prepared):
     assert json.loads(receipt.read_bytes()) == result
 
 
+@pytest.mark.parametrize('prepared', [False, True], indirect=True)
 @pytest.mark.parametrize("fault", ["bad_hash", "wrong_baseline", "failed_restore", "wrong_restore_sha",
-                                   "dirty_source", "unrelated_code", "overwrite_restore", "bad_schema"])
+                                   "dirty_source", "unrelated_code", "overwrite_restore", "bad_schema", "unpaired_share"])
 def test_unreviewed_or_unrestored_state_cannot_activate(prepared, fault):
     root, config, restored, receipt, git = prepared
     value = json.loads(config.read_bytes())
@@ -75,6 +80,9 @@ def test_unreviewed_or_unrestored_state_cannot_activate(prepared, fault):
         value["runtime_sha"] = git("rev-parse", "HEAD")
         git("checkout", "--detach", value["baseline_sha"])
     elif fault == "overwrite_restore": receipt = restored
+    elif fault == 'unpaired_share':
+        value['changes']['scripts/share_unchanged_tail.py'] = ['1'*64, '2'*64]
+        value['changes'].pop('scripts/realtime_state_bundle.py', None)
     else: value["schema_version"] = 2
     config.write_text(json.dumps(value), encoding="utf8")
     before = git("rev-parse", "HEAD")

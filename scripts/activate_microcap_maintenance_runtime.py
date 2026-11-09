@@ -13,6 +13,7 @@ import re
 import subprocess
 
 SOURCE = "scripts/st_notice_boundary_review.py"
+DATED_SHARE_SOURCES = {SOURCE, "scripts/share_unchanged_tail.py", "scripts/share_change_source.py", "scripts/realtime_state_bundle.py"}
 
 
 def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path) -> dict:
@@ -24,12 +25,12 @@ def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path
     old, new = config["baseline_sha"], config["runtime_sha"]
     if old == new or any(not isinstance(v, str) or re.fullmatch("[0-9a-f]{40}", v) is None for v in (old, new)):
         raise ValueError("Maintenance review requires distinct exact commits")
-    if set(config["changes"]) != {SOURCE}:
-        raise ValueError("Maintenance review is limited to the native notice boundary adapter")
-    pair = config["changes"][SOURCE]
-    if (not isinstance(pair, list) or len(pair) != 2 or pair[0] == pair[1]
-            or any(not isinstance(v, str) or re.fullmatch("[0-9a-f]{64}", v) is None for v in pair)):
-        raise ValueError("Maintenance review requires exact source hashes")
+    if set(config["changes"]) not in ({SOURCE}, DATED_SHARE_SOURCES):
+        raise ValueError("Maintenance review is limited to the native boundary and paired dated-share continuation")
+    for pair in config["changes"].values():
+        if (not isinstance(pair, list) or len(pair) != 2 or pair[0] == pair[1]
+                or any(not isinstance(v, str) or re.fullmatch("[0-9a-f]{64}", v) is None for v in pair)):
+            raise ValueError("Maintenance review requires exact source hashes")
     if restored.get("restored") is not True or restored.get("strategy_sha") != old:
         raise ValueError("Maintenance requires the actual baseline restore receipt")
     if receipt.resolve() == restore_receipt.resolve():
@@ -49,18 +50,20 @@ def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path
     subprocess.run(["git", "-C", str(root), "fetch", "--no-tags", "origin", new], check=True)
     changed = set(git("diff", "--name-only", old, new).decode().splitlines())
     execution = {name for name in changed if not name.startswith(("tests/", "docs/"))}
-    if execution != {SOURCE}:
+    if execution != set(config["changes"]):
         raise ValueError("Maintenance runtime contains unrelated execution changes")
-    for revision, expected in zip((old, new), pair):
-        if digest(git("show", revision + ":" + SOURCE)) != expected:
-            raise ValueError("Maintenance Git source hash differs")
-    if digest((root / SOURCE).read_bytes()) != pair[0]:
-        raise ValueError("Maintenance baseline source readback differs")
+    for source, pair in config["changes"].items():
+        for revision, expected in zip((old, new), pair):
+            if digest(git("show", revision + ":" + source)) != expected:
+                raise ValueError("Maintenance Git source hash differs")
+        if digest((root / source).read_bytes()) != pair[0]:
+            raise ValueError("Maintenance baseline source readback differs")
     if config_path.read_bytes() != config_raw or restore_receipt.read_bytes() != restored_raw:
         raise ValueError("Maintenance review or restore receipt changed concurrently")
     subprocess.run(["git", "-C", str(root), "checkout", "--detach", new], check=True)
-    if digest((root / SOURCE).read_bytes()) != pair[1]:
-        raise ValueError("Maintenance runtime source readback differs")
+    for source, pair in config["changes"].items():
+        if digest((root / source).read_bytes()) != pair[1]:
+            raise ValueError("Maintenance runtime source readback differs")
     result = dict(schema="reviewed_maintenance_runtime_v1", baseline_sha=old, runtime_sha=new,
                   changes=config["changes"], review_sha256=hashlib.sha256(config_raw).hexdigest(),
                   restore_receipt_sha256=hashlib.sha256(restored_raw).hexdigest(),
