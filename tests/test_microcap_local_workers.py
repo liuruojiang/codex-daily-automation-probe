@@ -58,3 +58,22 @@ def test_worker_rejects_changed_code_before_any_native_import(tmp_path):
                                        {'microcap_local_workers.py':'0'*64}},'symbols':['000001']}))
     with pytest.raises(ValueError, match='code changed'):
         workers.worker(tmp_path / 'absent-runtime', tmp_path, 0, path)
+
+
+def test_orderly_stop_persists_accurate_status_instead_of_stale_running(tmp_path,monkeypatch):
+    import json
+    context={'target':'2026-11-09','scope_sha256':'f'*64}
+    def process(args,**kwargs):
+        slot=int(args[-2]);directory=Path(args[-1]).parent
+        (directory/f'worker-{slot}.json').write_bytes(encode(dict(status='interrupted_after_symbol',context=context,
+            processed=1,complete=1,failures={},reused_stages=3)))
+        class Stopped:
+            returncode=2
+            def poll(self):return self.returncode
+        return Stopped()
+    monkeypatch.setattr(workers.subprocess,'Popen',process)
+    with pytest.raises(RuntimeError,match='worker stopped'):
+        workers.run_workers(tmp_path/'runtime',tmp_path,[f'{n:06d}' for n in range(300)],context)
+    result=json.loads((tmp_path/'runs/2026-11-09/progress.json').read_bytes())
+    assert result['status']=='interrupted_after_symbol' and result['processed']==result['complete']==2
+    assert result['worker_exit_codes']==[2,2] and result['reused_stages']==6

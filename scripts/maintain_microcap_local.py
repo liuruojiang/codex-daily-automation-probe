@@ -23,8 +23,9 @@ import uuid
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 
-RUNTIME = '140b9c192e65a2b36a6b02106496e89f1143a4a6'
-BOOTSTRAP_RUNTIMES = {RUNTIME, '24a41867408ebee570349de46d3ae37bcff2a6d4',
+RUNTIME = '63c7b16d77600c4aa9dadf58b86d31e034477e44'
+BOOTSTRAP_RUNTIMES = {RUNTIME, '140b9c192e65a2b36a6b02106496e89f1143a4a6',
+                      '24a41867408ebee570349de46d3ae37bcff2a6d4',
                       'c8d15e418c7003021866cd2aa4984e3e9a7103b6',
                       'a4adeacca194d5add4cfea0456c27e9da5444e45'}
 CACHE = '.microcap_index_cache/'

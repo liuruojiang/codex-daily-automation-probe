@@ -129,6 +129,9 @@ def run_workers(root, state, symbols, context):
             if all(p.poll() is not None for p in processes): break
             time.sleep(1)
         if any(p.returncode != 0 for p in processes) or processed != 300:
+            progress.update(status='interrupted_after_symbol' if all(s['status']=='interrupted_after_symbol' for s in statuses) else 'failed',
+                            worker_exit_codes=[p.returncode for p in processes],stopped_at=datetime.now(timezone.utc).isoformat())
+            atomic(directory/'progress.json',encode(progress))
             raise RuntimeError('Native data worker stopped; retain its checkpoints and inspect worker logs')
         return progress
     finally:
