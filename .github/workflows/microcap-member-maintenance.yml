@@ -38,6 +38,9 @@ jobs:
           legacy=json.load(open('automation/config/microcap_approved_state.json'))['strategy_sha']
           assert re.fullmatch('[0-9a-f]{40}',legacy)
           print('legacy_sha='+legacy)
+          maintenance=json.load(open('automation/config/microcap_maintenance_runtime.json'))
+          assert maintenance['baseline_sha']==legacy and re.fullmatch('[0-9a-f]{40}',maintenance['runtime_sha'])
+          print('maintenance_sha='+maintenance['runtime_sha'])
           PY
       - uses: actions/checkout@v6
         with:
@@ -73,6 +76,9 @@ jobs:
         run: |
           target=$(python -c 'from scripts.exchange_calendar import latest_completed_session;print(latest_completed_session().isoformat())')
           python -B ../automation/scripts/microcap_whole_state_recovery.py restore --root . --bundle "$RUNNER_TEMP/whole.zip" --strategy-sha '${{ steps.runtime.outputs.legacy_sha }}' --not-after-date "$target" --receipt maintenance-restore.json
+      - name: Activate reviewed maintenance runtime
+        if: steps.schedule.outputs.run == 'true'
+        run: python -B automation/scripts/activate_microcap_maintenance_runtime.py --root legacy --config automation/config/microcap_maintenance_runtime.json --restore-receipt legacy/maintenance-restore.json --receipt legacy/maintenance-runtime.json
       - name: Refresh maintenance inputs
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'maintenance'
         working-directory: legacy
@@ -82,14 +88,14 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: legacy/.microcap_index_cache
-          key: microcap-member-maintenance-v1-${{ steps.runtime.outputs.sha }}-${{ github.run_id }}
+          key: microcap-member-maintenance-v1-${{ steps.runtime.outputs.maintenance_sha }}-${{ github.run_id }}
       - name: Restore prepared maintenance inputs for rebalance
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
         uses: actions/cache/restore@v4
         with:
           path: legacy/.microcap_index_cache
-          key: microcap-member-maintenance-v1-${{ steps.runtime.outputs.sha }}-${{ github.run_id }}
-          restore-keys: microcap-member-maintenance-v1-${{ steps.runtime.outputs.sha }}-
+          key: microcap-member-maintenance-v1-${{ steps.runtime.outputs.maintenance_sha }}-${{ github.run_id }}
+          restore-keys: microcap-member-maintenance-v1-${{ steps.runtime.outputs.maintenance_sha }}-
       - name: Build original close rebalance and three final streams
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
         working-directory: legacy
@@ -130,6 +136,7 @@ jobs:
           path: |
             schedule.json
             legacy/maintenance-restore.json
+            legacy/maintenance-runtime.json
             legacy/.microcap_index_cache/st_notice_sources
             legacy/.microcap_index_cache/st_notice_archive_pointer.json
             candidate
