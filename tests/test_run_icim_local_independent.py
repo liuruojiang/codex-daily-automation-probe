@@ -12,6 +12,19 @@ sys.path.insert(0, str(SCRIPTS))
 import run_icim_local_independent as independent
 
 
+@pytest.mark.parametrize('check_window', [True, False])
+def test_independent_command_runs_real_child_and_preserves_window_guard(tmp_path, monkeypatch, check_window):
+    run = independent.IndependentRun.__new__(independent.IndependentRun)
+    run.out, run.day = tmp_path, '2026-11-09'
+    checked = []
+    monkeypatch.setattr(independent.shared, 'require_window', checked.append)
+    record = run.command('probe', [sys.executable, '-B', '-c', 'print("child completed")'],
+                         tmp_path, check_window=check_window)
+    assert record['exit_code'] == 0 and record['status'] == 'completed'
+    assert checked == ([run.day] if check_window else [])
+    assert (tmp_path / 'probe.stdout.log').read_text().strip() == 'child completed'
+
+
 def test_bindings_do_not_read_microcap_consumer_or_state(tmp_path, monkeypatch):
     scripts = tmp_path / 'candidate/scripts'
     scripts.mkdir(parents=True)
