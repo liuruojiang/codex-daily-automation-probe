@@ -82,7 +82,7 @@ jobs:
       - name: Refresh maintenance inputs
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'maintenance'
         working-directory: legacy
-        run: python -B ../automation/scripts/refresh_microcap_notice_retry.py refresh --root .
+        run: python -B ../automation/scripts/refresh_microcap_notice_retry.py refresh --root . --force-refresh-static-inputs
       - name: Preserve maintenance inputs
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'maintenance' && success()
         uses: actions/cache/save@v4

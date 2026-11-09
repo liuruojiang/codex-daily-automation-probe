@@ -96,3 +96,16 @@ def test_workflow_activates_after_native_restore_before_refresh_and_rebalance():
     assert not any("send_gmail" in step.get("run", "") for step in steps)
     caches = [step for step in steps if step.get("uses", "").startswith("actions/cache/")]
     assert all("maintenance_sha" in step["with"]["key"] for step in caches)
+
+
+def test_maintenance_refreshes_restored_current_names_without_enabling_history_rebuild():
+    import yaml
+    flow = yaml.safe_load((ROOT / ".github/workflows/microcap-member-maintenance.yml").read_text(encoding="utf8"))
+    step = next(step for step in flow["jobs"]["maintain"]["steps"] if step.get("name") == "Refresh maintenance inputs")
+    # Actual Nov9 counterexample: restored Nov5 current_st.csv still contained
+    # ST美晨 after its already-approved Nov6 withdrawal. The native expired-
+    # interval guard correctly refused it. Refresh both current source lists.
+    assert "--force-refresh-static-inputs" in step["run"]
+    assert "--allow-full-rebuild" not in step["run"]
+    assert "--force-refresh " not in step["run"]
+    assert "continue-on-error" not in step

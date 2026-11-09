@@ -16,6 +16,17 @@ execution change aborts before checkout. The original restore receipt and all
 economic/source data remain intact. The separate activation receipt grants no
 current-data freshness or historical migration.
 
+The first real repaired run, 42548898079, passed the exact source switch and
+notice boundary, then exposed a stale restored `current_st.csv`: it still
+contained 300237/ST美晨 after the approved Nov6 withdrawal. The official issuer
+announcement is `https://static.cninfo.com.cn/finalpage/2026-11-05/1225658367.PDF`.
+A new native current-ST fetch on Nov9 returned 191 rows and excluded 300237;
+an independent current quote called it 美晨科技. The maintenance invocation now
+uses the existing `--force-refresh-static-inputs` option to refresh both current
+universe and ST lists. Historical interval/evidence checks and the prohibition
+on implicit full rebuild remain unchanged. This is current-source renewal,
+not a historical rewrite or an exception to the expired-interval guard.
+
 Both maintenance and actual rebalance use this verified runtime. Cache keys bind
 its exact SHA, so an older runtime's maintenance cache cannot be selected.
 The normal native refresh/check and rebalance gates are retained. Daily runtime,
