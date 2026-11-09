@@ -70,6 +70,14 @@ def test_current_names_use_native_force_refresh_and_preserve_observation_receipt
     local.refresh_current_names(tmp_path,'2000-01-04',fetch)
     assert calls==[{'force_refresh':True}]
     assert len(local.current_names_proof(tmp_path,'2000-01-04'))==2
+    from datetime import datetime,timezone,timedelta
+    with pytest.raises(ValueError):local.current_names_proof(tmp_path,'2000-01-04',datetime.now(timezone.utc)+timedelta(seconds=1))
+    old_names=(tmp_path/local.CACHE/'current_st.csv').read_bytes()
+    old_receipt=local.bound(tmp_path,local.CACHE+'local_current_names/2000-01-04.json').read_bytes()
+    local.refresh_current_names(tmp_path,'2000-01-04',lambda **kwargs:None)
+    snapshots=local.bound(tmp_path,local.CACHE+'local_current_names/observations')
+    assert (snapshots/(local.sha(old_names)+'.csv')).read_bytes()==old_names
+    assert (snapshots/(local.sha(old_receipt)+'.json')).read_bytes()==old_receipt
     (tmp_path/local.CACHE/'current_st.csv').write_bytes(b'changed')
     with pytest.raises((ValueError,KeyError)):local.current_names_proof(tmp_path,'2000-01-04')
 

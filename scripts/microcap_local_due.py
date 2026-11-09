@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 from zoneinfo import ZoneInfo
 
-from maintain_microcap_local import hashes
+from maintain_microcap_local import hashes, bound, CACHE, observation_floor
 
 BJ = ZoneInfo('Asia/Shanghai')
 
@@ -27,7 +27,7 @@ def morning_target(now, sessions):
     return max(previous).isoformat()
 
 
-def completed(directory, root, target, files_out=None):
+def completed(directory, root, target, files_out=None, required_asof=None):
     directory = Path(directory)
     path = directory / 'result.json'
     if not path.exists(): return False
@@ -52,6 +52,14 @@ def completed(directory, root, target, files_out=None):
             if name in all_files and all_files[name] != digest: return False
             all_files[name] = digest
     if hashes(root, all_files) != all_files: return False
+    if required_asof is not None:
+        # An evening rehearsal for tomorrow's price target is not tomorrow's
+        # morning ST/name observation. Prices can be reused; these sources cannot.
+        proof=json.loads(bound(root,CACHE+'st_notice_sources/freshness.json').read_bytes())
+        names=json.loads(bound(root,CACHE+'local_current_names/'+target+'.json').read_bytes())
+        for stamp in (proof['required_asof'],names['observed_at']):
+            observed=datetime.fromisoformat(stamp)
+            if observed.tzinfo is None or not required_asof<=observed<=datetime.now(BJ): return False
     if files_out is not None: files_out.update(all_files)
     return True
 
@@ -61,7 +69,7 @@ def plan(now, sessions, state, root):
     if target is None:
         return dict(status='not_due', target=None, action='no_collection')
     try:
-        done = completed(Path(state) / 'runs' / target, root, target)
+        done = completed(Path(state) / 'runs' / target, root, target, required_asof=observation_floor(now))
     except (OSError, ValueError, KeyError, TypeError):
         return dict(status='evidence_needs_revalidation', target=target,
                     action='inspect_and_resume_affected_native_stages')

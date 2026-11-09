@@ -41,7 +41,12 @@ def test_true_completed_receipts_skip_collection_but_changed_bytes_do_not(tmp_pa
     directory = tmp_path / 'runs' / '2026-11-06';directory.mkdir(parents=True)
     symbols = [f'{n:06d}' for n in range(1, 301)]
     context = {'date': '2026-11-06'}
-    record = dict(status='complete', context=context, files=local.hashes(root, ['source']))
+    freshness=local.bound(root,local.CACHE+'st_notice_sources/freshness.json')
+    names=local.bound(root,local.CACHE+'local_current_names/2026-11-06.json')
+    for path, value in [(freshness,{'required_asof':'2026-11-09T09:01:00+08:00'}),
+                        (names,{'observed_at':'2026-11-09T09:02:00+08:00'})]:
+        path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(local.encode(value))
+    record = dict(status='complete', context=context, files=local.hashes(root, ['source',freshness.relative_to(root).as_posix(),names.relative_to(root).as_posix()]))
     for key in ['notice', 'metadata', 'current-names', *[s + '-' + stage for s in symbols for stage in ('price', 'share', 'ratio')]]:
         (directory / (key + '.json')).write_bytes(local.encode(record))
     result = dict(status='complete', target='2026-11-06', total=300, complete=300,
@@ -51,3 +56,22 @@ def test_true_completed_receipts_skip_collection_but_changed_bytes_do_not(tmp_pa
     assert due.plan(now, SESSIONS, tmp_path, root)['status'] == 'already_complete'
     (root / 'source').write_bytes(b'changed')
     assert due.plan(now, SESSIONS, tmp_path, root)['status'] != 'already_complete'
+
+
+@pytest.mark.parametrize('source',['notice','names'])
+def test_evening_preparation_cannot_skip_next_morning_observation(tmp_path,source):
+    root=tmp_path/'runtime';root.mkdir()
+    target='2026-11-09';directory=tmp_path/'runs'/target;directory.mkdir(parents=True)
+    symbols=[f'{n:06d}' for n in range(1,301)]
+    floor=local.observation_floor(datetime.fromisoformat('2026-11-10T09:00:00+08:00'))
+    current='2026-11-10T09:02:00+08:00';old='2026-11-09T21:00:00+08:00'
+    paths={local.CACHE+'st_notice_sources/freshness.json':{'required_asof':old if source=='notice' else current},
+           local.CACHE+'local_current_names/'+target+'.json':{'observed_at':old if source=='names' else current}}
+    for name,value in paths.items():local.atomic(local.bound(root,name),local.encode(value))
+    context={'fixture':True};record=dict(status='complete',context=context,files=local.hashes(root,paths))
+    for key in ['notice','metadata','current-names',*[s+'-'+stage for s in symbols for stage in ('price','share','ratio')]]:
+        (directory/(key+'.json')).write_bytes(local.encode(record))
+    (directory/'result.json').write_bytes(local.encode(dict(status='complete',target=target,total=300,complete=300,
+        failures={},notice_status='complete',metadata_status='complete',current_names_status='complete',context=context,symbols=symbols)))
+    assert due.completed(directory,root,target) is True
+    assert due.completed(directory,root,target,required_asof=floor) is False

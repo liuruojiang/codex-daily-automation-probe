@@ -121,7 +121,7 @@ def run_workers(root, state, symbols, context):
                 scope_sha256=context['scope_sha256'], total=300, processed=processed,
                 complete=sum(s['complete'] for s in statuses), failures=failures,
                 reused_stages=sum(s['reused_stages'] for s in statuses),
-                notice_status='complete', production_outputs_changed=False)
+                notice_status='pending_parent_readback', production_outputs_changed=False)
             if processed != last:
                 atomic(directory / 'progress.json', encode(progress))
                 print(f'[scoped-maintenance] {processed}/300 complete={progress["complete"]} failures={len(failures)}', flush=True)

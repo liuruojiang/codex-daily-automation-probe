@@ -15,6 +15,7 @@ import io
 import json
 import os
 from pathlib import Path
+from zoneinfo import ZoneInfo
 import subprocess
 import sys
 import traceback
@@ -22,8 +23,9 @@ import uuid
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 
-RUNTIME = '24a41867408ebee570349de46d3ae37bcff2a6d4'
-BOOTSTRAP_RUNTIMES = {RUNTIME, 'c8d15e418c7003021866cd2aa4984e3e9a7103b6',
+RUNTIME = '140b9c192e65a2b36a6b02106496e89f1143a4a6'
+BOOTSTRAP_RUNTIMES = {RUNTIME, '24a41867408ebee570349de46d3ae37bcff2a6d4',
+                      'c8d15e418c7003021866cd2aa4984e3e9a7103b6',
                       'a4adeacca194d5add4cfea0456c27e9da5444e45'}
 CACHE = '.microcap_index_cache/'
 
@@ -358,12 +360,18 @@ def scoped_metadata_marker(root, scope_sha):
     return relative
 
 
-def current_names_proof(root, target):
+def observation_floor(now=None):
+    now = now or datetime.now(timezone.utc)
+    return now.astimezone(ZoneInfo('Asia/Shanghai')).replace(hour=9, minute=0, second=0, microsecond=0)
+
+
+def current_names_proof(root, target, required_asof=None):
     """Current name cross-check only; native notice history still proves PIT ST."""
     name=CACHE+'current_st.csv';receipt=CACHE+'local_current_names/'+target+'.json'
     record=json.loads(bound(root,receipt).read_bytes())
     observed=datetime.fromisoformat(record['observed_at'])
     earliest=datetime.fromisoformat(target+'T15:00:00+08:00')
+    if required_asof is not None: earliest=max(earliest,required_asof)
     rows=list(csv.DictReader(io.StringIO(bound(root,name).read_text(encoding='utf-8-sig'))))
     if (record.get('target')!=target or observed.tzinfo is None
             or not earliest<=observed<=datetime.now(timezone.utc)
@@ -376,6 +384,14 @@ def current_names_proof(root, target):
 
 
 def refresh_current_names(root, target, native_fetch):
+    # Keep immutable prior observations before the target's current pointer is replaced.
+    current=bound(root,CACHE+'current_st.csv')
+    receipt=bound(root,CACHE+'local_current_names/'+target+'.json')
+    if current.exists() and receipt.exists():
+        for suffix,raw in (('.csv',current.read_bytes()),('.json',receipt.read_bytes())):
+            saved=bound(root,CACHE+'local_current_names/observations/'+sha(raw)+suffix)
+            if saved.exists() and saved.read_bytes()!=raw: raise ValueError('Immutable current-name observation collision')
+            if not saved.exists(): atomic(saved,raw)
     native_fetch(force_refresh=True)
     raw=bound(root,CACHE+'current_st.csv').read_bytes()
     rows=list(csv.DictReader(io.StringIO(raw.decode('utf-8-sig'))))
@@ -395,6 +411,7 @@ def main(argv=None):
     p.add_argument('--pool', type=Path, required=True)
     p.add_argument('--as-of', required=True)
     p.add_argument('--notice-source-root', type=Path)
+    p.add_argument('--resume-notice-generation', type=Path)
     args = p.parse_args(argv)
     root, state = args.root.resolve(), args.state_root.resolve()
     validate_runtime(root, args.protected_root)
@@ -417,7 +434,10 @@ def main(argv=None):
     if not (state / 'bootstrap.json').exists(): raise ValueError('Bootstrap receipt missing')
     if Path(v2.base_mod.freq_mod.ROOT).resolve() != root: raise ValueError('Native frequency root differs')
     from microcap_local_workers import run_workers
+    floor=observation_floor()
+    if datetime.now(timezone.utc)<floor: raise ValueError('Local morning maintenance is not due before 09:00')
     context = dict(runtime_sha=RUNTIME, native_sources=source_fingerprint(root),
+                   observation_owner_date=floor.date().isoformat(), observation_floor=floor.isoformat(),
                    orchestrator_sources={name: sha((Path(__file__).parent / name).read_bytes())
                       for name in ('maintain_microcap_local.py', 'microcap_local_workers.py', 'prepare_microcap_local.py')},
                    orchestrator_sha256=sha(Path(__file__).read_bytes()), target=args.as_of,
@@ -427,6 +447,8 @@ def main(argv=None):
         def notice_verify():
             proof = json.loads(bound(root, FRESHNESS).read_bytes())
             if proof['target'] != args.as_of: raise ValueError('Notice authority target differs')
+            if datetime.fromisoformat(proof['required_asof'])<floor:
+                raise ValueError('Notice observation predates this local morning')
             return hashes(root, [FRESHNESS, *freshness_source_files(root)])
         def notice_action():
             if bound(root, FRESHNESS).exists():
@@ -435,10 +457,12 @@ def main(argv=None):
             if args.notice_source_root:
                 import_notice_evidence(args.notice_source_root, root, args.as_of)
             else:
-                refresh_notice_archive(root=root, target=args.as_of)
+                refresh_notice_archive(root=root, target=args.as_of,
+                    **({'resume_generation':args.resume_notice_generation,'required_asof':floor}
+                       if args.resume_notice_generation else {}))
         notice = journal.run('notice', notice_action, notice_verify)
         current_names=journal.run('current-names',lambda:refresh_current_names(root,args.as_of,
-            v2.base_mod.fetch_mod.fetch_current_st_codes),lambda:current_names_proof(root,args.as_of))
+            v2.base_mod.fetch_mod.fetch_current_st_codes),lambda:current_names_proof(root,args.as_of,floor))
         # Native approved Tencent route has explicit suspension/status evidence.
         # No empty-response fallback or inferred suspension is introduced here.
         os.environ.setdefault('MICROCAP_DAILY_STOCK_PROVIDER', 'tencent')

@@ -1,7 +1,7 @@
 {
   "schema": "microcap_local_source_runtime_v1",
   "role": "source_preparation_only",
-  "runtime_sha": "24a41867408ebee570349de46d3ae37bcff2a6d4",
+  "runtime_sha": "140b9c192e65a2b36a6b02106496e89f1143a4a6",
   "max_candidates": 300,
   "calculation_sources": {
     "scripts/exchange_calendar.py": "8c5f82f72fee80b8ffb5ca381bb894bdf82eeb267678800ba972bf9bad64abcb",
@@ -13,10 +13,10 @@
     "scripts/st_notice_archive.py": "625483138aebda935a852953a1645ec95eeff9fdf10ab259c463af198c7b7c9c",
     "scripts/st_history_scope.py": "e4ee3b06d91ba562c68354217def93d1d72482924138963ff34a706b9c15a063",
     "scripts/st_notice_incremental.py": "0592bd87c515af2c7e819681e9c87714737d21c8d833050e4db0403625d2cdc3",
-    "scripts/st_notice_refresh.py": "42b94db9a41c197bbd9124f83aec955eaa5619938d84cebd951875236d550893",
+    "scripts/st_notice_refresh.py": "a9ee19c96df52517d45b0d7e56f82a4b7c924cdaaa72f2818c0a32f7d772a83e",
     "scripts/st_metadata_refresh.py": "14f7162e90accc385499155aed55ab540b293ec23a0ad6d357abcd212e64ca6a",
     "scripts/stock_tail_returns.py": "fc5875bdb53ed1786c7c851b8e3c9b8028f79f49a71c72cd4eb22c8f1c14d5c6",
-    "scripts/share_change_source.py": "2850b7ebe49bbdd2bbbb577786017e8b54163d2f61d9784c4c75dfef792e72e7",
+    "scripts/share_change_source.py": "9272a521cc7306135f0df2488b85834f9a60374848d7efe3dc5d2bb446d4cdd3",
     "scripts/share_unchanged_tail.py": "1266562cb77158266cbba7b1c99b732b6ac8b57002b39b6bab204ed6c3b8f202",
     "data/share_source_future_plan_reviews.json": "972825f752eb59d274c14e6a009f1b92cbed2e4a3f45ad5adce027f3b174e2e1",
     "scripts/sina_share_history.py": "fe726fa2ba56a8321d2ded915ed8c20d71a1666b4eef375ab3707a6c0380c702",
