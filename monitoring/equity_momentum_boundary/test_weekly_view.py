@@ -54,7 +54,9 @@ class DurableSnapshotTests(unittest.TestCase):
         report["method_version"] = METHOD_VERSION
         body = render_text(report)
         html = render_html(report)
-        meta = {"subject": "每周股票动量边界监控", "body": body, "html_body": html}
+        report_bytes = json.dumps(report).encode()
+        meta = {"subject": "每周股票动量边界监控", "body": body, "html_body": html,
+                "report_sha256": hashlib.sha256(report_bytes).hexdigest()}
         meta_bytes = json.dumps(meta).encode()
         receipt = {"status": "smtp_accepted", "message_id": "<verified@example.com>",
                    "accepted_at": report["generated_at_utc"],
@@ -65,7 +67,7 @@ class DurableSnapshotTests(unittest.TestCase):
             receipt["body_sha256"] = "wrong"
         out = io.BytesIO()
         with zipfile.ZipFile(out, "w") as archive:
-            for name, value in (("report.json", json.dumps(report)), ("metadata.json", meta_bytes),
+            for name, value in (("report.json", report_bytes), ("metadata.json", meta_bytes),
                                 ("report.txt", body), ("report.html", html)):
                 archive.writestr(name, value)
             if delivered:

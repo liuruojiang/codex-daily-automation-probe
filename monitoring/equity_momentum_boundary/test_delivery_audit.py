@@ -1,6 +1,7 @@
 """Adversarial regression checks for snapshot isolation and delivery workflow."""
 
 import copy
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -39,6 +40,7 @@ class SnapshotDeliveryAuditTests(unittest.TestCase):
         metadata = json.loads(written["metadata.json"])
         self.assertEqual(metadata["body"], written["report.txt"])
         self.assertEqual(metadata["html_body"], written["report.html"])
+        self.assertEqual(metadata["report_sha256"], hashlib.sha256(written["report.json"].encode("utf-8")).hexdigest())
         return report, metadata
 
     def assert_rejected(self, candidate):
@@ -143,8 +145,10 @@ class WorkflowDeliveryAuditTests(unittest.TestCase):
                 self.assertNotIn("continue-on-error:", block)
         positions = [self.workflow.index("- name: " + name) for name in names]
         self.assertEqual(positions, sorted(positions))
-        self.assertIn("scripts/send_report.py artifacts/metadata.json", self.step(names[0]))
-        self.assertIn("--receipt artifacts/delivery-receipt.json", self.step(names[0]))
+        self.assertIn("weekly_delivery.py artifacts/metadata.json", self.step(names[0]))
+        self.assertIn("GH_TOKEN: ${{ github.token }}", self.step(names[0]))
+        self.assertIn("contents: write", self.workflow)
+        self.assertIn("name: equity-momentum-boundary-${{ github.run_id }}-${{ github.run_attempt }}", self.workflow)
         self.assertIn("--previous-status .monitor-state/restore.json", self.step("Build weekly report metadata"))
 
     def test_ci_runs_real_unit_tests_on_python311_before_building_or_sending(self):

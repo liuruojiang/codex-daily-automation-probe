@@ -14,6 +14,10 @@ on:
         description: "Send the validated weekly report through the existing daily-report mailer"
         type: boolean
         default: true
+      verify_delivery_store:
+        description: "检查防重复发送记录（不发邮件）"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -27,12 +31,17 @@ jobs:
   monitor:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
     env:
       TZ: Asia/Shanghai
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -58,9 +67,16 @@ jobs:
           REPORT_LABEL: ${{ github.event_name == 'push' && '审计修订重发' || '' }}
         run: python monitoring/equity_momentum_boundary/monitor.py --output-dir artifacts --previous-report .monitor-state/report.json --previous-status .monitor-state/restore.json --report-label "$REPORT_LABEL"
 
+      - name: Verify isolated no-mail delivery storage
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.send_email == false && inputs.verify_delivery_store == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python monitoring/equity_momentum_boundary/probe_delivery_store.py --output artifacts/delivery-store-probe.json
+
       - name: Send through the existing daily-report mailer
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_email != false }}
         env:
+          GH_TOKEN: ${{ github.token }}
           MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
@@ -68,13 +84,13 @@ jobs:
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
-        run: python scripts/send_report.py artifacts/metadata.json --receipt artifacts/delivery-receipt.json
+        run: python monitoring/equity_momentum_boundary/weekly_delivery.py artifacts/metadata.json
 
       - name: Upload weekly report artifact
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: equity-momentum-boundary-${{ github.run_id }}
+          name: equity-momentum-boundary-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/
           if-no-files-found: warn
           retention-days: 90

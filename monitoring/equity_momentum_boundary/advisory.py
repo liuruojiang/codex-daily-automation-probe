@@ -38,6 +38,7 @@ def _valid_core(item):
 
 
 def build_advisory(report, previous=None):
+    from weekly_view import market_lines, monthly_update, valid_market, valid_vix
     core = _mapping(report.get("core"))
     context = _mapping(report.get("supplemental"))
     market = _mapping(context.get("sp500_price_momentum"))
@@ -97,10 +98,7 @@ def build_advisory(report, previous=None):
     except (KeyError, TypeError, ValueError, UnboundLocalError):
         pass
     usable = complete and core_fresh and market_fresh and all(number(v) and v > -1 for v in (m1, m3, m12)) and number(market.get("price")) and market["price"] > 0
-    vix_aligned = (vix_fresh and vix.get("as_of") == market.get("as_of")
-                   and number(vix.get("value")) and vix["value"] > 0
-                   and number(vix.get("weekly_change")) and vix["value"] - vix["weekly_change"] > 0
-                   and number(vix.get("one_year_percentile")) and 0 <= vix["one_year_percentile"] <= 1)
+    vix_aligned = valid_vix(report, market, vix)
     stress = vix_aligned and vix["one_year_percentile"] >= .8
     reversal = number(m1) and number(m12) and m1 * m12 < 0
     if not usable:
@@ -128,8 +126,6 @@ def build_advisory(report, previous=None):
         conclusion += "估值方向存在分歧，不作一致高估或低估判断。"
     if usable and not vix_aligned:
         conclusion += "波动证据缺失、异常或日期不齐，不能确认风险已经缓和。"
-    from weekly_view import market_lines, monthly_update
-
     evidence = ["月度慢指标：先对月度数据取12个月平均，再与过去10年/20年比较；不随本周涨跌即时更新。"
                 "100%表示平滑估值位于窗口最高位置，不是下跌概率；只要仍居最高，数值就可能持续为100%。"]
     for key in VARIANTS:
@@ -192,7 +188,7 @@ def build_advisory(report, previous=None):
     if previous and provenance.get("run_url"):
         changes.append("上期已发送归档：" + provenance["run_url"])
     price, delta = market.get("price"), market.get("weekly_change")
-    if number(price) and number(delta) and price - delta > 0:
+    if valid_market(report, market) and number(delta) and number(price - delta) and price - delta > 0:
         changes.append(f"S&P 500较约7日前可用交易日变化{delta / (price - delta):+.2%}。")
     changes.append("日频的一年分位与核心10年/20年月度分位不同，不可替换或混用。")
 

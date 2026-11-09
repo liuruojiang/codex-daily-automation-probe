@@ -11,6 +11,7 @@ Ibbotson long-bond series is not distributed as a live feed here.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import math
@@ -431,8 +432,12 @@ def _build_sp500_context(series: pd.Series, source: SourceResult) -> dict[str, A
         "momentum_6m": _safe_float(latest / series.iloc[-127] - 1) if len(series) >= 127 else None,
         "momentum_12m": _safe_float(latest / series.iloc[-253] - 1) if len(series) >= 253 else None,
     }
-    log_return = (series / series.shift(1)).apply(lambda x: math.log(x) if x > 0 else float("nan"))
-    result["realized_vol_20d_annualized"] = _safe_float(log_return.tail(20).std(ddof=1) * math.sqrt(252)) if len(log_return) >= 20 else None
+    log_return = (series / series.shift(1)).apply(lambda x: math.log(x) if pd.notna(x) and math.isfinite(float(x)) and x > 0 else float("nan"))
+    price_window, return_window = series.tail(21), log_return.tail(20)
+    complete_window = (len(price_window) == 21 and len(return_window) == 20
+                       and all(pd.notna(value) and math.isfinite(float(value)) and value > 0 for value in price_window)
+                       and all(pd.notna(value) and math.isfinite(float(value)) for value in return_window))
+    result["realized_vol_20d_annualized"] = _safe_float(return_window.std(ddof=1) * math.sqrt(252)) if complete_window else None
     result["recent_reversal_flag"] = bool(
         result["momentum_12m"] is not None
         and result["momentum_1m"] is not None
@@ -768,9 +773,10 @@ def main(argv: Iterable[str] | None = None) -> int:
     report["overall_state"] = report["advisory"]["current_core_state"]
     text_body = render_text(report)
     html_body = render_html(report)
-    (args.output_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    (args.output_dir / "report.txt").write_text(text_body, encoding="utf-8")
-    (args.output_dir / "report.html").write_text(html_body, encoding="utf-8")
+    report_json = json.dumps(report, ensure_ascii=False, indent=2)
+    (args.output_dir / "report.json").write_text(report_json, encoding="utf-8", newline="\n")
+    (args.output_dir / "report.txt").write_text(text_body, encoding="utf-8", newline="\n")
+    (args.output_dir / "report.html").write_text(html_body, encoding="utf-8", newline="\n")
     (args.output_dir / "metadata.json").write_text(
         json.dumps(
             {
@@ -778,12 +784,14 @@ def main(argv: Iterable[str] | None = None) -> int:
                 "body": text_body,
                 "html_body": html_body,
                 "attachment": None,
+                "report_sha256": hashlib.sha256(report_json.encode("utf-8")).hexdigest(),
             },
             ensure_ascii=False,
             indent=2,
         )
         + "\n",
         encoding="utf-8",
+        newline="\n",
     )
     print(text_body)
     return 0
