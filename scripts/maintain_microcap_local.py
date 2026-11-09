@@ -22,8 +22,9 @@ import uuid
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 
-RUNTIME = 'c8d15e418c7003021866cd2aa4984e3e9a7103b6'
-BOOTSTRAP_RUNTIMES = {RUNTIME, 'a4adeacca194d5add4cfea0456c27e9da5444e45'}
+RUNTIME = '24a41867408ebee570349de46d3ae37bcff2a6d4'
+BOOTSTRAP_RUNTIMES = {RUNTIME, 'c8d15e418c7003021866cd2aa4984e3e9a7103b6',
+                      'a4adeacca194d5add4cfea0456c27e9da5444e45'}
 CACHE = '.microcap_index_cache/'
 
 
@@ -106,6 +107,13 @@ def validate_runtime(root, protected_root):
     actual = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
     if actual != RUNTIME:
         raise ValueError('Native maintenance runtime differs from the reviewed exact commit')
+    config=json.loads((Path(__file__).resolve().parents[1]/'config/microcap_local_producer_runtime.json').read_bytes())
+    if (config.get('schema')!='microcap_local_source_runtime_v1' or config.get('runtime_sha')!=actual
+            or config.get('role')!='source_preparation_only' or config.get('max_candidates')!=300):
+        raise ValueError('Local source producer role or runtime config differs')
+    for name,digest in config['calculation_sources'].items():
+        if sha(bound(root,name).read_bytes().replace(b'\r\n',b'\n'))!=digest:
+            raise ValueError('Local source producer calculation source differs')
     dirty = subprocess.check_output(['git', '-C', str(root), 'diff', '--name-only', 'HEAD'], text=True).splitlines()
     if any(not name.startswith((CACHE, 'outputs/')) for name in dirty):
         raise ValueError('Native runtime has executable edits')
@@ -467,7 +475,8 @@ def main(argv=None):
                 # source history can remain cached across weekly roster changes.
                 metadata_native.MARKER = scoped_metadata_marker(root,scope_sha)
                 metadata_native.refresh_metadata_after_notice(root=root, freq_mod=freq_scope, target=args.as_of,
-                    notice_result={'authority_changed': True}, consumed_through=baseline['reference_consumed_through'])
+                    notice_result={'authority_changed': True}, consumed_through=baseline['reference_consumed_through'],
+                    scoped_preparation=True)
             finally:
                 metadata_native.MARKER = original_marker
         metadata = journal.run('metadata', metadata_action, metadata_verify) if notice['status'] == current_names['status'] == 'complete' else {'status': 'waiting_for_notice_or_current_names'}

@@ -89,6 +89,25 @@ def test_current_name_receipt_cannot_be_redated_or_reused_with_unknown_source(tm
     with pytest.raises(ValueError):local.current_names_proof(tmp_path,'2000-01-04')
 
 
+@pytest.mark.parametrize('fault',[None,'runtime','role','source'])
+def test_preparation_runtime_requires_the_pinned_role_and_source_bytes(tmp_path,monkeypatch,fault):
+    code=tmp_path/'orchestrator';(code/'scripts').mkdir(parents=True);(code/'config').mkdir()
+    root=tmp_path/'runtime';root.mkdir();protected=tmp_path/'protected';protected.mkdir()
+    (root/'native.py').write_bytes(b'original native fixture')
+    cfg=dict(schema='microcap_local_source_runtime_v1',runtime_sha=local.RUNTIME,
+             role='source_preparation_only',max_candidates=300,
+             calculation_sources={'native.py':local.sha(b'original native fixture')})
+    if fault=='runtime':cfg['runtime_sha']='0'*40
+    elif fault=='role':cfg['role']='formal_deployment'
+    elif fault=='source':(root/'native.py').write_bytes(b'changed code')
+    (code/'config/microcap_local_producer_runtime.json').write_bytes(local.encode(cfg))
+    monkeypatch.setattr(local,'__file__',str(code/'scripts/maintain_microcap_local.py'))
+    monkeypatch.setattr(local.subprocess,'check_output',lambda args,**kw:local.RUNTIME+'\n' if 'rev-parse' in args else '')
+    if fault is None:local.validate_runtime(root,protected)
+    else:
+        with pytest.raises(ValueError):local.validate_runtime(root,protected)
+
+
 def test_corrupt_completed_stage_does_not_refresh_over_the_evidence(tmp_path):
     root = tmp_path / 'runtime';root.mkdir()
     (root / 'data').write_bytes(b'correct')
