@@ -2,11 +2,39 @@ import json
 from pathlib import Path
 import sys
 import zipfile
+from types import SimpleNamespace
 
 import pytest
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import microcap_scoped_inputs as package
+
+
+def test_immutable_reader_and_producer_contract_are_both_required(tmp_path, monkeypatch):
+    calls=[]
+    pin=next(iter(package.REVIEWED_CONSUMERS))
+    def verify(root, commit):
+        calls.append(('release',commit))
+    def contract(root, manifest):
+        calls.append(('sources',manifest))
+        if manifest.get('changed'):
+            raise ValueError('Unreviewed source change')
+    monkeypatch.setitem(sys.modules,'scripts.top100_delivery',SimpleNamespace(verify_candidate_release=verify))
+    monkeypatch.setitem(sys.modules,'scripts.scoped_source_consumer',SimpleNamespace(validate_source_contract=contract))
+    package.validate_consumer(tmp_path,{},pin)
+    assert calls==[('release',pin),('sources',{})]
+    with pytest.raises(ValueError,match='Unreviewed source change'):
+        package.validate_consumer(tmp_path,{'changed':True},pin)
+    with pytest.raises(ValueError,match='exact reviewed'):
+        package.validate_consumer(tmp_path,{},'0'*40)
+
+
+def test_modified_reader_is_rejected_before_source_adoption(tmp_path,monkeypatch):
+    def reject(*args):raise ValueError('Executable code differs from candidate commit')
+    monkeypatch.setitem(sys.modules,'scripts.top100_delivery',SimpleNamespace(verify_candidate_release=reject))
+    monkeypatch.setitem(sys.modules,'scripts.scoped_source_consumer',SimpleNamespace(validate_source_contract=lambda *a:pytest.fail('Release must pass first')))
+    with pytest.raises(ValueError,match='Executable code differs'):
+        package.validate_consumer(tmp_path,{},next(iter(package.REVIEWED_CONSUMERS)))
 
 
 def archive(tmp_path, change=None):

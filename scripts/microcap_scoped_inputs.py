@@ -25,6 +25,22 @@ from microcap_local_due import completed
 SCHEMA = 'microcap_scoped_source_inputs_v1'
 PREFIXES = tuple(CACHE + p + '/' for p in ('prices_raw', 'share_change', 'trade_status', 'share_sources', 'return_basis'))
 MAX_BYTES = 1024 * 1024 * 1024
+REVIEWED_CONSUMERS = frozenset({'33062463d66afbff0c4342e3dd9203fa3117d865'})
+
+
+def validate_consumer(root, manifest, actual):
+    """Keep producer identity separate from an immutable, reviewed reader."""
+    if actual != RUNTIME and actual not in REVIEWED_CONSUMERS:
+        raise ValueError('Scoped source consumer requires the exact reviewed native runtime')
+    if actual in REVIEWED_CONSUMERS:
+        from scripts.top100_delivery import verify_candidate_release
+        from scripts.scoped_source_consumer import validate_source_contract
+        verify_candidate_release(root, actual)
+        validate_source_contract(root, manifest)
+    else:
+        from scripts.stock_input_contract import source_fingerprint
+        if source_fingerprint(root) != manifest['producer_context']['native_sources']:
+            raise ValueError('Scoped input calculation source differs at consumer')
 
 
 def permitted(name):
@@ -203,14 +219,13 @@ def stage_inputs(root, manifest, bodies, identity, trusted_files, verify_native)
 def install(root, bundle, expected_sha, not_after):
     root=Path(root).resolve()
     actual=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
-    if actual!=RUNTIME: raise ValueError('Scoped source consumer requires the exact reviewed native runtime')
+    if actual!=RUNTIME and actual not in REVIEWED_CONSUMERS:
+        raise ValueError('Scoped source consumer requires the exact reviewed native runtime')
     manifest,bodies,digest=read_bundle(bundle,not_after,expected_sha)
     sys.path.insert(0,str(root))
     import microcap_top100_mom16_biweekly_live_v2_0 as v2
-    from scripts.stock_input_contract import source_fingerprint
     from maintain_microcap_local import price_proof,share_proof,ratio_proof
-    if source_fingerprint(root)!=manifest['producer_context']['native_sources']:
-        raise ValueError('Scoped input calculation source differs at consumer')
+    validate_consumer(root,manifest,actual)
     target=manifest['target'];symbols=manifest['symbols']
     master=v2.base_mod.freq_mod.load_security_master()
     source_rows={r['symbol']:r for r in csv.DictReader(io.StringIO(bodies['maintenance-evidence/master.csv'].decode('utf-8-sig')))}
