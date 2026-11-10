@@ -1,7 +1,7 @@
 {
   "schema": "microcap_scoped_rebalance_runtime_v1",
   "enabled": false,
-  "runtime_sha": "6b56e6902799aa189a0bbc42c18d6506dcc2a04e",
+  "runtime_sha": "872abe41d48f818363d879cdf98b297d230377b4",
   "producer_sha": "be89e87a0da728b27be0308d7c4c9e57a212b815",
   "whole_seed": null,
   "weekly_roster": {

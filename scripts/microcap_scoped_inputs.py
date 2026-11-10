@@ -26,7 +26,8 @@ SCHEMA = 'microcap_scoped_source_inputs_v1'
 PREFIXES = tuple(CACHE + p + '/' for p in ('prices_raw', 'share_change', 'trade_status', 'share_sources', 'return_basis'))
 MAX_BYTES = 1024 * 1024 * 1024
 REVIEWED_CONSUMERS = frozenset({'33062463d66afbff0c4342e3dd9203fa3117d865',
-    '564d681308dd7593ffadb075d4dd5291e4c4e89c','6b56e6902799aa189a0bbc42c18d6506dcc2a04e'})
+    '564d681308dd7593ffadb075d4dd5291e4c4e89c','6b56e6902799aa189a0bbc42c18d6506dcc2a04e',
+    '872abe41d48f818363d879cdf98b297d230377b4'})
 
 
 def validate_consumer(root, manifest, actual):
