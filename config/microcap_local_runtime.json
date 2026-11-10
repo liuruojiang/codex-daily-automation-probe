@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "ad4de441d35442616f91aa613146ffdf8cd479f3",
+  "runtime_sha": "c8d15e418c7003021866cd2aa4984e3e9a7103b6",
+  "changes": {
+    "scripts/st_notice_boundary_review.py": [
+      "036c84451add80a4cde5ac3bf98cf57a20b7c7ff1759b4557b5c8aa67632310b",
+      "0c685378c213210d3fc17614c2488fb3466fb881f5008422439196597430d0a7"
+    ],
+    "scripts/share_unchanged_tail.py": [
+      "f4bf84f795b83817f8113c83ff649545566da51d2fbff9fcf17f194da53bf0f7",
+      "1266562cb77158266cbba7b1c99b732b6ac8b57002b39b6bab204ed6c3b8f202"
+    ],
+    "scripts/share_change_source.py": [
+      "98f8fd4ab69a62bc8b340875fbb9d1f71ff5f974d5310c392419561450225df3",
+      "2850b7ebe49bbdd2bbbb577786017e8b54163d2f61d9784c4c75dfef792e72e7"
+    ],
+    "scripts/realtime_state_bundle.py": [
+      "04ac107f151fb0f9b6d8df9b1da398fe1c02742bcdccc2827606820d1711d9b2",
+      "aa12c7620440238ffabd569ae99a6ef896ecfe120c325910ce390cefffb6fa43"
+    ],
+    "scripts/exchange_calendar.py": [
+      "9eb3ef9dee3298ab0ec5d7792dd607d3a1a07c55c93a1442af1779c44ca9067b",
+      "8c5f82f72fee80b8ffb5ca381bb894bdf82eeb267678800ba972bf9bad64abcb"
+    ]
+  }
+}

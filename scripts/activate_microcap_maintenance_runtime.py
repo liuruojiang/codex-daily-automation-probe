@@ -14,6 +14,7 @@ import subprocess
 
 SOURCE = "scripts/st_notice_boundary_review.py"
 DATED_SHARE_SOURCES = {SOURCE, "scripts/share_unchanged_tail.py", "scripts/share_change_source.py", "scripts/realtime_state_bundle.py"}
+LOCAL_WINDOW_SOURCES = DATED_SHARE_SOURCES | {"scripts/exchange_calendar.py"}
 
 
 def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path) -> dict:
@@ -25,7 +26,7 @@ def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path
     old, new = config["baseline_sha"], config["runtime_sha"]
     if old == new or any(not isinstance(v, str) or re.fullmatch("[0-9a-f]{40}", v) is None for v in (old, new)):
         raise ValueError("Maintenance review requires distinct exact commits")
-    if set(config["changes"]) not in ({SOURCE}, DATED_SHARE_SOURCES):
+    if set(config["changes"]) not in ({SOURCE}, DATED_SHARE_SOURCES, LOCAL_WINDOW_SOURCES):
         raise ValueError("Maintenance review is limited to the native boundary and paired dated-share continuation")
     for pair in config["changes"].values():
         if (not isinstance(pair, list) or len(pair) != 2 or pair[0] == pair[1]

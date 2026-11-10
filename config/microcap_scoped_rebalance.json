@@ -1,0 +1,12 @@
+{
+  "schema": "microcap_scoped_rebalance_runtime_v1",
+  "enabled": false,
+  "runtime_sha": "6b56e6902799aa189a0bbc42c18d6506dcc2a04e",
+  "producer_sha": "be89e87a0da728b27be0308d7c4c9e57a212b815",
+  "whole_seed": null,
+  "weekly_roster": {
+    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-20261109-63c7b16d/microcap-weekly-roster-20261109.zip",
+    "sha256": "a369c67c4a3d167fec5744fe0017b7e6acb370055665afd0f2472287ee0b623c",
+    "date": "2026-11-09"
+  }
+}
