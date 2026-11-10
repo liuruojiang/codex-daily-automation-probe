@@ -306,12 +306,28 @@ jobs:
             ${{ runner.temp }}/scoped-whole-recovery-*/*.log
             ${{ runner.temp }}/scoped-whole-recovery-*/*.json
             scoped-source-state/runs
+            scoped-source-state/bootstrap.json
+            scoped-source-state/reference-proxy.csv
             scoped-prepare/commands
             scoped-prepare/receipts
             scoped-prepare/local-source-download.json
             scoped-prepare/prepared.json
+            scoped-prepare/sources.zip
             scoped-prepare/consumer-config.json
             scoped-prepare/boundaries
             scoped-delivery
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Preserve failed scoped producer sources
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-scoped-producer-recovery-${{ inputs.task }}
+          path: |
+            scoped-source-state/runtime/.microcap_index_cache
+            scoped-source-state/bootstrap.json
+            scoped-source-state/reference-proxy.csv
+            !scoped-source-state/runtime/.microcap_index_cache/**/*.lock
+          include-hidden-files: true
           if-no-files-found: warn
           retention-days: 90

@@ -251,3 +251,20 @@ SHA-256为`3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42`。
 正式完整性检查已通过，恢复种子配置保持准确哈希。对应80项来源读者、种子配置、
 完整恢复回归通过。发布上传及两次main云端接力仍待实际结果；scoped enabled仍
 为false，owner仍cloud，本地任务仍PAUSED。不得仅凭这些本地结果提前启用。
+
+### 云端失败后的原始来源保留
+
+调仓源码仍为固定入口，云端失败后的修复由原09:00/11:00本地Codex任务接续。
+本地already_complete/not_due仅控制是否重复采集，不能忽略最近实际调仓的失败或
+未完成handoff；先核对成品和活动进程，再诊断及复用已成功阶段。
+
+正常证据另保留`scoped-prepare/sources.zip`、bootstrap和原始reference proxy。
+失败或取消时，单独发布`microcap-scoped-producer-recovery-<task>`，保留生产者
+`.microcap_index_cache`及原始bootstrap/reference；显式允许隐藏数据目录，路径
+只含来源数据，不含Git凭据目录，排除旧`.lock`所有权文件。完整成功时的whole
+成品继续走原发布门槛；失败来源缓存本身不构成完成证明。
+
+恢复时保留原运行和原始HTTP时钟，在独立准确源码角色及同一经验证完整基线下
+核对数据、名单和reference绑定；成功步骤先原生读回再复用。原调仓日市值边界
+须取已保留的该日快照，不用今日快照冒充。不能盲还原旧锁或把失败回执改成功。
+该证据补全另有25项调度/原日更器回归通过，15:10的4774966d日更器不变。
