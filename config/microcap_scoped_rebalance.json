@@ -3,7 +3,11 @@
   "enabled": false,
   "runtime_sha": "872abe41d48f818363d879cdf98b297d230377b4",
   "producer_sha": "be89e87a0da728b27be0308d7c4c9e57a212b815",
-  "whole_seed": null,
+  "whole_seed": {
+    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-872abe41/microcap-whole-delivery-state-close-20261110.zip",
+    "sha256": "3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42",
+    "date": "2026-11-10"
+  },
   "weekly_roster": {
     "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-20261109-63c7b16d/microcap-weekly-roster-20261109.zip",
     "sha256": "a369c67c4a3d167fec5744fe0017b7e6acb370055665afd0f2472287ee0b623c",
