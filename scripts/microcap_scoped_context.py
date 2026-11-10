@@ -16,7 +16,7 @@ import sys
 import zipfile
 
 from prepare_microcap_local import atomic, encode, sha
-from maintain_microcap_local import bound, RUNTIME
+from maintain_microcap_local import bound, RUNTIME, SOURCE_RUNTIMES
 from microcap_scoped_inputs import read_bundle, REVIEWED_CONSUMERS, MAX_BYTES
 
 SCHEMA = 'microcap_scoped_original_context_v1'
@@ -48,11 +48,13 @@ def permitted(name):
     if (not isinstance(name,str) or p.is_absolute() or '..' in p.parts or ':' in name
             or '\\' in name or p.as_posix()!=name):
         return False
-    if name in (RECEIPT, POINTER, '.microcap_index_cache/current_st.csv',
+    if name in (RECEIPT, POINTER, '.microcap_index_cache/current_st.csv','.microcap_index_cache/active_universe.csv',
                 '.microcap_index_cache/security_master.csv', '.microcap_index_cache/st_notice_refresh_proof.json'):
         return True
     if name.startswith(NAMES):
-        return len(p.parts)==3 and re.fullmatch(r'\d{4}-\d{2}-\d{2}\.json',p.name) is not None
+        return ((len(p.parts)==3 and re.fullmatch(r'\d{4}-\d{2}-\d{2}\.json',p.name) is not None)
+                or (len(p.parts)==4 and p.parts[2]=='observations'
+                    and re.fullmatch(r'[0-9a-f]{64}\.universe\.csv',p.name) is not None))
     if name.startswith('.microcap_index_cache/security_meta/'):
         return len(p.parts)==3 and re.fullmatch(r'\d{6}\.json',p.name) is not None
     return (name.startswith('.microcap_index_cache/st_notice_sources/')
@@ -75,7 +77,7 @@ def export(source, reader, config_path, previous, destination):
     source=Path(source).resolve();config=json.loads(Path(config_path).read_bytes())
     native=load_reader(reader)
     source_manifest,_,_=read_bundle(config['bundle'],'9999-12-31',config['bundle_sha256'])
-    _,name=native.checked_producer(source,config,source_manifest)
+    _,name_path=native.checked_producer(source,config,source_manifest)
     chain,specs=native.original_notice_chain(source,previous,source_manifest['target'])
     receipt_raw=Path(config['producer_metadata_receipt']).read_bytes()
     receipt=json.loads(receipt_raw)
@@ -92,8 +94,14 @@ def export(source, reader, config_path, previous, destination):
                 raise ValueError('Original notice archives have conflicting object identities')
             files[name]=digest
     from scripts.st_notice_refresh import FRESHNESS
-    for item in (name,POINTER,FRESHNESS,'.microcap_index_cache/security_master.csv'):
+    for item in (name_path,POINTER,FRESHNESS,'.microcap_index_cache/security_master.csv'):
         files[item]=sha(bound(source,item).read_bytes())
+    names=json.loads(bound(source,name_path).read_bytes())
+    if names.get('schema')=='current_publication_names_v2':
+        item='.microcap_index_cache/active_universe.csv'
+        files[item]=sha(bound(source,item).read_bytes())
+        if names.get('publication_name_scope')=='maintained_plus_ST_conflicts':
+            prior=names['scoped_observation']['prior_universe'];files[prior['path']]=prior['sha256']
     bodies={name:bound(source,name).read_bytes() for name in files}
     bodies[RECEIPT]=receipt_raw;files[RECEIPT]=sha(receipt_raw)
     unsupported=[name for name in files if not permitted(name)]
@@ -129,7 +137,7 @@ def read_context(path,expected,*,lazy=False):
                 or any(i.file_size>32*1024*1024 for i in archive.infolist())):
             raise ValueError('Context archive expands beyond limit')
         manifest=json.loads(archive.read('manifest.json'))
-        if (manifest.get('schema')!=SCHEMA or manifest.get('producer_runtime')!=RUNTIME
+        if (manifest.get('schema')!=SCHEMA or manifest.get('producer_runtime') not in SOURCE_RUNTIMES
                 or manifest.get('final_strategy_delivery') is not False
                 or manifest.get('original_observation_clocks_preserved') is not True):
             raise ValueError('Context identity or scope differs')
@@ -145,7 +153,7 @@ def read_context(path,expected,*,lazy=False):
 def restore(root,reader,bundle,expected,source_bundle,config_out,*,resume=False):
     root=Path(root).resolve()
     actual=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
-    if actual!=RUNTIME:
+    if actual not in SOURCE_RUNTIMES:
         raise ValueError('Original context requires the exact producer-code checkout')
     if any((root/'outputs'/n).exists() for n in (
             'microcap_top100_mom16_biweekly_live_v2_0_base_proxy_meta.json',

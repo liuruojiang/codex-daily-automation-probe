@@ -10,6 +10,7 @@ import sys
 import time
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
+from microcap_local_http import pooled_public_gets
 
 
 @contextmanager
@@ -57,7 +58,7 @@ def worker(root, state, slot, context_path):
     journal = local.Journal(state / 'runs' / target, root, context)
     status_path = path.parent / f'worker-{slot}.json'
     failures = {}
-    with writer_lock(state / f'worker-slot-{slot}.lock'):
+    with writer_lock(state / f'worker-slot-{slot}.lock'),pooled_public_gets():
         for number, symbol in enumerate(symbols, 1):
             anchor = local.price_seed_anchor(root, symbol, baseline) if symbol in baseline['initialized_symbols'] else target
             def price_action():

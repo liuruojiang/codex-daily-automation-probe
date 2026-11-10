@@ -23,8 +23,10 @@ import uuid
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 
-RUNTIME = '63c7b16d77600c4aa9dadf58b86d31e034477e44'
-BOOTSTRAP_RUNTIMES = {RUNTIME, '140b9c192e65a2b36a6b02106496e89f1143a4a6',
+RUNTIME = 'be89e87a0da728b27be0308d7c4c9e57a212b815'
+SOURCE_RUNTIMES = frozenset({RUNTIME,'a016ce27ea86fca1fa0b5199f802b198c0ed99de',
+    '706af7ea9186bdb9b3948738deb5a5afda7a331e','63c7b16d77600c4aa9dadf58b86d31e034477e44'})
+BOOTSTRAP_RUNTIMES = {*SOURCE_RUNTIMES, '140b9c192e65a2b36a6b02106496e89f1143a4a6',
                       '24a41867408ebee570349de46d3ae37bcff2a6d4',
                       'c8d15e418c7003021866cd2aa4984e3e9a7103b6',
                       'a4adeacca194d5add4cfea0456c27e9da5444e45'}
@@ -39,7 +41,7 @@ def bound(root, relative):
     # Native recovery closures can exceed Win32's ordinary path length. Keep
     # the confinement check above, then use the same extended path convention
     # as the native verifier for actual file I/O.
-    if os.name=='nt' and len(str(path))>=248 and not str(path).startswith('\\\\?\\'):
+    if os.name=='nt' and not str(path).startswith('\\\\?\\'):
         return Path('\\\\?\\'+str(path))
     return path
 
@@ -127,14 +129,14 @@ def validate_runtime(root, protected_root):
         raise ValueError('Native runtime has executable edits')
 
 
-def load_pool(path, target):
+def load_pool(path, target, *, run_directory=None):
     path = Path(path)
     summary = json.loads(path.read_bytes())
     if summary.get('schema') != 'microcap_local_screen_preparation_v1' or summary.get('status') != 'PREPARATION_VERIFIED':
         raise ValueError('Scoped maintenance requires a verified preparation roster')
     if not 0 <= (date.fromisoformat(target) - date.fromisoformat(summary['date'])).days <= 7:
         raise ValueError('Weekly preparation roster is stale or from the future')
-    pool_path = Path(summary['run_directory']) / 'candidates.json'
+    pool_path = Path(run_directory if run_directory is not None else summary['run_directory']) / 'candidates.json'
     raw = pool_path.read_bytes()
     if sha(raw) != summary['candidates_sha256']:
         raise ValueError('Candidate roster binding differs')
@@ -371,7 +373,7 @@ def observation_floor(now=None):
     return now.astimezone(ZoneInfo('Asia/Shanghai')).replace(hour=9, minute=0, second=0, microsecond=0)
 
 
-def current_names_proof(root, target, required_asof=None):
+def current_names_proof(root, target, required_asof=None, symbols=None):
     """Current name cross-check only; native notice history still proves PIT ST."""
     name=CACHE+'current_st.csv';receipt=CACHE+'local_current_names/'+target+'.json'
     record=json.loads(bound(root,receipt).read_bytes())
@@ -386,26 +388,141 @@ def current_names_proof(root, target, required_asof=None):
             or not rows or record.get('count')!=len(rows)
             or len({r['code'] for r in rows})!=len(rows)):
         raise ValueError('Current-name native snapshot identity or observation differs')
-    return hashes(root,[name,receipt])
+    for key in ('st_observed_at','universe_observed_at'):
+        stamp=datetime.fromisoformat(record[key])
+        if stamp.tzinfo is None or not earliest<=stamp<=observed:
+            raise ValueError('Current name sources do not share the required fresh observation window')
+    universe=CACHE+'active_universe.csv'
+    if (record.get('schema')!='current_publication_names_v2'
+            or record.get('universe_sha256')!=sha(bound(root,universe).read_bytes())):
+        raise ValueError('Current publication universe observation is missing or changed')
+    count=validate_publication_names(root)
+    if record.get('universe_count')!=count:raise ValueError('Current publication name coverage differs')
+    if record.get('publication_name_scope')!='maintained_plus_ST_conflicts':
+        raise ValueError('Current publication names require an explicit maintained-pool scope')
+    files=[name,receipt,universe]
+    if record.get('publication_name_scope')=='maintained_plus_ST_conflicts':
+        witness=record['scoped_observation'];prior=witness['prior_universe']
+        if prior['path']!=CACHE+'local_current_names/observations/'+prior['sha256']+'.universe.csv':
+            raise ValueError('Original publication name snapshot has another file role')
+        previous=bound(root,prior['path']).read_bytes()
+        if sha(previous)!=prior['sha256']:raise ValueError('Original publication name snapshot changed')
+        old=pd_read_names(previous);quotes={r['code']:r for r in witness['quote_rows']}
+        import re
+        conflicts={r['code'] for r in rows if re.fullmatch('[036][0-9]{5}',r['code']) and old.get(r['code'])!=r['name'].strip()}
+        if (len(witness['maintained_symbols'])!=300 or len(set(witness['maintained_symbols']))!=300
+                or (symbols is not None and set(witness['maintained_symbols'])!=set(symbols))
+                or set(quotes)!=set(witness['requested_symbols']) or len(quotes)!=len(witness['quote_rows'])
+                or set(witness['conflict_symbols'])!=conflicts or len(witness['conflict_symbols'])!=len(conflicts)
+                or set(quotes)!=set(witness['maintained_symbols'])|set(witness['conflict_symbols'])):
+            raise ValueError('Scoped publication name observation coverage differs')
+        for row in quotes.values():
+            fetched=datetime.fromisoformat(row['fetched_at'])
+            if (fetched.tzinfo is None or not earliest<=fetched<=observed
+                    or row.get('quote_source')!='tencent_batch_free' or not row.get('name','').strip()):
+                raise ValueError('Scoped native name quote is stale or has an unknown source')
+        old.update({s:r['name'].strip() for s,r in quotes.items()})
+        if old!=pd_read_names(bound(root,universe).read_bytes()):
+            raise ValueError('Publication names changed outside the witnessed scope')
+        files.append(prior['path'])
+    return hashes(root,files)
 
 
-def refresh_current_names(root, target, native_fetch):
+def validate_publication_names(root):
+    rows=list(csv.DictReader(io.StringIO(bound(root,CACHE+'active_universe.csv').read_text(encoding='utf-8-sig'))))
+    current=list(csv.DictReader(io.StringIO(bound(root,CACHE+'current_st.csv').read_text(encoding='utf-8-sig'))))
+    mapping={r['code']:r['name'].strip() for r in rows}
+    import re
+    if (not rows or len(mapping)!=len(rows) or any(not re.fullmatch('[0-9]{6}',s) or not n for s,n in mapping.items())
+            or not current or any(r['code'] not in mapping or mapping[r['code']]!=r['name'].strip()
+                for r in current if re.fullmatch('[036][0-9]{5}',r['code']))):
+        raise ValueError('Current name and ST snapshots disagree; refresh the original lightweight name sources')
+    return len(rows)
+
+
+def refresh_current_names(root, target, native_fetch, native_universe_fetch, *, provider_trace=None,scoped_observation=None):
     # Keep immutable prior observations before the target's current pointer is replaced.
     current=bound(root,CACHE+'current_st.csv')
     receipt=bound(root,CACHE+'local_current_names/'+target+'.json')
     if current.exists() and receipt.exists():
-        for suffix,raw in (('.csv',current.read_bytes()),('.json',receipt.read_bytes())):
+        originals=[('.csv',current.read_bytes()),('.json',receipt.read_bytes())]
+        universe=bound(root,CACHE+'active_universe.csv')
+        if universe.exists():originals.append(('.universe.csv',universe.read_bytes()))
+        for suffix,raw in originals:
             saved=bound(root,CACHE+'local_current_names/observations/'+sha(raw)+suffix)
             if saved.exists() and saved.read_bytes()!=raw: raise ValueError('Immutable current-name observation collision')
             if not saved.exists(): atomic(saved,raw)
     native_fetch(force_refresh=True)
+    st_observed=datetime.now(timezone.utc).isoformat()
+    native_universe_fetch(force_refresh=True)
+    universe_observed=datetime.now(timezone.utc).isoformat()
+    universe_count=validate_publication_names(root)
     raw=bound(root,CACHE+'current_st.csv').read_bytes()
     rows=list(csv.DictReader(io.StringIO(raw.decode('utf-8-sig'))))
     atomic(bound(root,CACHE+'local_current_names/'+target+'.json'),encode(dict(
-        target=target,observed_at=datetime.now(timezone.utc).isoformat(),count=len(rows),
+        schema='current_publication_names_v2',target=target,observed_at=datetime.now(timezone.utc).isoformat(),count=len(rows),
+        st_observed_at=st_observed,universe_observed_at=universe_observed,
+        native_functions=['fetch_current_st_codes','fetch_tencent_realtime_quotes' if scoped_observation is not None else 'fetch_active_universe'],provider_trace=provider_trace or [],
+        publication_name_scope='maintained_plus_ST_conflicts' if scoped_observation is not None else 'full_native_name_snapshot',
+        scoped_observation=scoped_observation,
         cache_sha256=sha(raw),native_source_sha256=sha(bound(root,
             'microcap_top100_mom16_biweekly_live_v2_0.py').read_bytes().replace(b'\r\n',b'\n')),
+        universe_count=universe_count,universe_sha256=sha(bound(root,CACHE+'active_universe.csv').read_bytes()),
         semantics='native_current_name_cross_check_not_PIT_ST_certification')))
+
+
+def refresh_native_current_names(root,target,native,symbols,quote_fetch):
+    from scripts import bounded_market_data as market
+    original=market.fetch_akshare_frame;trace=[]
+    def observed(method,*args,**kwargs):
+        item=dict(method=method,started_at=datetime.now(timezone.utc).isoformat());trace.append(item)
+        try:
+            frame=original(method,*args,**kwargs)
+            item.update(status='complete',rows=len(frame),frame_sha256=sha(frame.to_csv(index=False).encode('utf-8')))
+            return frame
+        except Exception as exc:
+            item.update(status='failed',error_type=type(exc).__name__)
+            raise
+        finally:item['completed_at']=datetime.now(timezone.utc).isoformat()
+    witness={}
+    def scoped_universe(*,force_refresh):
+        if force_refresh is not True:raise ValueError('Fresh scoped name observations are required')
+        path=bound(root,CACHE+'active_universe.csv')
+        if not path.exists():native.fetch_active_universe(force_refresh=True)
+        previous=path.read_bytes();old=pd_read_names(previous)
+        current=list(csv.DictReader(io.StringIO(bound(root,CACHE+'current_st.csv').read_text(encoding='utf-8-sig'))))
+        import re
+        conflicts=sorted(r['code'] for r in current if re.fullmatch('[036][0-9]{5}',r['code']) and old.get(r['code'])!=r['name'].strip())
+        requested=sorted(set(symbols)|set(conflicts))
+        if len(symbols)!=300 or len(set(symbols))!=300:raise ValueError('Scoped name refresh requires the maintained 300')
+        frame=quote_fetch(requested)
+        rows=json.loads(frame.to_json(orient='records',date_format='iso',force_ascii=False))
+        quotes={r['code']:r for r in rows}
+        if set(quotes)!=set(requested) or len(quotes)!=len(rows) or any(not r.get('name','').strip() for r in rows):
+            raise ValueError('Native scoped name quotes are incomplete; keep the prior publication map')
+        expected=dict(old);expected.update({s:r['name'].strip() for s,r in quotes.items()})
+        if any(expected.get(r['code'])!=r['name'].strip() for r in current if re.fullmatch('[036][0-9]{5}',r['code'])):
+            raise ValueError('Independent native name quotes disagree with the ST board')
+        prior=CACHE+'local_current_names/observations/'+sha(previous)+'.universe.csv'
+        if not bound(root,prior).exists():atomic(bound(root,prior),previous)
+        witness.update(maintained_symbols=sorted(symbols),conflict_symbols=conflicts,requested_symbols=requested,
+            quote_rows=rows,prior_universe=dict(path=prior,sha256=sha(previous)))
+        original_rows=list(csv.DictReader(io.StringIO(previous.decode('utf-8-sig'))))
+        for row in original_rows:row['name']=expected[row['code']]
+        original_rows += [dict(symbol=('sh' if s.startswith('6') else 'sz')+s,name=expected[s],code=s)
+                          for s in requested if s not in old]
+        stream=io.StringIO(newline='');writer=csv.DictWriter(stream,fieldnames=['symbol','name','code']);writer.writeheader();writer.writerows(original_rows)
+        atomic(path,stream.getvalue().encode('utf-8'))
+    market.fetch_akshare_frame=observed
+    try:refresh_current_names(root,target,native.fetch_current_st_codes,scoped_universe,provider_trace=trace,scoped_observation=witness)
+    finally:market.fetch_akshare_frame=original
+
+
+def pd_read_names(raw):
+    rows=list(csv.DictReader(io.StringIO(raw.decode('utf-8-sig'))))
+    mapping={row['code']:row['name'].strip() for row in rows}
+    if not rows or len(rows)!=len(mapping):raise ValueError('Cached publication names have duplicate or missing codes')
+    return mapping
 
 
 def main(argv=None):
@@ -445,7 +562,7 @@ def main(argv=None):
     context = dict(runtime_sha=RUNTIME, native_sources=source_fingerprint(root),
                    observation_owner_date=floor.date().isoformat(), observation_floor=floor.isoformat(),
                    orchestrator_sources={name: sha((Path(__file__).parent / name).read_bytes())
-                      for name in ('maintain_microcap_local.py', 'microcap_local_workers.py', 'prepare_microcap_local.py')},
+                      for name in ('maintain_microcap_local.py', 'microcap_local_workers.py', 'prepare_microcap_local.py','microcap_local_http.py')},
                    orchestrator_sha256=sha(Path(__file__).read_bytes()), target=args.as_of,
                    scope_sha256=scope_sha, master_sha256=sha(bound(root, CACHE + 'security_master.csv').read_bytes()))
     with writer_lock(state / 'writer.lock'):
@@ -467,8 +584,9 @@ def main(argv=None):
                     **({'resume_generation':args.resume_notice_generation,'required_asof':floor}
                        if args.resume_notice_generation else {}))
         notice = journal.run('notice', notice_action, notice_verify)
-        current_names=journal.run('current-names',lambda:refresh_current_names(root,args.as_of,
-            v2.base_mod.fetch_mod.fetch_current_st_codes),lambda:current_names_proof(root,args.as_of,floor))
+        current_names=journal.run('current-names',lambda:refresh_native_current_names(root,args.as_of,v2.base_mod.fetch_mod,
+            symbols,v2.base_mod.fetch_tencent_realtime_quotes),
+            lambda:current_names_proof(root,args.as_of,floor,symbols))
         # Native approved Tencent route has explicit suspension/status evidence.
         # No empty-response fallback or inferred suspension is introduced here.
         os.environ.setdefault('MICROCAP_DAILY_STOCK_PROVIDER', 'tencent')

@@ -19,18 +19,19 @@ import uuid
 import zipfile
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
-from maintain_microcap_local import CACHE, RUNTIME, bound, hashes
+from maintain_microcap_local import CACHE, RUNTIME, SOURCE_RUNTIMES, bound, hashes
 from microcap_local_due import completed
 
 SCHEMA = 'microcap_scoped_source_inputs_v1'
 PREFIXES = tuple(CACHE + p + '/' for p in ('prices_raw', 'share_change', 'trade_status', 'share_sources', 'return_basis'))
 MAX_BYTES = 1024 * 1024 * 1024
-REVIEWED_CONSUMERS = frozenset({'33062463d66afbff0c4342e3dd9203fa3117d865'})
+REVIEWED_CONSUMERS = frozenset({'33062463d66afbff0c4342e3dd9203fa3117d865',
+    '564d681308dd7593ffadb075d4dd5291e4c4e89c','6b56e6902799aa189a0bbc42c18d6506dcc2a04e'})
 
 
 def validate_consumer(root, manifest, actual):
     """Keep producer identity separate from an immutable, reviewed reader."""
-    if actual != RUNTIME and actual not in REVIEWED_CONSUMERS:
+    if actual not in SOURCE_RUNTIMES and actual not in REVIEWED_CONSUMERS:
         raise ValueError('Scoped source consumer requires the exact reviewed native runtime')
     if actual in REVIEWED_CONSUMERS:
         from scripts.top100_delivery import verify_candidate_release
@@ -108,7 +109,7 @@ def read_bundle(bundle, not_after, expected_sha=None):
         if len(names)!=len(set(names)) or 'manifest.json' not in names: raise ValueError('Duplicate or absent archive manifest')
         if sum(i.file_size for i in archive.infolist())>MAX_BYTES: raise ValueError('Scoped input archive expands beyond limit')
         manifest=json.loads(archive.read('manifest.json'))
-        if (manifest.get('schema')!=SCHEMA or manifest.get('runtime_sha')!=RUNTIME
+        if (manifest.get('schema')!=SCHEMA or manifest.get('runtime_sha') not in SOURCE_RUNTIMES
                 or manifest.get('source_inputs_only') is not True
                 or manifest.get('native_ST_refresh_required_at_consumer') is not True
                 or manifest.get('final_strategy_delivery') is not False):
@@ -219,7 +220,7 @@ def stage_inputs(root, manifest, bodies, identity, trusted_files, verify_native)
 def install(root, bundle, expected_sha, not_after):
     root=Path(root).resolve()
     actual=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
-    if actual!=RUNTIME and actual not in REVIEWED_CONSUMERS:
+    if actual not in SOURCE_RUNTIMES and actual not in REVIEWED_CONSUMERS:
         raise ValueError('Scoped source consumer requires the exact reviewed native runtime')
     manifest,bodies,digest=read_bundle(bundle,not_after,expected_sha)
     sys.path.insert(0,str(root))

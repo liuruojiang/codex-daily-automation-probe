@@ -4,7 +4,7 @@ on:
     inputs:
       task:
         type: choice
-        options: [maintenance, rebalance]
+        options: [maintenance, rebalance, scoped_acceptance, scoped_readback]
         default: maintenance
 permissions:
   contents: read
@@ -37,7 +37,10 @@ jobs:
           sys.path.insert(0,'automation/scripts')
           from restore_microcap_scoped_inputs import load_config
           host=load_config('automation/config/microcap_local_maintenance.json')
-          print('host_enabled='+str(os.environ['TASK']!='maintenance' or host['owner']=='cloud').lower())
+          scoped=json.load(open('automation/config/microcap_scoped_rebalance.json'))
+          task=os.environ['TASK']
+          legacy=(task=='maintenance' and host['owner']=='cloud') or (task=='rebalance' and not scoped['enabled'])
+          print('host_enabled='+str(legacy).lower())
           value=json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha']
           assert re.fullmatch('[0-9a-f]{40}',value)
           print('sha='+value)
@@ -155,5 +158,156 @@ jobs:
             legacy/.microcap_index_cache/st_notice_archive_pointer.json
             candidate
             handoff
+          if-no-files-found: warn
+          retention-days: 90
+  scoped:
+    if: inputs.task != 'maintenance'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      TZ: Asia/Shanghai
+      PYTHONDONTWRITEBYTECODE: '1'
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14.4'
+      - name: Read exact scoped maintenance configuration
+        id: config
+        env:
+          TASK: ${{ inputs.task }}
+        run: python -B automation/scripts/microcap_scoped_settings.py --config automation/config/microcap_scoped_rebalance.json --task "$TASK" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        if: steps.config.outputs.run == 'true'
+        with:
+          repository: liuruojiang/microcap
+          ref: ${{ steps.config.outputs.runtime_sha }}
+          path: scoped-consumer
+      - name: Install exact native validation dependencies
+        if: steps.config.outputs.run == 'true'
+        run: python -m pip install 'numpy==2.4.3' 'pandas==2.3.3' requests matplotlib 'akshare==1.18.46' 'baostock==0.9.1'
+      - name: Resolve scoped close and original rebalance schedule
+        if: steps.config.outputs.run == 'true'
+        id: schedule
+        env:
+          TASK: ${{ inputs.task }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os,sys,json
+          from pathlib import Path
+          sys.path.insert(0,str(Path('scoped-consumer').resolve()))
+          from scripts.exchange_calendar import latest_completed_session
+          from scripts.member_period_handoff import schedule
+          target=latest_completed_session().isoformat()
+          value=schedule(Path('scoped-consumer').resolve(),target)
+          run=os.environ['TASK']!='rebalance' or value['is_rebalance']
+          print('run='+str(run).lower());print('date='+target)
+          Path('scoped-schedule.json').write_text(json.dumps(value,indent=2)+'\n')
+          PY
+      - name: Restore verified scoped whole delivery
+        if: steps.schedule.outputs.run == 'true'
+        env:
+          TASK: ${{ inputs.task }}
+          RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
+          TARGET: ${{ steps.schedule.outputs.date }}
+          SEED_URL: ${{ steps.config.outputs.seed_url }}
+          SEED_SHA256: ${{ steps.config.outputs.seed_sha256 }}
+        run: |
+          args=(--root scoped-consumer --runtime-sha "$RUNTIME_SHA" --not-after-date "$TARGET" --bundle "$RUNNER_TEMP/restored-scoped-whole.zip" --receipt scoped-restore.json)
+          if [[ "$TASK" == 'scoped_readback' ]]; then
+            args+=(--require-artifact)
+          else
+            args+=(--fallback-url "$SEED_URL" --fallback-sha256 "$SEED_SHA256")
+          fi
+          python -B automation/scripts/microcap_scoped_whole_recovery.py "${args[@]}"
+      - name: Verify complete restored three-version state without sending
+        if: steps.schedule.outputs.run == 'true' && inputs.task != 'rebalance'
+        working-directory: scoped-consumer
+        run: python -B scripts/top100_delivery.py check
+      - uses: actions/checkout@v6
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        with:
+          repository: liuruojiang/microcap
+          ref: ${{ steps.config.outputs.producer_sha }}
+          path: scoped-source-state/runtime
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*.py
+            /scripts/
+            /data/
+            /.gitattributes
+            /AGENTS.md
+      - name: Restore original verified weekly maintenance roster
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+          ROSTER_SHA256: ${{ steps.config.outputs.roster_sha256 }}
+        run: |
+          python -B automation/scripts/microcap_scoped_settings.py --config automation/config/microcap_scoped_rebalance.json --roster-bundle scoped-weekly-roster.zip
+          python -B automation/scripts/microcap_scoped_roster.py restore --bundle scoped-weekly-roster.zip --sha256 "$ROSTER_SHA256" --date "$TARGET" --out scoped-weekly-roster
+      - name: Prepare current close sources for exactly 300 candidates
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+          RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
+        run: python -B automation/scripts/run_microcap_scoped_rebalance.py prepare --consumer scoped-consumer --consumer-sha "$RUNTIME_SHA" --producer scoped-source-state/runtime --state scoped-source-state --pool scoped-weekly-roster/latest.json --date "$TARGET" --out scoped-prepare --warm-source-config automation/config/microcap_local_maintenance.json
+      - name: Restore previous daily member checkpoint
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+        run: |
+          daily=$(python -c "import json;print(json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha'])")
+          python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha "$daily" --seed-config automation/config/microcap_member_checkpoint.json --not-after-date "$TARGET" --out scoped-previous
+      - name: Earn original formal rebalance and next-session handoff
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+          RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
+        run: python -B automation/scripts/run_microcap_scoped_rebalance.py deliver --consumer scoped-consumer --consumer-sha "$RUNTIME_SHA" --prepared scoped-prepare/prepared.json --current-checkpoint scoped-previous/checkpoint.json --date "$TARGET" --out scoped-delivery
+      - name: Describe verified scoped member checkpoint
+        id: checkpoint
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        run: |
+          daily=$(python -c "import json;print(json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha'])")
+          name=$(python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha "$daily" --describe-checkpoint scoped-delivery/handoff/checkpoint.json)
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Publish verified member checkpoint
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance' && success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.checkpoint.outputs.name }}
+          path: scoped-delivery/handoff/*
+          if-no-files-found: error
+          retention-days: 90
+      - name: Pack verified scoped whole state
+        if: steps.schedule.outputs.run == 'true' && inputs.task != 'scoped_readback'
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+        run: python -B scoped-consumer/scripts/top100_cloud_delivery.py pack --root scoped-consumer --v23-root scoped-consumer --v25-root scoped-consumer --bundle "$RUNNER_TEMP/microcap-whole-delivery-state.zip" --expected-date "$TARGET"
+      - name: Publish verified scoped whole state
+        if: steps.schedule.outputs.run == 'true' && inputs.task != 'scoped_readback' && success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-scoped-whole-v1-${{ steps.config.outputs.runtime_sha }}
+          path: ${{ runner.temp }}/microcap-whole-delivery-state.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve scoped maintenance evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-scoped-maintenance-${{ inputs.task }}
+          path: |
+            scoped-schedule.json
+            scoped-restore.json
+            scoped-source-state/runs
+            scoped-prepare/commands
+            scoped-prepare/prepared.json
+            scoped-prepare/consumer-config.json
+            scoped-prepare/boundaries
+            scoped-delivery
           if-no-files-found: warn
           retention-days: 90

@@ -111,7 +111,7 @@ def test_export_includes_original_predecessor_archive_objects(tmp_path,monkeypat
     name=m.NAMES+'2026-11-09.json'
     base='.microcap_index_cache/st_notice_sources/objects/old-scope.json'
     objects={proof:m.encode({'authority':new}),base:b'original predecessor scope',
-             name:b'original names',m.POINTER:b'original pointer',freshness:b'original clock',
+             name:b'{}',m.POINTER:b'original pointer',freshness:b'original clock',
              '.microcap_index_cache/security_master.csv':b'original master'}
     for path,raw in objects.items():
         dest=source/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(raw)
@@ -131,6 +131,8 @@ def test_export_includes_original_predecessor_archive_objects(tmp_path,monkeypat
     monkeypatch.setitem(sys.modules,'scripts.st_notice_refresh',SimpleNamespace(FRESHNESS=freshness))
     path=tmp_path/'complete.zip'
     result=m.export(source,source,config,old,path)
+    with zipfile.ZipFile(path) as packed:
+        assert packed.read(name)==objects[name]
     manifest,bodies=m.read_context(path,result['sha256'])
     assert observed==[old,new]
     assert bodies[base]==b'original predecessor scope'

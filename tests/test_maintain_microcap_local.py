@@ -67,14 +67,18 @@ def test_current_names_use_native_force_refresh_and_preserve_observation_receipt
         calls.append(kwargs)
         path=local.bound(tmp_path,local.CACHE+'current_st.csv');path.parent.mkdir(parents=True)
         path.write_bytes(b'code,name\n000001,ST example\n')
-    local.refresh_current_names(tmp_path,'2000-01-04',fetch)
-    assert calls==[{'force_refresh':True}]
-    assert len(local.current_names_proof(tmp_path,'2000-01-04'))==2
+    def universe(**kwargs):
+        calls.append(kwargs)
+        local.bound(tmp_path,local.CACHE+'active_universe.csv').write_bytes(b'code,name\n000001,ST example\n')
+    local.refresh_current_names(tmp_path,'2000-01-04',fetch,universe)
+    assert calls==[{'force_refresh':True},{'force_refresh':True}]
+    with pytest.raises(ValueError,match='explicit maintained-pool scope'):
+        local.current_names_proof(tmp_path,'2000-01-04')
     from datetime import datetime,timezone,timedelta
     with pytest.raises(ValueError):local.current_names_proof(tmp_path,'2000-01-04',datetime.now(timezone.utc)+timedelta(seconds=1))
     old_names=(tmp_path/local.CACHE/'current_st.csv').read_bytes()
     old_receipt=local.bound(tmp_path,local.CACHE+'local_current_names/2000-01-04.json').read_bytes()
-    local.refresh_current_names(tmp_path,'2000-01-04',lambda **kwargs:None)
+    local.refresh_current_names(tmp_path,'2000-01-04',lambda **kwargs:None,lambda **kwargs:None)
     snapshots=local.bound(tmp_path,local.CACHE+'local_current_names/observations')
     assert (snapshots/(local.sha(old_names)+'.csv')).read_bytes()==old_names
     assert (snapshots/(local.sha(old_receipt)+'.json')).read_bytes()==old_receipt
@@ -82,19 +86,35 @@ def test_current_names_use_native_force_refresh_and_preserve_observation_receipt
     with pytest.raises((ValueError,KeyError)):local.current_names_proof(tmp_path,'2000-01-04')
 
 
-@pytest.mark.parametrize('fault',['future','target','code'])
+@pytest.mark.parametrize('fault',['future','target','code','universe_clock','universe_bytes','conflicting_name'])
 def test_current_name_receipt_cannot_be_redated_or_reused_with_unknown_source(tmp_path,fault):
     source=tmp_path/'microcap_top100_mom16_biweekly_live_v2_0.py';source.write_bytes(b'original')
     name=local.bound(tmp_path,local.CACHE+'current_st.csv');name.parent.mkdir(parents=True)
     name.write_bytes(b'code,name\n000001,ST example\n')
-    local.refresh_current_names(tmp_path,'2000-01-04',lambda **kw:None)
+    local.bound(tmp_path,local.CACHE+'active_universe.csv').write_bytes(b'code,name\n000001,ST example\n')
+    local.refresh_current_names(tmp_path,'2000-01-04',lambda **kw:None,lambda **kw:None)
     receipt=local.bound(tmp_path,local.CACHE+'local_current_names/2000-01-04.json')
     value=json.loads(receipt.read_bytes())
     if fault=='future':value['observed_at']='2099-01-01T00:00:00+00:00'
     elif fault=='target':value['target']='2000-01-05'
-    else:source.write_bytes(b'unknown source')
+    elif fault=='code':source.write_bytes(b'unknown source')
+    elif fault=='universe_clock':value['universe_observed_at']='1999-01-01T00:00:00+00:00'
+    elif fault=='universe_bytes':local.bound(tmp_path,local.CACHE+'active_universe.csv').write_bytes(b'changed')
+    else:
+        raw=b'code,name\n000001,ordinary name\n'
+        local.bound(tmp_path,local.CACHE+'active_universe.csv').write_bytes(raw)
+        value['universe_sha256']=local.sha(raw)
     receipt.write_bytes(local.encode(value))
     with pytest.raises(ValueError):local.current_names_proof(tmp_path,'2000-01-04')
+
+
+def test_atomic_temporary_suffix_keeps_windows_extended_path(tmp_path):
+    import os
+    if os.name!='nt':pytest.skip('Win32 temporary-path regression')
+    length=240-len(str(tmp_path.resolve()))-len('/files//receipt.json')
+    path=local.bound(tmp_path,'files/'+'x'*length+'/receipt.json')
+    local.atomic(path,b'original verified data')
+    assert path.read_bytes()==b'original verified data'
 
 
 @pytest.mark.parametrize('fault',[None,'runtime','role','source'])
