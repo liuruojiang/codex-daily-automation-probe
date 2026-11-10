@@ -5864,6 +5864,71 @@
       "zh_summary": "S&P DJI介绍9月宣布将旗下数字资产指数与Kaiko框架整合，10月提供单资产参考价及基准参考价两类；未取得完整方法论，不推断投资回报。",
       "evidence_level": "发布者公开摘要及截断开头",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42722135857",
+      "origin_report_date": "2026-11-10",
+      "source": "Seeking Alpha ETFs",
+      "title": "PCM: One Year Later, A Much Stronger Investment Case Emerges (Rating Upgrade)",
+      "zh_title": "PCM估值与持仓变化：作者上调评价",
+      "url": "https://seekingalpha.com/article/4965251-pcm-one-year-later-a-much-stronger-investment-case-emerges-rating-upgrade?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-09T20:26:58+00:00",
+      "summary": "公开摘要：市价由去年约5%溢价转为5%折价，作者强调非机构抵押债；未独立验证净值与信用风险。",
+      "zh_summary": "公开摘要：市价由去年约5%溢价转为5%折价，作者强调非机构抵押债；未独立验证净值与信用风险。",
+      "evidence_level": "公开摘要与截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42722135857",
+      "origin_report_date": "2026-11-10",
+      "source": "Seeking Alpha ETFs",
+      "title": "VYM Vs. QG&I: Different Approaches To Dividend Growth",
+      "zh_title": "VYM与QG&I：股息ETF和主动模型组合的差异",
+      "url": "https://seekingalpha.com/article/4965244-vym-vs-qg-and-i-different-approaches-to-dividend-growth?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-09T20:10:33+00:00",
+      "summary": "公开摘要比较宽基股息ETF与作者管理的模型组合；6月3日至10月短样本不足以证明长期稳健。",
+      "zh_summary": "公开摘要比较宽基股息ETF与作者管理的模型组合；6月3日至10月短样本不足以证明长期稳健。",
+      "evidence_level": "公开摘要与截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42722135857",
+      "origin_report_date": "2026-11-10",
+      "source": "Seeking Alpha ETFs",
+      "title": "PKW: Why High Buybacks Don't Always Equal High Returns",
+      "zh_title": "PKW：高回购率不保证高回报",
+      "url": "https://seekingalpha.com/article/4965198-pkw-why-high-buybacks-dont-always-equal-high-returns?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-09T18:32:03+00:00",
+      "summary": "公开摘要讨论回购收益率、估值、增长与40.8%金融行业敞口，属于ETF因子与集中度研究。",
+      "zh_summary": "公开摘要讨论回购收益率、估值、增长与40.8%金融行业敞口，属于ETF因子与集中度研究。",
+      "evidence_level": "公开摘要与截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42722135857",
+      "origin_report_date": "2026-11-10",
+      "source": "Seeking Alpha ETFs",
+      "title": "SOXX: The AI Bubble Already Popped, And The Next Rally May Be Coming",
+      "zh_title": "SOXX：作者预期AI调整后反弹",
+      "url": "https://seekingalpha.com/article/4964962-soxx-the-ai-bubble-already-popped-and-the-next-rally-may-be-coming?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-09T13:33:33+00:00",
+      "summary": "公开摘要提出选举后反弹与估值均值回归论据；作者方向观点未经独立验证，与已选看空技术文章并非同一研究。",
+      "zh_summary": "公开摘要提出选举后反弹与估值均值回归论据；作者方向观点未经独立验证，与已选看空技术文章并非同一研究。",
+      "evidence_level": "公开摘要与截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42722135857",
+      "origin_report_date": "2026-11-10",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Beyond the Election: 4 ETFs I'm Continuing to Buy No Matter What the Market Does in 2027",
+      "zh_title": "选举之后的四只ETF：宽基、股息、质量与等权",
+      "url": "https://www.fool.com/investing/2026/11/09/beyond-election-4-etfs-buy-no-matter-2027-market/?.tsrc=rss",
+      "published": "2026-11-09T14:05:00+00:00",
+      "summary": "媒体全文比较VTI、SCHD、SPHQ、RSP；讨论美国股票内部集中度和质量倾斜，非跨资产分散。",
+      "zh_summary": "媒体全文比较VTI、SCHD、SPHQ、RSP；讨论美国股票内部集中度和质量倾斜，非跨资产分散。",
+      "evidence_level": "媒体全文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
