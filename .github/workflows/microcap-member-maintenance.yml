@@ -303,6 +303,8 @@ jobs:
           path: |
             scoped-schedule.json
             scoped-restore.json
+            ${{ runner.temp }}/scoped-whole-recovery-*/*.log
+            ${{ runner.temp }}/scoped-whole-recovery-*/*.json
             scoped-source-state/runs
             scoped-prepare/commands
             scoped-prepare/receipts
