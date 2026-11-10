@@ -305,6 +305,8 @@ jobs:
             scoped-restore.json
             scoped-source-state/runs
             scoped-prepare/commands
+            scoped-prepare/receipts
+            scoped-prepare/local-source-download.json
             scoped-prepare/prepared.json
             scoped-prepare/consumer-config.json
             scoped-prepare/boundaries
