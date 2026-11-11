@@ -227,6 +227,78 @@
       "stored_bytes": 24279,
       "stored_sha256": "e778788292ef8988010b4ca8feaf9d6cb72f3b7863632a225175da9fc82b2ddd",
       "encoding": "original_bytes"
+    },
+    {
+      "path": "M5-archive-publication.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\exports\\m5-archive-publication-20261111.json",
+      "original_bytes": 734,
+      "original_sha256": "6b1f54e5581f80835bdd9ebcb19a298ac8cbdd3d14799602f6f1a574838446f2",
+      "stored_bytes": 734,
+      "stored_sha256": "6b1f54e5581f80835bdd9ebcb19a298ac8cbdd3d14799602f6f1a574838446f2",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "M5-byte-relay-cloud.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\cloud-43065027595\\byte-relay.json",
+      "original_bytes": 497,
+      "original_sha256": "637bac273a52780169366e76cee48561659ffad2fd978474e1680e6b2e56da3a",
+      "stored_bytes": 497,
+      "stored_sha256": "637bac273a52780169366e76cee48561659ffad2fd978474e1680e6b2e56da3a",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "local-cutover-configuration-validation.json",
+      "original_path": "D:\\Codex\\test-lifecycle\\records\\84c9efca1b6446a993b6afccf43218d7\\configuration-validation.json",
+      "original_bytes": 3427,
+      "original_sha256": "b3f6f8e10d9ae4f66f17e7403bd1982c1b3993ba10f237f67d063efcfd5d02ae",
+      "stored_bytes": 3427,
+      "stored_sha256": "b3f6f8e10d9ae4f66f17e7403bd1982c1b3993ba10f237f67d063efcfd5d02ae",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "cloud-relay-m5-20261112.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\cloud-relay-m5-20261112.json",
+      "original_bytes": 823,
+      "original_sha256": "b52d1fb4bb5b9e1369f7c8442ba1486d0bc48a0f9bd3b02695b4bd73d34ca794",
+      "stored_bytes": 823,
+      "stored_sha256": "b52d1fb4bb5b9e1369f7c8442ba1486d0bc48a0f9bd3b02695b4bd73d34ca794",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "M5-cloud-43065299195-scoped-restore.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\cloud-43065299195\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-restore.json",
+      "original_bytes": 1556,
+      "original_sha256": "2f7cd0419040daa283896c41f0ca341b7872cca35a9444ffb71944e89e7b51c3",
+      "stored_bytes": 1556,
+      "stored_sha256": "2f7cd0419040daa283896c41f0ca341b7872cca35a9444ffb71944e89e7b51c3",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "M5-cloud-43065299195-scoped-archive-acceptance.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\cloud-43065299195\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-archive-acceptance.json",
+      "original_bytes": 3881,
+      "original_sha256": "d0b6597cb186743cb688f2fe68ed8cfb10e4ec47fc77bc3691b2b91614e6c47c",
+      "stored_bytes": 3881,
+      "stored_sha256": "d0b6597cb186743cb688f2fe68ed8cfb10e4ec47fc77bc3691b2b91614e6c47c",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "M5-cloud-43067983093-scoped-restore.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\cloud-43067983093\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-restore.json",
+      "original_bytes": 1605,
+      "original_sha256": "4414b35271dbef2852286fc0d413ab0b7998fd95906a049b004e768111d8e4d6",
+      "stored_bytes": 1605,
+      "stored_sha256": "4414b35271dbef2852286fc0d413ab0b7998fd95906a049b004e768111d8e4d6",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "M5-cloud-43067983093-scoped-archive-acceptance.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\cloud-43067983093\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-archive-acceptance.json",
+      "original_bytes": 3881,
+      "original_sha256": "d0b6597cb186743cb688f2fe68ed8cfb10e4ec47fc77bc3691b2b91614e6c47c",
+      "stored_bytes": 3881,
+      "stored_sha256": "d0b6597cb186743cb688f2fe68ed8cfb10e4ec47fc77bc3691b2b91614e6c47c",
+      "encoding": "original_bytes"
     }
   ],
   "candidate_parent_run": {
@@ -240,10 +312,41 @@
   },
   "code_reader": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
   "source_producer": "f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5",
-  "new_M5_seed_and_two_run_relay": "pending",
-  "production_owner_switch": "pending",
+  "new_M5_seed_and_two_run_relay": "published_and_two_real_main_M5_restores_verified",
+  "production_owner_switch": "candidate_config_ready_main_merge_and_automation_tool_pending",
   "current_signal_ready": false,
   "SMTP_sent": false,
   "orders_placed": false,
-  "final_primary_seven_hash_recheck": "not_in_this_evidence_package"
+  "final_primary_seven_hash_recheck": "not_in_this_evidence_package",
+  "M5_archive_publication": {
+    "release_id": 441957202,
+    "asset_id": 736257558,
+    "sha256": "3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1",
+    "bytes": 673248922,
+    "archive_date": "2026-11-10",
+    "native_reader": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+    "byte_relay_run": 43065027595,
+    "server_digest_verified": true,
+    "current_signal_ready": false
+  },
+  "M5_cloud_relay": {
+    "status": "two_real_main_runs_verified",
+    "reader": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+    "archive_date": "2026-11-10",
+    "first_run": 43065299195,
+    "second_run": 43067983093,
+    "second_source_run": 43065299195,
+    "artifact_id": 13876647441,
+    "artifact_name": "microcap-scoped-whole-v1-1634a27c5a609a46ab35fc29ca2c65b94182671b",
+    "fallback_disabled_and_unused": true,
+    "github_digest_verified": true,
+    "bundle_sha256": "3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1",
+    "bundle_bytes": 673248922,
+    "source_manifest_sha256": "1e9bd2695523bbbea8e86033da298e54b4be6523be0e94d570615f4fb398398e",
+    "source_release": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+    "streams_equal": true,
+    "sending": "skipped",
+    "orders_placed": false,
+    "current_signal_ready": false
+  }
 }

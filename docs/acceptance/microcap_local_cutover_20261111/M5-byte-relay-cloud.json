@@ -1,0 +1,13 @@
+{
+  "status": "exact_native_archive_bytes_reconstructed",
+  "base_sha256": "3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42",
+  "delta_sha256": "ec354f25c61136afcfe0a759e252b84c6e77b3c2111fbd9586bcfa9dbd4411a6",
+  "delta_bytes": 11693277,
+  "sha256": "3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1",
+  "bytes": 673248922,
+  "literal_bytes": 30745222,
+  "transport_only": true,
+  "current_signal_ready": false,
+  "sending": "skipped",
+  "orders_placed": false
+}
