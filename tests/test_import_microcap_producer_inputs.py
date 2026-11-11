@@ -107,6 +107,27 @@ def test_verified_local_sources_advance_producer_only_after_900_native_readbacks
     assert not result['email_sent'] and not result['orders_placed']
 
 
+@pytest.mark.parametrize('fault',[None,'source_newer','unbound_reference'])
+def test_old_producer_transport_cannot_overwrite_new_formal_bootstrap(setup,fault):
+    old='be89e87a0da728b27be0308d7c4c9e57a212b815'
+    setup.manifest['runtime_sha']=old;setup.manifest['producer_context']['runtime_sha']=old
+    setup.manifest['producer_context']['native_sources']={k:'a'*64 for k in setup.manifest['producer_context']['native_sources']}
+    if fault!='source_newer':
+        setup.manifest['target']='2026-11-10';setup.manifest['producer_context']['target']='2026-11-10'
+        setup.bodies.clear();setup.bodies.update(setup.originals)
+    if fault=='unbound_reference':(setup.state/'reference-proxy.csv').write_bytes(b'changed formal reference')
+    setup.args['expected_sha']=setup.package()
+    if fault:
+        with pytest.raises(ValueError):importer.import_producer(**setup.args)
+    else:
+        result=importer.import_producer(**setup.args)
+        assert result['status']=='skipped_source_covered_by_formal_baseline'
+        assert result['formal_baseline']=='2026-11-10' and not result['producer_pointers_changed']
+        assert not result['production_pointers_changed'] and not result['final_strategy_delivery']
+    assert not setup.calls
+    assert_baseline_unchanged(setup)
+
+
 @pytest.mark.parametrize('fault',['raw_rewrite','raw_delete','raw_duplicate','share_rewrite','return_rewrite','return_delete',
     'scope','runtime','native_sources','master','incomplete_bootstrap','wrong_protected','reference_changed','unbound_proxy',
     'candidate_consumer','producer_has_outputs','incoming_future','immutable_collision'])

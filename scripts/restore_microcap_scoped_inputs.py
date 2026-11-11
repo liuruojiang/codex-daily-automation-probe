@@ -10,7 +10,7 @@ import urllib.parse
 import urllib.request
 
 from prepare_microcap_local import atomic,encode,sha
-from microcap_scoped_inputs import MAX_BYTES,RUNTIME,install,read_bundle
+from microcap_scoped_inputs import MAX_BYTES,RUNTIME,SOURCE_RUNTIMES,install,read_bundle
 
 
 def load_config(path):
@@ -25,7 +25,7 @@ def load_config(path):
                 or not parsed.path.startswith('/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-')
                 or not parsed.path.endswith('.zip') or '..' in parsed.path or '%' in parsed.path):
             raise ValueError('Scoped source URL is outside the approved repository release route')
-        if (re.fullmatch('[0-9a-f]{64}',item['sha256']) is None or item['runtime_sha']!=RUNTIME
+        if (re.fullmatch('[0-9a-f]{64}',item['sha256']) is None or item['runtime_sha'] not in SOURCE_RUNTIMES
                 or re.fullmatch('[0-9a-f]{40}',item['producer_commit']) is None):
             raise ValueError('Scoped source pointer identity differs')
         date.fromisoformat(item['target'])

@@ -278,3 +278,11 @@ SHA-256为`3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42`。
 云端接收验收验证明确日期的完整历史归档，不把10日种子当作11日当前交付。第一次验收保存已经完整验证的原包，第二次强制发现第一次发布的准确runtime artifact并禁用seed回退。接收者采用新main，种子仍保留原M3身份。当前enabled=false、owner=cloud，须两次真实云端通过及本地11日300只来源准备完成后切换。
 
 第一次云端启动43037529937在Python安装前失败：ubuntu-latest已指向26.04，而官方3.14.4安装清单仅提供22.04/24.04 Linux包。scoped运行固定ubuntu-24.04并保留Python/NumPy/pandas版本，随后从新main重新验收。该失败没有开始恢复或发布数据。
+
+### 已完成的M4云端接力与P1来源准备
+
+M4两次实际main运行均已完整成功：[43038784464](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43038784464)恢复并发布10日原包；[43040757263](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43040757263)关闭seed回退，准确发现第一运行的artifact `13865312028`。两次包SHA均为`3d9aa183…`，三版streams一致，原M3 release身份不变。该结果证明10日归档接力，不证明11日来源或调仓信号。
+
+本地来源生产者准备pin为`f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5`，对应18项源码内容逐项锁定；旧`be89e87a…`包保留原身份。旧生产者包只有在真实完整bootstrap的正式reference已经覆盖其目标日期时，才可记录`skipped_source_covered_by_formal_baseline`并跳过预热；不导入该包、不覆盖新生产者资料，也不把旧源码声明改为新源码。较新旧包仍拒绝，当前生产者导入仍需18项源码完全一致及原生逐股读回。
+
+09:00和11:00均维护当天早上的上一完成session。收盘后的手工补跑仍遵守这一映射；前晚预备不能替代当天09:00后的公告、名称实际观察。Windows测试夹具以逻辑相对路径登记资料，保留真实长路径读回，未改变生产due判断。启用配置与最终接收者/新归档指针仍由正式验收结果决定；本次准备提交保持`owner=cloud`、`enabled=false`。

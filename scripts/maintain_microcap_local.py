@@ -23,8 +23,8 @@ import uuid
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 
-RUNTIME = 'be89e87a0da728b27be0308d7c4c9e57a212b815'
-SOURCE_RUNTIMES = frozenset({RUNTIME,'a016ce27ea86fca1fa0b5199f802b198c0ed99de',
+RUNTIME = 'f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5'
+SOURCE_RUNTIMES = frozenset({RUNTIME,'be89e87a0da728b27be0308d7c4c9e57a212b815','a016ce27ea86fca1fa0b5199f802b198c0ed99de',
     '706af7ea9186bdb9b3948738deb5a5afda7a331e','63c7b16d77600c4aa9dadf58b86d31e034477e44'})
 BOOTSTRAP_RUNTIMES = {*SOURCE_RUNTIMES, '140b9c192e65a2b36a6b02106496e89f1143a4a6',
                       '24a41867408ebee570349de46d3ae37bcff2a6d4',

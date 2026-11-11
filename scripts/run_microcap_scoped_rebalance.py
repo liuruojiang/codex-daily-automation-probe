@@ -184,7 +184,7 @@ def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resum
                     '--bundle',downloaded,'--sha256',warm['sha256'],'--not-after-date',target])
                 if not isinstance(receipt,dict):raise ValueError('Producer import did not return its command evidence')
                 report=json.loads(Path(receipt['stdout']).read_text(encoding='utf-8').strip().splitlines()[-1])
-                if (report.get('status') not in ('producer_source_inputs_imported','skipped_same_verified_producer_inputs','skipped_newer_producer_baseline')
+                if (report.get('status') not in ('producer_source_inputs_imported','skipped_same_verified_producer_inputs','skipped_newer_producer_baseline','skipped_source_covered_by_formal_baseline')
                         or report.get('source_target')!=warm['target'] or report.get('bundle_sha256')!=warm['sha256']
                         or report.get('issuer_count')!=300 or report.get('source_preparation_only') is not True
                         or report.get('production_pointers_changed') is not False or report.get('native_consumer_gate_required') is not True

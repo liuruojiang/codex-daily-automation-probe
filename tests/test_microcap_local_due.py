@@ -41,12 +41,14 @@ def test_true_completed_receipts_skip_collection_but_changed_bytes_do_not(tmp_pa
     directory = tmp_path / 'runs' / '2026-11-06';directory.mkdir(parents=True)
     symbols = [f'{n:06d}' for n in range(1, 301)]
     context = {'date': '2026-11-06'}
-    freshness=local.bound(root,local.CACHE+'st_notice_sources/freshness.json')
-    names=local.bound(root,local.CACHE+'local_current_names/2026-11-06.json')
+    freshness_name=local.CACHE+'st_notice_sources/freshness.json'
+    names_name=local.CACHE+'local_current_names/2026-11-06.json'
+    freshness=local.bound(root,freshness_name)
+    names=local.bound(root,names_name)
     for path, value in [(freshness,{'required_asof':'2026-11-09T09:01:00+08:00'}),
                         (names,{'observed_at':'2026-11-09T09:02:00+08:00'})]:
         path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(local.encode(value))
-    record = dict(status='complete', context=context, files=local.hashes(root, ['source',freshness.relative_to(root).as_posix(),names.relative_to(root).as_posix()]))
+    record = dict(status='complete', context=context, files=local.hashes(root, ['source',freshness_name,names_name]))
     for key in ['notice', 'metadata', 'current-names', *[s + '-' + stage for s in symbols for stage in ('price', 'share', 'ratio')]]:
         (directory / (key + '.json')).write_bytes(local.encode(record))
     result = dict(status='complete', target='2026-11-06', total=300, complete=300,
