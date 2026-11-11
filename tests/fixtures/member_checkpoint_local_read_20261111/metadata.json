@@ -1,0 +1,676 @@
+{
+  "scope": "recorded_actual_GitHub_checkpoint_metadata_not_current_market_data",
+  "artifacts": [
+    {
+      "id": 13659634947,
+      "node_id": "MDg6QXJ0aWZhY3QxMzY1OTYzNDk0Nw==",
+      "name": "microcap-member-checkpoint-v2-ab214c20d92ca9bbda1dde7e447bb153e7f59028-2026-11-09-current-cf65ece421a5",
+      "size_in_bytes": 85009,
+      "url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/13659634947",
+      "archive_download_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/13659634947/zip",
+      "expired": false,
+      "digest": "sha256:3fa87b093e46f81651a17a2c6de23ad4cf3e46d1853744211c1ff191c6d67c50",
+      "created_at": "2026-11-09T08:48:13Z",
+      "updated_at": "2026-11-09T08:48:13Z",
+      "expires_at": "2027-02-07T08:46:38Z",
+      "workflow_run": {
+        "id": 42588400092,
+        "repository_id": 1236131103,
+        "head_repository_id": 1236131103,
+        "head_branch": "main",
+        "head_sha": "0e57641acfc5012a6e2fe508265f939799895324"
+      }
+    },
+    {
+      "id": 13661473903,
+      "node_id": "MDg6QXJ0aWZhY3QxMzY2MTQ3MzkwMw==",
+      "name": "microcap-member-checkpoint-v2-4774966da38f0b5af18617f73cc67c39c9e41a8e-2026-11-09-current-cf65ece421a5",
+      "size_in_bytes": 85009,
+      "url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/13661473903",
+      "archive_download_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/13661473903/zip",
+      "expired": false,
+      "digest": "sha256:32d0af5314cce6227d8ca4b7ad856e95b08640548a6eadf660163258b948e306",
+      "created_at": "2026-11-09T09:28:08Z",
+      "updated_at": "2026-11-09T09:28:08Z",
+      "expires_at": "2027-02-07T09:26:51Z",
+      "workflow_run": {
+        "id": 42593480628,
+        "repository_id": 1236131103,
+        "head_repository_id": 1236131103,
+        "head_branch": "main",
+        "head_sha": "388c0670f576b8672305a0dbf99590a16e5ad8d4"
+      }
+    },
+    {
+      "id": 13745147190,
+      "node_id": "MDg6QXJ0aWZhY3QxMzc0NTE0NzE5MA==",
+      "name": "microcap-member-checkpoint-v2-4774966da38f0b5af18617f73cc67c39c9e41a8e-2026-11-10-current-cf65ece421a5",
+      "size_in_bytes": 85014,
+      "url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/13745147190",
+      "archive_download_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/13745147190/zip",
+      "expired": false,
+      "digest": "sha256:bd5dc7a49993107912c654183972b334b41a104e2d19ec395ce1f6eeca89826f",
+      "created_at": "2026-11-10T08:02:06Z",
+      "updated_at": "2026-11-10T08:02:06Z",
+      "expires_at": "2027-02-08T08:00:04Z",
+      "workflow_run": {
+        "id": 42779236944,
+        "repository_id": 1236131103,
+        "head_repository_id": 1236131103,
+        "head_branch": "main",
+        "head_sha": "1582cc2ada1ff663634efc320d832d9bf3c78843"
+      }
+    },
+    {
+      "id": 13838054871,
+      "node_id": "MDg6QXJ0aWZhY3QxMzgzODA1NDg3MQ==",
+      "name": "microcap-member-checkpoint-v2-4774966da38f0b5af18617f73cc67c39c9e41a8e-2026-11-11-current-cf65ece421a5",
+      "size_in_bytes": 85126,
+      "url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/13838054871",
+      "archive_download_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/artifacts/13838054871/zip",
+      "expired": false,
+      "digest": "sha256:f0bd99d0fda764fadd0fbf875f2d59dae804c4df3bd39d5caaba02e8f1e39463",
+      "created_at": "2026-11-11T08:02:04Z",
+      "updated_at": "2026-11-11T08:02:04Z",
+      "expires_at": "2027-02-09T08:00:06Z",
+      "workflow_run": {
+        "id": 42983576468,
+        "repository_id": 1236131103,
+        "head_repository_id": 1236131103,
+        "head_branch": "main",
+        "head_sha": "c49142c5bc7492ff00026ae14bda8f422e93c99a"
+      }
+    }
+  ],
+  "runs": {
+    "42983576468": {
+      "id": 42983576468,
+      "status": "completed",
+      "head_branch": "main",
+      "path": ".github/workflows/microcap-member-daily.yml",
+      "conclusion": "success"
+    },
+    "42588400092": {
+      "id": 42588400092,
+      "status": "completed",
+      "head_branch": "main",
+      "path": ".github/workflows/microcap-member-daily.yml",
+      "conclusion": "success"
+    }
+  },
+  "jobs": {
+    "42588400092": {
+      "total_count": 1,
+      "jobs": [
+        {
+          "id": 129063696895,
+          "run_id": 42588400092,
+          "workflow_name": "Microcap Member Daily",
+          "head_branch": "main",
+          "run_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/runs/42588400092",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOSa3dH88AAAAeDMu5_w",
+          "head_sha": "0e57641acfc5012a6e2fe508265f939799895324",
+          "url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/jobs/129063696895",
+          "html_url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/42588400092/job/129063696895",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-11-09T08:46:38Z",
+          "started_at": "2026-11-09T08:46:40Z",
+          "completed_at": "2026-11-09T08:48:25Z",
+          "name": "send",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-11-09T08:46:40Z",
+              "completed_at": "2026-11-09T08:46:41Z"
+            },
+            {
+              "name": "Run actions/checkout@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-11-09T08:46:41Z",
+              "completed_at": "2026-11-09T08:46:42Z"
+            },
+            {
+              "name": "Run actions/setup-python@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-11-09T08:46:42Z",
+              "completed_at": "2026-11-09T08:46:42Z"
+            },
+            {
+              "name": "Read exact strategy runtime",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-11-09T08:46:42Z",
+              "completed_at": "2026-11-09T08:46:42Z"
+            },
+            {
+              "name": "Run actions/checkout@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-11-09T08:46:42Z",
+              "completed_at": "2026-11-09T08:47:13Z"
+            },
+            {
+              "name": "Install daily runtime",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-11-09T08:47:13Z",
+              "completed_at": "2026-11-09T08:47:30Z"
+            },
+            {
+              "name": "Validate publication clock and recovery inputs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-11-09T08:47:30Z",
+              "completed_at": "2026-11-09T08:47:30Z"
+            },
+            {
+              "name": "Resolve independent completed session",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-11-09T08:47:30Z",
+              "completed_at": "2026-11-09T08:47:31Z"
+            },
+            {
+              "name": "Check delivery marker",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-11-09T08:47:31Z",
+              "completed_at": "2026-11-09T08:47:32Z"
+            },
+            {
+              "name": "Recover delivery marker from accepted SMTP receipt",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10,
+              "started_at": "2026-11-09T08:47:32Z",
+              "completed_at": "2026-11-09T08:47:32Z"
+            },
+            {
+              "name": "Mark recovered digest delivered",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 11,
+              "started_at": "2026-11-09T08:47:32Z",
+              "completed_at": "2026-11-09T08:47:32Z"
+            },
+            {
+              "name": "Restore small member checkpoint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-11-09T08:47:32Z",
+              "completed_at": "2026-11-09T08:47:46Z"
+            },
+            {
+              "name": "Verify member checkpoint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-11-09T08:47:46Z",
+              "completed_at": "2026-11-09T08:47:46Z"
+            },
+            {
+              "name": "Collect only member daily inputs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-11-09T08:47:46Z",
+              "completed_at": "2026-11-09T08:48:08Z"
+            },
+            {
+              "name": "Compute three member daily signals",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-11-09T08:48:08Z",
+              "completed_at": "2026-11-09T08:48:12Z"
+            },
+            {
+              "name": "Render already confirmed same-day checkpoint",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 16,
+              "started_at": "2026-11-09T08:48:12Z",
+              "completed_at": "2026-11-09T08:48:12Z"
+            },
+            {
+              "name": "Restore exact reviewed report for send-only recovery",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 17,
+              "started_at": "2026-11-09T08:48:12Z",
+              "completed_at": "2026-11-09T08:48:12Z"
+            },
+            {
+              "name": "Verify close checkpoint candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-11-09T08:48:12Z",
+              "completed_at": "2026-11-09T08:48:12Z"
+            },
+            {
+              "name": "Publish verified member checkpoint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-11-09T08:48:12Z",
+              "completed_at": "2026-11-09T08:48:13Z"
+            },
+            {
+              "name": "Build member digest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-11-09T08:48:13Z",
+              "completed_at": "2026-11-09T08:48:13Z"
+            },
+            {
+              "name": "Choose independent complete or partial send transaction",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-11-09T08:48:13Z",
+              "completed_at": "2026-11-09T08:48:13Z"
+            },
+            {
+              "name": "Recover partial-information delivered marker",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 22,
+              "started_at": "2026-11-09T08:48:13Z",
+              "completed_at": "2026-11-09T08:48:13Z"
+            },
+            {
+              "name": "Persist normal-send intent before SMTP",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-11-09T08:48:13Z",
+              "completed_at": "2026-11-09T08:48:14Z"
+            },
+            {
+              "name": "Send Gmail",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-11-09T08:48:14Z",
+              "completed_at": "2026-11-09T08:48:18Z"
+            },
+            {
+              "name": "Preserve accepted SMTP receipt",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-11-09T08:48:18Z",
+              "completed_at": "2026-11-09T08:48:19Z"
+            },
+            {
+              "name": "Mark digest delivered",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-11-09T08:48:19Z",
+              "completed_at": "2026-11-09T08:48:20Z"
+            },
+            {
+              "name": "Preserve member report and source evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-11-09T08:48:20Z",
+              "completed_at": "2026-11-09T08:48:22Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 52,
+              "started_at": "2026-11-09T08:48:22Z",
+              "completed_at": "2026-11-09T08:48:22Z"
+            },
+            {
+              "name": "Post Run actions/setup-python@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 53,
+              "started_at": "2026-11-09T08:48:22Z",
+              "completed_at": "2026-11-09T08:48:23Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 54,
+              "started_at": "2026-11-09T08:48:23Z",
+              "completed_at": "2026-11-09T08:48:23Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 55,
+              "started_at": "2026-11-09T08:48:23Z",
+              "completed_at": "2026-11-09T08:48:23Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/check-runs/129063696895",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "runner_id": 1000003394,
+          "runner_name": "GitHub Actions 1000003394",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        }
+      ]
+    },
+    "42983576468": {
+      "total_count": 1,
+      "jobs": [
+        {
+          "id": 130399436581,
+          "run_id": 42983576468,
+          "workflow_name": "Microcap Member Daily",
+          "head_branch": "main",
+          "run_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/runs/42983576468",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOSa3dH88AAAAeXGl_JQ",
+          "head_sha": "c49142c5bc7492ff00026ae14bda8f422e93c99a",
+          "url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/actions/jobs/130399436581",
+          "html_url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/42983576468/job/130399436581",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-11-11T08:00:06Z",
+          "started_at": "2026-11-11T08:00:08Z",
+          "completed_at": "2026-11-11T08:02:15Z",
+          "name": "send",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-11-11T08:00:09Z",
+              "completed_at": "2026-11-11T08:00:10Z"
+            },
+            {
+              "name": "Run actions/checkout@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-11-11T08:00:10Z",
+              "completed_at": "2026-11-11T08:00:11Z"
+            },
+            {
+              "name": "Run actions/setup-python@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-11-11T08:00:11Z",
+              "completed_at": "2026-11-11T08:00:11Z"
+            },
+            {
+              "name": "Read exact strategy runtime",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-11-11T08:00:11Z",
+              "completed_at": "2026-11-11T08:00:12Z"
+            },
+            {
+              "name": "Run actions/checkout@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-11-11T08:00:12Z",
+              "completed_at": "2026-11-11T08:00:45Z"
+            },
+            {
+              "name": "Install daily runtime",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-11-11T08:00:45Z",
+              "completed_at": "2026-11-11T08:01:09Z"
+            },
+            {
+              "name": "Validate publication clock and recovery inputs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-11-11T08:01:09Z",
+              "completed_at": "2026-11-11T08:01:10Z"
+            },
+            {
+              "name": "Resolve independent completed session",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-11-11T08:01:10Z",
+              "completed_at": "2026-11-11T08:01:13Z"
+            },
+            {
+              "name": "Check delivery marker",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-11-11T08:01:13Z",
+              "completed_at": "2026-11-11T08:01:15Z"
+            },
+            {
+              "name": "Recover delivery marker from accepted SMTP receipt",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10,
+              "started_at": "2026-11-11T08:01:15Z",
+              "completed_at": "2026-11-11T08:01:15Z"
+            },
+            {
+              "name": "Mark recovered digest delivered",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 11,
+              "started_at": "2026-11-11T08:01:15Z",
+              "completed_at": "2026-11-11T08:01:15Z"
+            },
+            {
+              "name": "Restore small member checkpoint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-11-11T08:01:15Z",
+              "completed_at": "2026-11-11T08:01:35Z"
+            },
+            {
+              "name": "Verify member checkpoint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-11-11T08:01:35Z",
+              "completed_at": "2026-11-11T08:01:35Z"
+            },
+            {
+              "name": "Collect only member daily inputs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-11-11T08:01:35Z",
+              "completed_at": "2026-11-11T08:01:58Z"
+            },
+            {
+              "name": "Compute three member daily signals",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-11-11T08:01:58Z",
+              "completed_at": "2026-11-11T08:02:02Z"
+            },
+            {
+              "name": "Render already confirmed same-day checkpoint",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 16,
+              "started_at": "2026-11-11T08:02:02Z",
+              "completed_at": "2026-11-11T08:02:02Z"
+            },
+            {
+              "name": "Restore exact reviewed report for send-only recovery",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 17,
+              "started_at": "2026-11-11T08:02:02Z",
+              "completed_at": "2026-11-11T08:02:02Z"
+            },
+            {
+              "name": "Verify close checkpoint candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-11-11T08:02:02Z",
+              "completed_at": "2026-11-11T08:02:02Z"
+            },
+            {
+              "name": "Publish verified member checkpoint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-11-11T08:02:02Z",
+              "completed_at": "2026-11-11T08:02:04Z"
+            },
+            {
+              "name": "Build member digest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-11-11T08:02:04Z",
+              "completed_at": "2026-11-11T08:02:04Z"
+            },
+            {
+              "name": "Choose independent complete or partial send transaction",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-11-11T08:02:04Z",
+              "completed_at": "2026-11-11T08:02:04Z"
+            },
+            {
+              "name": "Recover partial-information delivered marker",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 22,
+              "started_at": "2026-11-11T08:02:04Z",
+              "completed_at": "2026-11-11T08:02:04Z"
+            },
+            {
+              "name": "Persist normal-send intent before SMTP",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-11-11T08:02:04Z",
+              "completed_at": "2026-11-11T08:02:05Z"
+            },
+            {
+              "name": "Send Gmail",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-11-11T08:02:05Z",
+              "completed_at": "2026-11-11T08:02:07Z"
+            },
+            {
+              "name": "Preserve accepted SMTP receipt",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-11-11T08:02:07Z",
+              "completed_at": "2026-11-11T08:02:09Z"
+            },
+            {
+              "name": "Mark digest delivered",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-11-11T08:02:09Z",
+              "completed_at": "2026-11-11T08:02:10Z"
+            },
+            {
+              "name": "Preserve member report and source evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-11-11T08:02:10Z",
+              "completed_at": "2026-11-11T08:02:12Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 52,
+              "started_at": "2026-11-11T08:02:12Z",
+              "completed_at": "2026-11-11T08:02:12Z"
+            },
+            {
+              "name": "Post Run actions/setup-python@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 53,
+              "started_at": "2026-11-11T08:02:12Z",
+              "completed_at": "2026-11-11T08:02:12Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 54,
+              "started_at": "2026-11-11T08:02:12Z",
+              "completed_at": "2026-11-11T08:02:13Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 55,
+              "started_at": "2026-11-11T08:02:13Z",
+              "completed_at": "2026-11-11T08:02:13Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/liuruojiang/codex-daily-automation-probe/check-runs/130399436581",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "runner_id": 1000003580,
+          "runner_name": "GitHub Actions 1000003580",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        }
+      ]
+    }
+  },
+  "source_metadata_sha256": {
+    "artifacts-run-42588400092.json": "ffc91e783cb2eda77533a2cde65b131d45ce9496b422bc89c1a47036aba696f5",
+    "artifacts-run-42593480628.json": "0785420c0c3751a782e24c0d15d4ca6fea108929fac54f7c0af1fd3be63e5bba",
+    "artifacts-run-42597162916.json": "ff81113b42a2f005bf1b410757b8a3aab4b95c9cf6ba84bb87d5b4a559a631b5",
+    "artifacts-run-42779236944.json": "2d74b05b550349f538762e467ab5a6aac493ca6d4f052832f5d8a3478938f2f1",
+    "artifacts-run-42983576468.json": "e29663308a55f53a7e2f439ee370479838b77e76b9b8ed2a4e6021aced460c7d"
+  },
+  "D11_zip_sha256": "f0bd99d0fda764fadd0fbf875f2d59dae804c4df3bd39d5caaba02e8f1e39463",
+  "native_verifier_commit": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+  "native_verifier_sha256_lf": "6592eb8b697189e5983816d239d6f8da501b39f4fb99977d645c87d65a3eeea3",
+  "native_verifier_windows_readback_sha256": "4298f5e1f29c3aa11e77f7d04addeefea72de87292281c72f9b28ce1588ebe4a"
+}

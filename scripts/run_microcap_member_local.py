@@ -8,6 +8,7 @@ import subprocess
 import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from member_checkpoint_policy import local_runtime, load_read_policy, validate_checkpoint_payload
 
 
 BJ=ZoneInfo('Asia/Shanghai')
@@ -55,7 +56,7 @@ def main():
     if out==strategy or out.is_relative_to(strategy/'outputs'):
         raise ValueError('Local reporting cannot overwrite production outputs')
     out.mkdir(parents=True,exist_ok=False)
-    runtime=json.loads((auto/'config/microcap_member_runtime.json').read_bytes())['strategy_sha']
+    runtime,read_policy=local_runtime(auto)
     actual=subprocess.run(['git','-C',str(strategy),'rev-parse','HEAD'],capture_output=True,text=True,check=True).stdout.strip()
     if actual!=runtime:
         raise ValueError('Local member runtime differs from the pinned strategy commit')
@@ -81,10 +82,13 @@ def main():
         sys.path.insert(0,str(strategy))
         from scripts.exchange_calendar import latest_completed_session
         not_after=latest_completed_session().isoformat()
-        run([py,'-B',str(auto/'scripts/restore_microcap_member_checkpoint.py'),'--strategy-sha',runtime,'--seed-config',str(auto/'config/microcap_member_checkpoint.json'),'--not-after-date',not_after,'--out',str(out/'checkpoint')],github_environment())
+        policy_args=['--checkpoint-read-policy',str(read_policy)] if read_policy is not None else []
+        run([py,'-B',str(auto/'scripts/restore_microcap_member_checkpoint.py'),'--strategy-sha',runtime,*policy_args,'--seed-config',str(auto/'config/microcap_member_checkpoint.json'),'--not-after-date',not_after,'--out',str(out/'checkpoint')],github_environment())
         cp=out/'checkpoint/checkpoint.json'
     else:
         cp=cached
+    if read_policy is not None:
+        validate_checkpoint_payload(json.loads(cp.read_bytes()), load_read_policy(read_policy, runtime))
     run([py,'-B',str(strategy/'scripts/member_period_handoff.py'),'verify','--checkpoint',str(cp)])
     if args.prepare_only:
         print(json.dumps({'status':'prepared','checkpoint':str(cp),'market_quotes_collected':False}))
