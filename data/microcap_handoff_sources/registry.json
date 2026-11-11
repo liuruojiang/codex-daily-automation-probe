@@ -1,0 +1,13 @@
+{
+  "schema": "member_hedge_origin_receipts_v1",
+  "records": [
+    {
+      "date": "2026-11-10",
+      "close": "6579.356",
+      "log": "20261110-sina-original.log",
+      "sha256": "518c386bd2ce26ad33a0794afd29dabef9cf9162cbbc759e88126be421d51720",
+      "origin_release_sha": "872abe41d48f818363d879cdf98b297d230377b4",
+      "origin_whole_sha256": "3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42"
+    }
+  ]
+}

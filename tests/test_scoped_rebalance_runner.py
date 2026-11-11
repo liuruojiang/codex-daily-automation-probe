@@ -59,6 +59,7 @@ def prepared(tmp_path,monkeypatch):
         return spec,path
 
     monkeypatch.setattr(runner,'validate_runtime',lambda *a:None)
+    monkeypatch.setattr(runner,'build_precision_witness',lambda *a:None)
     monkeypatch.setattr(runner,'completed',lambda *a:True)
     monkeypatch.setattr(runner,'read_bundle',lambda *a:(manifest,{},'c'*64))
     monkeypatch.setattr(runner,'boundary_spec',boundary)
@@ -127,6 +128,21 @@ def test_delivery_requires_both_native_formal_gates_before_period_export(prepare
     assert not value['email_sent'] and not value['orders_placed']
     refresh=next(argv for label,argv in prepared[1] if label=='refresh')
     assert 'refresh-all' in refresh and '--scoped-config' in refresh
+
+
+def test_bound_precision_witness_is_forwarded_to_native_handoff(prepared,monkeypatch):
+    args=delivery_args(prepared)
+    witness=args['out'].parent/'bound-witness.json'
+    calls=[]
+    def build(consumer,current,candidate,out,logs):
+        calls.append((current,candidate,logs))
+        return witness
+    monkeypatch.setattr(runner,'build_precision_witness',build)
+    runner.deliver(**args)
+    handoff=next(argv for label,argv in prepared[1] if label=='handoff')
+    assert handoff[handoff.index('--hedge-precision-witness')+1]==str(witness)
+    assert calls[0][0]==args['current_checkpoint']
+    assert calls[0][1]==args['out']/'candidate/checkpoint.json'
 
 
 @pytest.mark.parametrize('stage',['verify-current','refresh','check','bootstrap-period','handoff','verify-handoff'])

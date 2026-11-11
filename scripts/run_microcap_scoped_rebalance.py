@@ -18,6 +18,7 @@ from prepare_microcap_local import atomic, encode, fetch_snapshot, sha, writer_l
 from maintain_microcap_local import load_pool, validate_runtime, hashes
 from microcap_scoped_inputs import read_bundle
 from microcap_local_due import completed
+from microcap_handoff_witness import build as build_precision_witness
 
 SCRIPTS = Path(__file__).resolve().parent
 
@@ -88,7 +89,7 @@ class Commands:
         atomic(attempt/'process.json',encode(record))
         if process.returncode:
             raise RuntimeError(f'Scoped rebalance stage {label} failed; retained evidence: {attempt}')
-        return dict(stdout=attempt/'stdout.log',process=attempt/'process.json')
+        return dict(stdout=attempt/'stdout.log',stderr=attempt/'stderr.log',process=attempt/'process.json')
 
 
 def save_once(path, raw):
@@ -259,12 +260,15 @@ def deliver(*, consumer, target, consumer_sha, prepared, current_checkpoint, out
         _, config = validate_prepared(prepared,consumer,target,consumer_sha)
         native = consumer/'scripts'
         run('verify-current',[sys.executable,'-B',native/'member_period_handoff.py','verify','--checkpoint',Path(current_checkpoint).resolve()])
-        run('refresh',[sys.executable,'-B',native/'top100_delivery.py','refresh-all','--scoped-config',config])
+        refreshed=run('refresh',[sys.executable,'-B',native/'top100_delivery.py','refresh-all','--scoped-config',config])
         run('check',[sys.executable,'-B',native/'top100_delivery.py','check'])
         # Only both original formal gates can authorize exporting a new period.
         run('bootstrap-period',[sys.executable,'-B',native/'member_period_handoff.py','bootstrap','--root',consumer,'--out',out/'candidate'])
+        logs=[refreshed[k] for k in ('stdout','stderr') if refreshed and k in refreshed]
+        witness=build_precision_witness(consumer,Path(current_checkpoint).resolve(),out/'candidate/checkpoint.json',out/'precision-witness',logs)
+        options=['--hedge-precision-witness',witness] if witness else []
         run('handoff',[sys.executable,'-B',native/'member_period_handoff.py','handoff','--current',Path(current_checkpoint).resolve(),
-                       '--candidate',out/'candidate/checkpoint.json','--session',target,'--next-session',schedule['next_session'],'--out',out/'handoff'])
+                       '--candidate',out/'candidate/checkpoint.json','--session',target,'--next-session',schedule['next_session'],*options,'--out',out/'handoff'])
         run('verify-handoff',[sys.executable,'-B',native/'member_period_handoff.py','verify','--checkpoint',out/'handoff/checkpoint.json'])
         value = dict(schema='microcap_scoped_rebalance_handoff_v1',status='native_formal_handoff_verified_not_published',
                      target=target,consumer_sha=consumer_sha,checkpoint=str(out/'handoff/checkpoint.json'),
