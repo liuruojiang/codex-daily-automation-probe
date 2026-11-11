@@ -6,6 +6,7 @@ This switches source only; it grants no historical rewrite or formal acceptance.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime,timezone
 import hashlib
 import json
 import os
@@ -76,7 +77,6 @@ def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path
                 or restored.get('native_restore',{}).get('expected_date')!=manifest.get('expected_date')
                 or restored.get('source_manifest_release_sha')!=manifest.get('release_sha')
                 or restored.get('restored_manifest_release_sha')!=manifest.get('release_sha')
-                or restored.get('source_manifest_sha256')!=digest(raw)
                 or manifest.get('ok') is not True or manifest.get('status')!='complete'):
             raise ValueError('Scoped whole restoration identity differs from actual archive')
         if bundle is None:
@@ -87,7 +87,21 @@ def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path
         if actual_bundle!=restored.get('bundle_sha256') or bundle.stat().st_size!=restored.get('bundle_bytes'):
             raise ValueError('Scoped whole activation bundle identity differs')
         with zipfile.ZipFile(bundle) as archive:
-            if archive.namelist().count('outputs/top100_delivery_manifest.json')!=1 or archive.read('outputs/top100_delivery_manifest.json')!=raw:
+            if archive.namelist().count('outputs/top100_delivery_manifest.json')!=1:
+                raise ValueError('Original whole manifest is absent or ambiguous')
+            incoming_raw=archive.read('outputs/top100_delivery_manifest.json')
+        if digest(incoming_raw)!=restored.get('source_manifest_sha256'):
+            raise ValueError('Original whole manifest identity differs')
+        if incoming_raw!=raw:
+            incoming=json.loads(incoming_raw)
+            def verified_stamp(value):
+                stamp=datetime.fromisoformat(value['verified_at'])
+                if stamp.tzinfo is None or stamp>datetime.now(timezone.utc):
+                    raise ValueError('Original complete archive clock differs')
+                return stamp
+            if (restored['native_restore'].get('restore_source')!='existing_whole_delivery'
+                    or verified_stamp(incoming)==verified_stamp(manifest)
+                    or {k:v for k,v in incoming.items() if k!='verified_at'}!={k:v for k,v in manifest.items() if k!='verified_at'}):
                 raise ValueError('Original whole manifest differs from restored archive')
     elif restored.get("strategy_sha") != old:
         raise ValueError("Scoped activation requires the actual baseline restore receipt")
@@ -190,6 +204,10 @@ def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path
                       preserved_changed_data_files=before_data, activated=True,
                       current_data_verified=False, formal_release_verified=False,
                       historical_rewrite_authorized=False)
+        if restored.get('status')=='scoped_whole_restore_verified':
+            result['original_archive']=dict(source_manifest_sha256=restored['source_manifest_sha256'],
+                restored_manifest_sha256=digest(manifest_path.read_bytes()),bundle_sha256=actual_bundle,
+                seed_date=restored['seed_date'])
         receipt.parent.mkdir(parents=True, exist_ok=True)
         with receipt.open("x", encoding="utf-8") as stream:
             stream.write(json.dumps(result, indent=2) + "\n")
