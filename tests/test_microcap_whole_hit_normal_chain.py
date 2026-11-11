@@ -63,10 +63,12 @@ def allowed(name, values):
     return condition(STEPS[name]["if"], values)
 
 
-def test_whole_hit_reaches_normal_refresh_signals_pack_digest_without_smtp():
+def test_retired_whole_hit_job_is_unreachable_and_retains_historical_internal_gates():
     values = baseline()
-    assert condition(JOBS["send"]["if"], values)
+    assert not condition(JOBS["send"]["if"], values)
     assert not condition(JOBS["recovery-check"]["if"], values)
+    # The old job is retired. Preserve its internal no-send contracts as
+    # historical recovery checks without claiming the job can be entered.
     for name in ("Restore verified production state bundle", "Restore durable verified production state bundle",
                  "Restore approved release fallback"):
         assert not allowed(name, values)

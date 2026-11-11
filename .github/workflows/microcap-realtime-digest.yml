@@ -1,4 +1,4 @@
-name: Microcap Post-Close Digest
+name: Microcap Archive Recovery (legacy sender retired)
 
 on:
   workflow_dispatch:
@@ -140,8 +140,11 @@ jobs:
           cat calendar.env >> "$GITHUB_OUTPUT"
 
   send:
+    # The member-daily workflow owns all normal/partial email transactions.
+    # Keep this historical job inert even for correction/validation overrides;
+    # explicit archive bootstrap/require_hit remains in recovery-check below.
     needs: [check-trading-day, regression]
-    if: always() && (inputs.recovery_check == '' || inputs.recovery_check == 'off') && needs.regression.result == 'success' && needs.check-trading-day.result == 'success' && (needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true' || (github.event_name == 'workflow_dispatch' && inputs.external_schedule != true && (inputs.validation_only == true || inputs.correction == true || inputs.delivery_test_id != '')))
+    if: false && always() && (inputs.recovery_check == '' || inputs.recovery_check == 'off') && needs.regression.result == 'success' && needs.check-trading-day.result == 'success' && (needs.check-trading-day.outputs.SHOULD_RUN_MICROCAP == 'true' || (github.event_name == 'workflow_dispatch' && inputs.external_schedule != true && (inputs.validation_only == true || inputs.correction == true || inputs.delivery_test_id != '')))
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:

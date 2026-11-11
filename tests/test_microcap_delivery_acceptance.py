@@ -57,9 +57,9 @@ def actions_eval(expression, *, holiday, manual=True, external=False,
     ({"holiday": False, "manual": False}, True),
     ({"holiday": True, "validation": True, "calendar": "failure"}, False),
 ])
-def test_actual_workflow_only_explicit_maintenance_bypasses_holiday(options, expected):
+def test_retired_sender_stays_disabled_while_regression_calendar_contract_is_preserved(options, expected):
     workflow = yaml.safe_load((ROOT / ".github/workflows/microcap-realtime-digest.yml").read_text(encoding="utf-8"))
-    assert actions_eval(workflow["jobs"]["send"]["if"], **options) is expected
+    assert actions_eval(workflow["jobs"]["send"]["if"], **options) is False
     assert workflow["jobs"]["regression"]["needs"] == "check-trading-day"
     assert actions_eval(workflow["jobs"]["regression"]["if"], **options) is expected
 
