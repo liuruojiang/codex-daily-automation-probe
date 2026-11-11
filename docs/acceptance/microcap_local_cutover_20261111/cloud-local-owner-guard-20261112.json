@@ -1,0 +1,18 @@
+{
+  "status": "actual_main_cloud_maintenance_write_steps_skipped",
+  "run_id": 43070342596,
+  "main_sha": "538169e67ce5f71cd4b4a13fde13c3d85348eb80",
+  "conclusion": "success",
+  "skipped_write_steps": [
+    "Restore maintenance baseline",
+    "Activate reviewed maintenance runtime",
+    "Refresh maintenance inputs",
+    "Restore verified locally maintained sources for rebalance",
+    "Build original close rebalance and three final streams",
+    "Bind close event to next-session membership",
+    "Publish verified member checkpoint"
+  ],
+  "scoped_job": "skipped",
+  "strategy_sending": "skipped",
+  "orders_placed": false
+}

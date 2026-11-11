@@ -1,0 +1,18 @@
+{
+  "automation_id": "09-00",
+  "operation": "actual_tool_update",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Updated automation in the app."
+      },
+      {
+        "type": "text",
+        "text": "{\"automationId\":\"09-00\",\"mode\":\"update\",\"status\":\"ACTIVE\"}"
+      }
+    ],
+    "isError": false
+  }
+}
+

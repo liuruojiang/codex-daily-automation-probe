@@ -1,0 +1,31 @@
+{
+  "status": "actual_automation_toml_matches_tool_update",
+  "id": "09-00",
+  "active": true,
+  "local": true,
+  "same_existing_project": true,
+  "preserved_fields": [
+    "version",
+    "id",
+    "kind",
+    "rrule",
+    "model",
+    "reasoning_effort",
+    "notification_policy",
+    "execution_environment",
+    "target",
+    "cwds",
+    "created_at"
+  ],
+  "prompt_sha256": "9b1463a260905916dd8e07add070cff2f4066ce69abf6136ab56bdcc05564bcc",
+  "payload_file_sha256": "316a4ae37047f69e9d781b018480cc9df8bf85d6475190825d77aebee80f3560",
+  "actual_toml_sha256": "b55fec1b22b47bd1823ce36081ffea2166eb4a58bf765feb1c3a0bd1fcf78f69",
+  "prior_toml_sha256": "8572774f77ee30c3900b9aaf821c71be16ec9151dda7f2e2797089386c726698",
+  "created_at": 1794208029800,
+  "updated_at": 1794418790685,
+  "self_pause_removed": true,
+  "app_trimmed_one_final_newline": true,
+  "source": "D:\\Codex\\home\\automations\\09-00\\automation.toml",
+  "strategy_sending": "skipped",
+  "orders_placed": false
+}
