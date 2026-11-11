@@ -2,7 +2,7 @@
 
 维护读者M5为原生main `1634a27c5a609a46ab35fc29ca2c65b94182671b`，来源生产者P1为`f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5`。本次配置将09:00维护的唯一写入者设为`owner=local`并启用`enabled=true`；实际生效以正式main提交、无在途双写和自动化工具回执为准。云端09:00维护分支随owner退出，15:10调仓接力和16:00原477成员日更/日报保留独立职责，原参数和发送规则保持。
 
-本次授权切换基于完整的2026-11-10历史恢复基线。M5归档包673,248,922字节，SHA为`3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1`；[实际字节接力43065027595](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43065027595)已发布准确资产`736257558`并核对服务器digest。包只认证10日归档，`current_signal_ready=false`。M5两次真实main云端恢复仍待本轮结果，第一次`43065299195`正在执行；字节发布和配置准备不代表这些原生验收已经完成。原M3来源身份及七份经济CSV保留，整个历史范围仍为5,438只；这些验收不产生11日新净值、信号、SMTP或订单。
+本次授权切换基于完整的2026-11-10历史恢复基线。M5归档包673,248,922字节，SHA为`3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1`；[实际字节接力43065027595](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43065027595)已发布准确资产`736257558`并核对服务器digest。包只认证10日归档，`current_signal_ready=false`。M5两次真实main云端恢复已完整通过：[第一次43065299195](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43065299195)发布成品，[第二次43067983093](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43067983093)在关闭seed回退后准确恢复第一运行artifact `13876647441`。两次bundle SHA均为`3326bf3a…`，source manifest及三版streams一致，准确M5 reader和原生archive门槛均通过；完整原件见[M5接力证明](acceptance/microcap_local_cutover_20261111/cloud-relay-m5-20261112.json)。原M3来源身份及七份经济CSV保留，整个历史范围仍为5,438只；这些验收不产生11日新净值、信号、SMTP或订单。
 
 最新可用本地来源指针仍是已完整核验的10日300只be89包，SHA为`f50d6b3fc079e427c7220ec4ffc6153a2eea2aaea241c84fd991bf63b5cc2674`，原`runtime_sha=be89e87a…`与`producer_commit=3cf48691…`不改签为P1。云端先取得正式完整基线；旧来源日期被真实bootstrap覆盖时只记录预热跳过，不覆盖较新资料。日常深维护300只、每周一更新名单，原调仓日另核轻量全市场市值边界，保持实际100只成员闭包。
 

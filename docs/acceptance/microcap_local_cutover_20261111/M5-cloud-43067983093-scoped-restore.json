@@ -1,0 +1,32 @@
+{
+  "runtime_sha": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+  "repository": "liuruojiang/codex-daily-automation-probe",
+  "restored": true,
+  "fallback_used": false,
+  "work_directory": "/home/runner/work/_temp/scoped-whole-recovery-82jm6apm",
+  "source": "published_scoped_whole_artifact",
+  "source_run": 43065299195,
+  "artifact_id": 13876647441,
+  "artifact_name": "microcap-scoped-whole-v1-1634a27c5a609a46ab35fc29ca2c65b94182671b",
+  "producer_head_sha": "50387f2b7a3693d224884a1de1925b39010202a5",
+  "github_artifact_sha256": "d53e41de2c3981c4d7bd1ee96eb75d1710bb8b7614e1bc56f1d342db91aada01",
+  "github_artifact_bytes": 601502705,
+  "github_digest_verified": true,
+  "source_manifest_release_sha": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+  "seed_date": "2026-11-10",
+  "source_manifest_sha256": "1e9bd2695523bbbea8e86033da298e54b4be6523be0e94d570615f4fb398398e",
+  "bundle_sha256": "3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1",
+  "bundle_bytes": 673248922,
+  "restored_manifest_release_sha": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+  "native_restore": {
+    "ok": true,
+    "expected_date": "2026-11-10",
+    "backup": "/home/runner/work/codex-daily-automation-probe/codex-daily-automation-probe/scoped-consumer/.codex_backups/cloud_restore_20261111_173000_585229",
+    "restore_source": "verified_cloud_delivery",
+    "signal_ready": false,
+    "next": "same-day preflight then whole-delivery check"
+  },
+  "historical_release_files_equivalent": true,
+  "freshness": "verified_archive_only_requires_current_refresh",
+  "status": "scoped_whole_restore_verified"
+}

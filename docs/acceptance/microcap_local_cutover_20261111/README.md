@@ -15,13 +15,15 @@
 | [M5云端字节接力](M5-byte-relay-cloud.json)、[发布回执](M5-archive-publication.json) | 实际运行[43065027595](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43065027595)重建准确新包，release `441957202`、asset `736257558`服务器digest与本地包SHA `3326bf3a…`一致 | 仅传输并发布原已生成的673,248,922字节，不是原生恢复，也不更新行情、经济数据或当前信号 |
 | [切换候选配置验证](local-cutover-configuration-validation.json) | 两份实际配置由正式load入口通过，现有workflow guard退出旧云维护分支；三个scoped settings CLI均给出准确M5/P1/seed，原10日来源包身份和原477日更文件不变 | 仅本地分支配置验证，不合并、不派发、不改自动化；27只11日失败仍未完成 |
 
+| [M5两次真实main恢复](cloud-relay-m5-20261112.json) | [43065299195](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43065299195)发布准确M5成品；[43067983093](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43067983093)关闭seed回退后找到第一运行artifact `13876647441`，bundle SHA `3326bf3a…`、source manifest和三版streams一致 | 两轮均完成原生archive检查；日期仍10日、current_signal_ready=false，不等于11日新资料或生产自动化已启用 |
+
 原候选生命周期`288db1ef7fcc49d7b5500de219782ebf`的报告中，`native_archive.ok`和`whole_inspection.ok`为true，但顶层`ok=false`：随后读取旧快照inventory遇到Windows长路径错误。之后使用已提交的最终读者仅补做只读inventory，生命周期`ca389a4943ab409b8959ae9992adde33`产出上表的完整证明。两段原件均保留；不能把前一次整个运行写成PASS。`native_archive.price_cache_files`中的100项是当期成员输送检查，不代表把5,438只历史范围或300只日常维护范围缩为100。
 
 ## 正式准备与未完成项
 
 维护读者M5已随[原生PR #100](https://github.com/liuruojiang/microcap/pull/100)合入main `1634a27c5a609a46ab35fc29ca2c65b94182671b`；来源生产者P1为`f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5`。[Auto PR #184](https://github.com/liuruojiang/codex-daily-automation-probe/pull/184)已以main `50387f2…`合并，保留两个角色及原477日更身份。本地正式源码激活、10日归档源码复验和原生pack-archive均已退出0。新包673,248,922字节、SHA-256为`3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1`。直接上传因链路慢中止，核对原进程退出及当时draft无整包资产后，改用下述固定字节接力；实际接力和正式发布现在已完成，服务器digest一致。源码与归档验收不等于生产owner或自动化切换。
 
-尚待本轮结果：M5两次真实云端恢复、本地唯一写入配置的正式main生效，以及通过真实自动化工具替换09-00的旧自暂停prompt。第一次M5验收[43065299195](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43065299195)正在运行，未提前标成功。切换候选将配置设为`owner=local`、`enabled=true`并绑定已验证的10日be89来源；正式main应用前仍是原cloud/disabled状态。09-00虽显示ACTIVE，旧prompt仍含“保持暂停”。本次主机切换基于完整10日恢复基线，不以11日300只先齐全作为前置；27只报价仍按502失败保留，不生成新source或信号。M4接力不能替代M5验收。
+M5两次真实main云端恢复现已完整通过，第一次`43065299195`、第二次`43067983093`，第二次fallback=false，source_run准确指向第一次，artifact `13876647441`名称为`microcap-scoped-whole-v1-1634a27c5a609a46ab35fc29ca2c65b94182671b`。GitHub外层artifact SHA为`d53e41de2c3981c4d7bd1ee96eb75d1710bb8b7614e1bc56f1d342db91aada01`；内层原生bundle SHA为`3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1`。两个reader、源manifest和三版streams一致，原始restore与archive检查回执随本证明保留。尚待本轮完成：本地唯一写入配置的正式main生效，以及主线程通过真实工具更新09-00。切换候选为owner=local、enabled=true；main应用前保持原状态。旧自动化prompt仍自暂停，不能只凭ACTIVE标记称启用。11日27只502仍未完成，不生成新source或信号；本次主机切换基于完整10日恢复基线。
 
 历史重现使用[原M3完整种子](https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-872abe41/microcap-whole-delivery-state-close-20261110.zip)，SHA-256为`3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42`。新的M5归档必须保留该源身份及原始证明，不把旧日期改为当前日期。
 
@@ -29,4 +31,4 @@
 
 ### 一次性字节传输接力
 
-慢速直接上传当时未完成发布。固定手动工作流下载原M3包和11,693,277字节literal gzip，通过五个固定copy/literal范围恢复新ZIP；原包、新包和delta均核验完整SHA及长度，不能修改策略数据或改变消费者格式。[实际本地重建回执](M5-byte-relay-local.json)、[独立流式证明](M5-byte-relay-stream-verification.json)与[实际云端重建](M5-byte-relay-cloud.json)一致，目标为673,248,922字节、SHA `3326bf3a…`。[正式M5归档](https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-1634a27c/microcap-whole-delivery-state-archive-20261110-1634a27c.zip)已经发布，服务器digest已核对。该传输工作流已经main部署并实际执行，但它只解决字节传输；两次M5原生恢复与生产切换仍需自己的实际结果。
+慢速直接上传当时未完成发布。固定手动工作流下载原M3包和11,693,277字节literal gzip，通过五个固定copy/literal范围恢复新ZIP；原包、新包和delta均核验完整SHA及长度，不能修改策略数据或改变消费者格式。[实际本地重建回执](M5-byte-relay-local.json)、[独立流式证明](M5-byte-relay-stream-verification.json)与[实际云端重建](M5-byte-relay-cloud.json)一致，目标为673,248,922字节、SHA `3326bf3a…`。[正式M5归档](https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-1634a27c/microcap-whole-delivery-state-archive-20261110-1634a27c.zip)已经发布，服务器digest已核对。该传输工作流已经main部署并实际执行，但它只解决字节传输；两次M5原生恢复已另行通过并保留独立回执；生产配置合并与真实自动化更新仍按各自结果确认。
