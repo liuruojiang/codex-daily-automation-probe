@@ -11,6 +11,7 @@ def sample():
     return dict(schema='member_daily_result_v1',market_date='2026-11-06',publication_mode='close_confirmed',
         anchor_date='2026-11-05',generated_at='2026-11-06T16:01:00+08:00',quote_coverage='100/100',period_status='current',warnings=[],
         versions=[dict(version=v,revision=r,status='verified',signal=dict(strategy_revision=r,quote_trade_date='2026-11-06',
+            date='2026-11-06',signal_timing='close_confirmed',official_close_confirmed_signal=True,
             quote_coverage='100/100',current_holding='cash',next_holding='cash',current_execution_scale=0,next_session_target_scale=0,
             momentum_gap=-.03,annualized_log_wls_score=-1.06,microcap_mom=-.05,hedge_mom=-.02,
             entry_threshold=0,exit_threshold=0,momentum_gap_entry_threshold=0,momentum_gap_exit_buffer=.08)) for v,r in REVISIONS.items()])

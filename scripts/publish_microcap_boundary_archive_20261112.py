@@ -31,8 +31,30 @@ def release():
             missing = False
         if not missing:
             raise RuntimeError('Release lookup failed; reconcile before any write')
-        return None
-    value = json.loads(result.stdout)
+        # The tag endpoint omits an unpublished draft. Discover existing drafts
+        # completely before a create, so retrying publication cannot create a
+        # second release after the first create succeeded.
+        matches = []
+        for page in range(1, 101):
+            listed = subprocess.run(['gh', 'api', f'repos/{REPOSITORY}/releases?per_page=100&page={page}'],
+                                    capture_output=True)
+            if listed.returncode:
+                raise RuntimeError('Draft release lookup failed; reconcile before any write')
+            items = json.loads(listed.stdout)
+            if not isinstance(items, list):
+                raise RuntimeError('Draft release lookup is incomplete')
+            matches.extend(item for item in items if isinstance(item, dict) and item.get('tag_name') == TAG)
+            if len(items) < 100:
+                break
+        else:
+            raise RuntimeError('Draft release lookup exceeds its complete discovery budget')
+        if len(matches) > 1:
+            raise ValueError('Ambiguous existing release; refuse duplicate creation')
+        if not matches:
+            return None
+        value = matches[0]
+    else:
+        value = json.loads(result.stdout)
     if value.get('tag_name') != TAG or value.get('prerelease') is not False:
         raise ValueError('Existing release identity differs')
     return value
@@ -97,6 +119,8 @@ def publish(root, bundle, evidence):
            '--title', 'Microcap verified 10-Nov archive with exact issuer coverage',
            '--notes', 'Source-only native recertification. Economic history preserved. No current signal or email.')
         current = release()
+        if current is None:
+            raise RuntimeError('Created release is not yet visible; reconcile before any repeat write')
     (evidence/'release-before.json').write_text(json.dumps(current, indent=2)+'\n', encoding='utf-8')
     if not check_assets(current, digest, size):
         if current.get('draft') is not True:

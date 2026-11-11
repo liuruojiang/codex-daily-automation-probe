@@ -1,16 +1,15 @@
 """Restore a reviewed immutable report for send-only recovery, without fetching prices."""
 from __future__ import annotations
 import argparse
-import csv
 import hashlib
-import io
 import json
 import urllib.request
 import zipfile
 from pathlib import Path
 from restore_microcap_member_checkpoint import MAX_BYTES, unpack
 from restore_microcap_verified_state import StripCrossOriginAuthRedirectHandler
-from build_microcap_member_digest import render
+from build_microcap_member_digest import REVISIONS, render, saved_context
+from microcap_member_report_contract import final_signal_files
 
 
 def verify(out: Path, sha: str, day: str):
@@ -28,21 +27,14 @@ def verify(out: Path, sha: str, day: str):
     result=json.loads((out/'result.json').read_bytes())
     if result.get('publication_mode')!='close_confirmed':
         raise ValueError('Saved report recovery is close-confirmed only')
-    meta=render(result,expected_date=day)
-    if meta['status']!='OK' or any(name not in observed for name in ('v2_0_signal.csv','v2_3_signal.csv','v2_5_signal.csv','quotes.json','hedge.json')):
+    source=(out/'source-checkpoint/checkpoint.json' if 'source-checkpoint/checkpoint.json' in observed else None)
+    context=saved_context(out,source,expected_date=day,source_result=result)
+    final_signal_files(result,out,day,REVISIONS,context=context)
+    meta=render(result,expected_date=day,context=context)
+    required=['v2_0_signal.csv','v2_3_signal.csv','v2_5_signal.csv']
+    if result.get('reused_close_checkpoint') is not True:required+=['quotes.json','hedge.json']
+    if meta['status']!='OK' or any(name not in observed for name in required):
         raise ValueError('Reviewed normal send recovery requires all final signals and source snapshots')
-    for item in result['versions']:
-        name=item['version'].replace('.','_')+'_signal.csv'
-        with (out/name).open(encoding='utf-8-sig',newline='') as stream:rows=list(csv.DictReader(stream))
-        if len(rows)!=1:
-            raise ValueError('Saved signal CSV must have one row')
-        row, signal=rows[0],item['signal']
-        for field in ('strategy_revision','current_holding','next_holding','trade_state'):
-            if row.get(field)!=str(signal.get(field)):
-                raise ValueError('Saved CSV and result conflict: '+field)
-        for field in ('current_execution_scale','next_session_target_scale'):
-            if float(row[field])!=float(signal[field]):
-                raise ValueError('Saved CSV and result scales conflict')
 
 
 def main():

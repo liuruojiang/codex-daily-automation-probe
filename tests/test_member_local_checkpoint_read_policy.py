@@ -148,6 +148,20 @@ def test_explicit_cached_checkpoint_cannot_bypass_the_same_core_identity_guard()
         policy.validate_checkpoint_payload({'strategy_sha': 'd' * 40}, known)
 
 
+@pytest.mark.parametrize('producer', policy.LOCAL_READ_POLICY['rebalance_producer_shas'])
+def test_exact_reviewed_rebalance_marker_requires_preserved_native_handoff(producer):
+    known = policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json', AB)
+    with pytest.raises(ValueError, match='handoff lineage'):
+        policy.validate_checkpoint_payload({'strategy_sha': producer}, known)
+    value = dict(strategy_sha=producer, handoff_mode='native_close_extends_previous', handoff_from='1'*64)
+    for mode in ('native_close_extends_previous', 'same_close_period_switch'):
+        policy.validate_checkpoint_payload(dict(value, handoff_mode=mode), known)
+    for fault in ('handoff_mode', 'handoff_from'):
+        altered = dict(value, **{fault: 'unreviewed'})
+        with pytest.raises(ValueError, match='handoff lineage'):
+            policy.validate_checkpoint_payload(altered, known)
+
+
 def test_reader_policy_cannot_relabel_a_checkpoint_for_publication(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, 'argv', ['describe', '--strategy-sha', AB,
         '--checkpoint-read-policy', str(ROOT / 'config/microcap_member_local_runtime.json'),
@@ -156,13 +170,22 @@ def test_reader_policy_cannot_relabel_a_checkpoint_for_publication(tmp_path, mon
         restore.main()
 
 
-def test_bundle_materializes_exact_git_objects_without_activating(tmp_path, monkeypatch):
+@pytest.mark.parametrize('add_report_contract', [False, True])
+def test_bundle_materializes_exact_git_objects_without_activating(tmp_path, monkeypatch, add_report_contract):
     source = tmp_path / 'source'
     source.mkdir()
-    for name in bundle.BUNDLE_FILES:
+    names = [*bundle.BUNDLE_FILES, *[p for p in bundle.LOCAL_DEPENDENCIES.values() if (ROOT/p).exists()]]
+    for name in names:
         target = source / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / name).read_bytes())
+    if add_report_contract:
+        contract = bundle.LOCAL_DEPENDENCIES['microcap_member_report_contract']
+        if contract not in names:
+            names.append(contract)
+            (source/contract).write_text('# software-only dependency closure fixture\n')
+        builder = source/'scripts/build_microcap_member_digest.py'
+        builder.write_bytes(builder.read_bytes()+b'\nimport microcap_member_report_contract\n')
     subprocess.run(['git', 'init', '-q', str(source)], check=True)
     subprocess.run(['git', '-C', str(source), 'add', '--all'], check=True, capture_output=True)
     subprocess.run(['git', '-C', str(source), '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
@@ -181,8 +204,8 @@ def test_bundle_materializes_exact_git_objects_without_activating(tmp_path, monk
     assert result['status'] == 'local_member_bundle_prepared_not_installed'
     assert result['production_installation_changed'] is False
     manifest = json.loads((out / 'manifest.json').read_bytes())
-    assert set(manifest['files']) == set(bundle.BUNDLE_FILES)
-    for name in bundle.BUNDLE_FILES:
+    assert set(manifest['files']) == set(names)
+    for name in names:
         expected = original(['git', '-C', str(source), 'show', revision + ':' + name])
         assert (out / name).read_bytes() == expected
     candidate = json.loads(Path(result['candidate_pointer']).read_bytes())

@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+import uuid
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 from microcap_local_http import pooled_public_gets
@@ -45,6 +46,9 @@ def worker(root, state, slot, context_path):
     for name, digest in context['orchestrator_sources'].items():
         if sha((Path(__file__).parent / name).read_bytes()) != digest:
             raise ValueError('Data worker code changed after dispatch')
+    dispatch_id = assignment.get('dispatch_id')
+    if not isinstance(dispatch_id, str) or len(dispatch_id) != 32 or any(c not in '0123456789abcdef' for c in dispatch_id):
+        raise ValueError('Data worker requires an exact dispatch identity')
     sys.path.insert(0, str(root))
     import microcap_top100_mom16_biweekly_live_v2_0 as v2
     from scripts.stock_daily_inputs import refresh_daily_inputs
@@ -80,11 +84,12 @@ def worker(root, state, slot, context_path):
             missing = {key: {k:v for k,v in value.items() if k in ('status','error','error_type','attempt')}
                        for key,value in stages.items() if value['status'] != 'complete'}
             if missing: failures[symbol] = missing
-            result = dict(status='running', context=context, total=len(symbols), processed=number,
+            result = dict(status='running', context=context, dispatch_id=dispatch_id, total=len(symbols), processed=number,
                           complete=number-len(failures), failures=failures, reused_stages=journal.reused)
             atomic(status_path, encode(result))
-            stop = path.parent / 'stop-after-stage.json'
-            if stop.exists() and json.loads(stop.read_bytes()).get('context_sha256') == sha(encode(context)):
+            stop = path.parent / ('stop-after-stage-' + dispatch_id + '.json')
+            if (stop.exists() and json.loads(stop.read_bytes()).get('context_sha256') == sha(encode(context))
+                    and json.loads(stop.read_bytes()).get('dispatch_id') == dispatch_id):
                 result.update(status='interrupted_after_symbol')
                 atomic(status_path, encode(result))
                 return 2
@@ -100,12 +105,13 @@ def run_workers(root, state, symbols, context):
     for slot in (0, 1):
         with writer_lock(state / f'worker-slot-{slot}.lock'): pass
     context_path = directory / 'worker-context.json'
-    atomic(context_path, encode(dict(context=context, symbols=symbols)))
+    dispatch_id = uuid.uuid4().hex
+    atomic(context_path, encode(dict(context=context, symbols=symbols, dispatch_id=dispatch_id)))
     processes, streams = [], []
     try:
         for slot in (0, 1):
             # Old run summaries are not counted until this exact context agrees.
-            atomic(directory / f'worker-{slot}.json', encode(dict(status='starting', context=context,
+            atomic(directory / f'worker-{slot}.json', encode(dict(status='starting', context=context, dispatch_id=dispatch_id,
                    processed=0, complete=0, failures={}, reused_stages=0)))
             stdout = (directory / f'worker-{slot}.stdout.log').open('a', encoding='utf8')
             stderr = (directory / f'worker-{slot}.stderr.log').open('a', encoding='utf8')
@@ -115,10 +121,12 @@ def run_workers(root, state, symbols, context):
         last = -1
         while True:
             statuses = [json.loads((directory / f'worker-{slot}.json').read_bytes()) for slot in (0,1)]
-            if any(s['context'] != context for s in statuses): raise ValueError('Worker summary context changed')
+            if any(s['context'] != context or s.get('dispatch_id') != dispatch_id for s in statuses):
+                raise ValueError('Worker summary context or dispatch changed')
             processed = sum(s['processed'] for s in statuses)
             failures = {k:v for s in statuses for k,v in s['failures'].items()}
             progress = dict(schema='microcap_scoped_maintenance_v1', status='running', target=context['target'],
+                dispatch_id=dispatch_id,
                 scope_sha256=context['scope_sha256'], total=300, processed=processed,
                 complete=sum(s['complete'] for s in statuses), failures=failures,
                 reused_stages=sum(s['reused_stages'] for s in statuses),
@@ -139,7 +147,8 @@ def run_workers(root, state, symbols, context):
         # On ordinary parent errors ask for an orderly boundary, then keep the
         # worker ownership visible. Do not terminate a transactional source write.
         if any(p.poll() is None for p in processes):
-            atomic(directory / 'stop-after-stage.json', encode(dict(context_sha256=sha(encode(context)))))
+            atomic(directory / ('stop-after-stage-' + dispatch_id + '.json'),
+                   encode(dict(context_sha256=sha(encode(context)), dispatch_id=dispatch_id)))
         for stream in streams: stream.close()
 
 

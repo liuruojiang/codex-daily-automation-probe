@@ -1,0 +1,2 @@
+# Preserve the exact original Git bytes of the frozen 477 reader/verifier.
+original477_*.py -text

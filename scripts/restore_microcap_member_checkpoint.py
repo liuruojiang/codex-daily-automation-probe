@@ -306,12 +306,20 @@ def main():
     p.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY"))
     p.add_argument("--seed-config", type=Path)
     p.add_argument("--not-after-date")
+    p.add_argument("--expected-date", help="Require this exact completed session; a ceiling alone is insufficient for local preparation")
     p.add_argument("--checkpoint-read-policy", type=Path,
                    help="Exact reviewed local execution/producer relationship; does not relabel a checkpoint")
     p.add_argument("--describe-checkpoint", type=Path)
     args = p.parse_args()
     policy = load_read_policy(args.checkpoint_read_policy, args.strategy_sha) if args.checkpoint_read_policy else None
     namespace = policy['checkpoint_strategy_sha'] if policy else args.strategy_sha
+    if args.expected_date:
+        expected = date.fromisoformat(args.expected_date).isoformat()
+        if args.not_after_date and expected > date.fromisoformat(args.not_after_date).isoformat():
+            raise ValueError('Expected checkpoint session exceeds the permitted ceiling')
+        ceiling = args.not_after_date or expected
+    else:
+        expected, ceiling = None, args.not_after_date
     if args.describe_checkpoint:
         if policy is not None:
             p.error('--checkpoint-read-policy is read-only and cannot name a published checkpoint')
@@ -321,13 +329,15 @@ def main():
         p.error('--out is required for checkpoint restoration')
     token = os.environ["GITHUB_TOKEN"]
     try:
-        artifact = fetch_latest(args.repository, token, namespace,args.not_after_date)
+        artifact = fetch_latest(args.repository, token, namespace,ceiling)
     except RuntimeError as exc:
         if not str(exc).startswith("No published member checkpoint:") or args.seed_config is None:
             raise
         raw=seed_download(args.seed_config,namespace)
         identity=checkpoint_identity(raw)
         validate_checkpoint_core(raw, policy)
+        if expected is not None and identity['as_of_date'] != expected:
+            raise ValueError('Approved seed does not cover the expected completed session')
         if args.not_after_date and identity['as_of_date']>date.fromisoformat(args.not_after_date).isoformat():
             raise ValueError('Approved seed is later than the permitted market session')
         unpack(raw, args.out)
@@ -336,6 +346,8 @@ def main():
                           "checkpoint_read_policy": policy['policy'] if policy else None}))
     else:
         validate_checkpoint_core(artifact["_payload"], policy)
+        if expected is not None and artifact['_selection']['as_of_date'] != expected:
+            raise ValueError('Published checkpoint does not cover the expected completed session')
         unpack(artifact["_payload"], args.out)
         print(json.dumps({"artifact_id": artifact["id"], "run_id": artifact["workflow_run"]["id"],
                           "strategy_sha": args.strategy_sha, "checkpoint_strategy_sha": namespace,

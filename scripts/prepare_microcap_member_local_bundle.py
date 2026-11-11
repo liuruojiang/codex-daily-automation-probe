@@ -1,5 +1,6 @@
 """Materialize exact Git objects and a candidate install pointer; never activate."""
 import argparse
+import ast
 import hashlib
 import json
 from pathlib import Path
@@ -20,6 +21,7 @@ BUNDLE_FILES = (
     'config/microcap_member_checkpoint.json',
     'config/microcap_member_seed_20261109_4774966d.zip',
 )
+LOCAL_DEPENDENCIES = {'microcap_member_report_contract': 'scripts/microcap_member_report_contract.py'}
 
 
 def sha(raw):
@@ -39,6 +41,20 @@ def prepare(source, revision, strategy, out):
         raise ValueError('Candidate installation receipt already exists')
     bodies = {name: subprocess.check_output(['git', '-C', str(source), 'show', revision + ':' + name])
               for name in BUNDLE_FILES}
+    for name, raw in list(bodies.items()):
+        if not name.endswith('.py'):
+            continue
+        imports = set()
+        for node in ast.walk(ast.parse(raw)):
+            if isinstance(node, ast.ImportFrom):
+                imports.add(node.module)
+            elif isinstance(node, ast.Import):
+                imports.update(item.name for item in node.names)
+        for module, path in LOCAL_DEPENDENCIES.items():
+            if module in imports and path not in bodies:
+                # The final integrated builder imports this shared contract.
+                # Its absence is a broken bundle, never an optional fallback.
+                bodies[path] = subprocess.check_output(['git', '-C', str(source), 'show', revision + ':' + path])
     policy = validate_read_policy(json.loads(bodies['config/microcap_member_local_runtime.json']))
     cloud = json.loads(bodies['config/microcap_member_runtime.json'])
     seed = json.loads(bodies['config/microcap_member_checkpoint.json'])

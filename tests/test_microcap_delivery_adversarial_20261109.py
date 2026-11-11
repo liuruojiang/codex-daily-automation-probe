@@ -96,7 +96,8 @@ def test_tomorrow_sixteen_clock_dispatches_one_normal_member_workflow():
     call = result['calls'][0]
     assert call['url'].endswith('/microcap-member-daily.yml/dispatches')
     assert call['body'] == {'ref': 'main', 'inputs': {
-        'validation_only': False, 'external_schedule': True, 'publication_mode': 'close_confirmed'}}
+        'validation_only': False, 'external_schedule': True, 'publication_mode': 'close_confirmed',
+        'dispatch_key': 'microcap-daily-20261110T080000000Z'}}
 
 
 def test_transient_marker_lookup_504_retries_without_repeating_send(monkeypatch):

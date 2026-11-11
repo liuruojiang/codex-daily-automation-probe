@@ -16,9 +16,23 @@ import fs from 'node:fs';
 const scenario = JSON.parse(process.argv[1]);
 globalThis.setTimeout = (callback) => { callback(); return 1; };
 const calls = [];
+const reads = [];
 globalThis.fetch = async (url, options) => {
+  if (options.method !== 'POST') {
+    reads.push(url);
+    const sent = calls[0];
+    const stamp = scenario.scheduledTime || Date.parse('2026-11-06T01:00:00Z');
+    const run = sent && {display_title: 'microcap-dispatch:' + sent.body.inputs.dispatch_key,
+      head_branch: 'main', event: 'workflow_dispatch',
+      path: '.github/workflows/' + sent.url.split('/').at(-2),
+      created_at: new Date(stamp).toISOString(),
+      repository: {full_name: 'liuruojiang/codex-daily-automation-probe'},
+      ...scenario.lookupMutation};
+    return {ok: true, status: 200,
+      json: async () => ({workflow_runs: scenario.acceptThenLose || scenario.acceptedHttpError ? [run] : []})};
+  }
   calls.push({url, body: JSON.parse(options.body)});
-  if (scenario.networkError) throw new Error('isolated connection failure');
+  if (scenario.networkError || scenario.acceptThenLose) throw new Error('isolated connection failure');
   const status = calls.length < (scenario.succeedOn || 100) ? scenario.status : 204;
   return {ok: status === 204, status,
     text: async () => {
@@ -36,7 +50,7 @@ try {
     {waitUntil: promise => work.push(promise)});
   await Promise.all(work);
 } catch (failure) { error = String(failure.message); }
-console.log('RESULT ' + JSON.stringify({calls, error}));
+console.log('RESULT ' + JSON.stringify({calls, reads, error}));
 """
 
 
@@ -67,8 +81,9 @@ def test_retryable_http_failure_has_three_attempt_limit(status):
 
 def test_connection_failure_is_bounded():
     result = execute(networkError=True)
-    assert len(result["calls"]) == 3
+    assert len(result["calls"]) == 1
     assert "connection failure" in result["error"]
+    assert 'acceptance unknown' in result['error']
 
 
 def test_streaming_retryable_http_failure_retains_status_and_budget():
@@ -124,6 +139,8 @@ def test_activated_split_dispatches_exactly_one_workflow(cron, workflow, inputs)
     value=execute(cron=cron,memberDaily=True,succeedOn=1)
     assert not value['error'] and len(value['calls']) == 1
     assert value['calls'][0]['url'].endswith('/'+workflow+'/dispatches')
+    if workflow.startswith('microcap-member-'):
+        inputs = {**inputs, 'dispatch_key': 'microcap-'+inputs.get('task','daily')+'-20261106T010000000Z'}
     assert value['calls'][0]['body']=={'ref':'main','inputs':inputs}
 
 
@@ -146,4 +163,58 @@ def test_maintenance_reuses_nine_am_trigger_without_changing_ai_digest(stamp,cou
     assert not value['error'] and len(value['calls'])==count
     assert value['calls'][-1]['url'].endswith('/ai-hot-digest.yml/dispatches')
     if count==2:
-        assert value['calls'][0]['body']['inputs']=={'task':'maintenance'}
+        assert value['calls'][0]['body']['inputs']=={'task':'maintenance','dispatch_key':'microcap-maintenance-20261106T010000000Z'}
+
+
+@pytest.mark.parametrize('cron', ['0 8 * * MON-FRI','10 7 * * MON-FRI','0 1 * * *'])
+def test_accepted_post_with_lost_reply_is_reconciled_without_another_dispatch(cron):
+    value = execute(cron=cron, memberDaily=True, acceptThenLose=True)
+    # The 09:00 cron independently dispatches AI Hot as before. Check only the
+    # microcap POST and its exact read; no real HTTP or SMTP exists in this test.
+    microcap = [item for item in value['calls'] if 'microcap-' in item['url']]
+    assert len(microcap) == 1
+    assert len(value['reads']) == 1
+    if cron != '0 1 * * *':
+        assert not value['error']
+    assert microcap[0]['body']['inputs']['dispatch_key'].startswith('microcap-')
+
+
+@pytest.mark.parametrize('status', [408,500,502,503,504])
+def test_ambiguous_microcap_http_acceptance_never_repeats_the_post(status):
+    missing = execute(memberDaily=True, status=status)
+    assert len(missing['calls']) == 1 and len(missing['reads']) == 3
+    assert 'acceptance unknown' in missing['error']
+    accepted = execute(memberDaily=True, status=status, acceptedHttpError=True)
+    assert len(accepted['calls']) == 1 and len(accepted['reads']) == 1
+    assert not accepted['error']
+
+
+@pytest.mark.parametrize('mutation', [
+    {'head_branch':'other'}, {'event':'push'},
+    {'path':'.github/workflows/other.yml'},
+    {'repository':{'full_name':'other/repository'}},
+    {'created_at':'2026-11-05T01:00:00Z'},
+    {'display_title':'microcap-dispatch:wrong-slot'},
+])
+def test_reconciliation_cannot_borrow_a_different_workflow_or_slot(mutation):
+    value = execute(memberDaily=True, acceptThenLose=True, lookupMutation=mutation)
+    assert len(value['calls']) == 1 and len(value['reads']) == 3
+    assert 'acceptance unknown' in value['error']
+
+
+def test_uncertain_lookup_is_bounded_and_safe_rejection_still_retries():
+    lost = execute(memberDaily=True, networkError=True)
+    assert len(lost['calls']) == 1 and len(lost['reads']) == 3
+    assert 'no repeat POST' in lost['error']
+    rejected = execute(memberDaily=True, status=429, succeedOn=2)
+    assert len(rejected['calls']) == 2 and not rejected['error']
+    assert rejected['calls'][0]['body'] == rejected['calls'][1]['body']
+
+
+def test_member_workflow_titles_expose_the_same_slot_for_read_only_reconciliation():
+    import yaml
+    for name in ('microcap-member-daily.yml','microcap-member-maintenance.yml'):
+        value = yaml.safe_load((ROOT/'.github/workflows'/name).read_text(encoding='utf-8'))
+        assert "format('microcap-dispatch:{0}', inputs.dispatch_key)" in value['run-name']
+        trigger = value.get('on',value.get(True))
+        assert trigger['workflow_dispatch']['inputs']['dispatch_key']['default'] == ''

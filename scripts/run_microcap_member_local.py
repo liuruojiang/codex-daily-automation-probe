@@ -35,10 +35,11 @@ def github_environment():
     return env
 
 
-def reusable_checkpoint(path, policy):
+def reusable_checkpoint(path, policy, expected_date=None):
     if path is None:return None
     value=json.loads(Path(path).read_bytes())
     if value.get('history',{}).get('sha256') in policy.get('superseded_history_sha256',[]):return None
+    if expected_date is not None and value.get('as_of_date') != expected_date:return None
     return Path(path).resolve()
 
 
@@ -74,19 +75,26 @@ def main():
         if process.returncode:
             raise RuntimeError(f'Member local stage {number} failed; see saved exit code and logs')
     py=sys.executable
+    sys.path.insert(0,str(strategy))
+    from scripts.exchange_calendar import latest_completed_session
+    expected=latest_completed_session().isoformat()
     seed_policy=json.loads((auto/'config/microcap_member_checkpoint.json').read_bytes())
-    cached=reusable_checkpoint(args.checkpoint,seed_policy)
+    cached=reusable_checkpoint(args.checkpoint,seed_policy,expected)
     if args.checkpoint is not None and cached is None:
-        (out/'superseded_checkpoint.json').write_text(json.dumps({'cached_checkpoint':str(args.checkpoint),'reason':'exact superseded history serialization; original retained; use reviewed small seed'}),encoding='utf8')
+        original=json.loads(args.checkpoint.read_bytes())
+        superseded=original.get('history',{}).get('sha256') in seed_policy.get('superseded_history_sha256',[])
+        name='superseded_checkpoint.json' if superseded else 'stale_checkpoint.json'
+        (out/name).write_text(json.dumps({'cached_checkpoint':str(args.checkpoint),
+            'reason':'exact superseded history serialization' if superseded else 'checkpoint is not the latest completed session',
+            'actual_as_of':original.get('as_of_date'),'expected_as_of':expected,'original_retained':True}),encoding='utf8')
     if cached is None:
-        sys.path.insert(0,str(strategy))
-        from scripts.exchange_calendar import latest_completed_session
-        not_after=latest_completed_session().isoformat()
         policy_args=['--checkpoint-read-policy',str(read_policy)] if read_policy is not None else []
-        run([py,'-B',str(auto/'scripts/restore_microcap_member_checkpoint.py'),'--strategy-sha',runtime,*policy_args,'--seed-config',str(auto/'config/microcap_member_checkpoint.json'),'--not-after-date',not_after,'--out',str(out/'checkpoint')],github_environment())
+        run([py,'-B',str(auto/'scripts/restore_microcap_member_checkpoint.py'),'--strategy-sha',runtime,*policy_args,'--seed-config',str(auto/'config/microcap_member_checkpoint.json'),'--not-after-date',expected,'--expected-date',expected,'--out',str(out/'checkpoint')],github_environment())
         cp=out/'checkpoint/checkpoint.json'
     else:
         cp=cached
+    if json.loads(cp.read_bytes()).get('as_of_date') != expected:
+        raise ValueError('Local preparation requires the latest completed checkpoint session')
     if read_policy is not None:
         validate_checkpoint_payload(json.loads(cp.read_bytes()), load_read_policy(read_policy, runtime))
     run([py,'-B',str(strategy/'scripts/member_period_handoff.py'),'verify','--checkpoint',str(cp)])

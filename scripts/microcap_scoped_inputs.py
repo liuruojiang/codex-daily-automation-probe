@@ -19,8 +19,8 @@ import uuid
 import zipfile
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
-from maintain_microcap_local import CACHE, RUNTIME, SOURCE_RUNTIMES, bound, hashes
-from microcap_local_due import completed
+from maintain_microcap_local import CACHE, RUNTIME, SOURCE_RUNTIMES, bound, hashes, require_complete_bootstrap
+from microcap_local_due import completed, pool_binding
 
 SCHEMA = 'microcap_scoped_source_inputs_v1'
 PREFIXES = tuple(CACHE + p + '/' for p in ('prices_raw', 'share_change', 'trade_status', 'share_sources', 'return_basis'))
@@ -28,7 +28,8 @@ MAX_BYTES = 1024 * 1024 * 1024
 REVIEWED_CONSUMERS = frozenset({'33062463d66afbff0c4342e3dd9203fa3117d865',
     '564d681308dd7593ffadb075d4dd5291e4c4e89c','6b56e6902799aa189a0bbc42c18d6506dcc2a04e',
     '872abe41d48f818363d879cdf98b297d230377b4','efbfc3464208c2e9a2de5778310d813095446858',
-    '1634a27c5a609a46ab35fc29ca2c65b94182671b'})
+    '1634a27c5a609a46ab35fc29ca2c65b94182671b',
+    '14e9a9fa6f0487f1d5547598435089c43f2f9fd1'})
 
 
 def validate_consumer(root, manifest, actual):
@@ -57,11 +58,13 @@ def permitted(name):
             and not any(part in ('locks', 'incomplete', 'failures') for part in p.parts))
 
 
-def export(root, state, target, bundle):
+def export(root, state, target, bundle, pool=None):
     root, state, bundle = Path(root), Path(state), Path(bundle)
     files = {}
     directory = state / 'runs' / target
-    if not completed(directory, root, target, files_out=files):
+    binding = pool_binding(state, target, pool)
+    if not completed(directory, root, target, files_out=files,
+                     **(dict(expected_symbols=binding[0], expected_scope=binding[1]) if binding else {})):
         raise ValueError('A complete hash-verified 300-stock source run is required')
     result = json.loads((directory / 'result.json').read_bytes())
     if result.get('context',{}).get('runtime_sha')!=RUNTIME:
@@ -73,6 +76,7 @@ def export(root, state, target, bundle):
         raise ValueError('A native source evidence object has no supported transport role')
     files = {p:h for p,h in files.items() if permitted(p)}
     symbols = result['symbols']
+    require_complete_bootstrap(json.loads((state/'bootstrap.json').read_bytes()), symbols)
     for s in symbols:
         for group, suffix in (('prices_raw','.csv'),('share_change','.csv'),('share_sources','.json'),
                               ('trade_status','.json'),('return_basis/manifests','.json'),('return_basis/prices_adj','.csv')):
@@ -88,14 +92,20 @@ def export(root, state, target, bundle):
     manifest['evidence'] = {name:sha(raw) for name,raw in extras.items()}
     bundle.parent.mkdir(parents=True, exist_ok=True)
     if bundle.exists(): raise ValueError('Refuse to overwrite an existing source bundle')
-    with writer_lock(state/'writer.lock'), zipfile.ZipFile(bundle, 'x', zipfile.ZIP_DEFLATED) as archive:
+    with writer_lock(state/'writer.lock'):
+        if pool_binding(state, target, pool) != binding:
+            raise ValueError('Current weekly roster changed before source export')
+        require_complete_bootstrap(json.loads((state/'bootstrap.json').read_bytes()), symbols)
         if hashes(root, files) != files: raise ValueError('Source inputs changed before export')
-        for name,digest in files.items():
-            raw=bound(root,name).read_bytes()
-            if sha(raw)!=digest: raise ValueError('Source input changed during export')
-            archive.writestr(name, raw)
-        for name,raw in extras.items(): archive.writestr(name,raw)
-        archive.writestr('manifest.json', encode(manifest))
+        if sha(bound(root, CACHE+'security_master.csv').read_bytes()) != manifest['master_sha256']:
+            raise ValueError('Source master changed before export')
+        with zipfile.ZipFile(bundle, 'x', zipfile.ZIP_DEFLATED) as archive:
+            for name,digest in files.items():
+                raw=bound(root,name).read_bytes()
+                if sha(raw)!=digest: raise ValueError('Source input changed during export')
+                archive.writestr(name, raw)
+            for name,raw in extras.items(): archive.writestr(name,raw)
+            archive.writestr('manifest.json', encode(manifest))
     _, _, digest = read_bundle(bundle, target)
     return dict(status='source_inputs_exported', bundle_sha256=digest, target=target,
                 issuer_count=300, files=len(files), final_strategy_delivery=False)
@@ -282,11 +292,12 @@ def main():
     p.add_argument('action',choices=('export','import'))
     p.add_argument('--root',type=Path,required=True);p.add_argument('--bundle',type=Path,required=True)
     p.add_argument('--state-root',type=Path);p.add_argument('--date',required=True)
+    p.add_argument('--pool',type=Path)
     p.add_argument('--sha256')
     a=p.parse_args()
     if a.action=='export':
         if a.state_root is None:p.error('--state-root required for export')
-        result=export(a.root,a.state_root,a.date,a.bundle)
+        result=export(a.root,a.state_root,a.date,a.bundle,a.pool)
     else:
         if not a.sha256:p.error('--sha256 required for import')
         result=install(a.root,a.bundle,a.sha256,a.date)

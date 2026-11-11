@@ -20,7 +20,8 @@ from datetime import datetime
 
 def result():
     return {'schema':'member_daily_result_v1','market_date':'2026-11-06','publication_mode':'close_confirmed',
-            'versions':[{'version':v,'revision':r,'status':'verified','signal':{'current_holding':'cash','next_holding':'cash','next_session_target_scale':0,'strategy_revision':r,'quote_trade_date':'2026-11-06','quote_coverage':'100/100'}}
+            'generated_at':'2026-11-06T16:00:00+08:00','status':'OK',
+            'versions':[{'version':v,'revision':r,'status':'verified','signal':{'current_holding':'cash','next_holding':'cash','next_session_target_scale':0,'strategy_revision':r,'date':'2026-11-06','quote_trade_date':'2026-11-06','quote_coverage':'100/100','signal_timing':'close_confirmed','official_close_confirmed_signal':True}}
                         for v,r in REVISIONS.items()], 'warnings':[]}
 
 
