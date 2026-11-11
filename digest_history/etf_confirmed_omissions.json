@@ -5929,6 +5929,71 @@
       "zh_summary": "媒体全文比较VTI、SCHD、SPHQ、RSP；讨论美国股票内部集中度和质量倾斜，非跨资产分散。",
       "evidence_level": "媒体全文",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42905752559",
+      "origin_report_date": "2026-11-11",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Should State Street SPDR Dow Jones Industrial Average ETF Trust (DIA) Be on Your Investing Radar?",
+      "zh_title": "DIA是否值得关注：费用与集中度",
+      "url": "https://finance.yahoo.com/markets/stocks/articles/state-street-spdr-dow-jones-184353389.html?.tsrc=rss",
+      "published": "2026-11-10T18:43:53+00:00",
+      "summary": "Zacks产品分析可读，涉及0.16%费用、约27.1%金融权重与前十大55.36%；尚未独立核对发行人数据。",
+      "zh_summary": "Zacks产品分析可读，涉及0.16%费用、约27.1%金融权重与前十大55.36%；尚未独立核对发行人数据。",
+      "evidence_level": "发布者页面正文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42905752559",
+      "origin_report_date": "2026-11-11",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "How Much Does a 60-Year-Old Need Invested to Replace a $125,000 Salary With Dividends and Never Sell a Share?",
+      "zh_title": "用股息替代12.5万美元年薪需要多少本金",
+      "url": "https://247wallst.com/personal-finance/2026/11/10/how-much-does-a-60-year-old-need-invested-to-replace-a-125000-salary-with-dividends-and-never-sell-a-share/?.tsrc=rss",
+      "published": "2026-11-10T20:07:07+00:00",
+      "summary": "媒体用六类收入持仓估算约143万美元本金，明确派息削减和现金缓冲，含期权覆盖与高收益债风险。",
+      "zh_summary": "媒体用六类收入持仓估算约143万美元本金，明确派息削减和现金缓冲，含期权覆盖与高收益债风险。",
+      "evidence_level": "发布者页面正文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42905752559",
+      "origin_report_date": "2026-11-11",
+      "source": "A Wealth of Common Sense",
+      "title": "This is Why You Need a Plan",
+      "zh_title": "为何需要投资计划：应对叙事快速翻转",
+      "url": "https://awealthofcommonsense.com/2026/11/this-is-why-you-need-a-plan/",
+      "published": "2026-11-10T18:04:56+00:00",
+      "summary": "博客以选举及剧烈波动说明事后叙事不可靠，提出匹配目标、风险承受与长期计划。",
+      "zh_summary": "博客以选举及剧烈波动说明事后叙事不可靠，提出匹配目标、风险承受与长期计划。",
+      "evidence_level": "发布者页面正文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42905752559",
+      "origin_report_date": "2026-11-11",
+      "source": "Seeking Alpha ETFs",
+      "title": "ADX: Buy The Dip Because The Distributions Are Already Paid For",
+      "zh_title": "ADX回调与分配：未实现收益不能当现金保证",
+      "url": "https://seekingalpha.com/article/4965778-adx-buy-the-dip-because-the-distributions-are-already-paid-for?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-10T15:45:52+00:00",
+      "summary": "公开摘要讨论净值8%分配、科技超过40%与折价收窄；作者看多是观点。",
+      "zh_summary": "公开摘要讨论净值8%分配、科技超过40%与折价收窄；作者看多是观点。",
+      "evidence_level": "公开摘要及截断开头",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "42905752559",
+      "origin_report_date": "2026-11-11",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "The Senate Voted 73-25 to Start Debate on a Bill Making Data Centers Pay Their Own Power Bills",
+      "zh_title": "数据中心电力法案：辩论程序不是最终立法",
+      "url": "https://247wallst.com/investing/2026/11/10/the-senate-voted-73-25-to-start-debate-on-a-bill-making-data-centers-pay-their-own-power-bills/?.tsrc=rss",
+      "published": "2026-11-10T18:21:47+00:00",
+      "summary": "媒体讨论73比25程序投票及XLU/GRID敞口差异；法案未最终通过、存在政治条件。",
+      "zh_summary": "媒体讨论73比25程序投票及XLU/GRID敞口差异；法案未最终通过、存在政治条件。",
+      "evidence_level": "发布者页面正文",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
