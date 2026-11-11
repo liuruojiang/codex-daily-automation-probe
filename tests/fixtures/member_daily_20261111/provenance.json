@@ -20,5 +20,11 @@
     "v2_3_signal.csv": "182f48e42e024ed1c85b94245b570cca094ec2d3e8319b0a69e2f330f77684af",
     "v2_5_signal.csv": "1c8a650a43f9f17fcfa3d4fd44aa91aa751e6b1ce563b98007720649c2b7b49d",
     "version_state.json": "e11ad4628bcaf8b85a0da5eff28b6b2fc8b3290bbbf5b0c7ceab3af1d9ca89b4"
+  },
+  "sent_reference": {
+    "file": "expected_sent_report.json",
+    "sha256": "4ec7c2e3463b0d4fdb72c36dee16de75242ae69ab1591908c68c35bdaccb83d2",
+    "source": "Original successful D11 daily-report artifact metadata; matched to received Gmail MIME in the original audit",
+    "body_sha256": "13813691b5bb01276cefb055f96c9b366dbd1f5e505df208642bbcf291558bdd"
   }
 }

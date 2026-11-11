@@ -13,7 +13,6 @@ from pathlib import Path
 import socket
 import subprocess
 import sys
-import types
 import urllib.request
 import zipfile
 
@@ -25,7 +24,6 @@ import build_microcap_member_digest as digest
 from check_microcap_member_send import choose
 
 FIXTURE=ROOT/'tests/fixtures/member_daily_20261111'
-BASE='56b1fe4f470be9ca45e62b32a361a0d2d8b06c3e'
 
 
 @pytest.fixture(autouse=True)
@@ -82,12 +80,13 @@ def run_main(monkeypatch,directory,out,*,clock='2026-11-11T16:02:00+08:00',modul
 
 def test_real_d11_complete_field_csv_binding_preserves_original_json_csv_and_body(original,tmp_path,monkeypatch):
     before={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in original.iterdir()}
-    source=subprocess.check_output(['git','-C',str(ROOT),'show',BASE+':scripts/build_microcap_member_digest.py'])
-    old=types.ModuleType('original_member_digest');old.__file__=str(ROOT/'scripts/build_microcap_member_digest.py')
-    exec(compile(source,old.__file__,'exec'),old.__dict__)
-    old_meta=run_main(monkeypatch,original,tmp_path/'before',module=old)
+    proof=json.loads((FIXTURE/'provenance.json').read_bytes())['sent_reference']
+    raw=(FIXTURE/proof['file']).read_bytes().replace(b'\r\n',b'\n')
+    assert hashlib.sha256(raw).hexdigest()==proof['sha256']
+    old_meta=json.loads(raw)
+    assert hashlib.sha256(old_meta['body'].encode()).hexdigest()==proof['body_sha256']
     new_meta=run_main(monkeypatch,original,tmp_path/'after')
-    assert new_meta['status']==old_meta['status']=='OK'
+    assert new_meta['status']=='OK'
     assert new_meta['body']==old_meta['body'] and new_meta['subject']==old_meta['subject']
     assert new_meta['member_actions']=={}
     assert {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in original.iterdir()}==before
