@@ -39,5 +39,34 @@ def test_failed_release_read_cannot_become_permission_to_create(monkeypatch, pay
 
 
 def test_actual_not_found_is_distinguished_from_unknown_state(monkeypatch):
-    monkeypatch.setattr(publisher.subprocess, 'run', lambda *a,**k: SimpleNamespace(returncode=1,stdout=b'{"status":"404"}'))
+    replies = iter([SimpleNamespace(returncode=1,stdout=b'{"status":"404"}'),
+                    SimpleNamespace(returncode=0,stdout=b'[]')])
+    monkeypatch.setattr(publisher.subprocess, 'run', lambda *a,**k: next(replies))
     assert publisher.release() is None
+
+
+def test_successful_draft_creation_is_reconciled_when_tag_route_returns_404(monkeypatch):
+    import json
+    value = dict(id=442297118,tag_name=publisher.TAG,prerelease=False,draft=True,assets=[])
+    replies = iter([SimpleNamespace(returncode=1,stdout=b'{"status":"404"}'),
+                    SimpleNamespace(returncode=0,stdout=json.dumps([value]).encode())])
+    monkeypatch.setattr(publisher.subprocess, 'run', lambda *a,**k: next(replies))
+    assert publisher.release() == value
+
+
+def test_duplicate_drafts_cannot_become_another_create_permission(monkeypatch):
+    import json
+    item = dict(tag_name=publisher.TAG,prerelease=False,draft=True,assets=[])
+    replies = iter([SimpleNamespace(returncode=1,stdout=b'{"status":"404"}'),
+                    SimpleNamespace(returncode=0,stdout=json.dumps([item,item]).encode())])
+    monkeypatch.setattr(publisher.subprocess, 'run', lambda *a,**k: next(replies))
+    with pytest.raises(ValueError,match='Ambiguous'):
+        publisher.release()
+
+
+def test_unreadable_drafts_preserve_unknown_state(monkeypatch):
+    replies = iter([SimpleNamespace(returncode=1,stdout=b'{"status":"404"}'),
+                    SimpleNamespace(returncode=1,stdout=b'{"status":"403"}')])
+    monkeypatch.setattr(publisher.subprocess, 'run', lambda *a,**k: next(replies))
+    with pytest.raises(RuntimeError,match='reconcile'):
+        publisher.release()
