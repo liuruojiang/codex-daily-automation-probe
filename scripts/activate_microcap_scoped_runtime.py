@@ -12,6 +12,7 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
+import zipfile
 
 DATA_PREFIXES = ("outputs/", ".microcap_index_cache/")
 
@@ -39,7 +40,7 @@ def checked_path(root, name):
     return path
 
 
-def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path) -> dict:
+def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path, *, bundle: Path | None = None) -> dict:
     root, config_path, restore_receipt, receipt = [Path(p).resolve() for p in
                                                  (root, config_path, restore_receipt, receipt)]
     config_raw, restored_raw = config_path.read_bytes(), restore_receipt.read_bytes()
@@ -62,7 +63,33 @@ def activate(root: Path, config_path: Path, restore_receipt: Path, receipt: Path
                 or any(not isinstance(v, str) or re.fullmatch(r"[0-9a-f]{64}", v) is None
                        for v in ([pair[1]] if pair[0] is None else pair))):
             raise ValueError("Scoped review requires exact old/new source hashes")
-    if not isinstance(restored, dict) or restored.get("restored") is not True or restored.get("strategy_sha") != old:
+    if not isinstance(restored, dict) or restored.get("restored") is not True:
+        raise ValueError("Scoped activation requires the actual baseline restore receipt")
+    if restored.get('status') == 'scoped_whole_restore_verified':
+        manifest_path=root/'outputs/top100_delivery_manifest.json'
+        raw=manifest_path.read_bytes();manifest=json.loads(raw)
+        if (restored.get('runtime_sha')!=old
+                or restored.get('historical_release_files_equivalent') is not True
+                or restored.get('repository')!='liuruojiang/codex-daily-automation-probe'
+                or restored.get('native_restore',{}).get('ok') is not True
+                or restored.get('seed_date')!=manifest.get('expected_date')
+                or restored.get('native_restore',{}).get('expected_date')!=manifest.get('expected_date')
+                or restored.get('source_manifest_release_sha')!=manifest.get('release_sha')
+                or restored.get('restored_manifest_release_sha')!=manifest.get('release_sha')
+                or restored.get('source_manifest_sha256')!=digest(raw)
+                or manifest.get('ok') is not True or manifest.get('status')!='complete'):
+            raise ValueError('Scoped whole restoration identity differs from actual archive')
+        if bundle is None:
+            raise ValueError('Scoped whole activation requires its original verified bundle')
+        bundle=Path(bundle).resolve()
+        with bundle.open('rb') as stream:
+            actual_bundle=hashlib.file_digest(stream,'sha256').hexdigest()
+        if actual_bundle!=restored.get('bundle_sha256') or bundle.stat().st_size!=restored.get('bundle_bytes'):
+            raise ValueError('Scoped whole activation bundle identity differs')
+        with zipfile.ZipFile(bundle) as archive:
+            if archive.namelist().count('outputs/top100_delivery_manifest.json')!=1 or archive.read('outputs/top100_delivery_manifest.json')!=raw:
+                raise ValueError('Original whole manifest differs from restored archive')
+    elif restored.get("strategy_sha") != old:
         raise ValueError("Scoped activation requires the actual baseline restore receipt")
     if receipt in (restore_receipt, config_path) or receipt.exists():
         raise ValueError("Scoped activation receipt must be new and preserve original evidence")
@@ -175,8 +202,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("root", "config", "restore-receipt", "receipt"):
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument('--bundle',type=Path)
     args = parser.parse_args()
-    print(json.dumps(activate(args.root, args.config, args.restore_receipt, args.receipt)))
+    print(json.dumps(activate(args.root, args.config, args.restore_receipt, args.receipt,bundle=args.bundle)))
 
 
 if __name__ == "__main__":
