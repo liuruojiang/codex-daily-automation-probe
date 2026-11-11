@@ -22,6 +22,7 @@ from pathlib import Path, PurePosixPath
 from restore_microcap_verified_state import api_request, download
 from restore_microcap_verified_state import StripCrossOriginAuthRedirectHandler
 from build_microcap_member_digest import REVISIONS
+from member_checkpoint_policy import load_read_policy, validate_checkpoint_core
 
 WORKFLOWS = {".github/workflows/microcap-member-daily.yml", ".github/workflows/microcap-member-bootstrap.yml",
              ".github/workflows/microcap-member-maintenance.yml"}
@@ -305,28 +306,41 @@ def main():
     p.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY"))
     p.add_argument("--seed-config", type=Path)
     p.add_argument("--not-after-date")
+    p.add_argument("--checkpoint-read-policy", type=Path,
+                   help="Exact reviewed local execution/producer relationship; does not relabel a checkpoint")
     p.add_argument("--describe-checkpoint", type=Path)
     args = p.parse_args()
+    policy = load_read_policy(args.checkpoint_read_policy, args.strategy_sha) if args.checkpoint_read_policy else None
+    namespace = policy['checkpoint_strategy_sha'] if policy else args.strategy_sha
     if args.describe_checkpoint:
+        if policy is not None:
+            p.error('--checkpoint-read-policy is read-only and cannot name a published checkpoint')
         print(checkpoint_artifact_name(args.describe_checkpoint,args.strategy_sha))
         return
     if args.out is None:
         p.error('--out is required for checkpoint restoration')
     token = os.environ["GITHUB_TOKEN"]
     try:
-        artifact = fetch_latest(args.repository, token, args.strategy_sha,args.not_after_date)
+        artifact = fetch_latest(args.repository, token, namespace,args.not_after_date)
     except RuntimeError as exc:
         if not str(exc).startswith("No published member checkpoint:") or args.seed_config is None:
             raise
-        raw=seed_download(args.seed_config,args.strategy_sha)
+        raw=seed_download(args.seed_config,namespace)
         identity=checkpoint_identity(raw)
+        validate_checkpoint_core(raw, policy)
         if args.not_after_date and identity['as_of_date']>date.fromisoformat(args.not_after_date).isoformat():
             raise ValueError('Approved seed is later than the permitted market session')
         unpack(raw, args.out)
-        print(json.dumps({"source": "exact_small_bootstrap_seed", "strategy_sha": args.strategy_sha}))
+        print(json.dumps({"source": "exact_small_bootstrap_seed", "strategy_sha": args.strategy_sha,
+                          "checkpoint_strategy_sha": namespace,
+                          "checkpoint_read_policy": policy['policy'] if policy else None}))
     else:
+        validate_checkpoint_core(artifact["_payload"], policy)
         unpack(artifact["_payload"], args.out)
-        print(json.dumps({"artifact_id": artifact["id"], "run_id": artifact["workflow_run"]["id"], "strategy_sha": args.strategy_sha, "selection": artifact["_selection"], "rejected": artifact["_rejected"]}))
+        print(json.dumps({"artifact_id": artifact["id"], "run_id": artifact["workflow_run"]["id"],
+                          "strategy_sha": args.strategy_sha, "checkpoint_strategy_sha": namespace,
+                          "checkpoint_read_policy": policy['policy'] if policy else None,
+                          "selection": artifact["_selection"], "rejected": artifact["_rejected"]}))
 
 
 if __name__ == "__main__":

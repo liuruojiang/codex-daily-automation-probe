@@ -1,0 +1,91 @@
+name: One-off Microcap boundary archive recertification
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: microcap-independent-maintenance
+  cancel-in-progress: false
+jobs:
+  recertify:
+    if: github.repository == 'liuruojiang/codex-daily-automation-probe' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      TZ: Asia/Shanghai
+      PYTHONDONTWRITEBYTECODE: '1'
+      GITHUB_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14.4'
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: 872abe41d48f818363d879cdf98b297d230377b4
+          path: native
+          persist-credentials: false
+      - name: Install exact native archive dependencies
+        run: python -m pip install 'numpy==2.4.3' 'pandas==2.3.3' requests matplotlib 'akshare==1.18.46' 'baostock==0.9.1'
+      - name: Restore the fixed original M3 archive under its original runtime
+        run: |
+          mkdir -p evidence
+          python -B automation/scripts/microcap_scoped_whole_recovery.py \
+            --root native --runtime-sha 872abe41d48f818363d879cdf98b297d230377b4 \
+            --not-after-date 2026-11-10 --bundle "$RUNNER_TEMP/original-m3.zip" \
+            --receipt evidence/original-restore.json \
+            --fallback-url https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-872abe41/microcap-whole-delivery-state-close-20261110.zip \
+            --fallback-sha256 3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42 > evidence/original-restore.stdout.json
+          python - <<'PY'
+          import json
+          value=json.load(open('evidence/original-restore.json'))
+          assert value['bundle_sha256']=='3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42'
+          assert value['runtime_sha']=='872abe41d48f818363d879cdf98b297d230377b4'
+          assert value['seed_date']=='2026-11-10' and value['restored'] is True
+          PY
+      - name: Activate the complete exact source review while preserving restored data
+        run: |
+          python -B automation/scripts/activate_microcap_scoped_runtime.py --root native \
+            --config automation/config/microcap_boundary_archive_review_20261112.json \
+            --restore-receipt evidence/original-restore.json --bundle "$RUNNER_TEMP/original-m3.zip" \
+            --receipt evidence/source-activation.json > evidence/source-activation.stdout.json
+      - name: Earn the native complete archive certificate without refreshing history
+        run: |
+          python -B native/scripts/top100_delivery.py recertify-archive-source \
+            --expected-date 2026-11-10 > evidence/native-recertification.json
+          cp native/outputs/top100_delivery_manifest.json evidence/recertified-manifest.json
+      - name: Pack the native-validated archive without claiming a current signal
+        run: |
+          python -B native/scripts/top100_cloud_delivery.py pack-archive --root native \
+            --v23-root native --v25-root native --expected-date 2026-11-10 \
+            --bundle "$RUNNER_TEMP/microcap-whole-delivery-state-archive-20261110-14e9a9fa.zip" > evidence/native-pack.json
+      - name: Reconcile and publish the verified seed without overwriting an asset
+        run: |
+          python -B automation/scripts/publish_microcap_boundary_archive_20261112.py \
+            --root native --bundle "$RUNNER_TEMP/microcap-whole-delivery-state-archive-20261110-14e9a9fa.zip" \
+            --evidence evidence > evidence/publication.stdout.json
+      - name: Preserve source-only migration evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-boundary-archive-recertification-20261112
+          path: |
+            evidence
+            ${{ runner.temp }}/scoped-whole-recovery-*/*.json
+            ${{ runner.temp }}/scoped-whole-recovery-*/*.log
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve a packed candidate if publication failed
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-boundary-archive-publication-recovery-20261112
+          path: ${{ runner.temp }}/microcap-whole-delivery-state-archive-20261110-14e9a9fa.zip
+          if-no-files-found: warn
+          retention-days: 90
