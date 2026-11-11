@@ -188,7 +188,13 @@ jobs:
           path: scoped-consumer
       - name: Install exact native validation dependencies
         if: steps.config.outputs.run == 'true'
-        run: python -m pip install 'numpy==2.4.3' 'pandas==2.3.3' requests matplotlib 'akshare==1.18.46' 'baostock==0.9.1'
+        run: python -m pip install 'numpy==2.4.3' 'pandas==2.3.3' requests matplotlib 'akshare==1.18.46' 'baostock==0.9.1' pytest
+      - name: Check frozen precision bridge with original daily reader
+        if: steps.config.outputs.run == 'true' && inputs.task == 'scoped_acceptance'
+        working-directory: scoped-consumer
+        run: |
+          git fetch --no-tags origin 4774966da38f0b5af18617f73cc67c39c9e41a8e
+          python -B -m pytest tests/test_member_hedge_precision_bridge.py -q -p no:cacheprovider
       - name: Resolve scoped close and original rebalance schedule
         if: steps.config.outputs.run == 'true'
         id: schedule
@@ -223,10 +229,9 @@ jobs:
             args+=(--fallback-url "$SEED_URL" --fallback-sha256 "$SEED_SHA256")
           fi
           python -B automation/scripts/microcap_scoped_whole_recovery.py "${args[@]}"
-      - name: Verify complete restored three-version state without sending
+      - name: Verify complete restored three-version archive without sending
         if: steps.schedule.outputs.run == 'true' && inputs.task != 'rebalance'
-        working-directory: scoped-consumer
-        run: python -B scripts/top100_delivery.py check
+        run: python -B automation/scripts/check_microcap_scoped_archive.py --root scoped-consumer --receipt scoped-restore.json --out scoped-archive-acceptance.json
       - uses: actions/checkout@v6
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
         with:
@@ -283,10 +288,13 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Pack verified scoped whole state
-        if: steps.schedule.outputs.run == 'true' && inputs.task != 'scoped_readback'
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
         env:
           TARGET: ${{ steps.schedule.outputs.date }}
         run: python -B scoped-consumer/scripts/top100_cloud_delivery.py pack --root scoped-consumer --v23-root scoped-consumer --v25-root scoped-consumer --bundle "$RUNNER_TEMP/microcap-whole-delivery-state.zip" --expected-date "$TARGET"
+      - name: Publishable copy of verified restored archive
+        if: steps.schedule.outputs.run == 'true' && inputs.task == 'scoped_acceptance'
+        run: cp "$RUNNER_TEMP/restored-scoped-whole.zip" "$RUNNER_TEMP/microcap-whole-delivery-state.zip"
       - name: Publish verified scoped whole state
         if: steps.schedule.outputs.run == 'true' && inputs.task != 'scoped_readback' && success()
         uses: actions/upload-artifact@v7
@@ -303,13 +311,32 @@ jobs:
           path: |
             scoped-schedule.json
             scoped-restore.json
+            scoped-archive-acceptance.json
+            ${{ runner.temp }}/scoped-whole-recovery-*/*.log
+            ${{ runner.temp }}/scoped-whole-recovery-*/*.json
             scoped-source-state/runs
+            scoped-source-state/bootstrap.json
+            scoped-source-state/reference-proxy.csv
             scoped-prepare/commands
             scoped-prepare/receipts
             scoped-prepare/local-source-download.json
             scoped-prepare/prepared.json
+            scoped-prepare/sources.zip
             scoped-prepare/consumer-config.json
             scoped-prepare/boundaries
             scoped-delivery
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Preserve failed scoped producer sources
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-scoped-producer-recovery-${{ inputs.task }}
+          path: |
+            scoped-source-state/runtime/.microcap_index_cache
+            scoped-source-state/bootstrap.json
+            scoped-source-state/reference-proxy.csv
+            !scoped-source-state/runtime/.microcap_index_cache/**/*.lock
+          include-hidden-files: true
           if-no-files-found: warn
           retention-days: 90
