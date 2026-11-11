@@ -1,0 +1,24 @@
+{
+  "schema": "member_daily_real_frozen_fixture_v1",
+  "source_run": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/42983576468",
+  "source_artifact": "microcap-member-daily-report",
+  "checkpoint_artifact_id": 13838054871,
+  "helper_strategy_sha": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
+  "market_date": "2026-11-11",
+  "fixture_scope": "Original saved daily-result bytes only; no new market collection or current-day trading claim",
+  "archive_sha256": "f05663fe3a1b552c64d3ea67f8eac4cb5edf38126cfa3fc5e98f057ab6be5778",
+  "files": {
+    "checkpoint.json": "9596efafdebc3019f478ba89239c9a54079c919cd6e78827e12191d71c522ad7",
+    "hedge.json": "b9ece64b4aaf7b9b70c89a01d7834ed5f8ebad067548a3ee93c0b8b053ef799a",
+    "history.csv": "00da12f013f6b2b1f6798aa89372a7f9fbb80352d4e508576982b97de83228ed",
+    "member_prices.json": "f6169d0b1a266061cbaf88eece14565ff437e422c06ff5801fbb75de846b1067",
+    "period.json": "cf65ece421a5f848106f0b1b96415ffc8b2d02c3bb3b33584f58b509ed5b0096",
+    "quotes.json": "618c268361b10a49d561bf538309ec4f45427e9d4392df910e6777f067c35568",
+    "result.json": "b9c7209c8e476252d3699dfdbc110598760b273839d7e765e4599805df5adef3",
+    "turnover.csv": "a87ee0f76c90f08304bceda6805eca277bf101ca05dcbe2b3b0e0d3d63ed68d7",
+    "v2_0_signal.csv": "9aa15e0d3ce6f8a550a3269aada6c96c61dcca4708831530d202f62459c7bdf8",
+    "v2_3_signal.csv": "182f48e42e024ed1c85b94245b570cca094ec2d3e8319b0a69e2f330f77684af",
+    "v2_5_signal.csv": "1c8a650a43f9f17fcfa3d4fd44aa91aa751e6b1ce563b98007720649c2b7b49d",
+    "version_state.json": "e11ad4628bcaf8b85a0da5eff28b6b2fc8b3290bbbf5b0c7ceab3af1d9ca89b4"
+  }
+}

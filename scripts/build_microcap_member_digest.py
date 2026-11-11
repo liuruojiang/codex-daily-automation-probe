@@ -9,10 +9,14 @@ import csv
 import io
 import math
 import zipfile
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from microcap_member_report_contract import (
+    checkpoint_proof, final_signal_files, member_action, publication_context, saved_close_identity,
+    validate_publication_clock, validate_signal_identity, versions_for_date,
+)
 
 SCHEMA = "member_daily_report_v1"
 REVISIONS = {
@@ -20,6 +24,10 @@ REVISIONS = {
     "v2.3": "plain_lb25_hl2p5_r2off_no_overheat_20261029",
     "v2.5": "plain_lb20_hl3_entry0_exit0_20260905",
 }
+
+
+def now_bj():
+    return datetime.now(ZoneInfo('Asia/Shanghai'))
 
 
 def number(value, percent=False):
@@ -39,7 +47,7 @@ def cell(value):
     return str(value).replace('|','／').replace('\n',' ')
 
 
-def details(result, by_version, context):
+def details(result, by_version, context, member_actions=None):
     """Presentation only: read saved evidence, never fetch or run a model."""
     cp=context.get('checkpoint',{}); period=context.get('period',{})
     next_day=cp.get('next_trade_date') if cp.get('as_of_date')==result['market_date'] else None
@@ -62,6 +70,9 @@ def details(result, by_version, context):
                 if not all(math.isfinite(v) and v>=0 for v in scales): raise ValueError()
                 if (current=='cash' and scales[0]!=0) or (target=='cash' and scales[1]!=0): raise ValueError()
             except (KeyError,ValueError,TypeError): action='尺度字段缺失或冲突，动作未确认；持仓字段照列'
+            rotated=(member_actions or {}).get(version)
+            if rotated:
+                action=rotated['text'] if action=='继续持有' else action+'；'+rotated['text']
         lines.append('|'+ '|'.join(map(cell,[version,holding(s.get('current_holding'))+'→'+holding(s.get('next_holding')),
             number(s.get('current_execution_scale'))+'→'+number(s.get('next_session_target_scale')),action]))+'|')
     lines+=['','|版本|动量指标|本次读数|入场／退出条件|判断说明|','|---|---|---|---|---|']
@@ -128,7 +139,7 @@ def html_document(body):
     return '<html><body>'+''.join(out)+'</body></html>'
 
 
-def saved_context(root, checkpoint_path=None, expected_date=None):
+def saved_context(root, checkpoint_path=None, expected_date=None, source_result=None):
     context={};warnings=[]
     for key in ('quotes','hedge'):
         path=root/(key+'.json')
@@ -153,38 +164,46 @@ def saved_context(root, checkpoint_path=None, expected_date=None):
                 if hashlib.sha256(raw).hexdigest()!=spec['sha256']:raise ValueError('context hash differs')
                 loaded[key]=json.loads(raw) if key=='period' else list(csv.DictReader(io.StringIO(raw.decode('utf-8-sig'))))
             context.update(checkpoint=cp,**loaded)
+            # Turnover is optional presentation context. Its independent bound
+            # bytes are mandatory only when deriving a current member action.
+            try:
+                spec=cp['turnover'];source=(path.parent/spec['path']).resolve()
+                if not source.is_relative_to(path.parent.resolve()):raise ValueError('turnover path escape')
+                raw=source.read_bytes()
+                if hashlib.sha256(raw).hexdigest()!=spec['sha256']:raise ValueError('turnover hash differs')
+                context['turnover']=list(csv.DictReader(io.StringIO(raw.decode('utf-8-sig'))))
+                context['member_contract_bound']=True
+            except (ValueError,OSError,KeyError,TypeError):
+                warnings.append('名单成本事件证据缺失或哈希不符，不据此生成本次成员调仓动作')
         except (ValueError,OSError,KeyError,TypeError): warnings.append('名单／历史展示证据缺失或哈希不符，仅相应背景字段显示N/A')
+    if (source_result or {}).get('reused_close_checkpoint') is True:
+        try:
+            context['saved_close_proof']=checkpoint_proof(checkpoint_path or root/'checkpoint.json')
+        except (ValueError,OSError,KeyError,TypeError):
+            warnings.append('原始收盘检查点完整证明缺失，不将保存行补写为今日行情')
     context['presentation_warnings']=warnings
     return context
 
 
 def render(result: dict, *, expected_date: str, context=None) -> dict:
-    date.fromisoformat(expected_date)
-    if (result.get("schema") != "member_daily_result_v1"
-            or result.get("market_date") != expected_date
-            or result.get("publication_mode") not in {"intraday", "close_confirmed"}):
-        raise ValueError("Member daily result schema/date/mode mismatch")
-    versions = result.get("versions")
-    if not isinstance(versions, list) or len(versions) != 3:
-        raise ValueError("Member daily result needs three explicit version statuses")
-    by_version = {row.get("version"): row for row in versions}
-    if len(by_version) != 3 or set(by_version) != set(REVISIONS):
-        raise ValueError("Member daily version identity mismatch")
+    by_version=versions_for_date(result,expected_date,REVISIONS)
+    validate_publication_clock(result,expected_date,now_bj())
+    context=publication_context(result,context,expected_date,REVISIONS)
+    saved=saved_close_identity(result,context,expected_date,REVISIONS)
     rows, verified = [], 0
     for version, revision in REVISIONS.items():
         item = by_version[version]
         if item.get("revision") != revision or item.get("status") not in {"verified", "partial", "reference"}:
             raise ValueError("Member daily revision/status mismatch")
         signal = item.get("signal")
+        if item['status'] in {'verified','reference'}:
+            validate_signal_identity(signal,version,revision,expected_date,result['publication_mode'],saved_close=saved)
         if item["status"] == "verified":
             if not isinstance(signal, dict):
                 raise ValueError("Verified member daily row has no signal")
             required = ("current_holding", "next_holding")
             if any(signal.get(key) in (None, "") for key in required):
                 raise ValueError("Verified signal has missing holding identity")
-            if (signal.get('strategy_revision') != revision or signal.get('quote_trade_date') != expected_date
-                    or signal.get('quote_coverage') != '100/100'):
-                raise ValueError('Verified signal revision/date/member coverage differs')
             verified += 1
             scale = signal.get("next_session_target_scale", "N/A")
             text = f"{holding(signal['current_holding'])} → {holding(signal['next_holding'])}；目标尺度 {scale}"
@@ -217,13 +236,18 @@ def render(result: dict, *, expected_date: str, context=None) -> dict:
     body += "\n\n资料维护最后更新：" + str(maintenance_date or "未核验，未绑定本次维护回执")
     body += "。本期名单的历史核验不代表今日公告/ST资料已经完成核验。\n"
     body += "研究目标与模型记录，不代表账户成交。\n"
-    body += details(result,by_version,context or {})
+    member_actions={}
+    for version,item in by_version.items():
+        if item['status']=='verified':
+            action=member_action(result,version,item['signal'],context or {})
+            if action:member_actions[version]=action
+    body += details(result,by_version,context or {},member_actions)
     label = "微盘股资料报告（未形成当日完整信号）" if verified == 0 else "微盘股日报"
     return {"schema": SCHEMA, "status": status, "signal_date": expected_date,
             "publication_mode": "realtime" if result["publication_mode"] == "intraday" else "close_confirmed",
             "subject": f"[{timing}]{'[部分信息]' if status == 'PARTIAL' else ''}{label} {expected_date}",
             "body": body, "html_body": html_document(body),
-            "versions": rows, "warnings": warnings}
+            "versions": rows, "warnings": warnings, "member_actions": member_actions}
 
 
 def main():
@@ -235,14 +259,31 @@ def main():
     parser.add_argument('--context-checkpoint',type=Path)
     args = parser.parse_args()
     raw = args.result.read_bytes()
-    context=saved_context(args.context_root or args.result.parent,args.context_checkpoint,args.expected_date)
     result=json.loads(raw)
+    context=saved_context(args.context_root or args.result.parent,args.context_checkpoint,args.expected_date,result)
+    context=publication_context(result,context,args.expected_date,REVISIONS)
+    signal_files=final_signal_files(result,args.context_root or args.result.parent,args.expected_date,REVISIONS,context=context)
     if context['presentation_warnings']:
         result=dict(result,warnings=list(result.get('warnings',[]))+context['presentation_warnings'])
     metadata = render(result, expected_date=args.expected_date,context=context)
     metadata["result_sha256"] = hashlib.sha256(raw).hexdigest()
-    metadata['rendered_at']=datetime.now(ZoneInfo('Asia/Shanghai')).isoformat()
+    metadata['rendered_at']=now_bj().isoformat()
+    metadata['final_signal_sha256']={version:hashlib.sha256(value).hexdigest() for version,value in signal_files.items()}
+    if result.get('reused_close_checkpoint') is True:
+        metadata['saved_checkpoint_sha256']=context['saved_close_proof']['sha256']
     args.out.mkdir(parents=True, exist_ok=True)
+    if result.get('reused_close_checkpoint') is True:
+        # 477 reserializes its exported checkpoint. Retain the exact original
+        # hash-bound source for a later reviewed send-only restore, separately
+        # from the untouched saved result/CSV and the email attachment.
+        source_root=(args.out/'source-checkpoint').resolve()
+        for relative,value in context['saved_close_proof']['files'].items():
+            target=(source_root/relative).resolve()
+            if not target.is_relative_to(source_root):raise ValueError('Saved source output path escape')
+            target.parent.mkdir(parents=True,exist_ok=True)
+            if target.exists() and target.read_bytes()!=value:raise ValueError('Existing saved source checkpoint differs')
+            target.write_bytes(value)
+        metadata['saved_checkpoint_source']='source-checkpoint/checkpoint.json'
     # Small saved-input attachment; no source fetching or model calculation.
     attachment=args.out/'member-daily-details.zip'
     with zipfile.ZipFile(attachment,'w',zipfile.ZIP_DEFLATED) as archive:
@@ -253,9 +294,8 @@ def main():
                 names=sorted({k for row in members for k in row});buf=io.StringIO(newline='')
                 writer=csv.DictWriter(buf,fieldnames=names);writer.writeheader();writer.writerows(members)
                 archive.writestr(field+'.csv',buf.getvalue().encode('utf-8-sig'))
-        for version in REVISIONS:
-            path=(args.context_root or args.result.parent)/(version.replace('.','_')+'_signal.csv')
-            if path.is_file():archive.write(path,path.name)
+        for version,value in signal_files.items():
+            archive.writestr(version.replace('.','_')+'_signal.csv',value)
         for key in ('quotes','hedge'):
             if key in context:
                 path=(args.context_root or args.result.parent)/(key+'.json')

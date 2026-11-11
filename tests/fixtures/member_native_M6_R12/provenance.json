@@ -1,0 +1,26 @@
+{
+  "schema": "native_handoff_frozen_software_fixture_v1",
+  "native_strategy_sha": "14e9a9fa6f0487f1d5547598435089c43f2f9fd1",
+  "reader_sha": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
+  "real_prefix": "Delivered original D11 history",
+  "R12_suffix": "Explicit software fixture, never observed future market data",
+  "producer_record": "bb93d8ffe4374507b3b1eda9f2fcd42b",
+  "files": {
+    "M6-R12-software-checkpoint.zip": {
+      "sha256": "d2da38b562db77d9bcb517553978ebbec74d90b39da3169f5976e082d72ec874",
+      "handoff_mode": "native_close_extends_previous"
+    },
+    "M6-R12-same-close-software-checkpoint.zip": {
+      "sha256": "bfa65e57ece12e72c2b386f92e4e61d21609720cc0ed408e31515e7a1aefa811",
+      "handoff_mode": "same_close_period_switch"
+    },
+    "original477_member_daily_signal.py": {
+      "sha256": "f09e9312037269c491c280c26f73e51863dec3d82ce1eee8bb9428359673b4ff",
+      "original_git_path": "scripts/member_daily_signal.py"
+    },
+    "original477_member_period_handoff.py": {
+      "sha256": "6592eb8b697189e5983816d239d6f8da501b39f4fb99977d645c87d65a3eeea3",
+      "original_git_path": "scripts/member_period_handoff.py"
+    }
+  }
+}
