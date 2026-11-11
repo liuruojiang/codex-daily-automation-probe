@@ -11,6 +11,13 @@ import maintain_microcap_local as local
 SESSIONS = tuple(date(2026, 11, n) for n in (5, 6, 9, 10))
 
 
+def metadata_files(root, symbols):
+    names = [local.CACHE+'security_meta/'+s+'.json' for s in symbols]
+    for name in names:
+        local.atomic(local.bound(root,name),b'isolated metadata fixture')
+    return local.hashes(root,names)
+
+
 @pytest.mark.parametrize('clock', ['2026-11-09T09:00:00+08:00',
                                   '2026-11-09T11:00:00+08:00',
                                   '2026-11-09T16:00:00+08:00'])
@@ -49,8 +56,9 @@ def test_true_completed_receipts_skip_collection_but_changed_bytes_do_not(tmp_pa
                         (names,{'observed_at':'2026-11-09T09:02:00+08:00'})]:
         path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(local.encode(value))
     record = dict(status='complete', context=context, files=local.hashes(root, ['source',freshness_name,names_name]))
+    metadata = dict(record, files={**record['files'], **metadata_files(root,symbols)})
     for key in ['notice', 'metadata', 'current-names', *[s + '-' + stage for s in symbols for stage in ('price', 'share', 'ratio')]]:
-        (directory / (key + '.json')).write_bytes(local.encode(record))
+        (directory / (key + '.json')).write_bytes(local.encode(metadata if key=='metadata' else record))
     result = dict(status='complete', target='2026-11-06', total=300, complete=300,
                   failures={}, notice_status='complete', metadata_status='complete',current_names_status='complete', context=context, symbols=symbols)
     (directory / 'result.json').write_bytes(local.encode(result))
@@ -71,8 +79,9 @@ def test_evening_preparation_cannot_skip_next_morning_observation(tmp_path,sourc
            local.CACHE+'local_current_names/'+target+'.json':{'observed_at':old if source=='names' else current}}
     for name,value in paths.items():local.atomic(local.bound(root,name),local.encode(value))
     context={'fixture':True};record=dict(status='complete',context=context,files=local.hashes(root,paths))
+    metadata=dict(record,files={**record['files'],**metadata_files(root,symbols)})
     for key in ['notice','metadata','current-names',*[s+'-'+stage for s in symbols for stage in ('price','share','ratio')]]:
-        (directory/(key+'.json')).write_bytes(local.encode(record))
+        (directory/(key+'.json')).write_bytes(local.encode(metadata if key=='metadata' else record))
     (directory/'result.json').write_bytes(local.encode(dict(status='complete',target=target,total=300,complete=300,
         failures={},notice_status='complete',metadata_status='complete',current_names_status='complete',context=context,symbols=symbols)))
     assert due.completed(directory,root,target) is True

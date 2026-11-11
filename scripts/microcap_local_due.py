@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 from zoneinfo import ZoneInfo
 
-from maintain_microcap_local import hashes, bound, CACHE, observation_floor
+from maintain_microcap_local import hashes, bound, CACHE, observation_floor, load_pool
 
 BJ = ZoneInfo('Asia/Shanghai')
 
@@ -27,7 +27,19 @@ def morning_target(now, sessions):
     return max(previous).isoformat()
 
 
-def completed(directory, root, target, files_out=None, required_asof=None):
+def pool_binding(state, target, pool=None):
+    if pool is None:
+        candidates = sorted((Path(state) / 'screens').glob('*/latest.json'), reverse=True)
+        candidates = [p for p in candidates if p.parent.name <= target]
+        if not candidates:
+            return None
+        pool = candidates[0]
+    _, symbols, scope = load_pool(pool, target)
+    return symbols, scope
+
+
+def completed(directory, root, target, files_out=None, required_asof=None,
+              expected_symbols=None, expected_scope=None):
     directory = Path(directory)
     path = directory / 'result.json'
     if not path.exists(): return False
@@ -36,6 +48,10 @@ def completed(directory, root, target, files_out=None, required_asof=None):
             or result.get('total') != 300 or result.get('complete') != 300
             or result.get('failures') or result.get('notice_status') != 'complete'
             or result.get('metadata_status') != 'complete' or result.get('current_names_status')!='complete'):
+        return False
+    if ((expected_symbols is not None and set(result.get('symbols', [])) != set(expected_symbols))
+            or (expected_scope is not None and (result.get('scope_sha256') != expected_scope
+                or result.get('context', {}).get('scope_sha256') != expected_scope))):
         return False
     records = [directory / (symbol + '-' + stage + '.json')
                for symbol in result.get('symbols', []) for stage in ('price', 'share', 'ratio')]
@@ -46,8 +62,14 @@ def completed(directory, root, target, files_out=None, required_asof=None):
     all_files = {}
     for record_path in records:
         record = json.loads(record_path.read_bytes())
-        if record.get('status') != 'complete' or record.get('context') != context:
+        if (record.get('status') != 'complete' or record.get('context') != context
+                or not isinstance(record.get('files'), dict) or not record['files']):
             return False
+        if record_path.name == 'metadata.json':
+            expected = {CACHE+'security_meta/'+s+'.json' for s in result['symbols']}
+            actual = {name for name in record['files'] if name.startswith(CACHE+'security_meta/')}
+            if actual != expected:
+                return False
         for name, digest in record['files'].items():
             if name in all_files and all_files[name] != digest: return False
             all_files[name] = digest
@@ -64,12 +86,14 @@ def completed(directory, root, target, files_out=None, required_asof=None):
     return True
 
 
-def plan(now, sessions, state, root):
+def plan(now, sessions, state, root, pool=None):
     target = morning_target(now, sessions)
     if target is None:
         return dict(status='not_due', target=None, action='no_collection')
     try:
-        done = completed(Path(state) / 'runs' / target, root, target, required_asof=observation_floor(now))
+        binding = pool_binding(state, target, pool)
+        done = completed(Path(state) / 'runs' / target, root, target, required_asof=observation_floor(now),
+                         **(dict(expected_symbols=binding[0], expected_scope=binding[1]) if binding else {}))
     except (OSError, ValueError, KeyError, TypeError):
         return dict(status='evidence_needs_revalidation', target=target,
                     action='inspect_and_resume_affected_native_stages')
@@ -82,11 +106,12 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--root', type=Path, required=True)
     p.add_argument('--state-root', type=Path, required=True)
+    p.add_argument('--pool', type=Path, help='Bind completion to this current weekly roster; otherwise discover the latest dated local screen')
     args = p.parse_args()
     sys.path.insert(0, str(args.root.resolve()))
     from scripts.exchange_calendar import sessions_for_day
     now = datetime.now(BJ)
-    result = plan(now, sessions_for_day(now.date()), args.state_root, args.root)
+    result = plan(now, sessions_for_day(now.date()), args.state_root, args.root, args.pool)
     print(json.dumps(result))
 
 

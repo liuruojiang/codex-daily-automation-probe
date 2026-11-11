@@ -65,7 +65,8 @@ def test_orderly_stop_persists_accurate_status_instead_of_stale_running(tmp_path
     context={'target':'2026-11-09','scope_sha256':'f'*64}
     def process(args,**kwargs):
         slot=int(args[-2]);directory=Path(args[-1]).parent
-        (directory/f'worker-{slot}.json').write_bytes(encode(dict(status='interrupted_after_symbol',context=context,
+        dispatch=json.loads(Path(args[-1]).read_bytes())['dispatch_id']
+        (directory/f'worker-{slot}.json').write_bytes(encode(dict(status='interrupted_after_symbol',context=context,dispatch_id=dispatch,
             processed=1,complete=1,failures={},reused_stages=3)))
         class Stopped:
             returncode=2

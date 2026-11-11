@@ -1,7 +1,11 @@
 {
   "schema": "member_daily_local_runtime_v1",
-  "policy": "ab214_reads_477_member_checkpoint_v1",
+  "policy": "ab214_reads_477_member_checkpoint_v2",
   "execution_strategy_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
   "checkpoint_strategy_sha": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
-  "core_strategy_sha": "ad4de441d35442616f91aa613146ffdf8cd479f3"
+  "core_strategy_sha": "ad4de441d35442616f91aa613146ffdf8cd479f3",
+  "rebalance_producer_shas": [
+    "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+    "14e9a9fa6f0487f1d5547598435089c43f2f9fd1"
+  ]
 }

@@ -147,6 +147,29 @@ def load_pool(path, target, *, run_directory=None):
     return summary, sorted(symbols), sha(raw)
 
 
+def bootstrap_coverage(record, symbols):
+    """Report incomplete initialization without abandoning independent issuers."""
+    expected = set(symbols)
+    declared = record.get('symbols', [])
+    initialized = record.get('initialized_symbols', [])
+    if (len(symbols) != 300 or len(expected) != 300 or len(declared) != 300
+            or set(declared) != expected or not isinstance(initialized, list)
+            or len(initialized) != len(set(initialized))
+            or record.get('status') not in ('complete', 'partial')):
+        raise ValueError('Bootstrap does not bind the exact current 300-issuer roster')
+    missing = sorted(expected - set(initialized))
+    return dict(status='complete' if not missing and record['status'] == 'complete'
+                and not record.get('failures') else 'incomplete', missing_symbols=missing)
+
+
+def require_complete_bootstrap(record, symbols):
+    coverage = bootstrap_coverage(record, symbols)
+    if coverage['status'] != 'complete':
+        raise ValueError('Incomplete bootstrap cannot certify all 300 metadata issuers: '
+                         + ','.join(coverage['missing_symbols']))
+    return coverage
+
+
 def bootstrap(root, source, symbols, state):
     """Copy exact verified source objects once, without changing the original."""
     from scripts.share_change_source import verify_share_cache
@@ -566,6 +589,7 @@ def main(argv=None):
                    orchestrator_sha256=sha(Path(__file__).read_bytes()), target=args.as_of,
                    scope_sha256=scope_sha, master_sha256=sha(bound(root, CACHE + 'security_master.csv').read_bytes()))
     with writer_lock(state / 'writer.lock'):
+        initialization = bootstrap_coverage(json.loads((state / 'bootstrap.json').read_bytes()), symbols)
         journal = Journal(state / 'runs' / args.as_of, root, context)
         def notice_verify():
             proof = json.loads(bound(root, FRESHNESS).read_bytes())
@@ -596,12 +620,13 @@ def main(argv=None):
         # ST uses the unchanged native staged transaction over this checkout's
         # actual 300-stock cache. The frozen notice source is authenticated once
         # per batch and rechecked before any metadata is installed.
-        available = sorted(set(symbols) & set(json.loads((state / 'bootstrap.json').read_bytes())['initialized_symbols']))
+        available = symbols
         class ScopedFrequency:
             def __getattr__(self, name): return getattr(v2.base_mod.freq_mod, name)
             def list_backtest_universe_symbols(self): return available
         freq_scope = ScopedFrequency()
         def metadata_verify():
+            require_complete_bootstrap(json.loads((state / 'bootstrap.json').read_bytes()), symbols)
             freq = v2.base_mod.freq_mod
             if not available or not set(available) <= set(freq.list_backtest_universe_symbols()):
                 raise ValueError('Scoped metadata requires the initialized explicit roster')
@@ -615,6 +640,7 @@ def main(argv=None):
         def metadata_action():
             from scripts import st_metadata_refresh as metadata_native
             baseline = json.loads((state / 'bootstrap.json').read_bytes())
+            require_complete_bootstrap(baseline, symbols)
             if sha((state / 'reference-proxy.csv').read_bytes()) != baseline['reference_proxy_sha256']:
                 raise ValueError('Reference consumed proxy changed')
             original_marker = metadata_native.MARKER
@@ -630,7 +656,8 @@ def main(argv=None):
         metadata = journal.run('metadata', metadata_action, metadata_verify) if notice['status'] == current_names['status'] == 'complete' else {'status': 'waiting_for_notice_or_current_names'}
         progress.update(status='complete' if not failures and notice['status'] == current_names['status'] == metadata['status'] == 'complete' else 'incomplete',
                         completed_at=datetime.now(timezone.utc).isoformat(), context=context,
-                        symbols=symbols,
+                        symbols=symbols, bootstrap_status=initialization['status'],
+                        missing_initialized_symbols=initialization['missing_symbols'],
                         metadata_status=metadata['status'],current_names_status=current_names['status'], full_strategy_delivery=False, email_sent=False, orders_placed=False)
         atomic(state / 'runs' / args.as_of / 'result.json', encode(progress))
         print(json.dumps({k:v for k,v in progress.items() if k != 'failures'}))
