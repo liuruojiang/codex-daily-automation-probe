@@ -1,0 +1,59 @@
+{
+  "status": "candidate_configuration_validated_not_production_acceptance",
+  "head": "50387f2b7a3693d224884a1de1925b39010202a5",
+  "owner": "local",
+  "scoped_enabled": true,
+  "legacy_workflow_guard": {
+    "maintenance": false,
+    "rebalance": false
+  },
+  "scoped_settings_cli": {
+    "rebalance": {
+      "run": "true",
+      "runtime_sha": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "producer_sha": "f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5",
+      "seed_url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-1634a27c/microcap-whole-delivery-state-archive-20261110-1634a27c.zip",
+      "seed_sha256": "3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1",
+      "roster_sha256": "a369c67c4a3d167fec5744fe0017b7e6acb370055665afd0f2472287ee0b623c"
+    },
+    "scoped_acceptance": {
+      "run": "true",
+      "runtime_sha": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "producer_sha": "f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5",
+      "seed_url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-1634a27c/microcap-whole-delivery-state-archive-20261110-1634a27c.zip",
+      "seed_sha256": "3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1",
+      "roster_sha256": "a369c67c4a3d167fec5744fe0017b7e6acb370055665afd0f2472287ee0b623c"
+    },
+    "scoped_readback": {
+      "run": "true",
+      "runtime_sha": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "producer_sha": "f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5",
+      "seed_url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-1634a27c/microcap-whole-delivery-state-archive-20261110-1634a27c.zip",
+      "seed_sha256": "3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1",
+      "roster_sha256": "a369c67c4a3d167fec5744fe0017b7e6acb370055665afd0f2472287ee0b623c"
+    }
+  },
+  "old_source_pointer": {
+    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-20261110-be89e87a/microcap-local-sources-close-20261110-be89e87a.zip",
+    "sha256": "f50d6b3fc079e427c7220ec4ffc6153a2eea2aaea241c84fd991bf63b5cc2674",
+    "target": "2026-11-10",
+    "runtime_sha": "be89e87a0da728b27be0308d7c4c9e57a212b815",
+    "producer_commit": "3cf48691cb3ce625d6e1110ca2a84a2cd212d3c4"
+  },
+  "source_zip_bytes": 86138460,
+  "source_zip_sha256": "f50d6b3fc079e427c7220ec4ffc6153a2eea2aaea241c84fd991bf63b5cc2674",
+  "original_manifest_sha256": "c0e1675c1596eeab21070e2f2caa1c57b01781669a03bd1c10b903b0abbe6945",
+  "unchanged_daily_paths": {
+    "config/microcap_member_runtime.json": "4da95ef9826be2970489d9d19da382cd447a1afd66960de9ad07a8fac3dd92d1",
+    ".github/workflows/microcap-member-daily.yml": "980e3eca7c5fb47deeb36e15f4d609085844fab189ea1e65dd4f5d1bdd215675",
+    ".github/workflows/microcap-realtime-digest.yml": "d5625a6dd71faebd6fa1401c00af4588c2f89b844adea99266e273be136a3cf8",
+    ".github/workflows/microcap-member-maintenance.yml": "47f019c2559fe29ebe97b69c1b680926f2484b119ad663446a561457913001f8"
+  },
+  "source11_complete": false,
+  "source11_quote_blocked": 27,
+  "network_requests_made": 0,
+  "workflows_dispatched": false,
+  "automation_tool_invoked": false,
+  "SMTP_sent": false,
+  "orders_placed": false
+}

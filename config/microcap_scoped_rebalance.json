@@ -1,6 +1,6 @@
 {
   "schema": "microcap_scoped_rebalance_runtime_v1",
-  "enabled": false,
+  "enabled": true,
   "runtime_sha": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
   "producer_sha": "f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5",
   "whole_seed": {
