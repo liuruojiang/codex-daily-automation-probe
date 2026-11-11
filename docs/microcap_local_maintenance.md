@@ -1,6 +1,6 @@
 # 微盘股本地维护（2026-11-12，生产切换）
 
-维护读者M5为原生main `1634a27c5a609a46ab35fc29ca2c65b94182671b`，来源生产者P1为`f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5`。本次配置将09:00维护的唯一写入者设为`owner=local`并启用`enabled=true`；实际生效以正式main提交、无在途双写和自动化工具回执为准。云端09:00维护分支随owner退出，15:10调仓接力和16:00原477成员日更/日报保留独立职责，原参数和发送规则保持。
+维护读者M5为原生main `1634a27c5a609a46ab35fc29ca2c65b94182671b`，来源生产者P1为`f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5`。09:00维护的唯一写入者已设为`owner=local`，`enabled=true`；[PR185](https://github.com/liuruojiang/codex-daily-automation-probe/pull/185)已合并生产main `538169e67ce5f71cd4b4a13fde13c3d85348eb80`，真实自动化工具更新及文件读回均已通过。云端09:00维护分支随owner退出，15:10调仓接力和16:00原477成员日更/日报保留独立职责，原参数和发送规则保持。
 
 本次授权切换基于完整的2026-11-10历史恢复基线。M5归档包673,248,922字节，SHA为`3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1`；[实际字节接力43065027595](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43065027595)已发布准确资产`736257558`并核对服务器digest。包只认证10日归档，`current_signal_ready=false`。M5两次真实main云端恢复已完整通过：[第一次43065299195](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43065299195)发布成品，[第二次43067983093](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43067983093)在关闭seed回退后准确恢复第一运行artifact `13876647441`。两次bundle SHA均为`3326bf3a…`，source manifest及三版streams一致，准确M5 reader和原生archive门槛均通过；完整原件见[M5接力证明](acceptance/microcap_local_cutover_20261111/cloud-relay-m5-20261112.json)。原M3来源身份及七份经济CSV保留，整个历史范围仍为5,438只；这些验收不产生11日新净值、信号、SMTP或订单。
 
@@ -8,9 +8,9 @@
 
 11日公告、当前名称、300只metadata和301429股本四阶段已真实完成；273只股本证书到11日，27只报价仍受HTTP502阻塞，整体维护和新source导出未完成。11日300只齐全不是本次10日恢复基线上的主机切换前置；11日失败继续保留失败状态，不生成新来源包或新信号。12日09:00启动仍须真实观察当日公告/名称，不能用前晚预备替代。成功来源先读回复用，只诊断并补受影响阶段。
 
-09-00的旧prompt仍自暂停；main配置合并后由主线程使用真实自动化工具更新并读回，不能只看ACTIVE标记。already_complete或not_due只跳过重复采集，仍须检查未完成的云端调仓handoff、完整状态及下一成员期接力。HTTP5xx和无响应的独立恢复预算保留；401/403、TLS、内容及历史语义冲突不适用这些恢复。
+09-00已通过真实工具更新为ACTIVE，旧自暂停说明已移除，保留原项目、本地环境、工作日09:00和11:00补跑及失败通知设置。[实际配置读回](acceptance/microcap_local_cutover_20261111/automation09-actual-final-20261112.json)仅记录应用裁去一个末尾换行，其他内容及保留字段全部一致。[云端实跑43070342596](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43070342596)成功且全部旧写入步骤跳过，未启动重复维护。already_complete或not_due只跳过重复采集，仍须检查未完成的云端调仓handoff、完整状态及下一成员期接力。HTTP5xx和无响应的独立恢复预算保留；401/403、TLS、内容及历史语义冲突不适用这些恢复。
 
-可复核的[11日准备与12日续接原件](acceptance/microcap_local_cutover_20261111/README.md)保留各阶段真实状态；[主项目保护复核](acceptance/microcap_local_cutover_20261111/final-primary-preservation.json)按其实际观察时点证明原pin、七文件及native dev旧ST文件不变。最新正式切换与自动化工具回执由主线程保存。以下按日期保留的段落是历史记录，当前运行合同以上述说明为准。
+可复核的[11日准备与12日续接原件](acceptance/microcap_local_cutover_20261111/README.md)保留各阶段真实状态；[主项目保护复核](acceptance/microcap_local_cutover_20261111/final-primary-preservation.json)按其实际观察时点证明原pin、七文件及native dev旧ST文件不变。[最终切换回执](acceptance/microcap_local_cutover_20261111/local-production-cutover-final-20261112.json)再次核对原pin、七文件、原生开发区既有ST改动，以及专用交付工作区与远端main一致；不宣称所有历史工作区都clean。以下按日期保留的段落是历史记录，当前运行合同以上述说明为准。
 
 ## 已落地的准备入口
 

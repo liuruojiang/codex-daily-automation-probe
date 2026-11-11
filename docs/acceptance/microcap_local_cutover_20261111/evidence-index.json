@@ -299,6 +299,51 @@
       "stored_bytes": 3881,
       "stored_sha256": "d0b6597cb186743cb688f2fe68ed8cfb10e4ec47fc77bc3691b2b91614e6c47c",
       "encoding": "original_bytes"
+    },
+    {
+      "path": "automation09-tool-update-20261112.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\automation09-tool-update-20261112.json",
+      "original_bytes": 352,
+      "original_sha256": "adc0a1c238ea1223b920e33d5c5968e33b6a6e0a78ee3e1a2eebccb66025d2a3",
+      "stored_bytes": 352,
+      "stored_sha256": "adc0a1c238ea1223b920e33d5c5968e33b6a6e0a78ee3e1a2eebccb66025d2a3",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "automation09-actual-final-20261112.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\automation09-actual-final-20261112.json",
+      "original_bytes": 1015,
+      "original_sha256": "815e9804c78b4a2b51270f07040592e5c29f977ce29fcdcaf0f1c9874d76edde",
+      "stored_bytes": 1015,
+      "stored_sha256": "815e9804c78b4a2b51270f07040592e5c29f977ce29fcdcaf0f1c9874d76edde",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "cloud-local-owner-guard-20261112.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\cloud-local-owner-guard-20261112.json",
+      "original_bytes": 648,
+      "original_sha256": "ea7902eefed2e813be0d02b251eecc1f564c600972ad525f959dc5697873fa43",
+      "stored_bytes": 648,
+      "stored_sha256": "ea7902eefed2e813be0d02b251eecc1f564c600972ad525f959dc5697873fa43",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "cloud-local-owner-guard-jobs-20261112.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\cloud-local-owner-guard-jobs-20261112.json",
+      "original_bytes": 6326,
+      "original_sha256": "87c336e11d78d58fefcdb1d872062250684ba31b7e424aec17339de14598956d",
+      "stored_bytes": 6326,
+      "stored_sha256": "87c336e11d78d58fefcdb1d872062250684ba31b7e424aec17339de14598956d",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "local-production-cutover-final-20261112.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\local-production-cutover-final-20261112.json",
+      "original_bytes": 12625,
+      "original_sha256": "ddccaf3c26ec9f914b3a7614b219834ae6793b528d1980e47baa21125cdd6892",
+      "stored_bytes": 12625,
+      "stored_sha256": "ddccaf3c26ec9f914b3a7614b219834ae6793b528d1980e47baa21125cdd6892",
+      "encoding": "original_bytes"
     }
   ],
   "candidate_parent_run": {
@@ -313,11 +358,11 @@
   "code_reader": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
   "source_producer": "f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5",
   "new_M5_seed_and_two_run_relay": "published_and_two_real_main_M5_restores_verified",
-  "production_owner_switch": "candidate_config_ready_main_merge_and_automation_tool_pending",
+  "production_owner_switch": "completed_PR185_main538169e6_real_automation_tool_and_cloud_no_write_guard_verified",
   "current_signal_ready": false,
   "SMTP_sent": false,
   "orders_placed": false,
-  "final_primary_seven_hash_recheck": "not_in_this_evidence_package",
+  "final_primary_seven_hash_recheck": "verified_in_local-production-cutover-final-20261112.json_at_its_recorded_time",
   "M5_archive_publication": {
     "release_id": 441957202,
     "asset_id": 736257558,
@@ -348,5 +393,21 @@
     "sending": "skipped",
     "orders_placed": false,
     "current_signal_ready": false
+  },
+  "production_closeout": {
+    "main_sha": "538169e67ce5f71cd4b4a13fde13c3d85348eb80",
+    "checked_at_utc": "2026-11-11T17:41:10.190556+00:00",
+    "automation_id": "09-00",
+    "active": true,
+    "prompt_sha256": "9b1463a260905916dd8e07add070cff2f4066ce69abf6136ab56bdcc05564bcc",
+    "app_trimmed_one_final_newline": true,
+    "cloud_no_write_guard": 43070342596,
+    "current_signal_ready": false,
+    "source11_complete": false,
+    "source11_pending_quote_502": 27,
+    "dedicated_checkout_clean_at_recorded_time": true,
+    "all_related_worktrees_clean_claimed": false,
+    "SMTP_sent": false,
+    "orders_placed": false
   }
 }
