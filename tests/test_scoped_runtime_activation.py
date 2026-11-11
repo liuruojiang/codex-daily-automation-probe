@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import zipfile
 
 import pytest
 
@@ -70,6 +71,37 @@ def test_exact_activation_preserves_restored_state_and_evidence(prepared):
     assert all(p.read_bytes() == raw for p, raw in originals.items())
     assert set(result["changes"]) == set(json.loads(config.read_bytes())["changes"])
     assert not (root / ".git/codex-scoped-activation.lock").exists()
+
+
+@pytest.mark.parametrize('fault',[None,'existing_verified_clock','bundle','manifest','runtime','native','missing_bundle'])
+def test_scoped_whole_receipt_requires_original_bound_archive(prepared,fault):
+    root,config,restore,receipt,git,put=prepared
+    old=json.loads(config.read_bytes())['baseline_sha']
+    manifest=dict(ok=True,status='complete',release_sha='c'*40,expected_date='2026-11-10',verified_at='2026-11-10T16:30:00+08:00')
+    raw=json.dumps(manifest).encode();put('outputs/top100_delivery_manifest.json',raw)
+    bundle=restore.parent.parent/'whole.zip'
+    with zipfile.ZipFile(bundle,'w') as archive:archive.writestr('outputs/top100_delivery_manifest.json',raw)
+    body=dict(restored=True,status='scoped_whole_restore_verified',runtime_sha=old,
+        historical_release_files_equivalent=True,repository='liuruojiang/codex-daily-automation-probe',
+        native_restore=dict(ok=True,expected_date='2026-11-10'),seed_date='2026-11-10',
+        source_manifest_release_sha='c'*40,restored_manifest_release_sha='c'*40,
+        source_manifest_sha256=runtime.digest(raw),bundle_sha256=runtime.digest(bundle.read_bytes()),bundle_bytes=bundle.stat().st_size)
+    if fault=='bundle':bundle.write_bytes(bundle.read_bytes()+b'changed')
+    elif fault=='manifest':put('outputs/top100_delivery_manifest.json',raw+b' ')
+    elif fault=='runtime':body['runtime_sha']='d'*40
+    elif fault=='native':body['native_restore']['ok']=False
+    elif fault=='existing_verified_clock':
+        manifest['verified_at']='2026-11-10T16:31:00+08:00'
+        raw=json.dumps(manifest).encode();put('outputs/top100_delivery_manifest.json',raw)
+        body['native_restore']['restore_source']='existing_whole_delivery'
+    restore.write_text(json.dumps(body))
+    if fault and fault!='existing_verified_clock':
+        with pytest.raises(ValueError):runtime.activate(root,config,restore,receipt,bundle=None if fault=='missing_bundle' else bundle)
+        assert git('rev-parse','HEAD')==old and not receipt.exists()
+    else:
+        result=runtime.activate(root,config,restore,receipt,bundle=bundle)
+        assert result['activated'] and result['original_archive']['restored_manifest_sha256']==runtime.digest(raw)
+        assert (root/'outputs/top100_delivery_manifest.json').read_bytes()==raw
 
 
 @pytest.mark.parametrize("fault", ["old_hash", "new_hash", "absent_before_lie", "omit_code",

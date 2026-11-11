@@ -1,0 +1,265 @@
+{
+  "schema": "P1_native900_calendar_guard_scope_correction_v1",
+  "created_at": "2026-11-11T16:18:30.900543+00:00",
+  "original_result": {
+    "path": "D:\\Codex\\test-lifecycle\\records\\45f4df44266a4c119cbe9e05ae3a7269\\native900\\result.json",
+    "sha256": "2a13e68f8b1ffededfa098b9af3915ac510d78d438dde4aa81e76fdef724f275",
+    "retained_unmodified": true
+  },
+  "important_assertions": {
+    "native_reader_invocations": 900,
+    "processed_symbols": 300,
+    "price_verified": 300,
+    "ratio_verified": 300,
+    "share_verified": 273,
+    "share_rejected_unfinished": 27,
+    "unexpected_stock_verification_failures": 0,
+    "production_data_content_inventory": 3304,
+    "production_data_content_unchanged": true,
+    "only_native_temporary_lock_writes_observed_in_guarded_production_paths": true,
+    "native_lock_creations": 300,
+    "native_lock_removals": 300,
+    "remaining_native_locks": [],
+    "whole_300_complete": false,
+    "current_ready": false
+  },
+  "corrected_network_scope": {
+    "whole_run_zero_network_claim": false,
+    "only_one_calendar_HTTP_claim": false,
+    "original_result_field_not_reliable": "calendar_actual_HTTP_requests=0",
+    "native_calendar_cache_final": "CacheInfo(hits=2212, misses=9, maxsize=32, currsize=9)",
+    "cache_misses": 9,
+    "initial_calendar_call_replayed_exact_real_raw": true,
+    "unwrapped_later_native_calendar_subprocess_executions": 8,
+    "actual_HTTP_request_count_for_these_8": "not_individually_captured",
+    "actual_HTTP_statuses_for_these_8": "not_individually_captured",
+    "no_inference_of_logged_HTTP_count_from_cache_misses": true,
+    "explanation": "Harness restored subprocess.run after warming only target11; historical share certificates requested8 other date keys. The original native calendar subprocess path remained active for those cache misses. No fabricated dates or calendar replacement were used."
+  },
+  "captured_original_calendar_HTTP": {
+    "receipt_path": "D:\\Codex\\test-lifecycle\\records\\fcf4ceebe54e4b479a78d2d4ad173c1f\\native900\\calendar\\http-receipt.json",
+    "receipt_sha256": "735038ad4e6ed2ca0466782c3ee04f5a8bb47f5dd28cf108b670e7bcad5b9308",
+    "http_start": "2026-11-11T16:11:11.963039+00:00",
+    "http_complete": "2026-11-11T16:11:13.428185+00:00",
+    "actual_url": "https://finance.sina.com.cn/realstock/company/klc_td_sh.txt",
+    "status": 200,
+    "bytes": 508,
+    "raw_sha256": "d5112e08726ecc435092fb63547a34fc514b071b1a4a84f9e2c29fb9023726a9",
+    "tls_verify_configuration": true,
+    "first_strict_guard_parser_process_failed": true,
+    "later_initial_parser_replayed_exact_original_raw": true
+  },
+  "code_observation": {
+    "runtime_calendar_file": "D:\\Codex\\microcap-local-maintenance\\runtime\\scripts\\exchange_calendar.py",
+    "runtime_calendar_lf_sha256": "8c5f82f72fee80b8ffb5ca381bb894bdf82eeb267678800ba972bf9bad64abcb",
+    "native_subprocess_expression": "import json,akshare as ak; print(json.dumps([str(d) for d in ak.tool_trade_date_hist_sina()['trade_date']]))",
+    "akshare_version": "1.18.46",
+    "akshare_calendar_function_file": "C:\\Python314\\Lib\\site-packages\\akshare\\tool\\trade_date_hist.py",
+    "akshare_calendar_function_file_sha256": "a3dd36d501dd38456e723ca7165d232c48b53c4325371bc32a732c152c117ea8",
+    "akshare_calendar_function_source_sha256": "dacc92d8cb3d590d73ed07bbd2caece1fc98323c5cc38d8965c1c46a6a229e1d",
+    "allowed_native_calendar_endpoint": "https://finance.sina.com.cn/realstock/company/klc_td_sh.txt",
+    "inspection": "The actual subprocess expression calls only AkShare Sina trade-date calendar. That function invokes requests.get(url) on this one calendar endpoint, decodes its raw JS payload and applies its existing1992-05-04 correction; it contains no stock-price/share/factor request. Redirect/HTTP event counts for the8 unwrapped children were not recorded."
+  },
+  "guard_actual_coverage": {
+    "parent_requests_session_request": "forbidden for all stock HTTP before native900 reads",
+    "parent_socket_getaddrinfo_connect_sendto": "blocked by sys.audit",
+    "child_process_coverage": "initial instrumented calendar replay only;8 later native calendar subprocesses were not wrapped",
+    "production_file_write_guard": "state root/Auto checkout/protected primary; only evidence output and native return_basis/locks/<actual-roster-symbol>.lock open/remove allowed; no-op mkdir(existing) allowed",
+    "guard_audit_path": "D:\\Codex\\test-lifecycle\\records\\45f4df44266a4c119cbe9e05ae3a7269\\native900\\guard-audit.json",
+    "guard_audit_sha256": "f273856c2edc1c93332befff3aaf6c2967a3316d7e8706fdaa21471326f47091",
+    "guard_blocked_nonlock_writes": [],
+    "source_data_guard_no_failure": true
+  },
+  "rejected_share_cutoffs": [
+    {
+      "symbol": "300535",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688193",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "300644",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688251",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688288",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688310",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688355",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688393",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688420",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688450",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688466",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688528",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688565",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688573",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688597",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688613",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688616",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688619",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688638",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688659",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688670",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688671",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688681",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688695",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688701",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688737",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    },
+    {
+      "symbol": "688793",
+      "actual_certified_query_end": "2026-11-10",
+      "requested_target": "2026-11-11",
+      "native_error": "Share source/cache identity or cutoff mismatch",
+      "current_CSV_matches_certified_candidate": true
+    }
+  ],
+  "scope_conclusion": "Actual P1 native readers reuse all300 existing price and ratio sources and273 completed share sources; the27 incomplete share cutoffs remain correctly rejected. This establishes existing stock-state reuse, not全300complete/当前ready, and not whole-run zero network or exactly one calendar HTTP request."
+}

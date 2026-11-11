@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from prepare_microcap_local import sha, writer_lock
-from maintain_microcap_local import (CACHE, RUNTIME, bound, hashes, load_pool, validate_runtime,
+from maintain_microcap_local import (CACHE, RUNTIME, SOURCE_RUNTIMES, bound, hashes, load_pool, validate_runtime,
                                     price_proof, share_proof, ratio_proof)
 from microcap_scoped_inputs import read_bundle, apply_inputs, preserve_history
 
@@ -165,7 +165,7 @@ def import_producer(*,root,protected_root,bundle,expected_sha,not_after,pool,sta
     _,symbols,scope=load_pool(pool,not_after)
     manifest,bodies,digest=read_bundle(bundle,not_after,expected_sha)
     context=manifest.get('producer_context',{})
-    if (manifest.get('runtime_sha')!=RUNTIME or context.get('runtime_sha')!=RUNTIME
+    if (manifest.get('runtime_sha') not in SOURCE_RUNTIMES or context.get('runtime_sha')!=manifest.get('runtime_sha')
             or manifest.get('scope_sha256')!=scope or context.get('scope_sha256')!=scope
             or set(manifest['symbols'])!=set(symbols) or context.get('target')!=manifest['target']):
         raise ValueError('Producer source package runtime, date or verified roster differs')
@@ -173,8 +173,6 @@ def import_producer(*,root,protected_root,bundle,expected_sha,not_after,pool,sta
     from scripts.stock_input_contract import source_fingerprint,SOURCE_FILES
     current=source_fingerprint(root)
     assert_native_modules(root,SOURCE_FILES)
-    if set(context.get('native_sources',{}))!=set(SOURCE_FILES) or context['native_sources']!=current:
-        raise ValueError('Producer package calculation source identities differ')
     master_name=CACHE+'security_master.csv';master_raw=bound(root,master_name).read_bytes()
     if (sha(master_raw)!=manifest.get('master_sha256') or bodies['maintenance-evidence/master.csv']!=master_raw
             or context.get('master_sha256')!=sha(master_raw)):
@@ -183,10 +181,18 @@ def import_producer(*,root,protected_root,bundle,expected_sha,not_after,pool,sta
         for path in (state/'writer.lock',state/'worker-slot-0.lock',state/'worker-slot-1.lock',bound(root,CACHE+'local_input_import.lock')):
             stack.enter_context(writer_lock(path))
         references=checked_bootstrap(root,protected,state,symbols,not_after)
-        originals,anchors,newer=plan(root,manifest,bodies)
         common=dict(source_preparation_only=True,source_target=manifest['target'],issuer_count=300,
                     bundle_sha256=digest,final_strategy_delivery=False,production_pointers_changed=False,
                     native_consumer_gate_required=True,email_sent=False,orders_placed=False)
+        if manifest['runtime_sha']!=RUNTIME:
+            baseline=json.loads(references[state/'bootstrap.json'])['reference_consumed_through']
+            if manifest['target']<=baseline:
+                return dict(common,status='skipped_source_covered_by_formal_baseline',
+                            formal_baseline=baseline,source_runtime=manifest['runtime_sha'],producer_pointers_changed=False)
+            raise ValueError('Older producer package is not covered by the actual formal bootstrap')
+        if set(context.get('native_sources',{}))!=set(SOURCE_FILES) or context['native_sources']!=current:
+            raise ValueError('Producer package calculation source identities differ')
+        originals,anchors,newer=plan(root,manifest,bodies)
         if newer:return dict(common,status='skipped_newer_producer_baseline',newer_symbols=newer,producer_pointers_changed=False)
         def verify():
             with offline():

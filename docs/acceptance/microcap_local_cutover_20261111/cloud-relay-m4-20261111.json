@@ -1,0 +1,19 @@
+{
+  "status": "two_real_main_runs_verified",
+  "reader": "efbfc3464208c2e9a2de5778310d813095446858",
+  "archive_date": "2026-11-10",
+  "first_run": 43038784464,
+  "second_run": 43040757263,
+  "second_source_run": 43038784464,
+  "artifact_id": 13865312028,
+  "artifact_name": "microcap-scoped-whole-v1-efbfc3464208c2e9a2de5778310d813095446858",
+  "fallback_disabled_and_unused": true,
+  "github_digest_verified": true,
+  "bundle_sha256": "3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42",
+  "source_manifest_sha256": "141689e188a2d97bb39d641425cd3214dacfc01130cee43dc6c62a39e28aa29d",
+  "source_release": "872abe41d48f818363d879cdf98b297d230377b4",
+  "streams_equal": true,
+  "sending": "skipped",
+  "orders_placed": false,
+  "current_signal_ready": false
+}

@@ -1,0 +1,105 @@
+name: One-off exact Microcap archive byte relay
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: microcap-archive-byte-relay-20261112
+  cancel-in-progress: false
+jobs:
+  transfer:
+    if: github.repository == 'liuruojiang/codex-daily-automation-probe' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: liuruojiang/codex-daily-automation-probe
+      TAG: microcap-scoped-whole-20261110-1634a27c
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Reconcile exact existing release before any write
+        run: |
+          gh api "repos/$REPOSITORY/releases/441957202" > release-before.json
+          python - <<'PY'
+          import json
+          v=json.load(open('release-before.json'))
+          assert v['id']==441957202 and v['tag_name']=='microcap-scoped-whole-20261110-1634a27c'
+          name='microcap-whole-delivery-state-archive-20261110-1634a27c.zip'
+          items=[x for x in v['assets'] if x['name']==name]
+          if items:
+              assert len(items)==1 and items[0]['state']=='uploaded'
+              assert items[0]['size']==673248922
+              assert items[0]['digest']=='sha256:3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1'
+          else:
+              assert v['draft'] is True
+          with open('asset-present.txt','w') as f:f.write(str(bool(items)).lower())
+          PY
+      - name: Download fixed original archive and exact literal transport
+        run: |
+          gh release download microcap-scoped-whole-20261110-872abe41 --repo "$REPOSITORY" --pattern microcap-whole-delivery-state-close-20261110.zip
+          gh release download "$TAG" --repo "$REPOSITORY" --pattern m5-archive-byte-relay-20261112.delta.gz
+      - name: Reconstruct and verify exact native-validated ZIP bytes
+        run: |
+          python -B scripts/microcap_archive_byte_relay_20261112.py \
+            --base microcap-whole-delivery-state-close-20261110.zip \
+            --delta m5-archive-byte-relay-20261112.delta.gz \
+            --output microcap-whole-delivery-state-archive-20261110-1634a27c.zip \
+            --receipt byte-relay.json
+      - name: Publish verified original bytes without replacing an asset
+        run: |
+          gh api "repos/$REPOSITORY/releases/441957202" > release-preupload.json
+          python - <<'PY'
+          import json,os,urllib.request
+          from pathlib import Path
+          v=json.load(open('release-preupload.json'))
+          assert v['id']==441957202 and v['tag_name']=='microcap-scoped-whole-20261110-1634a27c'
+          endpoint='https://uploads.github.com/repos/liuruojiang/codex-daily-automation-probe/releases/441957202/assets'
+          assert v['upload_url'].split('{',1)[0]==endpoint
+          name='microcap-whole-delivery-state-archive-20261110-1634a27c.zip'
+          items=[x for x in v['assets'] if x['name']==name]
+          if items:
+              assert len(items)==1 and items[0]['state']=='uploaded' and items[0]['size']==673248922
+              assert items[0]['digest']=='sha256:3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1'
+          else:
+              assert v['draft'] is True
+              class NoRedirect(urllib.request.HTTPRedirectHandler):
+                  def redirect_request(self,*args,**kwargs):raise ValueError('Refuse upload redirect')
+              opener=urllib.request.build_opener(NoRedirect())
+              with Path(name).open('rb') as stream:
+                  request=urllib.request.Request(endpoint+'?name='+name,data=stream,method='POST',headers={
+                      'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Content-Type':'application/zip',
+                      'Content-Length':'673248922','Accept':'application/vnd.github+json'})
+                  with opener.open(request,timeout=180) as response:
+                      result=json.load(response)
+              Path('upload-response.json').write_text(json.dumps(result,indent=2)+'\n')
+          PY
+          gh api "repos/$REPOSITORY/releases/441957202" > release-uploaded.json
+          python - <<'PY'
+          import json
+          v=json.load(open('release-uploaded.json'))
+          a=[x for x in v['assets'] if x['name']=='microcap-whole-delivery-state-archive-20261110-1634a27c.zip']
+          assert len(a)==1 and a[0]['state']=='uploaded' and a[0]['size']==673248922
+          assert a[0]['digest']=='sha256:3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1'
+          PY
+          gh api --method PATCH "repos/$REPOSITORY/releases/441957202" -F draft=false > release-publication-response.json
+          gh api "repos/$REPOSITORY/releases/441957202" > release-published.json
+          python -c "import json;v=json.load(open('release-published.json'));assert v['draft'] is False"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: microcap-exact-archive-byte-relay-20261112
+          path: |
+            byte-relay.json
+            release-before.json
+            release-uploaded.json
+            release-preupload.json
+            upload-response.json
+            release-publication-response.json
+            release-published.json
+          if-no-files-found: error
+          retention-days: 90

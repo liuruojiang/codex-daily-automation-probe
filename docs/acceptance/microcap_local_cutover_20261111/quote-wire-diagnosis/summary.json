@@ -1,0 +1,70 @@
+{
+  "schema": "bounded_exact_semantics_quote_wire_diagnosis_v1",
+  "maximum_GET_requests": 4,
+  "producer_recovery_invoked": false,
+  "source_code_changed": false,
+  "requests": [
+    {
+      "index": 1,
+      "symbol": "688178",
+      "wire": "original_percent_encoded",
+      "folder": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\1-688178-original_percent_encoded",
+      "receipt_sha256": "c122f68a932877627394c57a7f262269a6f3369e0de8488c18cda7d3061d1b61",
+      "http_status": 502,
+      "bytes": 157,
+      "raw_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "actual_url": "https://push2.eastmoney.com/api/qt/stock/get?fltt=2&invt=2&fields=f57%2Cf58%2Cf84%2Cf85%2Cf124%2Cf86%2Cf43%2Cf59%2Cf152%2Cf189&secid=1.688178",
+      "error_type": null,
+      "native_artifact": {
+        "status": "not_run"
+      }
+    },
+    {
+      "index": 2,
+      "symbol": "688193",
+      "wire": "original_percent_encoded",
+      "folder": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\2-688193-original_percent_encoded",
+      "receipt_sha256": "29c34b2b820714b644a33ee620bb4377528b9e11c514ab3a67df57f6f29cd944",
+      "http_status": 502,
+      "bytes": 157,
+      "raw_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "actual_url": "https://push2.eastmoney.com/api/qt/stock/get?fltt=2&invt=2&fields=f57%2Cf58%2Cf84%2Cf85%2Cf124%2Cf86%2Cf43%2Cf59%2Cf152%2Cf189&secid=1.688193",
+      "error_type": null,
+      "native_artifact": {
+        "status": "not_run"
+      }
+    },
+    {
+      "index": 3,
+      "symbol": "688193",
+      "wire": "literal_fields_commas",
+      "folder": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\3-688193-literal_fields_commas",
+      "receipt_sha256": "89e1c0abd39a7bc0506943671a6f53a33e80efd65ac8b687cdc0a51bd5a1b1fc",
+      "http_status": 502,
+      "bytes": 157,
+      "raw_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "actual_url": "https://push2.eastmoney.com/api/qt/stock/get?fltt=2&invt=2&fields=f57,f58,f84,f85,f124,f86,f43,f59,f152,f189&secid=1.688193",
+      "error_type": null,
+      "native_artifact": {
+        "status": "not_run"
+      }
+    },
+    {
+      "index": 4,
+      "symbol": "688193",
+      "wire": "query_order_secid_first",
+      "folder": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\4-688193-query_order_secid_first",
+      "receipt_sha256": "f525d7329bc77019fdd7dbc08bd8cacae167d8e9b47ebb6a0ff18527faef80be",
+      "http_status": 502,
+      "bytes": 157,
+      "raw_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "actual_url": "https://push2.eastmoney.com/api/qt/stock/get?secid=1.688193&fltt=2&invt=2&fields=f57%2Cf58%2Cf84%2Cf85%2Cf124%2Cf86%2Cf43%2Cf59%2Cf152%2Cf189",
+      "error_type": null,
+      "native_artifact": {
+        "status": "not_run"
+      }
+    }
+  ],
+  "completed_at": "2026-11-11T15:54:17.862312+00:00",
+  "GET_requests_made": 4
+}

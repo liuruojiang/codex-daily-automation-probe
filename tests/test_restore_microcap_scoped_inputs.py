@@ -28,6 +28,11 @@ def test_disabled_source_pointer_leaves_original_rebalance_unchanged(tmp_path,mo
     assert not (tmp_path/'out').exists()
 
 
+def test_older_reviewed_producer_keeps_its_original_pointer_identity(tmp_path):
+    p=pointer();p['runtime_sha']='be89e87a0da728b27be0308d7c4c9e57a212b815'
+    assert restore.load_config(config(tmp_path,p))['scoped_inputs']==p
+
+
 @pytest.mark.parametrize('url',[
     'http://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-x/input.zip',
     'https://github.com/another/repo/releases/download/microcap-local-sources-x/input.zip',
