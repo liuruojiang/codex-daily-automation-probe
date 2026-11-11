@@ -200,6 +200,33 @@
       "stored_bytes": 491,
       "stored_sha256": "dae0b05a659fb9b0c95db4c03530a9705a61d0979f28bf3315283f8504668951",
       "encoding": "original_bytes"
+    },
+    {
+      "path": "M5-byte-relay-local.json",
+      "original_path": "D:\\Codex\\test-lifecycle\\records\\895f8d22055343e89bbe76c0b7336277\\byte-relay.json",
+      "original_bytes": 510,
+      "original_sha256": "e1686338882d8e79ebad713b6a8da93b01040e656631a8817fdf61357f4ee16e",
+      "stored_bytes": 510,
+      "stored_sha256": "e1686338882d8e79ebad713b6a8da93b01040e656631a8817fdf61357f4ee16e",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "M5-byte-relay-stream-verification.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\exports\\m5-archive-byte-relay-20261112.verification.json",
+      "original_bytes": 1251,
+      "original_sha256": "a05f624afa026293383f8057057cc0a87819e817d4d1af7e58b6b22eafc6681f",
+      "stored_bytes": 1251,
+      "stored_sha256": "a05f624afa026293383f8057057cc0a87819e817d4d1af7e58b6b22eafc6681f",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "final-primary-preservation.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\final-primary-worktree-preservation-20261111T165038Z.json",
+      "original_bytes": 24279,
+      "original_sha256": "e778788292ef8988010b4ca8feaf9d6cb72f3b7863632a225175da9fc82b2ddd",
+      "stored_bytes": 24279,
+      "stored_sha256": "e778788292ef8988010b4ca8feaf9d6cb72f3b7863632a225175da9fc82b2ddd",
+      "encoding": "original_bytes"
     }
   ],
   "candidate_parent_run": {

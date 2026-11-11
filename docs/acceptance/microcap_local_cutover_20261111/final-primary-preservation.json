@@ -1,0 +1,603 @@
+{
+  "schema": "microcap_final_primary_preservation_v1",
+  "checked_at_utc": "2026-11-11T16:50:38.591371+00:00",
+  "scope": "read_only_git_and_exact_protected_file_hashes_no_native_strategy_validation",
+  "baseline_path": "C:\\Users\\Administrator.DESKTOP-95I7VVU\\Documents\\Codex\\2026-11-09\\new-chat\\work\\local-maintenance-primary-preservation.json",
+  "baseline_sha256": "17391a36600afb12f7b5a5d44524d3694f78213bb6481d150cea4c7fb686ce49",
+  "primary": {
+    "path": "D:\\动量策略\\微盘股对冲策略",
+    "expected_head": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+    "actual_head": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+    "head_unchanged": true,
+    "files": {
+      ".microcap_index_cache/active_universe.csv": {
+        "expected_sha256": "dfa9034af13351f1c921087983fd12c3823d741b6a938356da328179683623e4",
+        "actual_sha256": "dfa9034af13351f1c921087983fd12c3823d741b6a938356da328179683623e4",
+        "unchanged": true
+      },
+      ".microcap_index_cache/current_st.csv": {
+        "expected_sha256": "072ecac4836a16d6b5425c5f8d4fbfd324a4ecb5f4126764c86791769cf99696",
+        "actual_sha256": "072ecac4836a16d6b5425c5f8d4fbfd324a4ecb5f4126764c86791769cf99696",
+        "unchanged": true
+      },
+      "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_panel_refreshed.csv": {
+        "expected_sha256": "f74c66cda0725691352c530398aa20b348a52afa5b23dd7b5bace1074dc32f40",
+        "actual_sha256": "f74c66cda0725691352c530398aa20b348a52afa5b23dd7b5bace1074dc32f40",
+        "unchanged": true
+      },
+      "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_meta.json": {
+        "expected_sha256": "bfa0da0cceba7279f32f4a458223c33bf4330ff20172306adf0fe233b5f9e06a",
+        "actual_sha256": "bfa0da0cceba7279f32f4a458223c33bf4330ff20172306adf0fe233b5f9e06a",
+        "unchanged": true
+      },
+      "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_summary.json": {
+        "expected_sha256": "67c9d26310da2a3e30a694a97ea24a19669b507994284d61038091b4361accca",
+        "actual_sha256": "67c9d26310da2a3e30a694a97ea24a19669b507994284d61038091b4361accca",
+        "unchanged": true
+      },
+      "outputs/microcap_top100_mom16_hedge_zz1000_0p8x_biweekly_thursday_16y_v2_0_base_costed_nav.csv": {
+        "expected_sha256": "2fd07b636c7510a5232fb548f64edbdb31105b997855b19b64c84278233955f3",
+        "actual_sha256": "2fd07b636c7510a5232fb548f64edbdb31105b997855b19b64c84278233955f3",
+        "unchanged": true
+      },
+      "outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv": {
+        "expected_sha256": "8743bd1d2448cf8a86158483d5aa449c47b6bc4e568bfe25f913b6ee0079c57a",
+        "actual_sha256": "8743bd1d2448cf8a86158483d5aa449c47b6bc4e568bfe25f913b6ee0079c57a",
+        "unchanged": true
+      }
+    },
+    "seven_original_files_unchanged": true,
+    "tracked_change_paths_exactly_original_seven": true
+  },
+  "native_dev": {
+    "path": "D:\\Codex\\workspaces\\microcap-maintenance-20261109",
+    "current_st_expected_sha256": "a028cbf1449d627a86c2e2fd703c9e17ccc3e093da8f05b3cabc9979c1b1bed7",
+    "current_st_actual_sha256": "a028cbf1449d627a86c2e2fd703c9e17ccc3e093da8f05b3cabc9979c1b1bed7",
+    "current_st_unchanged": true
+  },
+  "related_worktrees": [
+    {
+      "path": "D:\\动量策略\\微盘股对冲策略",
+      "head": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+      "branch": null,
+      "detached": true,
+      "head_stable_during_read": true,
+      "git_status_exit_code": 0,
+      "status": [
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/active_universe.csv"
+        },
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/current_st.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_panel_refreshed.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_meta.json"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_summary.json"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_hedge_zz1000_0p8x_biweekly_thursday_16y_v2_0_base_costed_nav.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv"
+        }
+      ],
+      "status_warnings": [
+        "warning: could not open directory 'research_reports/20261024_release_audit/lineage/member_gate_final_tmp/test_windows_long_backup_path_0/nestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednested/': Filename too long",
+        "warning: could not open directory 'research_reports/20261024_release_audit/lineage/member_gate_tmp/test_windows_long_backup_path_0/nestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednestednested/': Filename too long"
+      ],
+      "untracked_scan_complete": false,
+      "tracked_modified_count": 7,
+      "untracked_count": 0,
+      "non_data_changes": [],
+      "local_origin_main": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "head_tree": "3030d9c93e9372669cfda2dd83c3092cb703c8c2",
+      "local_origin_main_tree": "ffdcd9c03e9d8f97d8bfb61c5d61e137f720fc56",
+      "committed_tree_matches_local_origin_main": false
+    },
+    {
+      "path": "D:\\Codex\\workspaces\\microcap-maintenance-20261109",
+      "head": "cdba11948d78c45ad99fe6b236bcf9c1d35d7220",
+      "branch": "refs/heads/fix/share-plan-observations-20261111",
+      "detached": false,
+      "head_stable_during_read": true,
+      "git_status_exit_code": 0,
+      "status": [
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/current_st.csv"
+        }
+      ],
+      "status_warnings": [],
+      "untracked_scan_complete": true,
+      "tracked_modified_count": 1,
+      "untracked_count": 0,
+      "non_data_changes": [],
+      "local_origin_main": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "head_tree": "ffdcd9c03e9d8f97d8bfb61c5d61e137f720fc56",
+      "local_origin_main_tree": "ffdcd9c03e9d8f97d8bfb61c5d61e137f720fc56",
+      "committed_tree_matches_local_origin_main": true
+    },
+    {
+      "path": "D:\\Codex\\microcap-local-maintenance\\acceptance-runtime",
+      "head": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "branch": null,
+      "detached": true,
+      "head_stable_during_read": true,
+      "git_status_exit_code": 0,
+      "status": [
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/active_universe.csv"
+        },
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/current_st.csv"
+        },
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/realtime/microcap_top100_mom16_biweekly_live_v1_1_static_effective_members.csv"
+        },
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/realtime/microcap_top100_mom16_biweekly_live_v1_1_static_meta.json"
+        },
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/realtime/microcap_top100_mom16_biweekly_live_v1_1_static_rebalance_changes.csv"
+        },
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/realtime/microcap_top100_mom16_biweekly_live_v1_1_static_target_members.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_panel_refreshed.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_meta.json"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_summary.json"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_hedge_zz1000_0p8x_biweekly_thursday_16y_v2_0_base_costed_nav.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv"
+        }
+      ],
+      "status_warnings": [],
+      "untracked_scan_complete": true,
+      "tracked_modified_count": 11,
+      "untracked_count": 0,
+      "non_data_changes": [],
+      "local_origin_main": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "head_tree": "ffdcd9c03e9d8f97d8bfb61c5d61e137f720fc56",
+      "local_origin_main_tree": "ffdcd9c03e9d8f97d8bfb61c5d61e137f720fc56",
+      "committed_tree_matches_local_origin_main": true
+    },
+    {
+      "path": "D:\\Codex\\microcap-local-maintenance\\runtime",
+      "head": "f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5",
+      "branch": null,
+      "detached": true,
+      "head_stable_during_read": true,
+      "git_status_exit_code": 0,
+      "status": [
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/active_universe.csv"
+        },
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/current_st.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_summary.json"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v1_1_proxy_members.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v1_1_proxy_meta.json"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v1_1_proxy_turnover.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_frozen_tail_authority.json"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_latest_signal.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_nav.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_panel_refreshed.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_effective_members.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_members.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_meta.json"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_turnover.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_rebalance_changes.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_summary.json"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_target_members.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_hedge_zz1000_0p8x_biweekly_thursday_16y_costed_nav.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/microcap_top100_mom16_hedge_zz1000_0p8x_biweekly_thursday_16y_v2_0_base_costed_nav.csv"
+        },
+        {
+          "status": " D",
+          "path": "outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv"
+        }
+      ],
+      "status_warnings": [],
+      "untracked_scan_complete": true,
+      "tracked_modified_count": 20,
+      "untracked_count": 0,
+      "non_data_changes": [],
+      "local_origin_main": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "head_tree": "885158b90b98a13147de2a270229ceabd4835a44",
+      "local_origin_main_tree": "ffdcd9c03e9d8f97d8bfb61c5d61e137f720fc56",
+      "committed_tree_matches_local_origin_main": false
+    },
+    {
+      "path": "D:\\Codex\\microcap-local-maintenance\\rebalance-runtime-20261110",
+      "head": "569c45929e1d18a44c9382257e7b552fe7fba196",
+      "branch": null,
+      "detached": true,
+      "head_stable_during_read": true,
+      "git_status_exit_code": 0,
+      "status": [
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/current_st.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_panel_refreshed.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_effective_members.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_members.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_meta.json"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_turnover.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/microcap_top100_mom16_hedge_zz1000_0p8x_biweekly_thursday_16y_v2_0_base_costed_nav.csv"
+        },
+        {
+          "status": " M",
+          "path": "outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv"
+        }
+      ],
+      "status_warnings": [],
+      "untracked_scan_complete": true,
+      "tracked_modified_count": 8,
+      "untracked_count": 0,
+      "non_data_changes": [],
+      "local_origin_main": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "head_tree": "81a1da95f8ffd393608baa9b622f4e1d521eb3bf",
+      "local_origin_main_tree": "ffdcd9c03e9d8f97d8bfb61c5d61e137f720fc56",
+      "committed_tree_matches_local_origin_main": false
+    },
+    {
+      "path": "D:\\Codex\\microcap-local-maintenance\\context-readback-20261110",
+      "head": "63c7b16d77600c4aa9dadf58b86d31e034477e44",
+      "branch": null,
+      "detached": true,
+      "head_stable_during_read": true,
+      "git_status_exit_code": 0,
+      "status": [
+        {
+          "status": " M",
+          "path": ".microcap_index_cache/current_st.csv"
+        },
+        {
+          "status": "??",
+          "path": "maintenance-evidence/context-readback.json"
+        },
+        {
+          "status": "??",
+          "path": "maintenance-evidence/producer-metadata.json"
+        }
+      ],
+      "status_warnings": [],
+      "untracked_scan_complete": true,
+      "tracked_modified_count": 1,
+      "untracked_count": 2,
+      "non_data_changes": [
+        {
+          "status": "??",
+          "path": "maintenance-evidence/context-readback.json"
+        },
+        {
+          "status": "??",
+          "path": "maintenance-evidence/producer-metadata.json"
+        }
+      ],
+      "local_origin_main": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "head_tree": "19f111565483aa54b90e311218e4673da6e21f6a",
+      "local_origin_main_tree": "ffdcd9c03e9d8f97d8bfb61c5d61e137f720fc56",
+      "committed_tree_matches_local_origin_main": false
+    },
+    {
+      "path": "D:\\Codex\\workspaces\\mc-audit-1109",
+      "head": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
+      "branch": "refs/heads/codex/member-daily-transport-audit-20261109",
+      "detached": false,
+      "head_stable_during_read": true,
+      "git_status_exit_code": 0,
+      "status": [],
+      "status_warnings": [],
+      "untracked_scan_complete": true,
+      "tracked_modified_count": 0,
+      "untracked_count": 0,
+      "non_data_changes": [],
+      "local_origin_main": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "head_tree": "b3e1f2d46e8a6fa1c02b2603500ca4a14b790e9f",
+      "local_origin_main_tree": "ffdcd9c03e9d8f97d8bfb61c5d61e137f720fc56",
+      "committed_tree_matches_local_origin_main": false
+    }
+  ],
+  "registered_worktrees": [
+    {
+      "worktree": "D:/动量策略/微盘股对冲策略",
+      "HEAD": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+      "detached": true
+    },
+    {
+      "worktree": "C:/mc206",
+      "HEAD": "c32cb6d425760c37b46a8a98ae38dec38feb5b9a",
+      "branch": "refs/heads/codex/cleanup-copy-20261011-4eb22b211b"
+    },
+    {
+      "worktree": "C:/Users/Administrator.DESKTOP-95I7VVU/.config/superpowers/worktrees/microcap/fix-digest-20260810",
+      "HEAD": "7476878f3f61147ca8e3ba7bbaeefb522ca39ffe",
+      "branch": "refs/heads/codex/fix-microcap-digest-20260810"
+    },
+    {
+      "worktree": "C:/Users/Administrator.DESKTOP-95I7VVU/.config/superpowers/worktrees/microcap/research-v20-v23-v25-1y-20260806",
+      "HEAD": "fc1a10f8ce13393d1220274147206009c516d6c8",
+      "branch": "refs/heads/codex/cleanup-copy-20261011-fabe14b02e"
+    },
+    {
+      "worktree": "C:/Users/Administrator.DESKTOP-95I7VVU/Desktop/microcap_clean_probe_20260517",
+      "HEAD": "c766309c9908bf795d61911473fc5af04039d200",
+      "branch": "refs/heads/codex/cleanup-copy-20261011-a396e3bf96"
+    },
+    {
+      "worktree": "C:/Users/Administrator.DESKTOP-95I7VVU/Documents/Codex/2026-05-10/github-4-45-10-45-github/microcap-ci-fix",
+      "HEAD": "c114289a938d34a49cf3203f08b8078bd4a64cc7",
+      "branch": "refs/heads/codex/cleanup-copy-20261011-7c143e74ff"
+    },
+    {
+      "worktree": "C:/Users/Administrator.DESKTOP-95I7VVU/Documents/Codex/2026-05-10/github-4-45-10-45-github/microcap-realtime-core",
+      "HEAD": "8afc1fc64462d0fb0cbea511a5ff5101d48027fa",
+      "branch": "refs/heads/codex/cleanup-copy-20261011-e3b458b381"
+    },
+    {
+      "worktree": "C:/Users/Administrator.DESKTOP-95I7VVU/Documents/Codex/2026-08-28/icim/work/microcap_official",
+      "HEAD": "e2b1079d61c4cd39fd1fe742a31d041d7a1b24b5",
+      "branch": "refs/heads/codex/cleanup-copy-20261011-14e521bcc6"
+    },
+    {
+      "worktree": "C:/Users/Administrator.DESKTOP-95I7VVU/Documents/Codex/worktrees/microcap-daily-repair-20260916",
+      "HEAD": "ce415f3e9338f424ec580ffa5d52d30c537a92ff",
+      "branch": "refs/heads/codex/cleanup-copy-20261011-03a67d31df"
+    },
+    {
+      "worktree": "C:/Users/Administrator.DESKTOP-95I7VVU/Documents/Codex/worktrees/microcap-daily-repair-summary-tail-clean",
+      "HEAD": "ee839d5c4529c60d75c2b7953c6973268a5fc816",
+      "branch": "refs/heads/codex/microcap-summary-rebalance-safe"
+    },
+    {
+      "worktree": "C:/Users/Administrator.DESKTOP-95I7VVU/Documents/Codex/worktrees/microcap-state-reproduce",
+      "HEAD": "331348f2d35bf0154c012ce219d4660449f8b2e5",
+      "branch": "refs/heads/codex/cleanup-copy-20261011-be3ed3ffde"
+    },
+    {
+      "worktree": "D:/Codex/home/automations/ic-im/repair_20260915/microcap_incremental_refresh_only",
+      "HEAD": "9b75ab929cfc54acb9a44fe8bad337010ffe4f31",
+      "branch": "refs/heads/codex/microcap-incremental-refresh-only-20260915"
+    },
+    {
+      "worktree": "D:/Codex/home/automations/ic-im/repair_20260915/microcap_refresh_percent",
+      "HEAD": "4cbeb117deff8620bba8572da8bd3b605bf039bd",
+      "branch": "refs/heads/codex/microcap-refresh-percent-20260915"
+    },
+    {
+      "worktree": "D:/Codex/home/automations/ic-im/repair_20260915/microcap_refresh_phases",
+      "HEAD": "12e1950d037b86daf54a1f52e9d29897afb142b2",
+      "branch": "refs/heads/codex/microcap-refresh-phases-20260915"
+    },
+    {
+      "worktree": "D:/Codex/home/automations/ic-im/repair_20260915/strategy",
+      "HEAD": "56720a5bf18570d421a881d16431f722af6d69b2",
+      "branch": "refs/heads/codex/microcap-same-session-repair-20260915"
+    },
+    {
+      "worktree": "D:/Codex/microcap-local-maintenance/acceptance-runtime",
+      "HEAD": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+      "detached": true
+    },
+    {
+      "worktree": "D:/Codex/microcap-local-maintenance/context-readback-20261110",
+      "HEAD": "63c7b16d77600c4aa9dadf58b86d31e034477e44",
+      "detached": true
+    },
+    {
+      "worktree": "D:/Codex/microcap-local-maintenance/rebalance-runtime-20261110",
+      "HEAD": "569c45929e1d18a44c9382257e7b552fe7fba196",
+      "detached": true
+    },
+    {
+      "worktree": "D:/Codex/microcap-local-maintenance/runtime",
+      "HEAD": "f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5",
+      "detached": true
+    },
+    {
+      "worktree": "D:/Codex/workspaces/daily-flow-20261105",
+      "HEAD": "a911fa239b995031dcd1d8324c62d03f63e77374",
+      "branch": "refs/heads/codex/normal-receipt-tests-20261105"
+    },
+    {
+      "worktree": "D:/Codex/workspaces/intraday-micro-20261105",
+      "HEAD": "05fd1ae961f726b7efe71acc2f5eb43ab55ac25d",
+      "branch": "refs/heads/codex/st-market-tests-20261106"
+    },
+    {
+      "worktree": "D:/Codex/workspaces/mc-audit-1109",
+      "HEAD": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
+      "branch": "refs/heads/codex/member-daily-transport-audit-20261109"
+    },
+    {
+      "worktree": "D:/Codex/workspaces/microcap-maintenance-20261109",
+      "HEAD": "cdba11948d78c45ad99fe6b236bcf9c1d35d7220",
+      "branch": "refs/heads/fix/share-plan-observations-20261111"
+    },
+    {
+      "worktree": "D:/Codex/workspaces/microcap-native-regression-20261102",
+      "HEAD": "75dd463e0a724af0b55e0f029f0468de1feed3c2",
+      "detached": true,
+      "prunable": "gitdir file points to non-existent location"
+    },
+    {
+      "worktree": "D:/Codex/workspaces/microcap-preflight-cutoff-20261103",
+      "HEAD": "8575c81e2475d0b8fb9c73115e02f64e46ffc97d",
+      "branch": "refs/heads/codex/preflight-network-cutoff-20261103"
+    },
+    {
+      "worktree": "D:/Codex/workspaces/microcap-st-state-release-20261103",
+      "HEAD": "d87e91b3d491f85df8652068ea212db0c975a7fd",
+      "branch": "refs/heads/codex/st-notice-exact-release-20261103"
+    },
+    {
+      "worktree": "D:/Codex/workspaces/microcap-st-whole-release-20261103",
+      "HEAD": "03cd9181b8f24eb4086284790d9b8b99810a83d3",
+      "branch": "refs/heads/codex/st-notice-whole-release-20261103"
+    },
+    {
+      "worktree": "D:/Codex/workspaces/microcap-wrapper-clock-tests-20261103",
+      "HEAD": "1144e87f29e2aa3daf401bcb710ca00386539109",
+      "branch": "refs/heads/codex/wrapper-clock-fixture-20261103"
+    },
+    {
+      "worktree": "D:/Codex/workspaces/postclose-fixture-reuse-20261105",
+      "HEAD": "f280069cd4181fe5ee40db8bdf6099e6b0d31738",
+      "branch": "refs/heads/codex/postclose-fixture-reuse-20261105"
+    },
+    {
+      "worktree": "D:/Codex/worktrees/microcap-continuation-20260917",
+      "HEAD": "7683b7a4919ef3fc98d664e9f3c8d89fd3931f47",
+      "branch": "refs/heads/codex/cleanup-copy-20261011-50e9b95b9d"
+    },
+    {
+      "worktree": "D:/Codex/worktrees/microcap-holiday-date-gates",
+      "HEAD": "de120e5731244834d44746c9dd779e4318503a9d",
+      "branch": "refs/heads/codex/microcap-holiday-date-gates"
+    },
+    {
+      "worktree": "D:/Codex/worktrees/microcap-metadata-preserve-20260917",
+      "HEAD": "c27098efc3c255e5025f636815a56d861b8ca74e",
+      "branch": "refs/heads/codex/cleanup-copy-20261011-798fb29f7e"
+    },
+    {
+      "worktree": "D:/CodexCandidates/mc_notice_1106",
+      "HEAD": "b03d898fb93f19405b2b8159a937e2889bf7c0aa",
+      "branch": "refs/heads/codex/notice-pagination-retry-20261106"
+    },
+    {
+      "worktree": "D:/CodexCandidates/mc_notice_tests_1106",
+      "HEAD": "1a75111aa7a49aa0d3066888fdd02d0e034a5181",
+      "branch": "refs/heads/codex/notice-pagination-tests-20261106"
+    },
+    {
+      "worktree": "D:/CodexCandidates/microcap_daily_split_1106",
+      "HEAD": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+      "branch": "refs/heads/codex/member-daily-20261106"
+    },
+    {
+      "worktree": "D:/CodexDaily/sharefb_adopt_probe",
+      "HEAD": "4b0e6180919ed79f4324f879df0b2b6fe583e884",
+      "detached": true
+    },
+    {
+      "worktree": "D:/t/m24release",
+      "HEAD": "edcef39f396e4cf522aa25151943ffc7be477886",
+      "branch": "refs/heads/codex/microcap-release-20261024"
+    },
+    {
+      "worktree": "D:/动量策略/microcap-production-durable-fix-20260903",
+      "HEAD": "f786e24ef6f94e7586d1c56602bd2041a253bbd9",
+      "branch": "refs/heads/codex/microcap-production-durable-fix-20260903"
+    }
+  ],
+  "registry_warnings": [],
+  "registry_prunable_count": 1,
+  "original_or_related_files_modified": false,
+  "deleted_paths": [],
+  "native_validation_executed": false,
+  "ok": true
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "actual_local_M5_zip_byte_reconstruction_verification_v1",
+  "started_at": "2026-11-11T16:56:05.684371+00:00",
+  "completed_at": "2026-11-11T16:56:09.286394+00:00",
+  "verified": true,
+  "source_sha256": "3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42",
+  "delta_bytes": 11693277,
+  "delta_sha256": "ec354f25c61136afcfe0a759e252b84c6e77b3c2111fbd9586bcfa9dbd4411a6",
+  "decoded_bytes": 30745222,
+  "decoded_sha256": "1ea7b966cc403980634625f2553a4d6267a37b0a22a70022e73a33937d4d1c33",
+  "target_bytes": 673248922,
+  "reconstructed_stream_sha256": "3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1",
+  "expected_target_sha256": "3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1",
+  "source_files_content_and_mtime_unchanged": true,
+  "no_reconstructed_file_materialized": true,
+  "no_network": true,
+  "no_repo_changes": true,
+  "manifest_path": "D:\\Codex\\microcap-local-maintenance\\exports\\m5-archive-byte-relay-20261112.manifest.json",
+  "manifest_sha256": "f901cae9ca3fe77e25b0e10d587613598c4ada98fff847d0af17af65123e8c37",
+  "native_pack_gate_preexisting": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\m5-formal-1634a27c-20261111\\result.json"
+}
