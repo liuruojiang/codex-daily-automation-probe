@@ -191,6 +191,15 @@
       "stored_bytes": 831619,
       "stored_sha256": "5fdf1c32f5df39d8a00cfc63cdbf399af3e963f2c86d95d2acd3014b9f1e9b48",
       "encoding": "original_bytes"
+    },
+    {
+      "path": "M5-archive-pack.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\m5-formal-1634a27c-20261111\\result.json",
+      "original_bytes": 491,
+      "original_sha256": "dae0b05a659fb9b0c95db4c03530a9705a61d0979f28bf3315283f8504668951",
+      "stored_bytes": 491,
+      "stored_sha256": "dae0b05a659fb9b0c95db4c03530a9705a61d0979f28bf3315283f8504668951",
+      "encoding": "original_bytes"
     }
   ],
   "candidate_parent_run": {

@@ -17,7 +17,7 @@
 
 ## 正式准备与未完成项
 
-维护读者M5已随[原生PR #100](https://github.com/liuruojiang/microcap/pull/100)合入main `1634a27c5a609a46ab35fc29ca2c65b94182671b`；来源生产者P1为`f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5`。[Auto PR #184](https://github.com/liuruojiang/codex-daily-automation-probe/pull/184)保留两个角色及原477日更身份。本地正式源码激活、10日归档源码复验均已退出0，当前执行原生pack-archive；源码复验不等于生产owner或自动化切换。
+维护读者M5已随[原生PR #100](https://github.com/liuruojiang/microcap/pull/100)合入main `1634a27c5a609a46ab35fc29ca2c65b94182671b`；来源生产者P1为`f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5`。[Auto PR #184](https://github.com/liuruojiang/codex-daily-automation-probe/pull/184)保留两个角色及原477日更身份。本地正式源码激活、10日归档源码复验均已退出0，原生pack-archive也已退出0，新包673,248,922字节、SHA-256为`3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1`，目前上传中（合并前须核验GitHub发布端digest）；源码复验不等于生产owner或自动化切换。
 
 尚待本轮结果：M5新seed发布、M5两次真实云端恢复、本地唯一写入owner切换，以及通过真实自动化工具替换09-00的旧自暂停prompt。当前准备配置仍为`owner=cloud`、`enabled=false`；09-00虽显示ACTIVE，旧prompt仍含“保持暂停”。M4接力不替代这些M5与生产验收。27只报价仍受上游502阻塞，保留成功阶段，不能将其填成完成。
 

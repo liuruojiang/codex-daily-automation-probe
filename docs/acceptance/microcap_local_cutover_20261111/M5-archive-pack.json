@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "reader": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+  "archive_date": "2026-11-10",
+  "bundle": "D:\\Codex\\microcap-local-maintenance\\exports\\microcap-whole-delivery-state-archive-20261110-1634a27c.zip",
+  "bytes": 673248922,
+  "sha256": "3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1",
+  "manifest_release": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+  "current_signal_ready": false,
+  "sending": "skipped",
+  "orders_placed": false
+}
