@@ -1,7 +1,12 @@
 name: Microcap Member Daily
+run-name: ${{ inputs.dispatch_key != '' && format('microcap-dispatch:{0}', inputs.dispatch_key) || 'Microcap Member Daily' }}
 on:
   workflow_dispatch:
     inputs:
+      dispatch_key:
+        description: 'Scheduled slot identity for read-only dispatch reconciliation'
+        type: string
+        default: ''
       validation_only:
         type: boolean
         default: true

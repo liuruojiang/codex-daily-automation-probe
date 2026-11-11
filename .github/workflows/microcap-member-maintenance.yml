@@ -1,7 +1,12 @@
 name: Microcap Independent Maintenance
+run-name: ${{ inputs.dispatch_key != '' && format('microcap-dispatch:{0}', inputs.dispatch_key) || 'Microcap Independent Maintenance' }}
 on:
   workflow_dispatch:
     inputs:
+      dispatch_key:
+        description: 'Scheduled slot identity for read-only dispatch reconciliation'
+        type: string
+        default: ''
       task:
         type: choice
         options: [maintenance, rebalance, scoped_acceptance, scoped_readback]
