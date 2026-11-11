@@ -164,6 +164,33 @@
       "stored_bytes": 157,
       "stored_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
       "encoding": "original_bytes"
+    },
+    {
+      "path": "P1-native-reuse-original.json",
+      "original_path": "D:\\Codex\\test-lifecycle\\records\\45f4df44266a4c119cbe9e05ae3a7269\\native900\\result.json",
+      "original_bytes": 2119,
+      "original_sha256": "2a13e68f8b1ffededfa098b9af3915ac510d78d438dde4aa81e76fdef724f275",
+      "stored_bytes": 2119,
+      "stored_sha256": "2a13e68f8b1ffededfa098b9af3915ac510d78d438dde4aa81e76fdef724f275",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "P1-native-reuse-calendar-correction.json",
+      "original_path": "D:\\Codex\\test-lifecycle\\records\\45f4df44266a4c119cbe9e05ae3a7269\\native900\\calendar-guard-correction.json",
+      "original_bytes": 12219,
+      "original_sha256": "5d2c3caaf0b7515b0e8c763c9ada1f2c67917d9721da10939a19c75bfc32ae87",
+      "stored_bytes": 12219,
+      "stored_sha256": "5d2c3caaf0b7515b0e8c763c9ada1f2c67917d9721da10939a19c75bfc32ae87",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "M5-formal-archive-source-recertification.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\m5-formal-1634a27c-20261111\\recertify\\stdout.log",
+      "original_bytes": 831619,
+      "original_sha256": "5fdf1c32f5df39d8a00cfc63cdbf399af3e963f2c86d95d2acd3014b9f1e9b48",
+      "stored_bytes": 831619,
+      "stored_sha256": "5fdf1c32f5df39d8a00cfc63cdbf399af3e963f2c86d95d2acd3014b9f1e9b48",
+      "encoding": "original_bytes"
     }
   ],
   "candidate_parent_run": {
