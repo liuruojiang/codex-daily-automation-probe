@@ -1,0 +1,28 @@
+{
+  "schema": "share_unchanged_tail_receipt_v1",
+  "url": "https://push2.eastmoney.com/api/qt/stock/get",
+  "params": {
+    "fltt": "2",
+    "invt": "2",
+    "fields": "f57,f58,f84,f85,f124,f86,f43,f59,f152,f189",
+    "secid": "1.688193"
+  },
+  "request_method": "GET",
+  "prepared_url": "https://push2.eastmoney.com/api/qt/stock/get?fltt=2&invt=2&fields=f57,f58,f84,f85,f124,f86,f43,f59,f152,f189&secid=1.688193",
+  "http_start": "2026-11-11T15:54:13.174779+00:00",
+  "tls_verification": true,
+  "redirects_allowed": false,
+  "diagnostic_scope": "exact_decoded_parameters_wire_encoding_only_not_production",
+  "wire_variant": "literal_fields_commas",
+  "http_complete": "2026-11-11T15:54:15.531958+00:00",
+  "actual_url": "https://push2.eastmoney.com/api/qt/stock/get?fltt=2&invt=2&fields=f57,f58,f84,f85,f124,f86,f43,f59,f152,f189&secid=1.688193",
+  "http_status": 502,
+  "bytes": 157,
+  "raw_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+  "response_headers": {
+    "Date": "Wed, 11 Nov 2026 15:54:15 GMT",
+    "Content-Type": "text/html",
+    "Content-Length": "157"
+  },
+  "server_observed": "nginx/1.26.2"
+}

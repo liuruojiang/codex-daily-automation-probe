@@ -1,0 +1,186 @@
+{
+  "schema": "microcap_cutover_evidence_index_v1",
+  "scope": "original_evidence_copy_not_production_acceptance",
+  "evidence_date": "2026-11-11",
+  "files": [
+    {
+      "path": "complete-real-m3-source-proof.json",
+      "original_path": "D:\\Codex\\test-lifecycle\\records\\ca389a4943ab409b8959ae9992adde33\\complete-real-m3-source-proof.json",
+      "original_bytes": 3896,
+      "original_sha256": "6a63dfdab9b2d3c7e40fd625f74a936e0e3a26d7395f0f2bab1d0531250617d0",
+      "stored_bytes": 3896,
+      "stored_sha256": "6a63dfdab9b2d3c7e40fd625f74a936e0e3a26d7395f0f2bab1d0531250617d0",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "native-m3-candidate-gate.json.gz",
+      "original_path": "D:\\Codex\\test-lifecycle\\records\\288db1ef7fcc49d7b5500de219782ebf\\real-m3-native-archive-gate.json",
+      "original_bytes": 1475714,
+      "original_sha256": "680aabd1c06b47c397d491e619642bca6cae99c0f2ccba968c4d8c33979d5e6c",
+      "stored_bytes": 386142,
+      "stored_sha256": "3b42d3a59f718629c90f3736bda39f20ac5b8fd90c481a451ce13f548bcec562",
+      "encoding": "gzip_original_bytes"
+    },
+    {
+      "path": "cloud-relay-m4-20261111.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\cloud-relay-m4-20261111.json",
+      "original_bytes": 793,
+      "original_sha256": "0b080c7481f0bff47082a168a412636ab156d36be4253f55bb25ffcd3d69cc42",
+      "stored_bytes": 793,
+      "stored_sha256": "0b080c7481f0bff47082a168a412636ab156d36be4253f55bb25ffcd3d69cc42",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "local-P1-readback.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\local-stages-P1-20261111\\readback.json",
+      "original_bytes": 118233,
+      "original_sha256": "6a226889abcdbff4850415d7c0047b7bf01f694e1e718fd34b10ab873acf50bf",
+      "stored_bytes": 118233,
+      "stored_sha256": "6a226889abcdbff4850415d7c0047b7bf01f694e1e718fd34b10ab873acf50bf",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "local-P1-result.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\local-stages-P1-20261111\\result.json",
+      "original_bytes": 82457,
+      "original_sha256": "0b5dba102b250bf49053d70d28469669ae9e45f6b910d39de9fd4d4b10debcdb",
+      "stored_bytes": 82457,
+      "stored_sha256": "0b5dba102b250bf49053d70d28469669ae9e45f6b910d39de9fd4d4b10debcdb",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/summary.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\summary.json",
+      "original_bytes": 3359,
+      "original_sha256": "44bc05117dc48679e3fcc904172914cbc1bdcd98ed16bd75fe8ccce8e24bd949",
+      "stored_bytes": 3359,
+      "stored_sha256": "44bc05117dc48679e3fcc904172914cbc1bdcd98ed16bd75fe8ccce8e24bd949",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/1-688178-original_percent_encoded/native_artifact_validation.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\1-688178-original_percent_encoded\\native_artifact_validation.json",
+      "original_bytes": 27,
+      "original_sha256": "95646b1c32bffa445c9ddc173dab115dbeba7fe17a32adda015fd00c7546fd1b",
+      "stored_bytes": 27,
+      "stored_sha256": "95646b1c32bffa445c9ddc173dab115dbeba7fe17a32adda015fd00c7546fd1b",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/1-688178-original_percent_encoded/receipt.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\1-688178-original_percent_encoded\\receipt.json",
+      "original_bytes": 1183,
+      "original_sha256": "c122f68a932877627394c57a7f262269a6f3369e0de8488c18cda7d3061d1b61",
+      "stored_bytes": 1183,
+      "stored_sha256": "c122f68a932877627394c57a7f262269a6f3369e0de8488c18cda7d3061d1b61",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/1-688178-original_percent_encoded/response.raw",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\1-688178-original_percent_encoded\\response.raw",
+      "original_bytes": 157,
+      "original_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "stored_bytes": 157,
+      "stored_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/2-688193-original_percent_encoded/native_artifact_validation.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\2-688193-original_percent_encoded\\native_artifact_validation.json",
+      "original_bytes": 27,
+      "original_sha256": "95646b1c32bffa445c9ddc173dab115dbeba7fe17a32adda015fd00c7546fd1b",
+      "stored_bytes": 27,
+      "stored_sha256": "95646b1c32bffa445c9ddc173dab115dbeba7fe17a32adda015fd00c7546fd1b",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/2-688193-original_percent_encoded/receipt.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\2-688193-original_percent_encoded\\receipt.json",
+      "original_bytes": 1183,
+      "original_sha256": "29c34b2b820714b644a33ee620bb4377528b9e11c514ab3a67df57f6f29cd944",
+      "stored_bytes": 1183,
+      "stored_sha256": "29c34b2b820714b644a33ee620bb4377528b9e11c514ab3a67df57f6f29cd944",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/2-688193-original_percent_encoded/response.raw",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\2-688193-original_percent_encoded\\response.raw",
+      "original_bytes": 157,
+      "original_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "stored_bytes": 157,
+      "stored_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/3-688193-literal_fields_commas/native_artifact_validation.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\3-688193-literal_fields_commas\\native_artifact_validation.json",
+      "original_bytes": 27,
+      "original_sha256": "95646b1c32bffa445c9ddc173dab115dbeba7fe17a32adda015fd00c7546fd1b",
+      "stored_bytes": 27,
+      "stored_sha256": "95646b1c32bffa445c9ddc173dab115dbeba7fe17a32adda015fd00c7546fd1b",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/3-688193-literal_fields_commas/receipt.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\3-688193-literal_fields_commas\\receipt.json",
+      "original_bytes": 1144,
+      "original_sha256": "89e1c0abd39a7bc0506943671a6f53a33e80efd65ac8b687cdc0a51bd5a1b1fc",
+      "stored_bytes": 1144,
+      "stored_sha256": "89e1c0abd39a7bc0506943671a6f53a33e80efd65ac8b687cdc0a51bd5a1b1fc",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/3-688193-literal_fields_commas/response.raw",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\3-688193-literal_fields_commas\\response.raw",
+      "original_bytes": 157,
+      "original_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "stored_bytes": 157,
+      "stored_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/4-688193-query_order_secid_first/native_artifact_validation.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\4-688193-query_order_secid_first\\native_artifact_validation.json",
+      "original_bytes": 27,
+      "original_sha256": "95646b1c32bffa445c9ddc173dab115dbeba7fe17a32adda015fd00c7546fd1b",
+      "stored_bytes": 27,
+      "stored_sha256": "95646b1c32bffa445c9ddc173dab115dbeba7fe17a32adda015fd00c7546fd1b",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/4-688193-query_order_secid_first/receipt.json",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\4-688193-query_order_secid_first\\receipt.json",
+      "original_bytes": 1182,
+      "original_sha256": "f525d7329bc77019fdd7dbc08bd8cacae167d8e9b47ebb6a0ff18527faef80be",
+      "stored_bytes": 1182,
+      "stored_sha256": "f525d7329bc77019fdd7dbc08bd8cacae167d8e9b47ebb6a0ff18527faef80be",
+      "encoding": "original_bytes"
+    },
+    {
+      "path": "quote-wire-diagnosis/4-688193-query_order_secid_first/response.raw",
+      "original_path": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\quote-transport-diagnosis-20261111\\wire-equivalence-155407Z-03fd87f9\\4-688193-query_order_secid_first\\response.raw",
+      "original_bytes": 157,
+      "original_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "stored_bytes": 157,
+      "stored_sha256": "24fe03fdb26088bfff8b1363911c29c79a19614bca42cdcdb9fefdf52917aeb1",
+      "encoding": "original_bytes"
+    }
+  ],
+  "candidate_parent_run": {
+    "lifecycle": "288db1ef7fcc49d7b5500de219782ebf",
+    "overall_ok": false,
+    "native_archive_ok": true,
+    "whole_inspection_ok": true,
+    "remaining_failure": "Windows long-path inventory snapshot",
+    "final_inventory_lifecycle": "ca389a4943ab409b8959ae9992adde33",
+    "final_inventory_ok": true
+  },
+  "code_reader": "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+  "source_producer": "f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5",
+  "new_M5_seed_and_two_run_relay": "pending",
+  "production_owner_switch": "pending",
+  "current_signal_ready": false,
+  "SMTP_sent": false,
+  "orders_placed": false,
+  "final_primary_seven_hash_recheck": "not_in_this_evidence_package"
+}
