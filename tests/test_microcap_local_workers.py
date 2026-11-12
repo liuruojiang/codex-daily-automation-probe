@@ -10,6 +10,24 @@ import microcap_local_workers as workers
 from prepare_microcap_local import encode
 
 
+def test_worker_status_permanent_access_failure_is_bounded(tmp_path, monkeypatch):
+    calls = []
+    def denied(path):
+        calls.append(path)
+        raise PermissionError(13, 'Access denied')
+    monkeypatch.setattr(Path, 'read_bytes', denied)
+    monkeypatch.setattr(workers.time, 'sleep', lambda _: None)
+    with pytest.raises(PermissionError): workers.read_worker_status(tmp_path/'worker-0.json')
+    assert len(calls) == 5
+
+
+def test_worker_status_corrupt_bytes_are_not_retried(tmp_path, monkeypatch):
+    import json
+    path = tmp_path/'worker-0.json'; path.write_bytes(b'{')
+    monkeypatch.setattr(workers.time, 'sleep', lambda _: pytest.fail('corruption retry'))
+    with pytest.raises(json.JSONDecodeError): workers.read_worker_status(path)
+
+
 @pytest.fixture
 def another_writer(tmp_path):
     # Real separate native-data process, no model or market-data calls.
@@ -60,7 +78,8 @@ def test_worker_rejects_changed_code_before_any_native_import(tmp_path):
         workers.worker(tmp_path / 'absent-runtime', tmp_path, 0, path)
 
 
-def test_orderly_stop_persists_accurate_status_instead_of_stale_running(tmp_path,monkeypatch):
+@pytest.mark.parametrize('transient_denial', [False, True])
+def test_orderly_stop_persists_accurate_status_instead_of_stale_running(tmp_path,monkeypatch,transient_denial):
     import json
     context={'target':'2026-11-09','scope_sha256':'f'*64}
     def process(args,**kwargs):
@@ -73,6 +92,14 @@ def test_orderly_stop_persists_accurate_status_instead_of_stale_running(tmp_path
             def poll(self):return self.returncode
         return Stopped()
     monkeypatch.setattr(workers.subprocess,'Popen',process)
+    original_read = Path.read_bytes
+    denied = []
+    def read(path):
+        if transient_denial and path.name == 'worker-0.json' and not denied:
+            denied.append(path)
+            raise PermissionError(13, 'Sharing violation', str(path))
+        return original_read(path)
+    monkeypatch.setattr(Path, 'read_bytes', read)
     with pytest.raises(RuntimeError,match='worker stopped'):
         workers.run_workers(tmp_path/'runtime',tmp_path,[f'{n:06d}' for n in range(300)],context)
     result=json.loads((tmp_path/'runs/2026-11-09/progress.json').read_bytes())
