@@ -23,6 +23,109 @@ import ic_im_state_council_calendar_v1 as approved_calendar
 _CALENDAR_POLICY_DAY = ContextVar('icim_delivery_calendar_policy_day', default=None)
 
 
+def _calendar_trace_uses(product, signal):
+    """Project consumed date/purpose pairs; month coverage is not a session."""
+    uses = set()
+
+    def covered(value, purpose):
+        if value is None:
+            return
+        day = date.fromisoformat(str(value)[:10])
+        if day.year == 2027:
+            uses.add((day.isoformat(), purpose))
+        elif day.year not in CALENDAR_YEARS:
+            raise ValueError('calendar trace consumes an unsupported year')
+
+    def contract(value, purpose, execution=None):
+        if not value:
+            return
+        text = str(value)
+        match = re.fullmatch(r'(?:IC|IM)([0-9]{2})([0-9]{2})', text)
+        option = False
+        if match is None:
+            match = re.fullmatch(r'MO([0-9]{2})([0-9]{2})-[PC]-[0-9]+', text)
+        if match is None:
+            match = re.fullmatch(r'510500P([0-9]{2})([0-9]{2})[MA][0-9]{5}', text)
+            option = True
+        if match is None:
+            raise ValueError('calendar trace contract identity is invalid')
+        year, month = 2000 + int(match[1]), int(match[2])
+        first = date(year, month, 1)
+        covered(first, purpose)
+        if execution is not None:
+            weekday, occurrence = (2, 4) if option else (4, 3)
+            expiry = first + timedelta(days=(weekday-first.weekday()) % 7 + 7*(occurrence-1))
+            while not is_session(expiry):
+                expiry += timedelta(days=1)
+            covered(expiry, purpose)
+
+    def positive(value):
+        try:
+            return float(value) > 0
+        except (TypeError, ValueError):
+            return False
+
+    covered(signal.get('market_date'), 'market date')
+    covered(signal.get('next_trade_date'), 'next session')
+    contract(signal.get('core_target'), 'core target')
+    target_day = (signal.get('market_date') if signal.get('option_monthly_reset_due')
+                  else signal.get('next_trade_date', signal.get('market_date')))
+    shared_qty = (signal.get('put_target_momentum_qty') if signal.get('v14_core_put_contract')
+                  and signal.get('v14_core_put_contract') != signal.get('put_target_contract')
+                  else signal.get('put_target_total_qty'))
+    quantities = ({'put_target_contract': shared_qty, 'v14_core_put_contract': signal.get('v14_core_put_qty')}
+                  if product == 'IC' else
+                  {'put_target_contract': signal.get('core_put_target_qty_normalized'),
+                   'core_put_target_contract': signal.get('core_put_target_qty_normalized'),
+                   'momentum_put_target_contract': signal.get('momentum_put_target_qty_normalized')})
+    for key in ('put_target_contract', 'core_put_target_contract', 'v14_core_put_contract', 'momentum_put_target_contract'):
+        contract(signal.get(key), key, target_day if positive(quantities.get(key)) else None)
+    opening = signal.get('v14_action') in {'ENTER_SHORT_PUT', 'ROLL_SHORT_PUT'}
+    if opening or positive(signal.get('v14_short_put_qty_normalized')):
+        covered(signal.get('v14_short_put_expiry'), 'new short Put expiry')
+        contract(signal.get('v14_short_put_contract'), 'new short Put', signal.get('next_trade_date') if opening else None)
+    if signal.get('v14_profit_pending'):
+        covered(signal.get('v14_profit_execution_day'), 'profit reentry execution')
+        contract(signal.get('v14_profit_reentry_contract'), 'profit reentry', signal.get('v14_profit_execution_day'))
+    for key in ('v14_ordinary_put_open_plan', 'v14_ordinary_put_pending', 'v14_short_put_open_pending'):
+        plan = signal.get(key)
+        if not isinstance(plan, dict):
+            continue
+        covered(plan.get('execution_day'), key)
+        contract(plan.get('new_contract'), key, plan.get('execution_day'))
+        legs = plan.get('legs', {})
+        for leg in (legs.values() if isinstance(legs, dict) else legs):
+            if leg.get('changed') and positive(leg.get('new_qty')):
+                contract(leg.get('new_contract'), key, plan.get('execution_day'))
+    if signal.get('option_monthly_reset_due') or signal.get('option_monthly_reset_preview'):
+        covered(signal.get('option_monthly_reset_execution_date'), 'monthly maintenance')
+    if signal.get('option_monthly_reset_due') or signal.get('put_monthly_reset_preview'):
+        covered(signal.get('put_monthly_reset_execution_date'), 'Put monthly maintenance')
+    if signal.get('roll_confirmed') or signal.get('core_target') != signal.get('core_current'):
+        covered(signal.get('roll_execution_date'), 'future roll execution')
+    return uses
+
+
+def _validate_calendar_trace(evidence, expected_uses):
+    source = approved_calendar.load().evidence()
+    if (not isinstance(evidence, dict) or set(evidence) != {'policy_revision', 'exchange_notice_verified', 'sources'}
+            or evidence['policy_revision'] != approved_calendar.REVISION
+            or evidence['exchange_notice_verified'] is not False
+            or not isinstance(evidence['sources'], list) or not 1 <= len(evidence['sources']) <= 128):
+        raise ValueError('derived calendar source identity/hash/evidence is invalid')
+    uses = []
+    for row in evidence['sources']:
+        if (not isinstance(row, dict) or set(row) != set(source) | {'date', 'purpose'}
+                or {key: row[key] for key in source} != source
+                or type(row['year']) is not int or row['accepted_for_research'] is not True
+                or row['exchange_notice_verified'] is not False
+                or not isinstance(row['date'], str) or not isinstance(row['purpose'], str)):
+            raise ValueError('derived calendar source identity/hash/evidence is invalid')
+        uses.append((row['date'], row['purpose']))
+    if len(set(uses)) != len(uses) or set(uses) != expected_uses:
+        raise ValueError('derived calendar consumed date/purpose trace is invalid')
+
+
 def with_calendar_policy(*, verify_source_metadata=False):
     """Use the immutable payload's policy day; never today's wall clock."""
     def decorate(function):
@@ -39,20 +142,15 @@ def with_calendar_policy(*, verify_source_metadata=False):
                 if verify_source_metadata:
                     required = any(str(payload.get(field, '')).startswith('2027-') for field in
                                    ('market_date', 'completed_day', 'verified_day', 'next_trade_day'))
-                    for signal in payload.get('signals', {}).values():
+                    for product, signal in payload.get('signals', {}).items():
                         evidence = signal.get('calendar_source_evidence')
-                        if evidence is None and not required:
+                        uses = (_calendar_trace_uses(product, signal) if policy_day is not None
+                                and policy_day >= approved_calendar.EFFECTIVE_SIGNAL_DATE else set())
+                        if evidence is None and not required and not uses:
                             continue
                         if policy_day is None or policy_day < approved_calendar.EFFECTIVE_SIGNAL_DATE:
                             raise ValueError('derived calendar is outside its approved signal-day scope')
-                        expected = {'policy_revision': approved_calendar.REVISION,
-                                    'exchange_notice_verified': False,
-                                    'sources': [approved_calendar.load().evidence()]}
-                        if (not isinstance(evidence, dict) or evidence != expected
-                                or evidence.get('exchange_notice_verified') is not False
-                                or evidence['sources'][0].get('exchange_notice_verified') is not False
-                                or evidence['sources'][0].get('accepted_for_research') is not True):
-                            raise ValueError('derived calendar source identity/hash/evidence is invalid')
+                        _validate_calendar_trace(evidence, uses)
                 return result
             finally:
                 _CALENDAR_POLICY_DAY.reset(token)

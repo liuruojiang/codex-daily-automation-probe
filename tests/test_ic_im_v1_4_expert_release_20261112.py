@@ -76,9 +76,10 @@ def test_source_verifier_checks_committed_inventory_and_every_support_byte(tmp_p
 
 def payload(policy_day='2026-11-12'):
     evidence = {'policy_revision': calendar.REVISION, 'exchange_notice_verified': False,
-                'sources': [calendar.load().evidence()]}
+                'sources': [{**calendar.load().evidence(), 'date': '2027-01-04', 'purpose': 'next session'}]}
     return {'market_date': policy_day, 'next_trade_day': '2027-01-04',
-            'signals': {p: {'calendar_source_evidence': deepcopy(evidence)} for p in ('IC', 'IM')}}
+            'signals': {p: {'market_date': policy_day, 'next_trade_date': '2027-01-04',
+                            'calendar_source_evidence': deepcopy(evidence)} for p in ('IC', 'IM')}}
 
 
 @contract.with_calendar_policy(verify_source_metadata=True)
