@@ -8,7 +8,15 @@ P3/M8双源股本备用和原公告页接续已完成发布及本地代码、11�
 
 M9 `906eca8a5dfede7fa1674fb17cd3c6ce12205e6d`仅修复历史比较中ISO日期与精确午夜的读取兼容，保留原CSV及其SHA、待定首收益日和全部经济比较。18项股票来源指纹和P3生产者不变。恢复先由原95d读取器正式核验原M8完整包，再按`microcap_midnight_runtime_review_20261112.json`完整三路径审阅切换代码，另存激活事务；不把旧归档改签为新版本，也不在新代码下给D10归档伪造重新认证。新版本直接执行当日原生refresh-all/check，旧归档认证保留为历史来源。
 
-原失败运行的300只资料由`microcap_completed_prepare_recovery.py`读取，限定原run/attempt、两个GitHub工件ID及完整SHA，保留原prepared、来源包、903回执及观察时钟。未随诊断上传的旧warm ZIP从原固定release按原SHA补齐。新读取器重新导入原来源包并验核；旧失败consumer输出和delivery context只作诊断，不能缓存为成功或放入新执行事务。后续正式调仓、下一次云端读取与日报无发送验收仍须各自取得真实回执。
+原失败运行的300只资料由`microcap_completed_prepare_recovery.py`读取，限定原run/attempt、两个GitHub工件ID及完整SHA，保留原prepared、来源包、903回执及观察时钟。未随诊断上传的旧warm ZIP从原固定release按原SHA补齐。新读取器重新导入原来源包并验核；旧失败consumer输出和delivery context只作诊断，不能缓存为成功或放入新执行事务。
+
+[实际恢复43261210223](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43261210223)已在Auto `9033b7619395897212c186115e10fca175b34f61`完成原300只/903项复用、M9正式刷新/检查、精度桥、R12交接及完整发布。新检查点13969755172的原JSON SHA为`74f1a3c4757c605961804ddaa76fa79f5b30818c0adfa3e79061e9d51268e3c6`，日期12日、下一交易日13日、phase=current；完整包13969276381的外层SHA为`52d1beb174b1c9b3acb0126056f6acb3341dc8abbfcf2ec667646327a0b760fd`，内层ZIP为`fb0ca1698b4f00f2d5a8dd6b5467021db9b6760bb5f77f05739abd65c672fda3`。原D11父包六份数据及历史经济前缀保持，三版收益、净值、成本和持仓一致；v2.3少量诊断评分的浮点末位差另列，不冒称所有诊断列逐字节一致。
+
+[PR208](https://github.com/liuruojiang/codex-daily-automation-probe/pull/208)在Auto `827494305cbafaf5586437bafec4050c8e83e389`修复随后实际冷恢复发现的目录绑定错误。`microcap_native_staged_validation.py`仅把Native对私有staged目录的`inspect_outputs`和`validate_state`交给新解释器执行，先核所有原SOURCE_FILES及额外Python源码字节，再核嵌入freq/base/fetch及其函数全局路径。不能读取接收者空缓存或外部共享缓存，原参数、完整报告、失败原因、全部来源和名单门槛保持；接收目录自身仍调用原Native函数。原906、归档、manifest及源SHA不改，不借当前100只扩充历史证券集合，不重新采集或重算正式策略。
+
+实际完整包冷恢复[43281731910](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43281731910)已成功，准确命中上述原工件，未使用fallback，原生恢复及三版完整归档检查均通过。该验收证明原12日归档可在第二个独立云端运行恢复，不伪造13日新行情或新交易信号。[新版无发送日报43281745222](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43281745222)也已通过，仍读取原检查点和三版CSV；重复采集、策略重算、检查点持久化和全部发送步骤跳过。名单附件保留原字段和历史name，仅增加`name_basis=historical_member_alias`及正文说明，不以旧别名判断当前ST资格。原D12邮件是partial-information，原发送intent、accepted和marker均保留，不补发正常日报。
+
+部署后实际11文件包的manifest SHA为`a02f88c6c40ecf965c8293282bd4d033b07a3f4eab179e20bc0d85e3e3728392`，指针SHA为`f12a73ab135e3b1db8a3522bceb5cc7f299ed1335ef8392401cc034de0d333c5`。全部文件与827正式Git对象相同，仅renderer相对旧9033发生变化；原策略、来源、配置、09:00/11:00时槽及历史数据保留。111项恢复回归、74项报告回归、独立22项隔离反例和原906源码小oracle分别留证；小oracle不代替上述真实完整包验收。未来实际周更、下一真实交易日收盘后的计算和新的故障仍需按其当日真实资料核验，不把软件未来日后缀或本次归档验收冒称未来实绩。
 
 ## 09:00与11:00的同槽恢复
 
