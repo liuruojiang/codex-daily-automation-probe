@@ -1,4 +1,38 @@
-# 微盘股本地维护（2026-11-12，生产切换）
+# 微盘股本地维护（2026-11-12，M6修复后生产状态）
+
+scoped维护/调仓配置经[PR189](https://github.com/liuruojiang/codex-daily-automation-probe/pull/189)切换到原生M6 `14e9a9fa6f0487f1d5547598435089c43f2f9fd1`（配置切换提交`b8ff92f07a86edfe01bbb54ad2784ccd575668dd`）。来源生产者仍为P1 `f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5`；`owner=local`，日常深维护300只、每周一更新名单，原调仓日另核轻量全市场市值边界。09:00/11:00本地维护、10:00准备、14:15盘中、15:10云端调仓和16:00原477成员日报职责独立。
+
+本轮11项软件缺陷（3 P1、8 P2）及其跨任务反例已修复并完成独立复核：[验收总表](acceptance/microcap_daily_chain_repairs_20261112/README.md)。策略参数、原始历史、正常发送事务保持，未调用SMTP或订单接口。下文M5及更早阶段记录保留原文，仅表示当时状态；当前身份以正式config及本节验收为准。
+
+## 11项修复与真实接续
+
+| 优先级/编号 | 修复 |
+| --- | --- |
+| P1 LM-01 | 分开本地ab214执行、477检查点namespace、ad4核心与精确M5/M6原生handoff来源角色，保留原包标签与血缘。 |
+| P1 F-B1 | 轻量边界按有效证券集合覆盖核验，不能由足够行数掩盖实际缺股；排名及维护范围不变。 |
+| P1 C1 | 旧sender恒定关闭，独立no-send恢复保留。 |
+| P2 LS-01 | bootstrap/metadata/300证券与900来源闭包完整一致；补齐缺项后复用成功阶段。 |
+| P2 LS-02 | 停止请求绑定执行代次，旧stop不毒化新owner，锁与HTTP预算不重置。 |
+| P2 LM-02 | prepare缓存/恢复均核最近已完成交易日D，过期包或旧seed不能冒充就绪。 |
+| P2 C2 | 退役旧FAILED发送分支，不新增无事务的异常邮件。 |
+| P2 C3 | 最终CSV与原生JSON逐字段、日期/修订/状态一致，保留真实source-checkpoint闭包支持saved-report恢复。 |
+| P2 C4 | 行级官方标志、模式、生成/发布时钟一致，盘中不能改顶层标签升格收盘。 |
+| P2 C5 | 当期官方非现金换成员显示进出与信号/下一执行日；历史、preview、现金不升格，坏依据不静默正常续持。 |
+| P2 ROOT-01 | 稳定slot key/run-name调解未知POST接受状态；只读确认、未知不重POST，明确拒绝才有界重试。 |
+
+本地member已原子激活10文件不可变bundle `540009ba6ed9cbc01d81590978cb9ec3e4864b57`，manifest为`08bdd286ef98d65ac0bb15dafc4ea72d70792079b47666b4c741eb7a0ab2146f`，与main对应文件一致。真实12日时钟下未传缓存且未使用seed回退，实际恢复D11 artifact13838054871并通过独立日历、AB214 verify、prepare-only；没有采新盘中价。09/11实际来源执行器已同步最终代码。10:00/14:15只通过应用工具更正“09云端维护”的旧职责文字，其他任务字段及ICIM内容保持。
+
+实际Worker `345055bb-1466-4309-a7d0-9e057b82dbe0`读回模块与已测编译件一致，5个cron/flag保持；实际部署模块11项隔离故障反例通过。旧sender、假SMTP及模拟故障测试均未产生正常发送；既有11日marker/intent/SMTP receipt保留。
+
+M3→M6 source-only认证/pack在[43116277092](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43116277092)成功，只有publisher的draft tag查询失败；[43122103224](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122103224)只恢复原ZIP发布，未重跑已成功认证或打包。M6归档672169265字节、SHA `5f78da37688112128d4edbaf6cc5dc7f3dbeb8602193d1834ddd2334d0c72f7f`，release442297118/asset737320728服务器digest匹配；170713数据对象和7经济CSV保持，`current_signal_ready=false`。
+
+[第一普通main恢复43122727666](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122727666)从M6 seed核验并发布成品；[第二次43124356822](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43124356822)在禁止seed回退后准确恢复前者artifact13901524557，`fallback_used=false`。包5f78、source manifest `a891e3ce…`及三版streams一致，原生完整归档门槛均通过，sending=skipped。见[双次接力原件](acceptance/microcap_daily_chain_repairs_20261112/cloud-relay-m6-20261112.json)。
+
+此接力只认证完整10日归档，不能代表11日来源完成或12日当前信号。按真实记录cutoff，11日share为273 complete/27 failed；旧aggregate的272属于较早时点。12日09:00新公告/名称观察及下一实际R/new-v2现场接续尚未发生，仍按真实来源与原门槛取得；软件R12/R13/R26演练不冒充未来行情。原M5匹配代码/seed及旧75文件bundle保留回退，主项目ab214与原7个数据改动保持。
+
+## 历史记录：修复前/M5及更早阶段
+
+以下原文的“当前”“待完成”均指相应历史记录时点，不覆盖上面的M6生产配置和本轮验收；原M5接力仍保留供复核与匹配回退。
 
 维护读者M5为原生main `1634a27c5a609a46ab35fc29ca2c65b94182671b`，来源生产者P1为`f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5`。09:00维护的唯一写入者已设为`owner=local`，`enabled=true`；[PR185](https://github.com/liuruojiang/codex-daily-automation-probe/pull/185)已合并生产main `538169e67ce5f71cd4b4a13fde13c3d85348eb80`，真实自动化工具更新及文件读回均已通过。云端09:00维护分支随owner退出，15:10调仓接力和16:00原477成员日更/日报保留独立职责，原参数和发送规则保持。
 

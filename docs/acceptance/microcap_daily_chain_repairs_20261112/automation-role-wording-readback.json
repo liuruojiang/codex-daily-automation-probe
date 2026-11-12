@@ -1,0 +1,32 @@
+{
+  "schema": "microcap_local_maintenance_role_wording_readback_v1",
+  "updates_via_app_tool": true,
+  "rows": [
+    {
+      "id": "ic-im-session-10-00",
+      "changed_fields": [
+        "prompt",
+        "updated_at"
+      ],
+      "actual_status": "ACTIVE",
+      "model_preserved": true,
+      "rrule_preserved": true,
+      "project_preserved": true,
+      "notification_preserved": true,
+      "wording_only": true
+    },
+    {
+      "id": "ic-im",
+      "changed_fields": [
+        "prompt",
+        "updated_at"
+      ],
+      "actual_status": "ACTIVE",
+      "model_preserved": true,
+      "rrule_preserved": true,
+      "project_preserved": true,
+      "notification_preserved": true,
+      "wording_only": true
+    }
+  ]
+}

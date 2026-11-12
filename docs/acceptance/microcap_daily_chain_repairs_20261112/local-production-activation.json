@@ -1,0 +1,16 @@
+{
+  "status": "local_member_and_sources_activated",
+  "activated_at_utc": "2026-11-11T23:45:11.726214+00:00",
+  "production_auto_head": "a403909ac2a2b53c40ff0f3dee2e37ca6ba6235e",
+  "installed_auto_pin": "540009ba6ed9cbc01d81590978cb9ec3e4864b57",
+  "installed_manifest_sha256": "08bdd286ef98d65ac0bb15dafc4ea72d70792079b47666b4c741eb7a0ab2146f",
+  "exact_bundle_files_match_main": true,
+  "source_workers_main_synchronized": true,
+  "installed_pointer_sha256": "fed85d83ce72338395f490ad1b6ee58c6ced6de95847a68748c0e0e2de3298ec",
+  "source_execution_root": "D:\\Codex\\workspaces\\auto-maintenance-20261109\\scripts",
+  "actual_prepare_receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\local_links\\final-p2-install-preparation-20261112T073812-d4c87623\\actual-run-acceptance.json",
+  "primary_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+  "seven_protected_data_files_unchanged": true,
+  "real_email_calls": 0,
+  "orders_placed": false
+}
