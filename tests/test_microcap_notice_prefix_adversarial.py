@@ -211,6 +211,25 @@ def prepare_pipeline(notice_case,tmp_path,monkeypatch):
             stdout=put(command,'stdout.log',(json.dumps(result)+'\n').encode())
             process=put(command,'process.json',dict(exit_code=0,command=argv,explicit_software_process_envelope=True))
             return dict(stdout=str(stdout),process=str(process))
+        elif label=='select-original-notice-forward-checkpoint':
+            def forward(runtime,data,mode,profile_root=None,requested_target=None):
+                assert mode=='forward'
+                raw=(Path(data)/m.FRESHNESS).read_bytes();active=json.loads(raw)
+                value=dict(mode='forward',native_runtime=m.PRODUCER,authority=m.END,authority_day=m.TARGET,
+                    requested_target=requested_target,active_sha256=hashlib.sha256(raw).hexdigest(),
+                    old_prefix_unchanged=True,original_clocks_retained=True,state='noop',reason='already_advancing',
+                    selected_spec=m.RECEIPTS[0])
+                if requested_target>m.TARGET and active['previous_authority']==m.END:
+                    value.update(state='select',active_spec=m.RECEIPTS[1],selected_previous_authority=m.START,
+                        source_files={spec['path']:spec['sha256'] for spec in m.RECEIPTS})
+                return value
+            selected=Path(argv[argv.index('--out')+1])
+            result=m.select_forward(root=c['root'],protected_root=c['protected'],state=c['args']['state'],
+                pool=pool,target=target,out=selected,native=forward)
+            command=out/'commands'/(label+'-'+str(len(calls)))
+            stdout=put(command,'stdout.log',(json.dumps(result)+'\n').encode())
+            process=put(command,'process.json',dict(exit_code=0,command=argv,explicit_software_process_envelope=True))
+            return dict(stdout=str(stdout),process=str(process))
         elif label=='maintain':
             assert argv[argv.index('--as-of')+1]==target
             assert json.loads((c['root']/m.FRESHNESS).read_bytes())['target']=='2026-11-11'
@@ -271,7 +290,7 @@ def test_saved_prepared_keeps_original_closure_when_notice_warm_becomes_covered(
     pair=m._pair(c['root']);calls.clear()
     again=runner.prepare(**args)
     assert again==first and (args['out']/'prepared.json').read_bytes()==saved
-    assert [label for label,_ in calls]==['preflight','warm-approved-notice-prefix']
+    assert [label for label,_ in calls]==['preflight','warm-approved-notice-prefix','select-original-notice-forward-checkpoint']
     assert m._pair(c['root'])==pair
     value,_=runner.validate_prepared(args['out']/'prepared.json',args['consumer'],args['target'],args['consumer_sha'])
     assert value==first
@@ -368,6 +387,6 @@ def test_saved_prepared_reuse_still_borrows_exact_old_baseline_without_recollect
     first=runner.prepare(**args);saved=(args['out']/'prepared.json').read_bytes()
     calls.clear();again=runner.prepare(**args)
     assert again==first and (args['out']/'prepared.json').read_bytes()==saved
-    assert [name for name,_ in calls]==['preflight','warm-approved-notice-prefix']
+    assert [name for name,_ in calls]==['preflight','warm-approved-notice-prefix','select-original-notice-forward-checkpoint']
     assert (source.read_bytes(),source.stat().st_nlink)==before
     assert all(not view.exists() for view in c['views'])
