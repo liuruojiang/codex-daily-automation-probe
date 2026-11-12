@@ -71,7 +71,7 @@ def test_partial_bootstrap_does_not_abandon_sources_or_certify_299_metadata(tmp_
     root = state / 'runtime'
     root.mkdir(parents=True)
     fake_native(monkeypatch, root)
-    monkeypatch.setattr(local, 'validate_runtime', lambda *_: None)
+    monkeypatch.setattr(local, 'validate_runtime', lambda *_: local.RUNTIME)
     floor = datetime.now(timezone.utc) - timedelta(hours=1)
     monkeypatch.setattr(local, 'observation_floor', lambda: floor)
     write(local.bound(root, local.CACHE + 'st_notice_sources/freshness.json'), dict(target=TARGET, required_asof=floor.isoformat()))

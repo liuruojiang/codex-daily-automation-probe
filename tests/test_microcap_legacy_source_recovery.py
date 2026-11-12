@@ -24,7 +24,7 @@ def zipped(files):
 @pytest.fixture
 def originals():
     symbols=[f'{i:06}' for i in range(1,301)]
-    config=json.loads((Path(__file__).resolve().parents[1]/'config/microcap_local_producer_runtime.json').read_bytes())
+    config=json.loads((Path(__file__).resolve().parents[1]/'config/microcap_local_producer_p2_20261112.json').read_bytes())
     master=b'software source master\n';reference=b'original software reference\n'
     context=dict(runtime_sha=m.PRODUCER,target=m.TARGET,scope_sha256=m.SCOPE,
         master_sha256=hashlib.sha256(master).hexdigest(),observation_owner_date=m.TARGET,

@@ -14,6 +14,7 @@ LOCAL_READ_POLICY = {
         '1634a27c5a609a46ab35fc29ca2c65b94182671b',
         '14e9a9fa6f0487f1d5547598435089c43f2f9fd1',
         'a7c1b9ac33454be4367880a0989dfc1466640503',
+        '95d896fe58cc7cb84c0fcb7bd76534f62c9430f4',
     ],
 }
 
@@ -52,6 +53,9 @@ def validate_checkpoint_payload(checkpoint, policy):
         return
     if marker not in policy['rebalance_producer_shas']:
         raise ValueError('Checkpoint core identity or reviewed producer differs from the local reader contract')
+    from microcap_recovery_handoff import M8,MODE
+    if marker==M8 and checkpoint.get('handoff_mode')!=MODE:
+        raise ValueError('The reviewed M8 producer requires its formal recovery proof route')
     # Native R handoff records the exact full-state producer, not the older
     # model-core marker. The 477 daily reader preserves this original lineage.
     if (checkpoint.get('handoff_mode') not in ('native_close_extends_previous', 'same_close_period_switch', 'native_formal_gap_recovery_v1')
@@ -59,11 +63,8 @@ def validate_checkpoint_payload(checkpoint, policy):
             or re.fullmatch('[0-9a-f]{64}', checkpoint['handoff_from']) is None):
         raise ValueError('Reviewed rebalance checkpoint lacks its original handoff lineage')
     if checkpoint.get('handoff_mode')=='native_formal_gap_recovery_v1':
-        from microcap_recovery_handoff import CONTROLLER,NATIVE
-        controller=checkpoint.get('recovery_controller',{})
-        if (marker!=NATIVE or controller.get('revision')!=CONTROLLER
-                or re.fullmatch('[0-9a-f]{64}',str(controller.get('source_sha256',''))) is None):
-            raise ValueError('Recovery checkpoint has an unreviewed producer/controller relationship')
+        from microcap_recovery_handoff import reviewed_controller_identity
+        reviewed_controller_identity(checkpoint)
 
 
 def validate_checkpoint_core(raw, policy):

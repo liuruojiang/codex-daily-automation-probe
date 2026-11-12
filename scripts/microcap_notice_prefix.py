@@ -22,7 +22,7 @@ import uuid
 import zipfile
 
 from prepare_microcap_local import atomic, encode, writer_lock
-from maintain_microcap_local import load_pool, validate_runtime
+from maintain_microcap_local import load_pool, validate_runtime, RUNTIME as ACTIVE_PRODUCER
 from import_microcap_producer_inputs import checked_bootstrap
 from microcap_scoped_whole_recovery import stream_download
 from restore_microcap_rebalance_recovery import relative, sha_file
@@ -32,6 +32,8 @@ PROFILE = 'approved_d10_d11_notice_prefix_20261112_v1'
 POINTER_SCHEMA = 'microcap_notice_prefix_pointer_v1'
 PRODUCER = '3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
 CONSUMER = 'a7c1b9ac33454be4367880a0989dfc1466640503'
+ACTIVE_CONSUMER = '95d896fe58cc7cb84c0fcb7bd76534f62c9430f4'
+PRODUCER_READERS = frozenset({PRODUCER, ACTIVE_PRODUCER})
 TARGET = '2026-11-11'
 PREFIX = '.microcap_index_cache/st_notice_sources/'
 POINTER = '.microcap_index_cache/st_notice_archive_pointer.json'
@@ -175,10 +177,10 @@ else:
   state='advance'
  else:
   endpoint=read(profile,spec['end'])
-  if (not is_prefix(endpoint,current) or not fresh
+  if (not is_prefix(endpoint,current)
    or (ref!=spec['end'] and len(current['daily_increments'])<=len(endpoint['daily_increments']))):
    raise ValueError('Private authority is unrelated, unknown, or not a strict successor')
-  state='covered'
+  state='covered' if fresh else 'covered_baseline_without_active_freshness'
  result=dict(mode='current',state=state,authority=ref,native_runtime=spec['producer'],
   old_prefix_unchanged=True,original_clocks_retained=True)
 print(json.dumps(result))
@@ -187,7 +189,9 @@ print(json.dumps(result))
 
 def runtime_role(root, expected):
     root=Path(root).resolve()
-    if subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],encoding='utf-8').strip()!=expected:
+    actual=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],encoding='utf-8').strip()
+    allowed=PRODUCER_READERS if expected==PRODUCER else {CONSUMER,ACTIVE_CONSUMER} if expected==CONSUMER else {expected}
+    if actual not in allowed:
         raise NoticePrefixError('notice_prefix_native_git_role_differs')
     dirty=subprocess.check_output(['git','-C',str(root),'diff','--name-only','HEAD'],encoding='utf-8').splitlines()
     if any(not n.startswith(('.microcap_index_cache/','outputs/')) for n in dirty):
@@ -197,8 +201,9 @@ def runtime_role(root, expected):
 
 def real_native(runtime_root,data_root,mode,profile_root=None,requested_target=None):
     runtime_role(runtime_root,PRODUCER)
+    reader=subprocess.check_output(['git','-C',str(runtime_root),'rev-parse','HEAD'],encoding='utf-8').strip()
     spec=dict(start=START,end=END,target=TARGET,receipts=RECEIPTS,end_pointer=END_POINTER,
-              producer=PRODUCER,pointer=POINTER,freshness=FRESHNESS,prefix=PREFIX,
+              producer=reader,pointer=POINTER,freshness=FRESHNESS,prefix=PREFIX,
               forward_target=requested_target)
     process=subprocess.run([sys.executable,'-B','-X','utf8','-c',NATIVE,str(runtime_root),str(data_root),
         mode,str(profile_root or data_root),json.dumps(spec)],capture_output=True,encoding='utf-8',
@@ -207,7 +212,7 @@ def real_native(runtime_root,data_root,mode,profile_root=None,requested_target=N
         raise NoticePrefixError('notice_prefix_original_native_verification_failed: '+process.stderr[-2000:])
     try:result=json.loads(process.stdout.strip().splitlines()[-1])
     except (IndexError,ValueError):raise NoticePrefixError('notice_prefix_native_response_invalid') from None
-    if (result.get('native_runtime')!=PRODUCER or result.get('old_prefix_unchanged') is not True
+    if (result.get('native_runtime')!=reader or result.get('old_prefix_unchanged') is not True
             or result.get('original_clocks_retained') is not True):
         raise NoticePrefixError('notice_prefix_native_proof_incomplete')
     return result
@@ -254,7 +259,7 @@ def borrowed_files(result):
 
 
 def validate_native_prefix(result,manifest):
-    if (result.get('mode')!='prefix' or result.get('native_runtime')!=PRODUCER
+    if (result.get('mode')!='prefix' or result.get('native_runtime') not in PRODUCER_READERS
             or result.get('previous_authority')!=START or result.get('authority')!=END
             or result.get('target')!=TARGET or result.get('receipt_count')!=2
             or result.get('old_prefix_unchanged') is not True or result.get('original_clocks_retained') is not True
@@ -265,8 +270,8 @@ def validate_native_prefix(result,manifest):
 
 def validate_native_current(value):
     ref=value.get('authority')
-    if (value.get('mode')!='current' or value.get('native_runtime')!=PRODUCER
-            or value.get('state') not in ('advance','covered') or value.get('old_prefix_unchanged') is not True
+    if (value.get('mode')!='current' or value.get('native_runtime') not in PRODUCER_READERS
+            or value.get('state') not in ('advance','covered','covered_baseline_without_active_freshness') or value.get('old_prefix_unchanged') is not True
             or value.get('original_clocks_retained') is not True or not isinstance(ref,list) or len(ref)!=2
             or not file_role(ref[0]) or re.fullmatch('[0-9a-f]{64}',str(ref[1])) is None):
         raise NoticePrefixError('notice_prefix_private_authority_unknown')
@@ -282,6 +287,8 @@ def export_prefix(*,root,bundle,issuer_head,native=real_native):
     runtime_role(root,PRODUCER)
     watched={p:(root/p).read_bytes() if (root/p).exists() else None for p in (POINTER,FRESHNESS)}
     result=native(root,root,'prefix')
+    if result.get('native_runtime')!=PRODUCER:
+        raise NoticePrefixError('fixed_notice_profile_export_requires_its_original_P2_runtime')
     files=result.get('files',{});sizes=result.get('sizes',{})
     baseline=borrowed_files(result)
     value=dict(schema=SCHEMA,profile=PROFILE,producer_runtime=PRODUCER,consumer_runtime=CONSUMER,
@@ -404,7 +411,9 @@ def import_prefix(*,root,protected_root,state,pool,bundle,expected_sha,not_after
     for p in (root,protected,state,out):
         if any(x.is_symlink() or (hasattr(x,'is_junction') and x.is_junction()) for x in (p,*p.parents)):
             raise NoticePrefixError('notice_prefix_role_contains_link')
-    runtime_role(root,PRODUCER);runtime_role(protected,CONSUMER);validate_runtime(root,protected)
+    runtime_role(root,PRODUCER);runtime_role(protected,CONSUMER);reader=validate_runtime(root,protected)
+    consumer_reader=(subprocess.check_output(['git','-C',str(protected),'rev-parse','HEAD'],encoding='utf-8').strip()
+                     if reader else CONSUMER)
     _,symbols,_=load_pool(pool,not_after)
     manifest=inspect_bundle(bundle=bundle,expected_sha=expected_sha,not_after=not_after)
     out.mkdir(parents=True,exist_ok=True)
@@ -463,7 +472,19 @@ def import_prefix(*,root,protected_root,state,pool,bundle,expected_sha,not_after
                 _rollback_pair(root,original,wanted)
         current=validate_native_current(native(root,root,'current',profile_root=view))
         if not _same(refs):raise NoticePrefixError('notice_prefix_protected_reference_changed')
-        if current['state']=='covered':
+        if current['state']=='covered_baseline_without_active_freshness':
+            # Bootstrap intentionally copies immutable authority objects only.
+            # A complete consumer already at this authority is the baseline,
+            # so it needs no older producer freshness to accept its own state.
+            pointer_raw=bound(protected,POINTER).read_bytes()
+            protected_ref=json.loads(pointer_raw)
+            formal=json.loads(refs[protected/'outputs/top100_delivery_manifest.json'])
+            if (protected_ref!={'manifest_path':current['authority'][0],'manifest_sha256':current['authority'][1]}
+                    or formal.get('inputs',{}).get(POINTER) not in (
+                        hashlib.sha256(pointer_raw).hexdigest(),
+                        hashlib.sha256(pointer_raw.replace(b'\r\n',b'\n')).hexdigest())):
+                raise NoticePrefixError('notice_prefix_missing_active_requires_actual_formal_consumer_authority')
+        if current['state'] in ('covered','covered_baseline_without_active_freshness'):
             if transaction.exists() and _pair(root)==wanted and journal['status'] in ('intent','rolled_back'):
                 atomic(transaction,encode(dict(journal,status='reconciled')))
             result=dict(status='skipped_notice_prefix_already_covered',authority=current['authority'],
@@ -510,6 +531,8 @@ def import_prefix(*,root,protected_root,state,pool,bundle,expected_sha,not_after
         if not _same(refs):raise NoticePrefixError('notice_prefix_final_protected_reference_changed')
         result.update(schema='microcap_notice_prefix_admission_v1',profile=PROFILE,bundle_sha256=expected_sha,
             target=TARGET,requested_not_after=not_after,producer_runtime=PRODUCER,consumer_runtime=CONSUMER,
+            verification_runtime=reader or current['native_runtime'],
+            verification_consumer_runtime=consumer_reader,
             producer_commit=manifest['producer_commit'],original_clocks_retained=True,
             actual_consumer_anchor_and_bootstrap_unchanged=True,source_inputs_only=True,
             fresh_for_requested_date=False,current_signal_ready=False,
@@ -559,7 +582,9 @@ def select_forward(*,root,protected_root,state,pool,target,out,native=real_nativ
             or out.is_relative_to(root) or out.is_relative_to(protected)
             or root.is_relative_to(out) or protected.is_relative_to(out)):
         raise NoticePrefixError('notice_forward_requires_private_separate_roles')
-    runtime_role(root,PRODUCER);runtime_role(protected,CONSUMER);validate_runtime(root,protected)
+    runtime_role(root,PRODUCER);runtime_role(protected,CONSUMER);reader=validate_runtime(root,protected)
+    consumer_reader=(subprocess.check_output(['git','-C',str(protected),'rev-parse','HEAD'],encoding='utf-8').strip()
+                     if reader else CONSUMER)
     _,symbols,_=load_pool(pool,target)
     with ExitStack() as locks:
         for name in ('writer.lock','worker-slot-0.lock','worker-slot-1.lock','price-worker.lock'):
@@ -572,7 +597,7 @@ def select_forward(*,root,protected_root,state,pool,target,out,native=real_nativ
         pointer=json.loads(before[POINTER]);authority=[pointer.get('manifest_path'),pointer.get('manifest_sha256')]
         result=native(root,root,'forward',requested_target=target)
         digest=hashlib.sha256(before[FRESHNESS]).hexdigest() if before[FRESHNESS] is not None else None
-        if (result.get('mode')!='forward' or result.get('native_runtime')!=PRODUCER
+        if (result.get('mode')!='forward' or result.get('native_runtime') not in PRODUCER_READERS
                 or result.get('authority')!=authority or result.get('requested_target')!=target
                 or result.get('active_sha256')!=digest or result.get('state') not in ('select','noop')
                 or result.get('old_prefix_unchanged') is not True or result.get('original_clocks_retained') is not True
@@ -592,6 +617,7 @@ def select_forward(*,root,protected_root,state,pool,target,out,native=real_nativ
         out.mkdir(parents=True,exist_ok=True);intent_path=out/'selection-intent.json'
         roots=dict(root=str(root),protected=str(protected),state=str(state))
         receipt=dict(schema='microcap_notice_forward_selection_v1',status='notice_forward_checkpoint_not_needed',
+            verification_runtime=reader or result['native_runtime'],verification_consumer_runtime=consumer_reader,
             requested_target=target,authority=authority,authority_day=result['authority_day'],reason=result.get('reason'),
             active_freshness_changed=False,authority_pointer_unchanged=True,
             original_receipt_bytes_and_clocks_preserved=True,actual_consumer_anchor_and_bootstrap_unchanged=True,

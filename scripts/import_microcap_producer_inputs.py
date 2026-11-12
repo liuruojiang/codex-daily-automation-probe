@@ -27,6 +27,41 @@ from microcap_scoped_inputs import read_bundle, apply_inputs, preserve_history
 
 PROXY='outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv'
 FORMAL='outputs/top100_delivery_manifest.json'
+P2_RUNTIME='3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
+P3_RUNTIME='3344e403ff01e17ef45b745a704a240e0917720b'
+P2_P3_READERS={
+    'scripts/share_change_source.py': (
+        'be9e393f09196a812d60b9eb867d21e32b6afbd1e7862d7605accb8bf809d93c',
+        'fdbc6292597ced431cf76bfdd9ad564c70042f8d603ee867f79d5da2bed2339e'),
+    'scripts/share_unchanged_tail.py': (
+        'd5824797c483d0b466684a5bebbe19595b7108fb393cd7815dc7b870688dd7ae',
+        '80ca426b78cfda4e63fc32be0157be188ebbe31d68e2f9758664b2d7d2342491'),
+}
+
+
+def producer_profile(name, runtime):
+    value=json.loads((Path(__file__).resolve().parents[1]/'config'/name).read_bytes())
+    sources=value.get('calculation_sources')
+    if (value.get('schema')!='microcap_local_source_runtime_v1' or value.get('role')!='source_preparation_only'
+            or value.get('runtime_sha')!=runtime or value.get('max_candidates')!=300
+            or not isinstance(sources,dict) or len(sources)!=18
+            or any(re.fullmatch('[0-9a-f]{64}',str(v)) is None for v in sources.values())):
+        raise ValueError('Frozen producer reader profile differs')
+    return value
+
+
+def exact_p2_successor(source_runtime,sources,current,reader_runtime):
+    """Read original P2 inputs with this exact P3 reader, never resign inputs."""
+    old=producer_profile('microcap_local_producer_p2_20261112.json',P2_RUNTIME)['calculation_sources']
+    new=producer_profile('microcap_local_producer_runtime.json',P3_RUNTIME)['calculation_sources']
+    changed={name for name in old if old.get(name)!=new.get(name)}
+    if (source_runtime!=P2_RUNTIME or reader_runtime!=P3_RUNTIME or set(old)!=set(new)
+            or sources!=old or current!=new or changed!=set(P2_P3_READERS)
+            or any((old[name],new[name])!=pair for name,pair in P2_P3_READERS.items())):
+        raise ValueError('Unreviewed P2 to P3 source-only reader successor')
+    return dict(schema='exact_p2_p3_source_reader_v1',source_runtime=P2_RUNTIME,reader_runtime=P3_RUNTIME,
+                source_fingerprints=old,reader_fingerprints=new,changed_sources=sorted(changed),
+                original_source_identity_preserved=True,native_proof_required=True)
 
 
 @contextmanager
@@ -159,7 +194,7 @@ def import_producer(*,root,protected_root,bundle,expected_sha,not_after,pool,sta
     if not isinstance(expected_sha,str) or re.fullmatch('[0-9a-f]{64}',expected_sha) is None:
         raise ValueError('Producer import requires an exact source bundle SHA256')
     date.fromisoformat(not_after)
-    validate_runtime(root,protected)
+    actual_runtime=validate_runtime(root,protected)
     if (root/'outputs').exists() and any((root/'outputs').rglob('*')):
         raise ValueError('Producer source import refuses any strategy outputs')
     _,symbols,scope=load_pool(pool,not_after)
@@ -184,14 +219,18 @@ def import_producer(*,root,protected_root,bundle,expected_sha,not_after,pool,sta
         common=dict(source_preparation_only=True,source_target=manifest['target'],issuer_count=300,
                     bundle_sha256=digest,final_strategy_delivery=False,production_pointers_changed=False,
                     native_consumer_gate_required=True,email_sent=False,orders_placed=False)
+        reader=None
         if manifest['runtime_sha']!=RUNTIME:
             baseline=json.loads(references[state/'bootstrap.json'])['reference_consumed_through']
             if manifest['target']<=baseline:
                 return dict(common,status='skipped_source_covered_by_formal_baseline',
                             formal_baseline=baseline,source_runtime=manifest['runtime_sha'],producer_pointers_changed=False)
-            raise ValueError('Older producer package is not covered by the actual formal bootstrap')
-        if set(context.get('native_sources',{}))!=set(SOURCE_FILES) or context['native_sources']!=current:
+            reader=exact_p2_successor(manifest['runtime_sha'],context.get('native_sources'),current,actual_runtime)
+        if (set(context.get('native_sources',{}))!=set(SOURCE_FILES)
+                or (reader is None and context['native_sources']!=current)):
             raise ValueError('Producer package calculation source identities differ')
+        if reader is not None:
+            common.update(source_runtime=manifest['runtime_sha'],validation_reader=reader)
         originals,anchors,newer=plan(root,manifest,bodies)
         if newer:return dict(common,status='skipped_newer_producer_baseline',newer_symbols=newer,producer_pointers_changed=False)
         def verify():
@@ -208,7 +247,9 @@ def import_producer(*,root,protected_root,bundle,expected_sha,not_after,pool,sta
                 assert_native_modules(root,SOURCE_FILES)
             if any(path.read_bytes()!=raw for path,raw in references.items()) or bound(root,master_name).read_bytes()!=master_raw:
                 raise ValueError('Protected bootstrap reference changed during producer import')
-            validate_runtime(root,protected)
+            verified_runtime=validate_runtime(root,protected)
+            if actual_runtime is not None and verified_runtime!=actual_runtime:
+                raise ValueError('Producer reader runtime changed during import')
         if all(bound(root,name).is_file() for name in manifest['files']) and hashes(root,manifest['files'])==manifest['files']:
             verify()
             return dict(common,status='skipped_same_verified_producer_inputs',producer_pointers_changed=False)

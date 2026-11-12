@@ -28,6 +28,9 @@ SCHEMA = 'member_formal_gap_recovery_v1'
 BOOTSTRAP = 'recovery_formal_exports_v1'
 CONTROLLER = 'auto_formal_gap_recovery_20261112_v1'
 NATIVE = 'a7c1b9ac33454be4367880a0989dfc1466640503'
+M8 = '95d896fe58cc7cb84c0fcb7bd76534f62c9430f4'
+REVIEWED_NATIVES = frozenset({NATIVE, M8})
+LEGACY_M7_CONTROLLER_SHA = 'eea88c4886baaba42256a4b57050432a0e3a4e4dfe12e827f99086d3b0389b16'
 CORE = 'ad4de441d35442616f91aa613146ffdf8cd479f3'
 BRIDGE = 'hedge_precision_bridge_v1'
 VERSIONS = ('v2.0', 'v2.3', 'v2.5')
@@ -183,8 +186,8 @@ def _native(root):
 
 def _runtime(root):
     value = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True, encoding='utf-8').strip()
-    if value != NATIVE:
-        raise ValueError('Recovery requires the exact reviewed native M7 runtime')
+    if value not in REVIEWED_NATIVES:
+        raise ValueError('Recovery requires an exact reviewed native runtime')
     return value
 
 
@@ -329,7 +332,7 @@ def _formal(root, target):
     if (manifest.get('ok') is not True or manifest.get('status') != 'complete'
             or manifest.get('scope') != 'whole_workspace_delivery' or manifest.get('expected_date') != target):
         raise ValueError('Recovery requires the complete native latest-close formal manifest')
-    if manifest.get('release_sha') != NATIVE:
+    if manifest.get('release_sha') != _runtime(root):
         raise ValueError('Recovery formal native release differs')
     hashes = {**manifest['inputs'], **manifest['artifacts']}
     for name, expected in hashes.items():
@@ -422,6 +425,23 @@ def bootstrap_formal_candidate(root, target, out):
     return result
 
 
+def reviewed_controller_identity(checkpoint):
+    """Bind each native reader to the controller that could actually earn it."""
+    runtime=checkpoint.get('strategy_sha')
+    identity=checkpoint.get('recovery_controller',{})
+    current=sha(Path(__file__).read_bytes().replace(b'\r\n',b'\n'))
+    allowed={current}
+    if runtime==NATIVE:
+        # Keep earned M7 packages readable after the source-only reader update.
+        # This old controller never produced M8 and cannot be used to claim it.
+        allowed.add(LEGACY_M7_CONTROLLER_SHA)
+    if (runtime not in REVIEWED_NATIVES or checkpoint.get('handoff_mode')!=MODE
+            or not isinstance(identity,dict) or set(identity)!={'revision','source_sha256'}
+            or identity.get('revision')!=CONTROLLER or identity.get('source_sha256') not in allowed):
+        raise ValueError('Unreviewed recovery controller source or native relationship')
+    return dict(identity)
+
+
 def validate_recovery_payload(checkpoint, payload_bytes):
     """Pure transport validation; native calculation is a separate build gate.
 
@@ -432,18 +452,17 @@ def validate_recovery_payload(checkpoint, payload_bytes):
     period = json.loads(payload_bytes['period'])
     proof = period.get(KEY)
     if proof is None:
-        if checkpoint.get('handoff_mode') == MODE:
+        if checkpoint.get('handoff_mode') == MODE or 'recovery_controller' in checkpoint:
             raise ValueError('Recovery checkpoint lacks its proof')
         return None
     if len(encode(proof)) > MAX_PROOF or proof.get('schema') != SCHEMA or proof.get('controller') != CONTROLLER:
         raise ValueError('Recovery proof contract or budget differs')
-    if checkpoint.get('handoff_mode') != MODE or checkpoint.get('strategy_sha') != NATIVE:
+    runtime=checkpoint.get('strategy_sha')
+    if checkpoint.get('handoff_mode') != MODE or runtime not in REVIEWED_NATIVES:
         raise ValueError('Recovery producer/mode differs')
-    controller = checkpoint.get('recovery_controller', {})
+    controller = reviewed_controller_identity(checkpoint)
     if controller != proof.get('controller_identity') or controller.get('revision') != CONTROLLER:
         raise ValueError('Recovery controller identity differs')
-    if controller.get('source_sha256') != sha(Path(__file__).read_bytes().replace(b'\r\n', b'\n')):
-        raise ValueError('Unreviewed recovery controller source')
     target = _day(proof['target']); parent = proof['parent']; formal = proof['formal']
     stamp = datetime.fromisoformat(proof['verified_at'])
     now = datetime.now(timezone.utc)
@@ -464,9 +483,9 @@ def validate_recovery_payload(checkpoint, payload_bytes):
         raise ValueError('Recovery parent must be an earlier confirmed current checkpoint')
     if old_period.get('next_rebalance_date', '') <= current_doc['as_of_date']:
         raise ValueError('Recovery parent is an overdue reference period')
-    if current_doc.get('strategy_sha') not in (CORE, NATIVE, '1634a27c5a609a46ab35fc29ca2c65b94182671b', '14e9a9fa6f0487f1d5547598435089c43f2f9fd1'):
+    if current_doc.get('strategy_sha') not in (CORE, *REVIEWED_NATIVES, '1634a27c5a609a46ab35fc29ca2c65b94182671b', '14e9a9fa6f0487f1d5547598435089c43f2f9fd1'):
         raise ValueError('Recovery parent producer differs')
-    if candidate.get('strategy_sha') != NATIVE or candidate.get('bootstrap_source') not in (BOOTSTRAP, 'existing_formal_exports') or candidate['as_of_date'] != target:
+    if candidate.get('strategy_sha') != runtime or candidate.get('bootstrap_source') not in (BOOTSTRAP, 'existing_formal_exports') or candidate['as_of_date'] != target:
         raise ValueError('Recovery formal candidate identity differs')
     if candidate.get('bootstrap_source') == BOOTSTRAP and candidate.get('bootstrap_controller') != CONTROLLER:
         raise ValueError('Recovery formal bootstrap controller differs')
@@ -521,7 +540,7 @@ def validate_recovery_payload(checkpoint, payload_bytes):
         raise ValueError('Recovery current turnover differs from complete formal candidate')
     manifest_raw = _unblob(formal['manifest']); manifest = json.loads(manifest_raw)
     if (manifest.get('ok') is not True or manifest.get('status') != 'complete'
-            or manifest.get('scope') != 'whole_workspace_delivery' or manifest.get('expected_date') != target or manifest.get('release_sha') != NATIVE
+            or manifest.get('scope') != 'whole_workspace_delivery' or manifest.get('expected_date') != target or manifest.get('release_sha') != runtime
             or new_period['source_manifest_sha256'] != sha(manifest_raw)):
         raise ValueError('Recovery formal whole-delivery proof differs')
     hashes = {**manifest['inputs'], **manifest['artifacts']}

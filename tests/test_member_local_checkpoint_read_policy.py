@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 import member_checkpoint_policy as policy
 import prepare_microcap_member_local_bundle as bundle
 import restore_microcap_member_checkpoint as restore
+import microcap_recovery_handoff as recovery
 
 FIXTURE = ROOT / 'tests/fixtures/member_checkpoint_local_read_20261111'
 AB = policy.LOCAL_READ_POLICY['execution_strategy_sha']
@@ -151,8 +152,24 @@ def test_explicit_cached_checkpoint_cannot_bypass_the_same_core_identity_guard()
 @pytest.mark.parametrize('producer', policy.LOCAL_READ_POLICY['rebalance_producer_shas'])
 def test_exact_reviewed_rebalance_marker_requires_preserved_native_handoff(producer):
     known = policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json', AB)
-    with pytest.raises(ValueError, match='handoff lineage'):
+    error='formal recovery proof route' if producer==recovery.M8 else 'handoff lineage'
+    with pytest.raises(ValueError, match=error):
         policy.validate_checkpoint_payload({'strategy_sha': producer}, known)
+    if producer==recovery.M8:
+        # This checks the policy header, not the independent complete-proof gate.
+        value=dict(strategy_sha=producer,handoff_mode=recovery.MODE,handoff_from='1'*64,
+            recovery_controller=dict(revision=recovery.CONTROLLER,
+                source_sha256=digest(Path(recovery.__file__).read_bytes().replace(b'\r\n',b'\n'))))
+        before=copy.deepcopy(value)
+        policy.validate_checkpoint_payload(value,known)
+        assert value==before
+        for fault,error in (('handoff_mode','formal recovery proof route'),
+                            ('handoff_from','handoff lineage'),('recovery_controller','Unreviewed recovery controller')):
+            altered=copy.deepcopy(value)
+            if fault=='recovery_controller':altered.pop(fault)
+            else:altered[fault]='unreviewed'
+            with pytest.raises(ValueError,match=error):policy.validate_checkpoint_payload(altered,known)
+        return
     value = dict(strategy_sha=producer, handoff_mode='native_close_extends_previous', handoff_from='1'*64)
     for mode in ('native_close_extends_previous', 'same_close_period_switch'):
         policy.validate_checkpoint_payload(dict(value, handoff_mode=mode), known)
