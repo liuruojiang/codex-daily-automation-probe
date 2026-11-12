@@ -1,0 +1,53 @@
+name: Recover only earned M7 archive publication
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: microcap-earned-m7-publication-20261112
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.repository == 'liuruojiang/codex-daily-automation-probe' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14.4'
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: a7c1b9ac33454be4367880a0989dfc1466640503
+          path: native-contract
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: /scripts/scoped_archive_source_revalidation.py
+      - name: Reuse the exact native-earned archive and original success receipts
+        run: |
+          python -B automation/scripts/download_earned_m7_artifacts_20261112.py
+      - name: Verify original bytes and resume only the reconciled publication
+        run: |
+          python -B automation/scripts/recover_earned_m7_publication_20261112.py \
+            --transport transport --native native-contract
+      - name: Preserve publication readback without another copy of the archive
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-earned-m7-publication-receipt-20261112
+          path: |
+            transport/publication-recovery.json
+            transport/release-published.json
+            transport/release-recovery-before.json
+            transport/upload-recovery-response.json
+            transport/original-artifact-downloads.json
+          if-no-files-found: warn
+          retention-days: 90
