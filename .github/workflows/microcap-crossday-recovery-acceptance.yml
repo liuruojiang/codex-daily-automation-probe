@@ -1,0 +1,119 @@
+name: Microcap Crossday Recovery No-send Acceptance
+run-name: microcap-crossday-acceptance:${{ inputs.phase }}:${{ github.run_id }}
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        type: choice
+        options: [produce, readback]
+        default: produce
+      source_run:
+        description: 'Exact successful produce run; required for readback'
+        type: string
+        default: ''
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: microcap-crossday-recovery-no-send-acceptance
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      TZ: Asia/Shanghai
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUTF8: '1'
+      GITHUB_TOKEN: ${{ github.token }}
+      MICROCAP_ACCEPTANCE_PHASE: ${{ inputs.phase }}
+      MICROCAP_ACCEPTANCE_SOURCE_RUN: ${{ inputs.source_run }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14.4'
+      - name: Validate explicit no-send acceptance inputs
+        run: |
+          python - <<'PY'
+          import os
+          phase=os.environ['MICROCAP_ACCEPTANCE_PHASE']
+          source=os.environ['MICROCAP_ACCEPTANCE_SOURCE_RUN']
+          if phase not in ('produce','readback'):
+              raise ValueError('Unknown no-send acceptance phase')
+          if (phase=='readback' and (not source.isascii() or not source.isdigit() or int(source)<=0)) or (phase=='produce' and source):
+              raise ValueError('Readback needs one exact source run; produce cannot substitute a source')
+          PY
+      - name: Read unchanged exact native runtime
+        id: runtime
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          v=json.load(open('config/microcap_scoped_rebalance.json'))
+          if v['runtime_sha']!='a7c1b9ac33454be4367880a0989dfc1466640503':
+              raise ValueError('Acceptance native runtime requires a new explicit review')
+          if v['producer_sha']!='3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36':
+              raise ValueError('Acceptance source runtime requires a new explicit review')
+          print('sha='+v['runtime_sha'])
+          print('producer_sha='+v['producer_sha'])
+          PY
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          persist-credentials: false
+          ref: ${{ steps.runtime.outputs.sha }}
+          path: acceptance-native
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*.py
+            /scripts/
+            /data/
+            /tests/fixtures/exchange_sessions_20261015.json
+            /.gitattributes
+            /AGENTS.md
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          persist-credentials: false
+          ref: ${{ steps.runtime.outputs.producer_sha }}
+          path: acceptance-producer
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.gitattributes
+            /AGENTS.md
+      - name: Install pinned software-test dependencies
+        run: python -m pip install 'numpy==2.4.3' 'pandas==2.3.3' pytest requests matplotlib 'akshare==1.18.46' pyyaml
+      - name: Produce isolated recovery acceptance state
+        if: inputs.phase == 'produce'
+        env:
+          MICROCAP_NATIVE_ROOT: ${{ github.workspace }}/acceptance-native
+          MICROCAP_PRODUCER_ROOT: ${{ github.workspace }}/acceptance-producer
+        run: python -B -X utf8 tests/test_microcap_crossday_recovery_adversarial.py produce --out "$RUNNER_TEMP/crossday-acceptance"
+      - name: Restore exact previous acceptance artifact
+        if: inputs.phase == 'readback'
+        env:
+          MICROCAP_NATIVE_ROOT: ${{ github.workspace }}/acceptance-native
+          MICROCAP_PRODUCER_ROOT: ${{ github.workspace }}/acceptance-producer
+        run: python -B -X utf8 tests/test_microcap_crossday_recovery_adversarial.py readback --source-run "$MICROCAP_ACCEPTANCE_SOURCE_RUN" --out "$RUNNER_TEMP/crossday-acceptance"
+      - name: Publish dedicated software acceptance state
+        if: inputs.phase == 'produce' && success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-crossday-acceptance-v1-${{ github.sha }}
+          path: ${{ runner.temp }}/crossday-acceptance/recovery-acceptance-state.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve no-send acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-crossday-acceptance-evidence-${{ inputs.phase }}
+          path: |
+            ${{ runner.temp }}/crossday-acceptance/receipt.json
+            ${{ runner.temp }}/crossday-acceptance/junit.xml
+            ${{ runner.temp }}/crossday-acceptance/readback-source.json
+            ${{ runner.temp }}/crossday-acceptance/evidence
+          if-no-files-found: warn
+          retention-days: 90

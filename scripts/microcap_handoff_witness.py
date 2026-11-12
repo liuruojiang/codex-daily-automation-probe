@@ -12,6 +12,7 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
+import sys
 import zipfile
 
 from prepare_microcap_local import atomic, encode, sha
@@ -112,20 +113,36 @@ def rows(cp):
     return list(csv.DictReader(io.StringIO(raw.decode('utf-8-sig'))))
 
 
-def build(consumer,current_path,candidate_path,out,logs=(),fetch=published):
+def build(consumer,current_path,candidate_path,out,logs=(),fetch=published,*,allow_gap=False):
     consumer,current_path,candidate_path,out=map(Path,(consumer,current_path,candidate_path,out))
     out.mkdir(parents=True,exist_ok=True)
     current=json.loads(current_path.read_bytes());candidate=json.loads(candidate_path.read_bytes())
     for cp,path in ((current,current_path),(candidate,candidate_path)):cp['_directory']=path.parent
     old,new=rows(current),rows(candidate)
-    if len(new) not in (len(old),len(old)+1):raise ValueError('Precision reconciliation cannot skip earned sessions')
+    if allow_gap:
+        if len(new)<len(old) or not old or not new:
+            raise ValueError('Precision reconciliation cannot remove earned sessions')
+        # Use the actual native independent calendar in a separate interpreter.
+        # Do not infer continuity from adjacent CSV rows or a business-day rule.
+        code='''import json,sys\nfrom pathlib import Path\nfrom datetime import date\nroot=Path(sys.argv[1]);sys.path.insert(0,str(root))\nfrom scripts.exchange_calendar import sessions_for_day\nprint(json.dumps([str(x)[:10] for x in sessions_for_day(date.fromisoformat(sys.argv[3])) if sys.argv[2]<str(x)[:10]<=sys.argv[3]]))'''
+        observed=subprocess.check_output([sys.executable,'-B','-c',code,str(consumer.resolve()),old[-1]['date'],new[-1]['date']],text=True,encoding='utf-8')
+        expected=json.loads(observed)
+        if [r['date'] for r in new[len(old):]]!=expected:
+            raise ValueError('Precision reconciliation must cover every intervening native session')
+    elif len(new) not in (len(old),len(old)+1):
+        raise ValueError('Precision reconciliation cannot skip earned sessions')
     current_period=json.loads((current_path.parent/current['period']['path']).read_bytes())
     period_raw=(candidate_path.parent/candidate['period']['path']).read_bytes()
     if sha(period_raw)!=candidate['period']['sha256']:raise ValueError('Formal period changed')
     period=json.loads(period_raw)
     panel=(consumer/PANEL).read_bytes();manifest=(consumer/'outputs/top100_delivery_manifest.json').read_bytes()
     formal_manifest=json.loads(manifest)
-    if (candidate.get('bootstrap_source')!='existing_formal_exports' or formal_manifest.get('ok') is not True
+    acceptable={'existing_formal_exports'}
+    if allow_gap:
+        from microcap_recovery_handoff import BOOTSTRAP,CONTROLLER
+        if candidate.get('bootstrap_source')==BOOTSTRAP and candidate.get('bootstrap_controller')==CONTROLLER:
+            acceptable.add(BOOTSTRAP)
+    if (candidate.get('bootstrap_source') not in acceptable or formal_manifest.get('ok') is not True
             or formal_manifest.get('status')!='complete' or formal_manifest.get('scope')!='whole_workspace_delivery'
             or formal_manifest.get('expected_date')!=candidate['as_of_date']):
         raise ValueError('Hedge witness requires a completed formal candidate')

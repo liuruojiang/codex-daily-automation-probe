@@ -27,6 +27,7 @@ SCRIPTS = Path(__file__).resolve().parent
 PREFLIGHT = r'''
 import json,sys,subprocess
 from pathlib import Path
+from datetime import date
 root=Path(sys.argv[1]).resolve();sys.path.insert(0,str(root))
 from scripts.top100_delivery import verify_release
 from scripts.exchange_calendar import latest_completed_session
@@ -39,7 +40,41 @@ if actual!=sys.argv[3]:raise ValueError('Consumer checkout differs from exact re
 release=verify_release(root)
 if latest_completed_session().isoformat()!=target:raise ValueError('Rebalance target is not the latest completed exchange close')
 s=schedule(root,target)
-if not s['is_trading_day'] or not s['is_rebalance']:raise ValueError('Not an original native rebalance session')
+if not s['is_trading_day']:raise ValueError('Not an original native trading session')
+recovery=None
+if len(sys.argv)>5:
+    from scripts.member_period_handoff import verify,read_bound,digest
+    recovery_path=Path(sys.argv[5]).resolve()
+    recovery=json.loads(recovery_path.read_bytes())
+    if (recovery.get('schema')!='microcap_scoped_recovery_plan_v1'
+            or recovery.get('target')!=target or recovery.get('delivery_date')!=target
+            or recovery.get('consumer_sha')!=actual or recovery.get('run') is not True):
+        raise ValueError('Recovery plan differs from the real completed session/runtime')
+    cp_path=Path(recovery['latest_checkpoint_path']).resolve()
+    if digest(cp_path.read_bytes())!=recovery['latest_checkpoint_sha256']:
+        raise ValueError('Recovery planning checkpoint changed')
+    cp=verify(cp_path);period=json.loads(read_bound(cp,'period'))
+    from scripts.exchange_calendar import sessions_for_day
+    from microcap_top100_mom16_biweekly_live_v2_0 import base_mod
+    calendar=pd.DatetimeIndex(sessions_for_day(date.fromisoformat(target))).normalize()
+    missing=[str(d.date()) for d in base_mod.build_biweekly_rebalance_dates(calendar)
+             if pd.Timestamp(period['anchor_day'])<d<=pd.Timestamp(target)]
+    if missing!=recovery.get('required_rebalance_dates'):
+        raise ValueError('Recovery plan omits or invents an original rebalance')
+    if (cp['as_of_date']>target or recovery.get('latest_checkpoint_as_of_date')!=cp['as_of_date']
+            or recovery.get('latest_checkpoint_period_status')!=cp.get('period_status','current')):
+        raise ValueError('Recovery plan checkpoint date/phase differs')
+    if not missing and not (recovery.get('action')=='daily_catchup'
+                           and recovery.get('needs_checkpoint_advance') is True
+                           and cp['as_of_date']<target and cp.get('period_status','current')=='current'):
+        raise ValueError('Recovery has no uncompleted rebalance or confirmed checkpoint gap')
+    if missing:
+        earlier=calendar[calendar<pd.Timestamp(missing[0])]
+        if (not len(earlier) or recovery.get('parent_not_after_date')!=str(earlier[-1].date())
+                or recovery.get('recovery_R')!=missing[0] or recovery.get('last_required_R')!=missing[-1]):
+            raise ValueError('Recovery plan changed an original rebalance/parent clock')
+elif not s['is_rebalance']:
+    raise ValueError('Not an original native rebalance session')
 m=json.loads((root/'outputs/top100_delivery_manifest.json').read_bytes())
 if m.get('ok') is not True or m.get('status')!='complete' or m.get('scope')!='whole_workspace_delivery':
     raise ValueError('Restored consumer has no completed formal baseline manifest')
@@ -51,6 +86,9 @@ dates=v2.base_mod.build_biweekly_rebalance_dates(sessions)
 boundaries=[str(d.date()) for d in dates if pd.Timestamp(bridge)<d<=pd.Timestamp(target)]
 result=dict(target=target,next_session=s['next_session'],consumer_sha=actual,release_sha=release,
             previous_authority=list(resolve_archive_reference(root)),rebalance_dates=boundaries)
+if recovery is not None:
+    result['recovery_plan_sha256']=digest(recovery_path.read_bytes())
+    result['recovery_rebalance_dates']=missing
 Path(sys.argv[4]).write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
 '''
 
@@ -116,12 +154,15 @@ def validate_paths(consumer, producer, state, out):
     return consumer, producer, state, out
 
 
-def preflight(consumer, target, consumer_sha, out, run):
+def preflight(consumer, target, consumer_sha, out, run, recovery_plan=None):
     date.fromisoformat(target)
     if len(consumer_sha) != 40 or any(c not in '0123456789abcdef' for c in consumer_sha):
         raise ValueError('Exact consumer commit required')
     temporary = out / ('preflight-' + uuid.uuid4().hex + '.json')
-    run('preflight', [sys.executable,'-B','-c',PREFLIGHT,consumer,target,consumer_sha,temporary])
+    argv=[sys.executable,'-B','-c',PREFLIGHT,consumer,target,consumer_sha,temporary]
+    if recovery_plan is not None:
+        argv.append(Path(recovery_plan).resolve())
+    run('preflight', argv)
     result = json.loads(temporary.read_bytes())
     if result['target'] != target or result['consumer_sha'] != consumer_sha:
         raise ValueError('Native preflight returned another source/date')
@@ -134,16 +175,92 @@ def boundary_spec(out, day):
     files = {p.name:sha(p.read_bytes()) for p in directory.iterdir() if p.name.startswith('page-') and p.suffix=='.json'}
     spec = dict(source_root=str(out), directory=directory.relative_to(out).as_posix(), files=files)
     spec_path = out / ('boundary-' + day + '.json')
+    if spec_path.exists() and spec_path.read_bytes()!=encode(spec):
+        original=json.loads(spec_path.read_bytes())
+        if original.get('directory')!=spec['directory'] or original.get('files')!=spec['files']:
+            raise ValueError('Preserved original boundary differs from the admitted source pages')
+        # Relocation creates a separately bound path instruction; it never
+        # changes the original boundary object or observation receipts.
+        spec_path=out/('boundary-'+day+'-admitted-'+sha(encode(spec))[:16]+'.json')
     save_once(spec_path, encode(spec))
     return spec, spec_path
 
 
-def validate_prepared(receipt, consumer, target, consumer_sha):
+def collect_boundaries(consumer, target, out, native, run):
+    result = {}
+    dates = sorted(set(native['rebalance_dates']) | set(native.get('recovery_rebalance_dates', [])))
+    for day in dates:
+        spec, spec_path = boundary_spec(out, day)
+        run('boundary-' + day, [sys.executable, '-B', '-c', BOUNDARY_READBACK, consumer, day, spec_path])
+        result[day] = spec
+    receipt = dict(schema='microcap_scoped_early_boundaries_v1', target=target,
+                   consumer_sha=native['consumer_sha'], dates=dates, boundaries=result,
+                   source_only=True, formal_delivery=False, email_sent=False, orders_placed=False)
+    path=Path(out)/'early-boundaries.json'
+    if path.exists() and path.read_bytes()!=encode(receipt):
+        previous=json.loads(path.read_bytes())
+        if previous.get('target')!=target or previous.get('dates')!=dates:
+            raise ValueError('Early boundary target changed inside a preserved preparation')
+        path=Path(out)/('early-boundaries-admitted-'+sha(encode(receipt))[:16]+'.json')
+    save_once(path, encode(receipt))
+    return result
+
+
+def boundary(*, consumer, target, consumer_sha, out, recovery_plan=None, resume_state=None,
+             producer=None,state=None,delivery_out=None,run=None):
+    consumer, out = Path(consumer).resolve(), Path(out).resolve()
+    if out == consumer or out.is_relative_to(consumer) or consumer.is_relative_to(out):
+        raise ValueError('Boundary evidence must be separate from its consumer')
+    out.mkdir(parents=True, exist_ok=True)
+    run = run or Commands(out)
+    with writer_lock(out / 'runner.lock'):
+        native = preflight(consumer, target, consumer_sha, out, run, recovery_plan)
+        if resume_state is not None:
+            if producer is None or state is None:
+                raise ValueError('Boundary recovery admission needs its dedicated source runtime/state')
+            admit_sources(resume_state,consumer,producer,state,out,
+                          Path(delivery_out) if delivery_out else out.parent/'scoped-delivery',target,consumer_sha,run)
+            native=preflight(consumer,target,consumer_sha,out,run,recovery_plan)
+        collect_boundaries(consumer, target, out, native, run)
+    return json.loads((out / 'early-boundaries.json').read_bytes())
+
+
+def mapped_path(value, admission=None):
+    text=str(value).replace('\\','/')
+    for old,new in sorted((admission or {}).get('path_admission',{}).items(),key=lambda p:-len(p[0])):
+        old=old.replace('\\','/').rstrip('/')
+        if text==old or text.startswith(old+'/'):
+            root=Path(new).resolve();path=(root/text[len(old):].lstrip('/')).resolve()
+            if not path.is_relative_to(root):
+                raise ValueError('Original path escapes its declared recovery admission')
+            return path
+    return Path(value).resolve()
+
+
+def admission_record(out, target):
+    path=Path(out)/'resume-admission.json'
+    if not path.exists():
+        return None
+    value=json.loads(path.read_bytes())
+    if (value.get('schema')!='microcap_scoped_resume_admission_v1' or value.get('target')!=target
+            or value.get('original_json_and_clocks_rewritten') is not False):
+        raise ValueError('Recovery path admission has another target or altered original clocks')
+    return value
+
+
+def admit_sources(manifest,consumer,producer,state,prepare_out,delivery_out,target,consumer_sha,run):
+    from restore_microcap_rebalance_recovery import admit_resume
+    producer_sha=json.loads((SCRIPTS.parent/'config/microcap_local_producer_runtime.json').read_bytes())['runtime_sha']
+    return admit_resume(manifest,consumer=consumer,producer=producer,state=state,prepare_out=prepare_out,
+                        delivery_out=delivery_out,target=target,consumer_sha=consumer_sha,producer_sha=producer_sha,run=run)
+
+
+def validate_prepared(receipt, consumer, target, consumer_sha, admission=None):
     receipt = Path(receipt).resolve()
     value = json.loads(receipt.read_bytes())
     if (value.get('schema') != 'microcap_scoped_rebalance_prepared_v1'
             or value.get('status') != 'prepared_sources_only' or value.get('target') != target
-            or value.get('consumer_sha') != consumer_sha or Path(value['consumer_root']).resolve() != consumer):
+            or value.get('consumer_sha') != consumer_sha or mapped_path(value['consumer_root'],admission) != consumer):
         raise ValueError('Prepared rebalance belongs to another date/runtime/consumer')
     for name, digest in value['files'].items():
         path = (receipt.parent / name).resolve()
@@ -152,23 +269,46 @@ def validate_prepared(receipt, consumer, target, consumer_sha):
     config = (receipt.parent / value['consumer_config']).resolve()
     if not config.is_relative_to(receipt.parent) or config.relative_to(receipt.parent).as_posix() not in value['files']:
         raise ValueError('Prepared consumer config is unbound')
+    if admission is not None:
+        original=json.loads(config.read_bytes());current=json.loads(config.read_bytes())
+        for field in ('source_root','bundle','producer_metadata_receipt'):
+            current[field]=str(mapped_path(original[field],admission))
+        for day,spec in current.get('boundary_snapshots',{}).items():
+            spec['source_root']=str(mapped_path(original['boundary_snapshots'][day]['source_root'],admission))
+        if current!=original:
+            active=receipt.parent/('consumer-config-admitted-'+sha(encode(current))[:16]+'.json')
+            save_once(active,encode(current))
+            save_once(receipt.parent/('prepared-path-admission-'+sha(encode(current))[:16]+'.json'),encode(dict(
+                schema='microcap_scoped_prepared_path_admission_v1',original_prepared_sha256=sha(receipt.read_bytes()),
+                original_config_sha256=sha(config.read_bytes()),admitted_config_sha256=sha(active.read_bytes()),
+                original_json_rewritten=False,source_observation_clocks_rewritten=False,
+                resume_manifest_sha256=admission['manifest_sha256'],path_admission=admission['path_admission'])))
+            config=active
     return value, config
 
 
-def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resume_notice_generation=None, warm_source_config=None, run=None):
+def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resume_notice_generation=None, warm_source_config=None, recovery_plan=None, resume_state=None, run=None):
     consumer, producer, state, out = validate_paths(consumer, producer, state, out)
     out.mkdir(parents=True, exist_ok=True)
     run = run or Commands(out)
     with writer_lock(out/'runner.lock'):
-        native = preflight(consumer,target,consumer_sha,out,run)
+        native = preflight(consumer,target,consumer_sha,out,run,recovery_plan)
+        delivery_out=out.parent/'scoped-delivery'
+        if resume_state is not None:
+            admit_sources(resume_state,consumer,producer,state,out,delivery_out,target,consumer_sha,run)
+            native=preflight(consumer,target,consumer_sha,out,run,recovery_plan)
+        admission=admission_record(delivery_out,target)
         roster, symbols, scope_sha = load_pool(pool,target)
         validate_runtime(producer,consumer)
         saved = out/'prepared.json'
         if saved.exists():
-            value, _ = validate_prepared(saved,consumer,target,consumer_sha)
-            if value['scope_sha256'] != scope_sha or value['producer_root'] != str(producer):
+            value, _ = validate_prepared(saved,consumer,target,consumer_sha,admission)
+            if value['scope_sha256'] != scope_sha or mapped_path(value['producer_root'],admission) != producer:
                 raise ValueError('Preserved preparation has another roster/producer')
             return value
+        # Boundary pages are real dated historical queries. Preserve them before
+        # any expensive stock request, retaining their original observation time.
+        boundaries = collect_boundaries(consumer,target,out,native,run)
         common = ['--root',producer,'--protected-root',consumer,'--state-root',state,'--pool',Path(pool).resolve(),'--as-of',target]
         run('bootstrap',[sys.executable,'-B',SCRIPTS/'maintain_microcap_local.py','bootstrap',*common])
         warm=dict(status='no_local_source_bundle_configured');warm_files={}
@@ -221,11 +361,6 @@ def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resum
                 or staged.get('files')!=manifest['files'] or staged.get('production_pointers_changed') is not False
                 or staged.get('native_late_adoption_required') is not True):
             raise ValueError('Scoped source staging did not earn its independent native readback receipt')
-        boundaries = {}
-        for day in native['rebalance_dates']:
-            spec, spec_path = boundary_spec(out,day)
-            run('boundary-'+day,[sys.executable,'-B','-c',BOUNDARY_READBACK,consumer,day,spec_path])
-            boundaries[day] = spec
         metadata_raw = (directory/'metadata.json').read_bytes()
         metadata = out/'receipts'/('metadata-'+sha(metadata_raw)+'.json')
         save_once(metadata,metadata_raw)
@@ -243,23 +378,33 @@ def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resum
                      scope_sha256=scope_sha,issuer_count=300,consumer_config='consumer-config.json',files=files,
                      local_source_warm=warm,
                      original_preflight=native,formal_release_verified=False,email_sent=False,orders_placed=False)
+        if recovery_plan is not None:
+            value['recovery_plan_sha256']=sha(Path(recovery_plan).read_bytes())
         save_once(saved,encode(value))
         return value
 
 
-def deliver(*, consumer, target, consumer_sha, prepared, current_checkpoint, out, run=None):
+def deliver(*, consumer, target, consumer_sha, prepared, current_checkpoint, out, recovery_plan=None, resume_state=None, run=None):
     consumer, out = Path(consumer).resolve(), Path(out).resolve()
-    if out.exists() and any(out.iterdir()):
+    if recovery_plan is None and out.exists() and any(out.iterdir()):
         raise ValueError('Delivery output must be new; prior evidence is preserved')
     if out == consumer or out.is_relative_to(consumer) or consumer.is_relative_to(out):
         raise ValueError('Delivery evidence must be separate from the consumer')
     out.mkdir(parents=True,exist_ok=True)
     run = run or Commands(out)
     with writer_lock(out/'runner.lock'):
-        schedule=preflight(consumer,target,consumer_sha,out,run)
-        _, config = validate_prepared(prepared,consumer,target,consumer_sha)
+        if resume_state is not None:
+            admitted=admission_record(out,target)
+            if admitted is None or admitted.get('manifest_sha256')!=sha(Path(resume_state).read_bytes()):
+                raise ValueError('Delivery resume requires prior verified boundary/prepare admission of these exact originals')
+        schedule=preflight(consumer,target,consumer_sha,out,run,recovery_plan)
+        preparation, config = validate_prepared(prepared,consumer,target,consumer_sha,admission_record(out,target))
         native = consumer/'scripts'
         run('verify-current',[sys.executable,'-B',native/'member_period_handoff.py','verify','--checkpoint',Path(current_checkpoint).resolve()])
+        if recovery_plan is not None:
+            return deliver_recovery(consumer=consumer,target=target,consumer_sha=consumer_sha,
+                    preparation=preparation,config=config,current_checkpoint=current_checkpoint,
+                    out=out,recovery_plan=recovery_plan,run=run)
         refreshed=run('refresh',[sys.executable,'-B',native/'top100_delivery.py','refresh-all','--scoped-config',config])
         run('check',[sys.executable,'-B',native/'top100_delivery.py','check'])
         # Only both original formal gates can authorize exporting a new period.
@@ -277,24 +422,79 @@ def deliver(*, consumer, target, consumer_sha, prepared, current_checkpoint, out
         return value
 
 
+def deliver_recovery(*,consumer,target,consumer_sha,preparation,config,current_checkpoint,out,recovery_plan,run):
+    from microcap_scoped_stage_resume import StageResume, formal_objects, checkpoint_objects
+    current_checkpoint=Path(current_checkpoint).resolve()
+    current=json.loads(current_checkpoint.read_bytes())
+    plan=json.loads(Path(recovery_plan).read_bytes())
+    if (current.get('period_status','current')!='current'
+            or current['as_of_date']>plan['parent_not_after_date']):
+        raise ValueError('Recovery needs the confirmed parent before the first missing rebalance')
+    checkpoint_objects(current_checkpoint)
+    context=dict(schema='microcap_scoped_recovery_transaction_v1',target=target,consumer_sha=consumer_sha,
+                 source_bundle_sha256=preparation['files'][preparation.get('bundle','sources.zip')],
+                 scope_sha256=preparation['scope_sha256'],parent_checkpoint_sha256=sha(current_checkpoint.read_bytes()),
+                 missing_rebalances=plan['required_rebalance_dates'],
+                 input_object_bindings=dict(parent_checkpoint=sha(current_checkpoint.read_bytes()),
+                     consumer_config=preparation['files'][preparation['consumer_config']]),
+                 controller_sources={name:sha((SCRIPTS/name).read_bytes().replace(b'\r\n',b'\n')) for name in (
+                     'run_microcap_scoped_rebalance.py','microcap_scoped_stage_resume.py',
+                     'microcap_recovery_handoff.py','microcap_handoff_witness.py')})
+    stages=StageResume(out,consumer,context,run,input_roles=dict(parent_checkpoint=current_checkpoint,consumer_config=config))
+    native=consumer/'scripts'
+    refreshed=stages.call('refresh',[sys.executable,'-B',native/'top100_delivery.py','refresh-all','--scoped-config',config],
+                          lambda:formal_objects(consumer,target))
+    stages.call('check',[sys.executable,'-B',native/'top100_delivery.py','check'],lambda:formal_objects(consumer,target))
+    # Preserve the already earned whole state before a small handoff/publication
+    # can fail. The workflow publishes this exact archive; it does not repack it.
+    # Native pack stamps its archive manifest anew without rewriting this
+    # original refresh/check manifest. Keep both identities for exact resumption.
+    original_manifest=out/'formal-manifest-original.json'
+    save_once(original_manifest,(consumer/'outputs/top100_delivery_manifest.json').read_bytes())
+    formal_archive=out/'formal-state.zip'
+    stages.call('pack-formal',[sys.executable,'-B',native/'top100_cloud_delivery.py','pack',
+                '--root',consumer,'--v23-root',consumer,'--v25-root',consumer,
+                '--bundle',formal_archive,'--expected-date',target],[formal_archive,original_manifest])
+    candidate=out/'candidate/checkpoint.json'
+    stages.call('bootstrap-period',[sys.executable,'-B',SCRIPTS/'microcap_recovery_handoff.py','bootstrap',
+                '--root',consumer,'--target',target,'--out',candidate.parent],lambda:checkpoint_objects(candidate))
+    logs=[refreshed[k] for k in ('stdout','stderr')]
+    witness=build_precision_witness(consumer,current_checkpoint,candidate,out/'precision-witness',logs,allow_gap=True)
+    options=['--hedge-precision-witness',witness] if witness else []
+    handoff=out/'handoff/checkpoint.json'
+    stages.call('handoff',[sys.executable,'-B',SCRIPTS/'microcap_recovery_handoff.py','recover',
+                '--root',consumer,'--current-checkpoint',current_checkpoint,'--candidate',candidate,
+                '--target',target,'--out',handoff.parent,*options],lambda:checkpoint_objects(handoff))
+    stages.call('verify-handoff',[sys.executable,'-B',native/'member_period_handoff.py','verify',
+                '--checkpoint',handoff],lambda:checkpoint_objects(handoff))
+    value=dict(schema='microcap_scoped_rebalance_handoff_v1',status='native_formal_handoff_verified_not_published',
+               target=target,consumer_sha=consumer_sha,checkpoint='handoff/checkpoint.json',checkpoint_sha256=sha(handoff.read_bytes()),
+               recovery_rebalances=plan['required_rebalance_dates'],formal_archive='formal-state.zip',paths_relative_to_result_directory=True,
+               formal_archive_sha256=sha(formal_archive.read_bytes()),email_sent=False,orders_placed=False)
+    save_once(out/'result.json',encode(value))
+    return value
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action',choices=('prepare','deliver'))
+    parser.add_argument('action',choices=('boundary','prepare','deliver'))
     for name in ('consumer','out'):
         parser.add_argument('--'+name,type=Path,required=True)
     for name in ('date','consumer-sha'):
         parser.add_argument('--'+name,required=True)
-    for name in ('producer','state','pool','prepared','current-checkpoint','resume-notice-generation','warm-source-config'):
+    for name in ('producer','state','pool','prepared','current-checkpoint','resume-notice-generation','warm-source-config','recovery-plan','resume-state','delivery-out'):
         parser.add_argument('--'+name,type=Path)
     args=parser.parse_args()
-    common=dict(consumer=args.consumer,target=args.date,consumer_sha=args.consumer_sha,out=args.out)
-    if args.action=='prepare':
+    common=dict(consumer=args.consumer,target=args.date,consumer_sha=args.consumer_sha,out=args.out,recovery_plan=args.recovery_plan)
+    if args.action=='boundary':
+        result=boundary(**common,resume_state=args.resume_state,producer=args.producer,state=args.state,delivery_out=args.delivery_out)
+    elif args.action=='prepare':
         if any(getattr(args,n) is None for n in ('producer','state','pool')):parser.error('prepare requires --producer --state --pool')
         result=prepare(**common,producer=args.producer,state=args.state,pool=args.pool,resume_notice_generation=args.resume_notice_generation,
-            warm_source_config=args.warm_source_config)
+            warm_source_config=args.warm_source_config,resume_state=args.resume_state)
     else:
         if args.prepared is None or args.current_checkpoint is None:parser.error('deliver requires --prepared --current-checkpoint')
-        result=deliver(**common,prepared=args.prepared,current_checkpoint=args.current_checkpoint)
+        result=deliver(**common,prepared=args.prepared,current_checkpoint=args.current_checkpoint,resume_state=args.resume_state)
     print(json.dumps(result))
 
 

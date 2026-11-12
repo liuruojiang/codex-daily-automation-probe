@@ -1,13 +1,13 @@
 """Recover scoped whole-state artifacts without relabelling their release identity.
 
-Only successful main maintenance producers are discoverable. An explicitly
+Successful main producers and strictly reconciled closed publications are discoverable. An explicitly
 hash-pinned release seed is used only after a complete, unambiguous artifact miss.
 All state validation and replacement stay in the original native restore.
 """
 from __future__ import annotations
 
 import argparse
-from datetime import date
+from datetime import date, datetime
 import hashlib
 import json
 import os
@@ -63,16 +63,18 @@ def api_json(url,token):
         raise RecoveryError('github_api_response_unavailable') from None
 
 
-def eligible_run(run,run_id):
+def eligible_run(run,run_id,*,allow_reconciliation=False):
     return (isinstance(run,dict) and run.get('id')==run_id and run.get('status')=='completed'
-            and run.get('conclusion')=='success' and run.get('head_branch')=='main'
+            and (run.get('conclusion')=='success' or (allow_reconciliation
+                 and run.get('event')=='workflow_dispatch' and run.get('conclusion') in ('failure','cancelled','timed_out')))
+            and run.get('head_branch')=='main'
             and run.get('path')==WORKFLOW
             and (run.get('repository') or {}).get('full_name')==REPOSITORY
             and (run.get('head_repository') or {}).get('full_name')==REPOSITORY
             and re.fullmatch('[0-9a-f]{40}',str(run.get('head_sha',''))) is not None)
 
 
-def published_step(base,token,run):
+def published_step(base,token,run,*,allow_reconciliation=False,observation=None):
     found=False
     for page in range(1,101):
         payload=api_json(f"{base}/runs/{run['id']}/jobs?per_page=100&page={page}",token)
@@ -80,12 +82,33 @@ def published_step(base,token,run):
         if not isinstance(jobs,list):raise RecoveryError('github_jobs_response_invalid')
         for job in jobs:
             if (not isinstance(job,dict) or job.get('run_id')!=run['id']
-                    or job.get('status')!='completed' or job.get('conclusion')!='success'):
+                    or job.get('status')!='completed'):
                 continue
-            if any(isinstance(step,dict) and step.get('name')==UPLOAD_STEP
+            steps=job.get('steps',[])
+            if job.get('conclusion')=='success' and any(isinstance(step,dict) and step.get('name')==UPLOAD_STEP
                    and step.get('status')=='completed' and step.get('conclusion')=='success'
-                   for step in job.get('steps',[])):
+                   for step in steps):
                 found=True
+                if observation is not None:observation['kind']='published_step_success'
+            if not found and allow_reconciliation:
+                succeeded={step.get('name') for step in steps if step.get('conclusion')=='success'}
+                earned=(('Pack verified scoped whole state' in succeeded
+                         and 'Earn original formal rebalance and next-session handoff' in succeeded)
+                        or {'Publishable copy of verified restored archive','Verify complete restored three-version archive without sending'}<=succeeded
+                        or 'Validate preserved earned whole archive without refreshing' in succeeded)
+                if earned:
+                    for step in steps:
+                        if step.get('name')!=UPLOAD_STEP or step.get('status')!='completed':continue
+                        if step.get('conclusion')=='success':accepted=True
+                        elif step.get('conclusion') in ('failure','cancelled','timed_out'):
+                            try:
+                                stamp=datetime.fromisoformat(step['started_at'].replace('Z','+00:00'))
+                                accepted=stamp.tzinfo is not None and stamp.year>=2020
+                            except (KeyError,TypeError,ValueError):accepted=False
+                        else:accepted=False
+                        if accepted:
+                            found=True
+                            if observation is not None:observation['kind']='closed_server_object_reconciled_after_publication_response_loss'
         if len(jobs)<100:return found
     raise RecoveryError('github_job_pagination_incomplete')
 
@@ -105,8 +128,12 @@ def fetch_latest(token,runtime_sha):
         run_id=(item.get('workflow_run') or {}).get('id')
         if type(run_id) is not int or run_id<=0:continue
         run=api_json(f'{base}/runs/{run_id}',token)
-        if not eligible_run(run,run_id):continue
-        if not published_step(base,token,run):continue
+        if not eligible_run(run,run_id,allow_reconciliation=True):continue
+        reconcile=(run.get('event')=='workflow_dispatch'
+                   and (item.get('workflow_run') or {}).get('head_sha')==run['head_sha']
+                   and re.fullmatch('sha256:[0-9a-f]{64}',str(item.get('digest',''))) is not None)
+        publication={}
+        if not published_step(base,token,run,allow_reconciliation=reconcile,observation=publication):continue
         if (type(item.get('id')) is not int or item['id']<=0
                 or item.get('archive_download_url')!=f"{base}/artifacts/{item['id']}/zip"):
             raise RecoveryError('artifact_repository_url_mismatch')
@@ -118,7 +145,7 @@ def fetch_latest(token,runtime_sha):
         declared=(item.get('workflow_run') or {}).get('head_sha')
         if declared is not None and declared!=run['head_sha']:
             raise RecoveryError('artifact_workflow_identity_mismatch')
-        return dict(item,producer_head_sha=run['head_sha'])
+        return dict(item,producer_head_sha=run['head_sha'],publication_acceptance=publication['kind'])
     return None
 
 
@@ -287,6 +314,8 @@ def recover(*,root,runtime_sha,not_after,bundle,receipt,token,fallback_url=None,
         else:
             source.update(source='published_scoped_whole_artifact',source_run=item['workflow_run']['id'],
                           artifact_id=item['id'],artifact_name=item['name'],producer_head_sha=item['producer_head_sha'])
+            if item.get('publication_acceptance'):
+                source['publication_acceptance']=item['publication_acceptance']
             downloaded,transport=download_artifact(item,token,work)
         # Preserve the original bytes and manifest release identity. No repack.
         os.replace(downloaded,bundle)

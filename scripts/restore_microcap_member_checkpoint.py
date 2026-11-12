@@ -119,6 +119,8 @@ def checkpoint_identity(raw):
                 raise ValueError('Checkpoint dependency SHA mismatch')
             payload[key]=data
         period=json.loads(payload['period']);members=period['effective_members']
+        from microcap_recovery_handoff import validate_recovery_payload
+        validate_recovery_payload(cp,payload)
         symbols=[m['symbol'] for m in members]
         if (period.get('schema')!='member_period_v1' or len(symbols)!=100 or len(set(symbols))!=100
                 or any(re.fullmatch(r'\d{6}',s,flags=re.ASCII) is None for s in symbols)
@@ -192,6 +194,39 @@ def unpack(raw: bytes, out: Path):
                     stream.write(archive.read(item))
 
 
+def publication_accepted(jobs, *, allow_reconciliation=False):
+    """A closed server object can resolve a lost upload response, never absence.
+
+    The exception is confined to the scoped maintenance publisher after its
+    actual formal handoff and name verification succeeded. The caller still
+    authenticates the original artifact/run/digest and every payload object.
+    """
+    for job in jobs:
+        steps=job.get('steps',[])
+        if any(s.get('name')=='Publish verified member checkpoint' and s.get('conclusion')=='success' for s in steps):
+            return 'published_step_success'
+    if not allow_reconciliation:
+        return None
+    for job in jobs:
+        steps=job.get('steps',[])
+        earned=any(s.get('name')=='Earn original formal rebalance and next-session handoff' and s.get('conclusion')=='success' for s in steps)
+        described=any(s.get('name')=='Describe verified scoped member checkpoint' and s.get('conclusion')=='success' for s in steps)
+        if not earned or not described:
+            continue
+        for step in steps:
+            if (step.get('name')!='Publish verified member checkpoint'
+                    or step.get('conclusion') not in ('failure','cancelled','timed_out')
+                    or step.get('status')!='completed'):
+                continue
+            try:
+                started=datetime.fromisoformat(step['started_at'].replace('Z','+00:00'))
+            except (KeyError,TypeError,ValueError):
+                continue
+            if started.tzinfo is not None and started.year>=2020:
+                return 'server_object_reconciled_after_upload_response_loss'
+    return None
+
+
 def fetch_latest(repository: str, token: str, sha: str, not_after_date=None):
     if re.fullmatch(r"[0-9a-f]{40}", sha) is None:
         raise ValueError("Member checkpoint requires exact strategy SHA")
@@ -229,12 +264,27 @@ def fetch_latest(repository: str, token: str, sha: str, not_after_date=None):
         run=checkpoint_json(api_request(f"{base}/runs/{run_id}",token))
         if run.get('head_branch')!='main' or run.get('status')!='completed' or run.get('path','').split('@',1)[0] not in WORKFLOWS:continue
         jobs=checkpoint_json(api_request(f"{base}/runs/{run_id}/jobs?per_page=100",token))['jobs']
-        if not any(any(s.get('name')=='Publish verified member checkpoint' and s.get('conclusion')=='success' for s in j.get('steps',[])) for j in jobs):continue
+        strict_reconciliation=(declared is not None
+            and run.get('path','').split('@',1)[0]=='.github/workflows/microcap-member-maintenance.yml'
+            and run.get('event')=='workflow_dispatch'
+            and run.get('repository',{}).get('full_name')==repository
+            and run.get('head_repository',{}).get('full_name')==repository
+            and re.fullmatch('[0-9a-f]{40}',str(run.get('head_sha',''))) is not None
+            and artifact.get('workflow_run',{}).get('head_sha')==run['head_sha']
+            and artifact.get('workflow_run',{}).get('head_branch')=='main'
+            and re.fullmatch('sha256:[0-9a-f]{64}',str(artifact.get('digest',''))) is not None
+            and type(artifact.get('size_in_bytes')) is int and 0<artifact['size_in_bytes']<=MAX_BYTES)
+        publication=publication_accepted(jobs,allow_reconciliation=strict_reconciliation)
+        if publication is None:continue
         if artifact.get('archive_download_url')!=f"{base}/artifacts/{artifact['id']}/zip":
             raise ValueError('Unexpected member checkpoint download URL')
         # Exhausted transport failures propagate; they never downgrade state.
         # Only a malformed payload is rejected in favour of a verified one.
         raw=retry_checkpoint_read(lambda: download(artifact,token), 'checkpoint archive request')
+        if publication=='server_object_reconciled_after_upload_response_loss':
+            if len(raw)!=artifact['size_in_bytes'] or hashlib.sha256(raw).hexdigest()!=artifact['digest'][7:]:
+                raise ValueError('Reconciled server checkpoint original size/digest differs')
+            artifact=dict(artifact,_publication_acceptance=publication)
         try:
             identity=checkpoint_identity(raw)
             if ceiling and identity['as_of_date']>ceiling:raise ValueError('Checkpoint is later than permitted market session')
@@ -349,10 +399,13 @@ def main():
         if expected is not None and artifact['_selection']['as_of_date'] != expected:
             raise ValueError('Published checkpoint does not cover the expected completed session')
         unpack(artifact["_payload"], args.out)
-        print(json.dumps({"artifact_id": artifact["id"], "run_id": artifact["workflow_run"]["id"],
+        receipt={"artifact_id": artifact["id"], "run_id": artifact["workflow_run"]["id"],
                           "strategy_sha": args.strategy_sha, "checkpoint_strategy_sha": namespace,
                           "checkpoint_read_policy": policy['policy'] if policy else None,
-                          "selection": artifact["_selection"], "rejected": artifact["_rejected"]}))
+                          "selection": artifact["_selection"], "rejected": artifact["_rejected"]}
+        if artifact.get('_publication_acceptance'):
+            receipt['publication_acceptance']=artifact['_publication_acceptance']
+        print(json.dumps(receipt))
 
 
 if __name__ == "__main__":

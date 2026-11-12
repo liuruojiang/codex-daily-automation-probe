@@ -54,10 +54,16 @@ def validate_checkpoint_payload(checkpoint, policy):
         raise ValueError('Checkpoint core identity or reviewed producer differs from the local reader contract')
     # Native R handoff records the exact full-state producer, not the older
     # model-core marker. The 477 daily reader preserves this original lineage.
-    if (checkpoint.get('handoff_mode') not in ('native_close_extends_previous', 'same_close_period_switch')
+    if (checkpoint.get('handoff_mode') not in ('native_close_extends_previous', 'same_close_period_switch', 'native_formal_gap_recovery_v1')
             or not isinstance(checkpoint.get('handoff_from'), str)
             or re.fullmatch('[0-9a-f]{64}', checkpoint['handoff_from']) is None):
         raise ValueError('Reviewed rebalance checkpoint lacks its original handoff lineage')
+    if checkpoint.get('handoff_mode')=='native_formal_gap_recovery_v1':
+        from microcap_recovery_handoff import CONTROLLER,NATIVE
+        controller=checkpoint.get('recovery_controller',{})
+        if (marker!=NATIVE or controller.get('revision')!=CONTROLLER
+                or re.fullmatch('[0-9a-f]{64}',str(controller.get('source_sha256',''))) is None):
+            raise ValueError('Recovery checkpoint has an unreviewed producer/controller relationship')
 
 
 def validate_checkpoint_core(raw, policy):
@@ -69,3 +75,29 @@ def validate_checkpoint_core(raw, policy):
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         checkpoint = json.loads(archive.read('checkpoint.json'))
     validate_checkpoint_payload(checkpoint, policy)
+    from microcap_recovery_handoff import validate_recovery_payload
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        payload={key:archive.read(checkpoint[key]['path']) for key in ('period','history','turnover','version_state','prices')}
+    validate_recovery_payload(checkpoint,payload)
+
+
+def validate_checkpoint_directory(path, policy):
+    """Apply the recovery proof gate to cached and freshly restored packages."""
+    path = Path(path).resolve()
+    checkpoint = json.loads(path.read_bytes())
+    validate_checkpoint_payload(checkpoint, policy)
+    from microcap_recovery_handoff import validate_recovery_payload
+    payload = {}
+    for role in ('period', 'history', 'turnover', 'version_state', 'prices'):
+        name = checkpoint[role]['path']
+        relative = Path(name)
+        if (relative.is_absolute() or relative.drive or '..' in relative.parts
+                or '\\' in name or ':' in name):
+            raise ValueError('Cached recovery payload path escapes its package')
+        target = path.parent / relative
+        if (not target.resolve().is_relative_to(path.parent)
+                or any(p.is_symlink() or (hasattr(p, 'is_junction') and p.is_junction())
+                       for p in (target, *target.parents) if p.is_relative_to(path.parent))):
+            raise ValueError('Cached recovery payload contains a link or escapes its package')
+        payload[role] = target.read_bytes()
+    validate_recovery_payload(checkpoint, payload)
