@@ -121,6 +121,9 @@ def verify_manifest(value, runtime_sha, producer_sha, not_after):
             or formal.get('sha256') != files.get(formal['path'])
             or formal.get('bytes') != sizes.get(formal['path'])):
         raise RecoveryError('recovery_formal_archive_not_bound')
+    if value.get('manifest_origin') is not None:
+        from microcap_legacy_source_recovery import validate_bridge_manifest
+        validate_bridge_manifest(value)
     return value
 
 
@@ -263,6 +266,10 @@ def recover(*, runtime_sha, producer_sha, not_after, out, token, current_run_id=
                         phases={'state'} if orphan_only else None,
                         excluded_artifact_ids=excluded)
         if item is None:
+            if not orphan_only:
+                from microcap_legacy_source_recovery import recover as recover_legacy_sources
+                return recover_legacy_sources(token=token,runtime_sha=runtime_sha,producer_sha=producer_sha,
+                                              not_after=not_after,out=out)
             return dict(status='no_resumable_scoped_recovery_state', restored=False)
         result = _recover_candidate(item=item, runtime_sha=runtime_sha, producer_sha=producer_sha,
                                     not_after=not_after, out=out, token=token, orphan_only=orphan_only)
@@ -900,6 +907,13 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
         original_json_and_clocks_rewritten=False, objects=admitted,
         path_admission=path_admission,
         final_strategy_delivery=False, email_sent=False, orders_placed=False)
+    if value.get('manifest_origin') is not None:
+        # Keep the old run's source identity even if another day later seals
+        # this admission.  The receiver is never presented as its producer.
+        report.update(manifest_origin=value['manifest_origin'],
+                      manifest_issuer=value['manifest_issuer'],
+                      original_source_was_sealed=value['original_source_was_sealed'],
+                      legacy_source_evidence=value['legacy_source_evidence'])
     delivery_out.mkdir(parents=True, exist_ok=True)
     if admission_path.exists() and admission_path.read_bytes() != encode(report):
         raise RecoveryError('preserve_existing_resume_admission')

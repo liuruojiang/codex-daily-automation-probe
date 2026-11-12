@@ -1,0 +1,74 @@
+name: Microcap Frozen Legacy Sources No-send Readback
+run-name: microcap-legacy-source-readback:${{ github.run_id }}
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: microcap-frozen-legacy-source-readback
+  cancel-in-progress: false
+jobs:
+  source-readback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      TZ: Asia/Shanghai
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUTF8: '1'
+      MPLCONFIGDIR: ${{ runner.temp }}/legacy-matplotlib-config
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14.4'
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: a7c1b9ac33454be4367880a0989dfc1466640503
+          path: legacy-consumer
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /.gitattributes
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: 3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36
+          path: legacy-source-state/runtime
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*.py
+            /scripts/
+            /data/
+            /.gitattributes
+      - name: Install unchanged source-verification dependencies
+        run: python -m pip install 'numpy==2.4.3' 'pandas==2.3.3' requests matplotlib 'akshare==1.18.46'
+      - name: Warm local plotting dependency cache before source verification
+        run: python -c "import matplotlib.pyplot"
+      - name: Restore exact original failed-run source artifact pair
+        run: |
+          target=$(date '+%Y-%m-%d')
+          python -B scripts/microcap_legacy_source_recovery.py recover --not-after-date "$target" --out "$RUNNER_TEMP/legacy-originals" > "$RUNNER_TEMP/legacy-transport.json"
+      - name: Natively verify all earned source stages without collecting
+        run: |
+          python -B scripts/check_microcap_legacy_source_recovery.py --manifest "$RUNNER_TEMP/legacy-originals/scoped-recovery-manifest.json" --consumer legacy-consumer --producer legacy-source-state/runtime --work "$RUNNER_TEMP/legacy-native-readback" --out "$RUNNER_TEMP/legacy-native-receipt.json"
+      - name: Preserve only no-send source-readback evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-legacy-source-readback-evidence
+          path: |
+            ${{ runner.temp }}/legacy-transport.json
+            ${{ runner.temp }}/legacy-native-receipt.json
+            ${{ runner.temp }}/legacy-originals/recovery-receipt.json
+            ${{ runner.temp }}/legacy-originals/scoped-recovery-manifest.json
+            ${{ runner.temp }}/legacy-native-readback/delivery/resume-admission.json
+            ${{ runner.temp }}/legacy-native-readback/independent-calendar.json
+          if-no-files-found: warn
+          retention-days: 90
