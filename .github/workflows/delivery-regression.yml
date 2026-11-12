@@ -155,9 +155,7 @@ jobs:
             /.gitattributes
       - name: Read immutable pre-fix local-runner counterexample
         if: ${{ inputs.family != 'icim' }}
-        run: |
-          git fetch --no-tags --depth=1 origin eecf2c8fa7afb69426e9d8293517beb22f5a8c98
-          git fetch --no-tags --depth=1 origin b8d489a7da1f09db5e48ebff387b7042f9508906
+        run: git fetch --no-tags --depth=1 origin eecf2c8fa7afb69426e9d8293517beb22f5a8c98
       - run: python -m pip install 'pytest>=8,<9' 'PyYAML>=6,<7' 'hypothesis>=6,<7' 'pandas<3' requests
       - name: Check delivery contracts and all automation regressions
         env:
@@ -346,7 +344,14 @@ jobs:
           # Exact real r6/roll/calendar inputs for the unchanged historical
           # audits; verify their hashes before installing into this checkout.
           python -B -X utf8 ../automation/tests/fixtures/icim/quarter_roll_20261013/prepare_fixture.py --strategy-root .
-          timeout --foreground 65s python -B -X utf8 run_ic_im_v1_4_delivery_tests.py --out-dir daily-regression
+          icim_gate_status=0
+          timeout --foreground 65s python -B -X utf8 run_ic_im_v1_4_delivery_tests.py --out-dir daily-regression || icim_gate_status=$?
+          if [[ "${icim_gate_status}" -ne 0 ]]; then
+            if [[ -f daily-regression/process_output.txt ]]; then
+              cat daily-regression/process_output.txt
+            fi
+            exit "${icim_gate_status}"
+          fi
           cp daily-regression/regression.xml regression.xml
           # Preserve the additional historical/diagnostic coverage from the old cloud gate.
           timeout --foreground 60s python -B -X utf8 -m pytest -q -p no:cacheprovider \
@@ -382,6 +387,11 @@ jobs:
             strategy/tested-sha.txt
             strategy/supplemental-regression.xml
             strategy/daily-regression/receipt.json
+            strategy/daily-regression/process_output.txt
+            strategy/daily-regression/regression.xml
+            strategy/daily-regression/regression.txt
+            strategy/daily-regression/test_run.json
+            strategy/daily-regression/progress.jsonl
             strategy/daily-regression/collection.json
             strategy/daily-regression/source_before.json
             strategy/daily-regression/source_after.json
@@ -392,6 +402,7 @@ jobs:
             strategy-tests/regression-core.xml
             strategy-tests/regression-release.xml
             strategy-tests/regression-flow.xml
+
 
 
 
