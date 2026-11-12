@@ -1,0 +1,43 @@
+{
+  "scope": "calendar consumed-date/purpose report validation",
+  "strategy_sha": "9ec8b91c5256155101faae3c84dba9ff95632db5",
+  "original_readiness_run": 43247959416,
+  "original_artifact": 13958841337,
+  "original_artifact_sha256": "8219545cdd4e6f5a7682efad0350c7fb15cc65e7429b003c5be3562f07fdf8c9",
+  "input_provenance": {
+    "artifact_id": 13958841337,
+    "source_run": 43247959416,
+    "artifact_sha256": "8219545cdd4e6f5a7682efad0350c7fb15cc65e7429b003c5be3562f07fdf8c9",
+    "strategy_sha": "9ec8b91c5256155101faae3c84dba9ff95632db5",
+    "source_status": "ok",
+    "verified_day": "2026-11-12",
+    "isolated_sequence": 35,
+    "purpose": "real retained render-only input; not a new producer run or order",
+    "files": {
+      "result.json": "fa958de57636ea18a02a1f6245e7fdcbd4a9bda5ae49a60edd6437ef90ab6d53",
+      "ic_im_v1_4_close_signal.md": "6f388854e5e44a7010ff8383b62ef4d2d2e8b73f3de76554f66536dae93b5c3b",
+      "program-source.json": "4f4520d7613bed38b90750fc564057e2026926d81a326c6d6c4cc9606d9e41a9"
+    }
+  },
+  "targeted_checks": {
+    "exit_code": 0,
+    "watchdog_seconds": 60,
+    "started_at": "2026-11-12T15:41:28.766043+00:00",
+    "finished_at": "2026-11-12T15:41:31.680693+00:00",
+    "source_before_equals_after": true,
+    "bound_files": 59,
+    "counts": {
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "consumer_sha256": "1df7b27008cf88ee533cc712e7830800e29126586c45daf28a7f12169c385efe",
+  "producer_runtime_or_dependencies_changed": false,
+  "producer_rerun": false,
+  "formal_ledger_written": false,
+  "message_sent": false,
+  "repair_helper_separate_verification": "original download/hash/inspection executed in cloud run43249517582; final dated render-only path requires actual no-DATA acceptance",
+  "regression_required": "complete existing cloud CI before merge; existing family icim gate before dated no-send render repair"
+}

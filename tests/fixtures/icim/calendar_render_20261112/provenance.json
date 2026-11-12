@@ -1,0 +1,15 @@
+{
+  "artifact_id": 13958841337,
+  "source_run": 43247959416,
+  "artifact_sha256": "8219545cdd4e6f5a7682efad0350c7fb15cc65e7429b003c5be3562f07fdf8c9",
+  "strategy_sha": "9ec8b91c5256155101faae3c84dba9ff95632db5",
+  "source_status": "ok",
+  "verified_day": "2026-11-12",
+  "isolated_sequence": 35,
+  "purpose": "real retained render-only input; not a new producer run or order",
+  "files": {
+    "result.json": "fa958de57636ea18a02a1f6245e7fdcbd4a9bda5ae49a60edd6437ef90ab6d53",
+    "ic_im_v1_4_close_signal.md": "6f388854e5e44a7010ff8383b62ef4d2d2e8b73f3de76554f66536dae93b5c3b",
+    "program-source.json": "4f4520d7613bed38b90750fc564057e2026926d81a326c6d6c4cc9606d9e41a9"
+  }
+}

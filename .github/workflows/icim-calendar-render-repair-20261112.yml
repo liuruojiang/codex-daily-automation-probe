@@ -1,0 +1,95 @@
+name: ICIM retained calendar render repair 20261112
+on:
+  push:
+    branches: [main]
+    paths: [docs/icim-render-repair-requests/20261112-r3.json]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  regression:
+    uses: ./.github/workflows/delivery-regression.yml
+    with:
+      family: icim
+  render:
+    needs: regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Validate this dated render-only request
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          request = json.load(open('docs/icim-render-repair-requests/20261112-r3.json'))
+          assert request == {'date': '2026-11-12', 'scope': 'retained_calendar_render_no_send', 'artifact_id': 13958841337}
+          assert datetime.now(ZoneInfo('Asia/Shanghai')).date().isoformat() == request['date']
+          PY
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/ic-im-rolling-arbitrage
+          ref: 9ec8b91c5256155101faae3c84dba9ff95632db5
+          path: strategy
+          persist-credentials: false
+      - name: Install the unchanged production dependencies
+        run: python -m pip install -r strategy/requirements-poe-v1.4-server.txt
+      - name: Verify the unchanged producer inventory
+        run: >-
+          python scripts/verify_icim_source_release.py --strategy-root strategy
+          --expected-strategy-sha 9ec8b91c5256155101faae3c84dba9ff95632db5 --output current-source.json
+      - name: Reuse the exact retained result and report without collection
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python -B -X utf8 scripts/icim_calendar_render_repair_20261112.py --render-input
+      - name: Validate and render the original report and dated marker
+        run: |
+          python scripts/build_ic_im_v1_4_digest.py \
+            --result retained-readiness/readiness-artifacts/result.json \
+            --report retained-readiness/readiness-artifacts/ic_im_v1_4_close_signal.md \
+            --source-provenance retained-readiness/readiness-artifacts/program-source.json \
+            --expected-source-sha 9ec8b91c5256155101faae3c84dba9ff95632db5 \
+            --expected-source-release 20261112-expert-review-v5-r3 --out-dir repair-mail
+          python scripts/prepare_ic_im_v1_4_marker.py \
+            --result retained-readiness/readiness-artifacts/result.json --marker-dir repair-marker
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          proof = json.load(open('repair-artifacts/reuse-verification.json'))
+          for name, expected in proof['original_file_sha256'].items():
+              assert hashlib.sha256(Path('retained-readiness/readiness-artifacts', name).read_bytes()).hexdigest() == expected
+          current = json.load(open('current-source.json'))
+          original = json.load(open('retained-readiness/readiness-artifacts/program-source.json'))
+          for key in ['status','release','strategy_sha','manifest_sha256','source_sha256','support_sha256']:
+              assert current[key] == original[key]
+          metadata = json.load(open('repair-mail/metadata.json'))
+          assert '2026-11-12' in metadata['subject'] and metadata['body']
+          print(json.dumps({'status':'render_verified','market_date':'2026-11-12','producer_rerun':False,
+                            'original_files_unchanged':True,'source_files':len(current['source_sha256'])}))
+          PY
+      - name: Authenticate SMTP and validate envelopes without DATA
+        env:
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
+        run: python scripts/check_mail_transport.py --output repair-artifacts/mail-transport.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: icim-render-repair-20261112-${{ github.run_id }}
+          path: |
+            repair-artifacts/
+            repair-mail/
+            current-source.json
+          if-no-files-found: warn
+          retention-days: 30
