@@ -192,6 +192,12 @@ def _verify_release_files(root,release):
 ''',encoding='utf-8')
     (root/'scripts/top100_cloud_delivery.py').write_text('''from pathlib import Path
 import zipfile,json
+from types import SimpleNamespace
+def validate_state(root,max_anchor_age_days=None,**kwargs):return dict(ok=True)
+state=SimpleNamespace(validate_state=validate_state)
+def inspect_outputs(root,expected_date,**kwargs):return dict(ok=True)
+delivery=SimpleNamespace(inspect_outputs=inspect_outputs)
+SOURCE_FILES=[]
 def restore(root,bundle,expected):
     with zipfile.ZipFile(bundle) as archive:raw=archive.read('outputs/top100_delivery_manifest.json')
     target=Path(root)/'outputs/top100_delivery_manifest.json';target.parent.mkdir(exist_ok=True);target.write_bytes(raw)

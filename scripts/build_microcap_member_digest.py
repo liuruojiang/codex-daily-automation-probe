@@ -24,6 +24,19 @@ REVISIONS = {
     "v2.3": "plain_lb25_hl2p5_r2off_no_overheat_20261029",
     "v2.5": "plain_lb20_hl3_entry0_exit0_20260905",
 }
+MEMBER_NAME_BASIS = 'historical_member_alias'
+MEMBER_NAME_NOTE = '名单附件中的股票名称为检查点保存的历史别名，不代表当前简称或当前 ST 资格；请按股票代码识别。'
+
+
+def member_attachment_csv(members):
+    """Keep saved fields unchanged and label their historical name semantics."""
+    if any('name_basis' in row and row['name_basis'] != MEMBER_NAME_BASIS for row in members):
+        raise ValueError('Saved member name basis conflicts with historical aliases')
+    names=sorted({key for row in members for key in row} | {'name_basis'})
+    buf=io.StringIO(newline='')
+    writer=csv.DictWriter(buf,fieldnames=names);writer.writeheader()
+    writer.writerows(dict(row,name_basis=MEMBER_NAME_BASIS) for row in members)
+    return buf.getvalue().encode('utf-8-sig')
 
 
 def now_bj():
@@ -291,9 +304,7 @@ def main():
         for field in ('effective_members','target_members'):
             members=context.get('period',{}).get(field,[])
             if members:
-                names=sorted({k for row in members for k in row});buf=io.StringIO(newline='')
-                writer=csv.DictWriter(buf,fieldnames=names);writer.writeheader();writer.writerows(members)
-                archive.writestr(field+'.csv',buf.getvalue().encode('utf-8-sig'))
+                archive.writestr(field+'.csv',member_attachment_csv(members))
         for version,value in signal_files.items():
             archive.writestr(version.replace('.','_')+'_signal.csv',value)
         for key in ('quotes','hedge'):
@@ -307,6 +318,8 @@ def main():
             archive.writestr('member_quotes.csv',buf.getvalue().encode('utf-8-sig'))
     metadata['attachment']=str(attachment.resolve())
     metadata['body']+='\n附件：当次结果、已保存的三版CSV、本期名单及成员行情明细。\n'
+    if any(context.get('period',{}).get(field) for field in ('effective_members','target_members')):
+        metadata['body']+=MEMBER_NAME_NOTE+'\n'
     metadata['html_body']=html_document(metadata['body'])
     (args.out / "metadata.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (args.out / "report.md").write_text(metadata["body"], encoding="utf-8")

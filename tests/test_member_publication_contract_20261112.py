@@ -87,7 +87,10 @@ def test_real_d11_complete_field_csv_binding_preserves_original_json_csv_and_bod
     assert hashlib.sha256(old_meta['body'].encode()).hexdigest()==proof['body_sha256']
     new_meta=run_main(monkeypatch,original,tmp_path/'after')
     assert new_meta['status']=='OK'
-    assert new_meta['body']==old_meta['body'] and new_meta['subject']==old_meta['subject']
+    # The original delivered body/fixture stays immutable. Only the explicitly
+    # added attachment-name explanation changes a newly rendered report.
+    assert new_meta['body']==old_meta['body']+digest.MEMBER_NAME_NOTE+'\n'
+    assert new_meta['subject']==old_meta['subject']
     assert new_meta['member_actions']=={}
     assert {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in original.iterdir()}==before
     with zipfile.ZipFile(new_meta['attachment']) as archive:
@@ -96,7 +99,7 @@ def test_real_d11_complete_field_csv_binding_preserves_original_json_csv_and_bod
             assert archive.read(name)==(original/name).read_bytes()
             assert hashlib.sha256(archive.read(name)).hexdigest()==digest_value
         assert archive.read('result.json')==(original/'result.json').read_bytes()
-    print(json.dumps({'D11_csv_and_json_unchanged':True,'D11_body_unchanged':True,
+    print(json.dumps({'D11_csv_and_json_unchanged':True,'D11_body_preserved_with_exact_alias_note':True,
         'signal_sha256':new_meta['final_signal_sha256'],'body_sha256':hashlib.sha256(new_meta['body'].encode()).hexdigest()}))
 
 
