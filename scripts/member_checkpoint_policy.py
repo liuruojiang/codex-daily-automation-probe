@@ -13,6 +13,7 @@ LOCAL_READ_POLICY = {
     'rebalance_producer_shas': [
         '1634a27c5a609a46ab35fc29ca2c65b94182671b',
         '14e9a9fa6f0487f1d5547598435089c43f2f9fd1',
+        'a7c1b9ac33454be4367880a0989dfc1466640503',
     ],
 }
 
