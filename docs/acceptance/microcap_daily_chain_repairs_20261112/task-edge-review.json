@@ -39,7 +39,7 @@
     "C_NATIVE_POSITIVES": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\member_publication\\native_r_positive_v2",
     "C_FINAL_RECORD": "D:\\Codex\\test-lifecycle\\records\\7b47c59d3f0f471c96ff33f0d84a5aac",
     "C_INDEPENDENT_RECORD": "D:\\Codex\\test-lifecycle\\records\\1b3d0888093c4cadb3bea61c22aca046",
-    "WORKER_ACTUAL_READBACK": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\readback.json",
+    "WORKER_ACTUAL_READBACK": "D:\\Codex\\workspaces\\microcap-fix-integration-20261112\\docs\\acceptance\\microcap_daily_chain_repairs_20261112\\worker-deployment-readback.json",
     "WORKER_ACTUAL_MODULE": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\deployed-module-0.js",
     "B_ROOT01_DEPLOYED_MODULE_RECORD": "D:\\Codex\\test-lifecycle\\records\\26f9c0fb9b7a4691a020e7a0a78098b0",
     "M6_NATIVE_RECERTIFICATION": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-migration\\first-run-evidence\\codex-daily-automation-probe\\codex-daily-automation-probe\\evidence\\native-recertification.json",
@@ -385,6 +385,128 @@
       "current_signal_ready": false,
       "sending": "skipped",
       "actual_future_R_claimed": false
+    },
+    "worker_deployment_readback_observations": {
+      "observation_policy": "Preserve observed metadata, hash and timestamp snapshots; mutable live paths are not immutable historical identities. Behavioral test credit is bound to executable bytes, not relabeled deployment versions.",
+      "original_tested_observation": {
+        "receipt_path": "D:\\Codex\\workspaces\\microcap-fix-integration-20261112\\docs\\acceptance\\microcap_daily_chain_repairs_20261112\\worker-deployment-readback.json",
+        "receipt_sha256": "78a36f431c4a835b194171961d204d52618cf89bf1a2f8b3e6da7b2bcf1c9439",
+        "frozen_git_commit": "aabc83ef4fd71fa5a996773232132774c3f23843",
+        "frozen_git_path": "docs/acceptance/microcap_daily_chain_repairs_20261112/worker-deployment-readback.json",
+        "git_blob_sha256": "b2bec3fada895640fdb8c6392f1811c38412081be56bc30372ec964bcd0aa8aa",
+        "receipt_snapshot": {
+          "checked_at_utc": "2026-11-11T23:46:48.575767+00:00",
+          "read_only": true,
+          "version": "345055bb-1466-4309-a7d0-9e057b82dbe0",
+          "compiled_candidate_matches": true,
+          "schedules_match": true,
+          "member_daily_enabled": true,
+          "results": [
+            {
+              "name": "deployed-content",
+              "status": 200,
+              "bytes": 18023,
+              "sha256": "0862cdc6bbeb429a01ae34fd94ae6b2aaa6b32dd82e11d25ed7ecb9edb5ce30b",
+              "modules": [
+                {
+                  "name": "worker.js",
+                  "file": "deployed-module-0.js",
+                  "bytes": 6422,
+                  "sha256": "b02277411d70b04148d9087110afd61f154cb258db05bb3ab60e5db25b080f11"
+                },
+                {
+                  "name": "worker.js.map",
+                  "file": "deployed-module-1.bin",
+                  "bytes": 11164,
+                  "sha256": "57fb8272b7ba22d0acb47bad717e00cf622c2cac361e37a006139c1de5e59308"
+                }
+              ]
+            },
+            {
+              "name": "deployed-schedules",
+              "status": 200,
+              "bytes": 881,
+              "sha256": "26c4af344b89ea2d6a989fcb0fb30fa2d4c8bb09463da81d6e0695ecd78e6848"
+            },
+            {
+              "name": "deployed-deployments",
+              "status": 200,
+              "bytes": 4942,
+              "sha256": "ce97e734b098d94127149d2c4a071c1070fee0562a2c4b72e4e917bdf8420ca9"
+            }
+          ],
+          "credentials_printed": false
+        },
+        "tests_record": "D:\\Codex\\test-lifecycle\\records\\26f9c0fb9b7a4691a020e7a0a78098b0",
+        "tests_executed_on_this_observation": true
+      },
+      "latest_observation": {
+        "mutable_receipt_path": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\readback.json",
+        "receipt_sha256_at_observation": "6dc839fa1747177270db66b04dcd4804a0b1b543a4a0ce5469a4d08c3d79f8ca",
+        "receipt_snapshot": {
+          "checked_at_utc": "2026-11-12T00:26:10.583438+00:00",
+          "read_only": true,
+          "version": "d194a2bd-3ebb-4354-be54-83ef5d323811",
+          "compiled_candidate_matches": true,
+          "schedules_match": true,
+          "member_daily_enabled": true,
+          "results": [
+            {
+              "name": "deployed-content",
+              "status": 200,
+              "bytes": 17745,
+              "sha256": "3de3cc85f7658d0636de2f65415cd2f1d9d706f08ce2d0969ee4d0ee4e8abbb8",
+              "modules": [
+                {
+                  "name": "worker.js",
+                  "file": "deployed-module-0.js",
+                  "bytes": 6422,
+                  "sha256": "b02277411d70b04148d9087110afd61f154cb258db05bb3ab60e5db25b080f11"
+                },
+                {
+                  "name": "worker.js.map",
+                  "file": "deployed-module-1.bin",
+                  "bytes": 10886,
+                  "sha256": "39ccfcb8aa3ba397b2a860c16bb35043909424c813255509ff411c1128626ad3"
+                }
+              ]
+            },
+            {
+              "name": "deployed-schedules",
+              "status": 200,
+              "bytes": 881,
+              "sha256": "26c4af344b89ea2d6a989fcb0fb30fa2d4c8bb09463da81d6e0695ecd78e6848"
+            },
+            {
+              "name": "deployed-deployments",
+              "status": 200,
+              "bytes": 4941,
+              "sha256": "fc8a5c38f91c272c92940172dbad01dc56ff8f21f39a8708b0391a5a6030883b"
+            }
+          ],
+          "credentials_printed": false
+        },
+        "tests_executed_on_this_observation": false,
+        "implementation_equivalent_to_original_tested_observation": true
+      },
+      "module_sha256": "b02277411d70b04148d9087110afd61f154cb258db05bb3ab60e5db25b080f11",
+      "module_bytes": 6422,
+      "five_crons_and_flag_preserved": true
+    },
+    "final_mail_transaction_identity": {
+      "checked_at_UTC": "2026-11-12T00:36:38.493612+00:00",
+      "before_receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\production-backup\\existing-mail-transactions.json",
+      "before_receipt_sha256": "007523e4697f5babafd0a79002a98a5ec3b84e07d9116a30b98b750f8fe92500",
+      "final_receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\final-mail-transactions-unchanged.json",
+      "final_receipt_sha256": "9684aca41edffb036a0f55be9247b27665dc556a497509bab19868f2238dec05",
+      "all_three_transactions_equal_field_for_field": true,
+      "artifact_ids": [
+        13838149297,
+        13838348766,
+        13838776495
+      ],
+      "new_strategy_SMTP_calls": 0,
+      "scope": "metadata identity only; original D11 delivered evidence remains the original audit observation, no new send or inbox claim"
     }
   },
   "independent_local_sources": {
@@ -450,7 +572,7 @@
     },
     "WORKER_DEPLOYMENT": {
       "state": "ACCEPTED_ACTUAL_DEPLOYED_MODULE_READBACK_AND_INDEPENDENT_FAULT_TESTS",
-      "receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\readback.json",
+      "receipt": "D:\\Codex\\workspaces\\microcap-fix-integration-20261112\\docs\\acceptance\\microcap_daily_chain_repairs_20261112\\worker-deployment-readback.json",
       "module": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\deployed-module-0.js",
       "module_sha256": "b02277411d70b04148d9087110afd61f154cb258db05bb3ab60e5db25b080f11",
       "version": "345055bb-1466-4309-a7d0-9e057b82dbe0",
@@ -462,7 +584,16 @@
       "test_environment": {
         "MICROCAP_WORKER_UNDER_TEST": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\deployed-module-0.js",
         "PYTHONUTF8": "1"
-      }
+      },
+      "tested_readback_version": "345055bb-1466-4309-a7d0-9e057b82dbe0",
+      "tested_readback_timestamp": "2026-11-11T23:46:48.575767+00:00",
+      "latest_observed_version": "d194a2bd-3ebb-4354-be54-83ef5d323811",
+      "latest_readback_timestamp": "2026-11-12T00:26:10.583438+00:00",
+      "latest_readback_receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\readback.json",
+      "latest_readback_receipt_sha256_at_observation": "6dc839fa1747177270db66b04dcd4804a0b1b543a4a0ce5469a4d08c3d79f8ca",
+      "latest_implementation_identical_to_tested_bytes": true,
+      "latest_version_tests_rerun": false,
+      "test_credit_basis": "11 fault tests executed only on the module read back under original 345 version; new d194 observation has exactly the same 6422-byte executable SHA. No new-version execution claim."
     },
     "FINAL_LOCAL_INSTALL": {
       "state": "ACCEPTED_ACTUAL_POINTER_SOURCE_SYNC_AND_D11_PREPARE",
@@ -475,6 +606,18 @@
         "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\local_links\\final-p2-install-preparation-20261112T073812-d4c87623\\actual-run-acceptance.json"
       ],
       "independent_readback": true
+    },
+    "FINAL_MAIN_MICROCAP_CI_RECHECK": {
+      "state": "ACCEPTED_ONE_TARGETED_RERUN_SUCCESS_ORIGINAL_FAILURE_RETAINED",
+      "receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\ci-p2\\main-targeted-recheck.json",
+      "run": 43122095720,
+      "failed_job": 130864836951,
+      "run_attempt": 2,
+      "rerun_job": 130883442380,
+      "all_five_latest_results_success": true,
+      "independent_readonly_API_verification": true,
+      "root_cause": "UNDETERMINED_NOT_ATTRIBUTED_TO_PLATFORM",
+      "GitHub_run_url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720"
     }
   },
   "tasks": [
@@ -602,7 +745,7 @@
         "B_ROOT01_DEPLOYED_MODULE_RECORD"
       ],
       "pending_signoffs": [],
-      "scope_and_limit": "旧cloud维护写步骤实际skipped、owner=local保持；新部署模块b0227741/版本345055bb已实读，5cron/flag匹配，实际模块11项独立故障正反例通过，无真实dispatch。"
+      "scope_and_limit": "旧cloud维护写步骤实际skipped、owner=local保持；新部署模块b0227741/版本345055bb已实读，5cron/flag匹配，实际模块11项独立故障正反例通过，无真实dispatch。 原11项只对23:46原345读回模块执行；00:26读回新d194版本的6422B可执行仍b0227741、5cron/flag相同，按实现字节延续结论，未将旧测试重标为新版本执行。"
     },
     {
       "id": "T09",
@@ -618,7 +761,7 @@
         "B_ROOT01_DEPLOYED_MODULE_RECORD"
       ],
       "pending_signoffs": [],
-      "scope_and_limit": "15:10准确keyed输入/标题合同已上线；实读部署模块经11项独立故障测试，POST状态未知只读查同槽不重POST；没有启动未来实际R调仓。"
+      "scope_and_limit": "15:10准确keyed输入/标题合同已上线；实读部署模块经11项独立故障测试，POST状态未知只读查同槽不重POST；没有启动未来实际R调仓。 原11项只对23:46原345读回模块执行；00:26读回新d194版本的6422B可执行仍b0227741、5cron/flag相同，按实现字节延续结论，未将旧测试重标为新版本执行。"
     },
     {
       "id": "T10",
@@ -634,7 +777,7 @@
         "B_ROOT01_DEPLOYED_MODULE_RECORD"
       ],
       "pending_signoffs": [],
-      "scope_and_limit": "真实D11成员日报事实保留；新部署16:00路由/key/run-name/flag和模块读回通过，实际模块故障反例通过；未重发旧日报。"
+      "scope_and_limit": "真实D11成员日报事实保留；新部署16:00路由/key/run-name/flag和模块读回通过，实际模块故障反例通过；未重发旧日报。 原11项只对23:46原345读回模块执行；00:26读回新d194版本的6422B可执行仍b0227741、5cron/flag相同，按实现字节延续结论，未将旧测试重标为新版本执行。"
     },
     {
       "id": "T11",
@@ -826,7 +969,7 @@
         "C_INDEPENDENT_RECORD"
       ],
       "pending_signoffs": [],
-      "scope_and_limit": "新normal/partial intent→accepted→marker事务源码保持；旧sender禁用；C3–C5最终门槛与事务前置连接测试通过且main源码相同。原有D11事务保留，无新增SMTP。"
+      "scope_and_limit": "新normal/partial intent→accepted→marker事务源码保持；旧sender禁用；C3–C5最终门槛与事务前置连接测试通过且main源码相同。原有D11事务保留，无新增SMTP。 最终00:36只读三事务与事前原件逐字段全同（marker13838776495/intent13838149297/accepted13838348766），新策略SMTP为0。"
     },
     {
       "id": "T23",
@@ -840,7 +983,7 @@
         "EXISTING_MAIL_TRANSACTIONS"
       ],
       "pending_signoffs": [],
-      "scope_and_limit": "既有Message-ID/正文/附件/INBOX证据只作为D11历史送达；未重发，不称Nov12已发。"
+      "scope_and_limit": "既有Message-ID/正文/附件/INBOX证据只作为D11历史送达；未重发，不称Nov12已发。 最终00:36只读三事务与事前原件逐字段全同（marker13838776495/intent13838149297/accepted13838348766），新策略SMTP为0。"
     },
     {
       "id": "T24",
@@ -934,7 +1077,7 @@
       "label": "相关回归/精确pin与本地安装验证",
       "baseline_status": "分别执行，不以全绿代全链",
       "baseline_boundary": "M5/P1/477/ab214/installed531各按真实角色审计",
-      "review_status": "EXACT_PINS_FINAL_INSTALL_REPORT_WORKER_AND_M6_TWO_CLOUD_LOOP_VERIFIED",
+      "review_status": "EXACT_PINS_INSTALL_WORKER_M6_CLOUD_LOOP_AND_TARGETED_MAIN_CI_RECHECK_VERIFIED",
       "evidence_refs": [
         "B_FIX",
         "A_FIX_HANDOFF",
@@ -958,7 +1101,7 @@
         "M6_SECOND_RAW_ARCHIVE_ACCEPTANCE"
       ],
       "pending_signoffs": [],
-      "scope_and_limit": "精确main/native/AB/477角色、C最终合同、本地10文件/D11实际下载verify与安装、实际Worker模块11反例，以及M6双main恢复全部有独立收据。后续真实R/new-v2和当前27缺源仍单列，未冒充全现场通过。"
+      "scope_and_limit": "精确main/native/AB/477角色、C最终合同、本地10文件/D11实际下载verify与安装、实际Worker模块11反例、M6双main恢复均有独立收据。主线CI43122095720原microcap组segfault139栈保留；仅失败组定向重验一次，attempt2/job130883442380成功，原其余四组执行时间保留，现五组success。段错误根因未知，不归因平台；未来真实R/new-v2及当前27缺源仍单列。 正式重验log明确mandatory microcap 1922 tests、zero skips；独立API与正式恢复回执五组字段完全一致。"
     }
   ],
   "edges": [
@@ -1096,7 +1239,7 @@
         "B_ROOT01_DEPLOYED_MODULE_RECORD"
       ],
       "pending_signoffs": [],
-      "scope_and_limit": "准确route/input/key/run-name合同、真实GitHub GET字段及部署模块b0227741/版本345055bb读回通过；5cron/启用flag匹配；不把调度配置当下游job或邮件成功。"
+      "scope_and_limit": "准确route/input/key/run-name合同、真实GitHub GET字段及部署模块b0227741/版本345055bb读回通过；5cron/启用flag匹配；不把调度配置当下游job或邮件成功。 原11项只对23:46原345读回模块执行；00:26读回新d194版本的6422B可执行仍b0227741、5cron/flag相同，按实现字节延续结论，未将旧测试重标为新版本执行。"
     },
     {
       "id": "E10",
@@ -1111,7 +1254,7 @@
         "B_ROOT01_DEPLOYED_MODULE_RECORD"
       ],
       "pending_signoffs": [],
-      "scope_and_limit": "实际部署模块经11项独立故障测试：连接丢失后一次POST仅查询精确同槽，权限拒绝/查询坏值/耗尽只读预算均明确unknown；并行cron不借用彼此结果；无真实POST。"
+      "scope_and_limit": "实际部署模块经11项独立故障测试：连接丢失后一次POST仅查询精确同槽，权限拒绝/查询坏值/耗尽只读预算均明确unknown；并行cron不借用彼此结果；无真实POST。 原11项只对23:46原345读回模块执行；00:26读回新d194版本的6422B可执行仍b0227741、5cron/flag相同，按实现字节延续结论，未将旧测试重标为新版本执行。"
     },
     {
       "id": "E11",
@@ -1293,7 +1436,7 @@
         "C_INDEPENDENT_RECORD"
       ],
       "pending_signoffs": [],
-      "scope_and_limit": "normal/partial独立事务、unknown阻断、accepted只补marker源码保持；C最终发布合同与事务入口连接通过。只复用D11既有送达事实，本轮无新增SMTP或marker。"
+      "scope_and_limit": "normal/partial独立事务、unknown阻断、accepted只补marker源码保持；C最终发布合同与事务入口连接通过。只复用D11既有送达事实，本轮无新增SMTP或marker。 最终00:36只读三事务与事前原件逐字段全同（marker13838776495/intent13838149297/accepted13838348766），新策略SMTP为0。"
     },
     {
       "id": "E23",
@@ -1333,11 +1476,11 @@
         "EXISTING_MAIL_TRANSACTIONS"
       ],
       "pending_signoffs": [],
-      "scope_and_limit": "真实D11正文/19650B附件ZIP/SMTP/Gmail闭环只作历史事实，本轮不重新发送，不称当前日已送达。"
+      "scope_and_limit": "真实D11正文/19650B附件ZIP/SMTP/Gmail闭环只作历史事实，本轮不重新发送，不称当前日已送达。 最终00:36只读三事务与事前原件逐字段全同（marker13838776495/intent13838149297/accepted13838348766），新策略SMTP为0。"
     }
   ],
   "reviewed_auto_main": "b8ff92f07a86edfe01bbb54ad2784ccd575668dd",
-  "updated_at_UTC": "2026-11-12T00:00:00.727646+00:00",
+  "updated_at_UTC": "2026-11-12T00:38:24.413688+00:00",
   "actual_M6_archive_migration": {
     "original_source_run": 43116277092,
     "publication_recovery_run_reported_by_root": 43122103224,
@@ -1366,7 +1509,7 @@
   },
   "pending": [],
   "pending_acceptance_count": 0,
-  "finalized_at_UTC": "2026-11-12T00:20:09.288842+00:00",
+  "finalized_at_UTC": "2026-11-12T00:38:24.413688+00:00",
   "review_summary": {
     "task_count": 31,
     "edge_count": 25,
@@ -1382,7 +1525,9 @@
     "future_R_live_acceptance_claimed": false,
     "future_forward_v2_live_acceptance_claimed": false,
     "new_SMTP_calls": 0,
-    "orders_placed": false
+    "orders_placed": false,
+    "final_main_CI_all_five_results_success": true,
+    "original_CI_native_segfault_root_cause": "UNDETERMINED"
   },
   "unobserved_operational_edges": [
     {
@@ -1397,5 +1542,112 @@
       "id": "E18",
       "scope": "next actual R forward-v2 whole archive discovered/restored by a following actual cloud run"
     }
-  ]
+  ],
+  "final_main_ci_verification": {
+    "status": "SUCCESS_AFTER_ONE_TARGETED_FAILED_JOB_RERUN",
+    "run": 43122095720,
+    "failed_job": 130864836951,
+    "rerun_scope": "failed microcap job only; no successful groups or archive runs repeated",
+    "other_groups_success_reported_by_root": 4,
+    "same_runtime_source_PR_run": 43121378212,
+    "same_runtime_source_PR_groups_passed_reported_by_root": 5,
+    "original_failure_log": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\ci-p2\\main-microcap-job.log",
+    "original_failure_log_sha256": "757d95b11d6b43550053b8a403b24aae597278fc0fc128273db9f0e5967f70aa",
+    "actual_failure": "Fatal Python error: Segmentation fault; pandas/io/parsers/c_parser_wrapper.py:234 -> readers.py read_csv -> tests/test_realtime_state_guard_20260915.py:181; process exit139",
+    "root_cause": "UNDETERMINED_NOT_ATTRIBUTED_TO_PLATFORM",
+    "new_local_tests": 0,
+    "code_data_config_changes": false,
+    "api_readback_at_UTC": "2026-11-12T00:37:25.113529+00:00",
+    "run_attempt": 2,
+    "rerun_job": 130883442380,
+    "rerun_count_reported_by_root": 1,
+    "root_rerun_command": "gh run rerun --job 130864836951",
+    "run_snapshot_from_actual_readonly_GitHub_API": {
+      "conclusion": "success",
+      "head_sha": "a403909ac2a2b53c40ff0f3dee2e37ca6ba6235e",
+      "html_url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720",
+      "id": 43122095720,
+      "run_attempt": 2,
+      "status": "completed"
+    },
+    "latest_jobs_snapshot_from_actual_readonly_GitHub_API": {
+      "jobs": [
+        {
+          "completed_at": "2026-11-12T00:34:03Z",
+          "conclusion": "success",
+          "html_url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/job/130883442380",
+          "id": 130883442380,
+          "name": "strategy-tests (microcap)",
+          "run_attempt": 2,
+          "started_at": "2026-11-12T00:28:51Z",
+          "status": "completed"
+        },
+        {
+          "completed_at": "2026-11-11T23:46:31Z",
+          "conclusion": "success",
+          "html_url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/job/130883444772",
+          "id": 130883444772,
+          "name": "automation-tests",
+          "run_attempt": 2,
+          "started_at": "2026-11-11T23:44:20Z",
+          "status": "completed"
+        },
+        {
+          "completed_at": "2026-11-11T23:45:01Z",
+          "conclusion": "success",
+          "html_url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/job/130883479552",
+          "id": 130883479552,
+          "name": "strategy-tests (icim)",
+          "run_attempt": 2,
+          "started_at": "2026-11-11T23:44:20Z",
+          "status": "completed"
+        },
+        {
+          "completed_at": "2026-11-11T23:46:08Z",
+          "conclusion": "success",
+          "html_url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/job/130883501107",
+          "id": 130883501107,
+          "name": "maintenance-native-tests",
+          "run_attempt": 2,
+          "started_at": "2026-11-11T23:44:20Z",
+          "status": "completed"
+        },
+        {
+          "completed_at": "2026-11-11T23:45:50Z",
+          "conclusion": "success",
+          "html_url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/job/130883510654",
+          "id": 130883510654,
+          "name": "member-daily-tests",
+          "run_attempt": 2,
+          "started_at": "2026-11-11T23:44:20Z",
+          "status": "completed"
+        }
+      ],
+      "total_count": 5
+    },
+    "API_paths": [
+      "repos/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720",
+      "repos/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/jobs?filter=latest"
+    ],
+    "all_five_latest_results_success": true,
+    "four_successful_groups_retained_old_execution_times": true,
+    "original_native_segfault_retained": true,
+    "successful_retry_does_not_establish_root_cause": true,
+    "Node_tests_rerun_for_metadata_change": false,
+    "formal_root_receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\ci-p2\\main-targeted-recheck.json",
+    "formal_root_receipt_sha256": "cfc0a2a7988ac29557dd80ae82c06e838dcc575f23e378ce83c1ef2a9ad86f30",
+    "root_rerun_command_exact": [
+      "gh",
+      "run",
+      "rerun",
+      "43122095720",
+      "--job",
+      "130864836951"
+    ],
+    "successful_rerun_log": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\ci-p2\\main-microcap-recheck.log",
+    "successful_rerun_log_sha256": "84a74fc0c34b4ddff99783330e926dc9000dddd97a9fe83169ba96afe798bdf4",
+    "mandatory_microcap_tests": 1922,
+    "mandatory_microcap_skips": 0,
+    "formal_receipt_jobs_match_independent_API_readback": true
+  }
 }

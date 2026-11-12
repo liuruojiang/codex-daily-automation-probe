@@ -1,0 +1,618 @@
+{
+  "schema": "main_microcap_ci_targeted_recheck_v1",
+  "status": "passed",
+  "checked_at_utc": "2026-11-12T00:36:35.872244+00:00",
+  "run_id": 43122095720,
+  "attempt": 2,
+  "head_sha": "a403909ac2a2b53c40ff0f3dee2e37ca6ba6235e",
+  "original_failed_job_id": 130864836951,
+  "repeated_component": "strategy-tests (microcap)",
+  "rerun_request_count": 1,
+  "rerun_command": [
+    "gh",
+    "run",
+    "rerun",
+    "43122095720",
+    "--job",
+    "130864836951"
+  ],
+  "original_failure": "Native Python segmentation fault at pandas c_parser_wrapper.py:234, pd.read_csv, test_realtime_state_guard_20260915.py:181; exit139",
+  "original_root_cause": "UNDETERMINED_NOT_ATTRIBUTED_TO_PLATFORM",
+  "code_dependency_threshold_changes": false,
+  "original_failure_log": "ci-p2/main-microcap-job.log",
+  "remaining_components_reused": true,
+  "all_five_checks_passed": true,
+  "jobs": [
+    {
+      "completedAt": "2026-11-12T00:34:03Z",
+      "conclusion": "success",
+      "databaseId": 130883442380,
+      "name": "strategy-tests (microcap)",
+      "startedAt": "2026-11-12T00:28:51Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-12T00:28:53Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-12T00:28:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:28:54Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 2,
+          "startedAt": "2026-11-12T00:28:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:28:55Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v6",
+          "number": 3,
+          "startedAt": "2026-11-12T00:28:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:28:55Z",
+          "conclusion": "success",
+          "name": "Resolve exact published strategy pin",
+          "number": 4,
+          "startedAt": "2026-11-12T00:28:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:29:41Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 5,
+          "startedAt": "2026-11-12T00:28:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:30:07Z",
+          "conclusion": "success",
+          "name": "Install Microcap regression dependencies",
+          "number": 6,
+          "startedAt": "2026-11-12T00:29:41Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:30:07Z",
+          "conclusion": "skipped",
+          "name": "Install ICIM regression dependencies",
+          "number": 7,
+          "startedAt": "2026-11-12T00:30:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:30:40Z",
+          "conclusion": "success",
+          "name": "Verify and materialize the separate complete Microcap test source",
+          "number": 8,
+          "startedAt": "2026-11-12T00:30:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:33:59Z",
+          "conclusion": "success",
+          "name": "Test Microcap state and cloud transport invariants",
+          "number": 9,
+          "startedAt": "2026-11-12T00:30:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:33:59Z",
+          "conclusion": "skipped",
+          "name": "Test ICIM source failover and persistent ledger invariants",
+          "number": 10,
+          "startedAt": "2026-11-12T00:33:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:33:59Z",
+          "conclusion": "success",
+          "name": "Verify Microcap test source bytes after execution",
+          "number": 11,
+          "startedAt": "2026-11-12T00:33:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:33:59Z",
+          "conclusion": "success",
+          "name": "Preserve tests and actual tested strategy SHA",
+          "number": 12,
+          "startedAt": "2026-11-12T00:33:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:34:01Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v7",
+          "number": 13,
+          "startedAt": "2026-11-12T00:34:00Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:34:01Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 24,
+          "startedAt": "2026-11-12T00:34:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:34:01Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v6",
+          "number": 25,
+          "startedAt": "2026-11-12T00:34:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:34:01Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 26,
+          "startedAt": "2026-11-12T00:34:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-12T00:34:01Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 27,
+          "startedAt": "2026-11-12T00:34:01Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/job/130883442380"
+    },
+    {
+      "completedAt": "2026-11-11T23:46:31Z",
+      "conclusion": "success",
+      "databaseId": 130883444772,
+      "name": "automation-tests",
+      "startedAt": "2026-11-11T23:44:20Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-11T23:44:22Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-11T23:44:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:23Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 2,
+          "startedAt": "2026-11-11T23:44:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:23Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v6",
+          "number": 3,
+          "startedAt": "2026-11-11T23:44:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:38Z",
+          "conclusion": "success",
+          "name": "Run python -m pip install 'pytest>=8,<9' 'PyYAML>=6,<7' 'hypothesis>=6,<7' 'pandas<3' requests",
+          "number": 4,
+          "startedAt": "2026-11-11T23:44:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:29Z",
+          "conclusion": "success",
+          "name": "Check delivery contracts and all automation regressions",
+          "number": 5,
+          "startedAt": "2026-11-11T23:44:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:29Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v7",
+          "number": 6,
+          "startedAt": "2026-11-11T23:46:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:30Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v6",
+          "number": 11,
+          "startedAt": "2026-11-11T23:46:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:30Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 12,
+          "startedAt": "2026-11-11T23:46:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:30Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "startedAt": "2026-11-11T23:46:30Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/job/130883444772"
+    },
+    {
+      "completedAt": "2026-11-11T23:45:01Z",
+      "conclusion": "success",
+      "databaseId": 130883479552,
+      "name": "strategy-tests (icim)",
+      "startedAt": "2026-11-11T23:44:20Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-11T23:44:21Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-11T23:44:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:23Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 2,
+          "startedAt": "2026-11-11T23:44:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:23Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v6",
+          "number": 3,
+          "startedAt": "2026-11-11T23:44:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:23Z",
+          "conclusion": "success",
+          "name": "Resolve exact published strategy pin",
+          "number": 4,
+          "startedAt": "2026-11-11T23:44:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:27Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 5,
+          "startedAt": "2026-11-11T23:44:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:27Z",
+          "conclusion": "skipped",
+          "name": "Install Microcap regression dependencies",
+          "number": 6,
+          "startedAt": "2026-11-11T23:44:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:40Z",
+          "conclusion": "success",
+          "name": "Install ICIM regression dependencies",
+          "number": 7,
+          "startedAt": "2026-11-11T23:44:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:40Z",
+          "conclusion": "skipped",
+          "name": "Verify and materialize the separate complete Microcap test source",
+          "number": 8,
+          "startedAt": "2026-11-11T23:44:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:40Z",
+          "conclusion": "skipped",
+          "name": "Test Microcap state and cloud transport invariants",
+          "number": 9,
+          "startedAt": "2026-11-11T23:44:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:58Z",
+          "conclusion": "success",
+          "name": "Test ICIM source failover and persistent ledger invariants",
+          "number": 10,
+          "startedAt": "2026-11-11T23:44:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:58Z",
+          "conclusion": "skipped",
+          "name": "Verify Microcap test source bytes after execution",
+          "number": 11,
+          "startedAt": "2026-11-11T23:44:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:58Z",
+          "conclusion": "success",
+          "name": "Preserve tests and actual tested strategy SHA",
+          "number": 12,
+          "startedAt": "2026-11-11T23:44:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:59Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v7",
+          "number": 13,
+          "startedAt": "2026-11-11T23:44:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:59Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 24,
+          "startedAt": "2026-11-11T23:44:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:59Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v6",
+          "number": 25,
+          "startedAt": "2026-11-11T23:44:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:59Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 26,
+          "startedAt": "2026-11-11T23:44:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:59Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 27,
+          "startedAt": "2026-11-11T23:44:59Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/job/130883479552"
+    },
+    {
+      "completedAt": "2026-11-11T23:46:08Z",
+      "conclusion": "success",
+      "databaseId": 130883501107,
+      "name": "maintenance-native-tests",
+      "startedAt": "2026-11-11T23:44:20Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-11T23:44:23Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-11T23:44:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:26Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 2,
+          "startedAt": "2026-11-11T23:44:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:27Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v6",
+          "number": 3,
+          "startedAt": "2026-11-11T23:44:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:30Z",
+          "conclusion": "success",
+          "name": "Resolve exact independent maintenance runtime",
+          "number": 4,
+          "startedAt": "2026-11-11T23:44:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:45:06Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 5,
+          "startedAt": "2026-11-11T23:44:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:45:37Z",
+          "conclusion": "success",
+          "name": "Run python -m pip install numpy 'pandas<3' requests 'akshare==1.18.46' matplotlib 'pytest>=8,<9'",
+          "number": 6,
+          "startedAt": "2026-11-11T23:45:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:03Z",
+          "conclusion": "success",
+          "name": "Test real maintenance evidence and unchanged source guards",
+          "number": 7,
+          "startedAt": "2026-11-11T23:45:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:05Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v7",
+          "number": 8,
+          "startedAt": "2026-11-11T23:46:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:05Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 14,
+          "startedAt": "2026-11-11T23:46:05Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:06Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v6",
+          "number": 15,
+          "startedAt": "2026-11-11T23:46:05Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:06Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 16,
+          "startedAt": "2026-11-11T23:46:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:46:06Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 17,
+          "startedAt": "2026-11-11T23:46:06Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/job/130883501107"
+    },
+    {
+      "completedAt": "2026-11-11T23:45:50Z",
+      "conclusion": "success",
+      "databaseId": 130883510654,
+      "name": "member-daily-tests",
+      "startedAt": "2026-11-11T23:44:20Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-11-11T23:44:22Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-11-11T23:44:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:27Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 2,
+          "startedAt": "2026-11-11T23:44:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:27Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v6",
+          "number": 3,
+          "startedAt": "2026-11-11T23:44:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:27Z",
+          "conclusion": "success",
+          "name": "Resolve exact member daily runtime",
+          "number": 4,
+          "startedAt": "2026-11-11T23:44:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:44:59Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 5,
+          "startedAt": "2026-11-11T23:44:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:45:28Z",
+          "conclusion": "success",
+          "name": "Run python -m pip install numpy 'pandas<3' requests matplotlib 'akshare==1.18.46' 'pytest>=8,<9'",
+          "number": 6,
+          "startedAt": "2026-11-11T23:44:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:45:47Z",
+          "conclusion": "success",
+          "name": "Test native member transport and next-session guards",
+          "number": 7,
+          "startedAt": "2026-11-11T23:45:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:45:48Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v7",
+          "number": 8,
+          "startedAt": "2026-11-11T23:45:47Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:45:48Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 14,
+          "startedAt": "2026-11-11T23:45:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:45:48Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v6",
+          "number": 15,
+          "startedAt": "2026-11-11T23:45:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:45:49Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 16,
+          "startedAt": "2026-11-11T23:45:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-11-11T23:45:49Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 17,
+          "startedAt": "2026-11-11T23:45:49Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122095720/job/130883510654"
+    }
+  ]
+}

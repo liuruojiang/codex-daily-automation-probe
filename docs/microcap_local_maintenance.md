@@ -22,13 +22,15 @@ scoped维护/调仓配置经[PR189](https://github.com/liuruojiang/codex-daily-a
 
 本地member已原子激活10文件不可变bundle `540009ba6ed9cbc01d81590978cb9ec3e4864b57`，manifest为`08bdd286ef98d65ac0bb15dafc4ea72d70792079b47666b4c741eb7a0ab2146f`，与main对应文件一致。真实12日时钟下未传缓存且未使用seed回退，实际恢复D11 artifact13838054871并通过独立日历、AB214 verify、prepare-only；没有采新盘中价。09/11实际来源执行器已同步最终代码。10:00/14:15只通过应用工具更正“09云端维护”的旧职责文字，其他任务字段及ICIM内容保持。
 
-实际Worker `345055bb-1466-4309-a7d0-9e057b82dbe0`读回模块与已测编译件一致，5个cron/flag保持；实际部署模块11项隔离故障反例通过。旧sender、假SMTP及模拟故障测试均未产生正常发送；既有11日marker/intent/SMTP receipt保留。
+首次部署Worker `345055bb-1466-4309-a7d0-9e057b82dbe0`读回模块与已测编译件一致；后续00:26自动构建版本d194保持同一b022可执行实现，仅记录同实现观察、不重标测试。5个cron/flag保持；实际部署模块11项隔离故障反例通过。旧sender、假SMTP及模拟故障测试均未产生正常发送；既有11日marker/intent/SMTP receipt保留。
 
 M3→M6 source-only认证/pack在[43116277092](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43116277092)成功，只有publisher的draft tag查询失败；[43122103224](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122103224)只恢复原ZIP发布，未重跑已成功认证或打包。M6归档672169265字节、SHA `5f78da37688112128d4edbaf6cc5dc7f3dbeb8602193d1834ddd2334d0c72f7f`，release442297118/asset737320728服务器digest匹配；170713数据对象和7经济CSV保持，`current_signal_ready=false`。
 
 [第一普通main恢复43122727666](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43122727666)从M6 seed核验并发布成品；[第二次43124356822](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43124356822)在禁止seed回退后准确恢复前者artifact13901524557，`fallback_used=false`。包5f78、source manifest `a891e3ce…`及三版streams一致，原生完整归档门槛均通过，sending=skipped。见[双次接力原件](acceptance/microcap_daily_chain_repairs_20261112/cloud-relay-m6-20261112.json)。
 
 此接力只认证完整10日归档，不能代表11日来源完成或12日当前信号。按真实记录cutoff，11日share为273 complete/27 failed；旧aggregate的272属于较早时点。12日09:00新公告/名称观察及下一实际R/new-v2现场接续尚未发生，仍按真实来源与原门槛取得；软件R12/R13/R26演练不冒充未来行情。原M5匹配代码/seed及旧75文件bundle保留回退，主项目ab214与原7个数据改动保持。
+
+主线最终复核中一组原生测试曾出现pandas C读表层段错误（根因未定）；仅定向重跑该失败组一次后，43122095720 attempt2五组全部成功，必需微盘1922 tests/zero skips。源码、依赖、门槛及已成功的云端恢复均未重复修改或重跑，原错误和复验收据分别保留。
 
 ## 历史记录：修复前/M5及更早阶段
 
