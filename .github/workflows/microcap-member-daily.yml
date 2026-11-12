@@ -89,6 +89,9 @@ jobs:
         working-directory: microcap
         env:
           MODE: ${{ inputs.publication_mode }}
+          VALIDATE: ${{ inputs.validation_only }}
+          PERSIST_CHECKPOINT: ${{ inputs.persist_checkpoint }}
+          EXTERNAL_SCHEDULE: ${{ inputs.external_schedule }}
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
           from datetime import datetime
@@ -99,7 +102,9 @@ jobs:
           sessions={x.date() if hasattr(x,'date') else x for x in sessions_for_day(today)}
           print('trading='+str(today in sessions).lower())
           target=latest_completed_session() if os.environ['MODE']=='close_confirmed' else today
-          if today in sessions and target != today:
+          readonly_validation=(os.environ['VALIDATE']=='true' and os.environ['PERSIST_CHECKPOINT']!='true'
+                               and os.environ['EXTERNAL_SCHEDULE']!='true')
+          if today in sessions and target != today and not readonly_validation:
               raise ValueError('Daily close cannot use an earlier completed session')
           print('date='+target.isoformat())
           PY

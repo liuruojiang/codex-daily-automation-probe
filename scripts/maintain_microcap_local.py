@@ -502,7 +502,7 @@ def select_local_notice_forward(*,root,protected_root,state,symbols,target,out,n
     from contextlib import ExitStack
     module_path=Path(__file__).with_name('microcap_notice_prefix.py').resolve()
     # Pin this reused dependency through maintain's existing orchestrator hash.
-    if sha(module_path.read_bytes().replace(b'\r\n',b'\n'))!='f6746db692d5a1af0baca6431cd774e048564a794d42e1a11484719a39fc57f0':
+    if sha(module_path.read_bytes().replace(b'\r\n',b'\n'))!='6a6b8c7e3da73afd72e0c76ae87d08357cc1c2ac4d30c0013c021914aef97d25':
         raise ValueError('Local notice selector dependency is not the reviewed exact source')
     import microcap_notice_prefix as prefix
     if Path(prefix.__file__).resolve()!=module_path:raise ValueError('Foreign local notice selector module')
@@ -512,7 +512,7 @@ def select_local_notice_forward(*,root,protected_root,state,symbols,target,out,n
     root,protected,state,out=map(lambda p:p.resolve(),roles)
     ab214='ab214c20d92ca9bbda1dde7e447bb153e7f59028'
     owner=subprocess.check_output(['git','-C',str(protected),'rev-parse','HEAD'],encoding='utf-8').strip()
-    if owner in (prefix.CONSUMER,prefix.ACTIVE_CONSUMER):
+    if owner in prefix.CONSUMER_READERS:
         return dict(status='not_applicable_to_local_notice_forward',verification_consumer_runtime=owner,
                     source_inputs_only=True,target_freshness_granted=False,current_signal_ready=False)
     if owner!=ab214:raise ValueError('Local notice protected owner must be actual AB214')

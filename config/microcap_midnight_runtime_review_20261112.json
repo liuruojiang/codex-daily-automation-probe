@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "95d896fe58cc7cb84c0fcb7bd76534f62c9430f4",
+  "runtime_sha": "906eca8a5dfede7fa1674fb17cd3c6ce12205e6d",
+  "changes": {
+    "scripts/scoped_forward_consumption.py": [
+      "23c053fd49c16aa2dce8fe26ff4b6e234d695fe47ce9350b488161d48b4305f5",
+      "85199f0152b08a91ec58bde363099a0670000bb118f8d921354b26b0ee02ecc6"
+    ],
+    "tests/fixtures/stock_return_basis_real/m8_turnover_a87ee0_20261110.csv.gz": [
+      null,
+      "68e2cc4983969572366bbe7429545d983b65f149cb240c632b015d21cb88fe9d"
+    ],
+    "tests/test_scoped_forward_consumption.py": [
+      "52dea65d9a5aa61bb92d0d6c5926c0dfc971351dfceb2ccc68d8dbc3096a804b",
+      "da37ca2870faa32c1ce131a864c8c9784a7c2c101aca7026471d0c3eea7b1e10"
+    ]
+  }
+}

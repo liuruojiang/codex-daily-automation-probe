@@ -41,10 +41,10 @@ def prepared(tmp_path,monkeypatch):
             Path(argv[-1]).write_bytes(encode(dict(target=target,consumer_sha=consumer_sha,release_sha=consumer_sha,
                 next_session='2026-10-30',previous_authority=['archive.json','d'*64],rebalance_dates=[target])))
         elif label=='export':Path(argv[-1]).write_bytes(b'software source bundle fixture')
-        elif label=='stage':
+        elif label in ('stage','stage-resumed-sources'):
             receipt=consumer/'.microcap_index_cache/local_input_imports'/('c'*64)/'receipt.json'
-            receipt.parent.mkdir(parents=True)
-            receipt.write_bytes(encode(dict(status='native_sources_staged',source_bundle_sha256='c'*64,
+            receipt.parent.mkdir(parents=True,exist_ok=True)
+            receipt.write_bytes(encode(dict(status='native_sources_staged',target=target,source_bundle_sha256='c'*64,
                 files={},production_pointers_changed=stage_fault['enabled'],native_late_adoption_required=True)))
         elif label=='handoff':
             checkpoint=Path(argv[-1])/'checkpoint.json';checkpoint.parent.mkdir(parents=True)
@@ -99,6 +99,30 @@ def test_completed_preparation_reuses_bound_source_package_without_recollection(
     calls.clear()
     assert runner.prepare(**args)==first
     assert [c[0] for c in calls]==['preflight']
+
+
+def test_completed_preparation_restages_only_the_missing_receiver_without_collecting(prepared):
+    args,calls,_,_,_=prepared
+    first=runner.prepare(**args)
+    original=(args['out']/'prepared.json').read_bytes()
+    receipt=args['consumer']/'.microcap_index_cache/local_input_imports'/('c'*64)/'receipt.json'
+    receipt.rename(receipt.with_name('old-receiver-receipt.json'))
+    calls.clear()
+    assert runner.prepare(**args)==first
+    assert [name for name,_ in calls]==['preflight','stage-resumed-sources']
+    assert (args['out']/'prepared.json').read_bytes()==original
+    assert receipt.with_name('old-receiver-receipt.json').is_file()
+
+
+def test_preserved_bad_receiver_receipt_is_not_silently_reimported(prepared):
+    args,calls,_,_,_=prepared
+    runner.prepare(**args)
+    receipt=args['consumer']/'.microcap_index_cache/local_input_imports'/('c'*64)/'receipt.json'
+    value=json.loads(receipt.read_bytes());value['production_pointers_changed']=True
+    receipt.write_bytes(encode(value));original=receipt.read_bytes();calls.clear()
+    with pytest.raises(ValueError,match='staging closure'):
+        runner.prepare(**args)
+    assert [name for name,_ in calls]==['preflight'] and receipt.read_bytes()==original
 
 
 @pytest.mark.parametrize('fault',['unverified_roster','stale_roster','tampered_candidates','incomplete_source','escaped_scope','staging_changed_pointer','preflight_rejected','source_failure'])

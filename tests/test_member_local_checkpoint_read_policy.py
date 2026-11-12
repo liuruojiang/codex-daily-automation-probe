@@ -152,10 +152,10 @@ def test_explicit_cached_checkpoint_cannot_bypass_the_same_core_identity_guard()
 @pytest.mark.parametrize('producer', policy.LOCAL_READ_POLICY['rebalance_producer_shas'])
 def test_exact_reviewed_rebalance_marker_requires_preserved_native_handoff(producer):
     known = policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json', AB)
-    error='formal recovery proof route' if producer==recovery.M8 else 'handoff lineage'
+    error='formal recovery proof route' if producer in (recovery.M8,recovery.M9) else 'handoff lineage'
     with pytest.raises(ValueError, match=error):
         policy.validate_checkpoint_payload({'strategy_sha': producer}, known)
-    if producer==recovery.M8:
+    if producer in (recovery.M8,recovery.M9):
         # This checks the policy header, not the independent complete-proof gate.
         value=dict(strategy_sha=producer,handoff_mode=recovery.MODE,handoff_from='1'*64,
             recovery_controller=dict(revision=recovery.CONTROLLER,

@@ -42,6 +42,8 @@ REVIEWED_ROLES = {
         producer_runtime='3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'),
     'm8': dict(tested_native='m8', native_runtime='95d896fe58cc7cb84c0fcb7bd76534f62c9430f4',
         producer_runtime='3344e403ff01e17ef45b745a704a240e0917720b'),
+    'm9': dict(tested_native='m9', native_runtime='906eca8a5dfede7fa1674fb17cd3c6ce12205e6d',
+        producer_runtime='3344e403ff01e17ef45b745a704a240e0917720b'),
 }
 
 
@@ -65,7 +67,7 @@ def environment_roles(native_root=None, *, require_producer=False):
     if chosen is not None and chosen != roles['tested_native']:
         raise ValueError('Acceptance selected Native differs from the actual checkout')
     producer_root = Path(os.environ.get('MICROCAP_PRODUCER_ROOT') or (
-        r'D:\Codex\workspaces\microcap-quote-fallback-p3-20261112' if roles['tested_native'] == 'm8'
+        r'D:\Codex\workspaces\microcap-quote-fallback-p3-20261112' if roles['tested_native'] in ('m8','m9')
         else r'D:\Codex\microcap-local-maintenance\runtime')).resolve()
     verified = producer_root.is_dir()
     if verified:
@@ -392,7 +394,7 @@ def test_dedicated_cloud_acceptance_has_no_production_dispatch_or_smtp_path():
     assert consumer['if'] == "inputs.phase == 'readback'"
     assert 'source-run' in consumer['run']
     choice = flow['on']['workflow_dispatch']['inputs']['tested_native']
-    assert choice['options'] == ['m7', 'm8'] and choice['default'] == 'm8'
+    assert choice['options'] == ['m7', 'm8', 'm9'] and choice['default'] == 'm9'
     selector = next(step for step in steps if step.get('id') == 'runtime')
     assert all(value['native_runtime'] in selector['run'] and value['producer_runtime'] in selector['run']
                for value in REVIEWED_ROLES.values())
