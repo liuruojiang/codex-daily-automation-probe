@@ -1,0 +1,43 @@
+{
+  "checked_at_utc": "2026-11-11T23:46:48.575767+00:00",
+  "read_only": true,
+  "version": "345055bb-1466-4309-a7d0-9e057b82dbe0",
+  "compiled_candidate_matches": true,
+  "schedules_match": true,
+  "member_daily_enabled": true,
+  "results": [
+    {
+      "name": "deployed-content",
+      "status": 200,
+      "bytes": 18023,
+      "sha256": "0862cdc6bbeb429a01ae34fd94ae6b2aaa6b32dd82e11d25ed7ecb9edb5ce30b",
+      "modules": [
+        {
+          "name": "worker.js",
+          "file": "deployed-module-0.js",
+          "bytes": 6422,
+          "sha256": "b02277411d70b04148d9087110afd61f154cb258db05bb3ab60e5db25b080f11"
+        },
+        {
+          "name": "worker.js.map",
+          "file": "deployed-module-1.bin",
+          "bytes": 11164,
+          "sha256": "57fb8272b7ba22d0acb47bad717e00cf622c2cac361e37a006139c1de5e59308"
+        }
+      ]
+    },
+    {
+      "name": "deployed-schedules",
+      "status": 200,
+      "bytes": 881,
+      "sha256": "26c4af344b89ea2d6a989fcb0fb30fa2d4c8bb09463da81d6e0695ecd78e6848"
+    },
+    {
+      "name": "deployed-deployments",
+      "status": 200,
+      "bytes": 4942,
+      "sha256": "ce97e734b098d94127149d2c4a071c1070fee0562a2c4b72e4e917bdf8420ca9"
+    }
+  ],
+  "credentials_printed": false
+}

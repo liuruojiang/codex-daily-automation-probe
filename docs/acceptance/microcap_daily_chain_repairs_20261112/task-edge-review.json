@@ -1,0 +1,1401 @@
+{
+  "schema": "microcap_final_task_edge_review_v1",
+  "prepared_at_UTC": "2026-11-11T23:25:05.040067+00:00",
+  "status": "COMPLETE_INDEPENDENT_TASK_EDGE_REVIEW_WITH_EXPLICIT_FIELD_LIMITS",
+  "source_matrix": "D:\\Codex\\audits\\microcap-daily-chain-20261112\\task-connection-matrix.json",
+  "source_matrix_sha256": "79332bb51a6b1ecded0ef996877120c0bd6ca711ac1a232c7fb4c50968d5a0f2",
+  "reviewed_task_count": 31,
+  "reviewed_edge_count": 25,
+  "missing_task_ids": [],
+  "missing_edge_ids": [],
+  "evidence_refs": {
+    "ORIGINAL_MATRIX": "D:\\Codex\\audits\\microcap-daily-chain-20261112\\task-connection-matrix.json",
+    "ORIGINAL_AUDIT": "D:\\Codex\\audits\\microcap-daily-chain-20261112\\AUDIT_REPORT.md",
+    "ORIGINAL_SCHEDULER": "D:\\Codex\\audits\\microcap-daily-chain-20261112\\scheduler\\findings.md",
+    "WEEKLY_OWNER_PROMPT": "D:\\Codex\\audits\\microcap-daily-chain-20261112\\scheduler\\09-00.toml",
+    "ORIGINAL_DAILY": "D:\\Codex\\audits\\microcap-daily-chain-20261112\\daily_delivery\\coverage.json",
+    "D11_ORIGINALS": "D:\\Codex\\audits\\microcap-daily-chain-20261112\\remote_evidence\\daily42983576468",
+    "D11_REAL_CALENDAR_PREPARE": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\local_links\\phase2-live-calendar-D11-acceptance.json",
+    "A_FIX_HANDOFF": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\local_links\\PHASE2_HANDOFF.md",
+    "A_INDEPENDENT": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\boundary\\independent_local_sources\\receipt.json",
+    "B_FIX": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\boundary\\repair_report.md",
+    "B_EXACT_SOURCE": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\boundary\\source_contract_probe.json",
+    "B_FROZEN": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\boundary\\frozen_fixture_provenance.json",
+    "B_ORIGINAL_HANDOFF": "D:\\Codex\\audits\\microcap-daily-chain-20261112\\rebalance_handoff\\coverage.json",
+    "B_CROSS": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\boundary\\cross_review_results.json",
+    "B_NATIVE_TWO_R_RECORD": "D:\\Codex\\test-lifecycle\\records\\e0046051f7fe461b90d4aed0b4cfb004",
+    "B_ACTUAL_AB_INTRADAY_RECORD": "D:\\Codex\\test-lifecycle\\records\\bb93d8ffe4374507b3b1eda9f2fcd42b",
+    "B_ROOT01_RECORD": "D:\\Codex\\test-lifecycle\\records\\26d40fd1bee04c4ab1603c7822dcf3b9",
+    "C1_C2_FIX": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\legacy\\README.md",
+    "SOURCE_STATUS_READONLY": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\production-backup\\source-status-readonly.json",
+    "PROTECTED_BACKUP": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\production-backup\\protected-state-baseline.json",
+    "EXISTING_MAIL_TRANSACTIONS": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\production-backup\\existing-mail-transactions.json",
+    "ROOT_PROGRESS": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\REPAIR_REPORT.md",
+    "M6_OLD_ARCHIVE_REAL_RELAY": "D:\\Codex\\microcap-local-maintenance\\consumer-acceptance\\cloud-relay-m5-20261112.json",
+    "FINAL_LOCAL_ACTIVATION": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\local-production-activation.json",
+    "FINAL_LOCAL_REAL_PREPARE": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\local_links\\final-p2-install-preparation-20261112T073812-d4c87623\\actual-run-acceptance.json",
+    "C_FINAL_RECEIPT": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\member_publication\\local_candidate_receipt.json",
+    "C_FINAL_HANDOFF": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\member_publication\\README.md",
+    "C_NATIVE_POSITIVES": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\member_publication\\native_r_positive_v2",
+    "C_FINAL_RECORD": "D:\\Codex\\test-lifecycle\\records\\7b47c59d3f0f471c96ff33f0d84a5aac",
+    "C_INDEPENDENT_RECORD": "D:\\Codex\\test-lifecycle\\records\\1b3d0888093c4cadb3bea61c22aca046",
+    "WORKER_ACTUAL_READBACK": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\readback.json",
+    "WORKER_ACTUAL_MODULE": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\deployed-module-0.js",
+    "B_ROOT01_DEPLOYED_MODULE_RECORD": "D:\\Codex\\test-lifecycle\\records\\26f9c0fb9b7a4691a020e7a0a78098b0",
+    "M6_NATIVE_RECERTIFICATION": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-migration\\first-run-evidence\\codex-daily-automation-probe\\codex-daily-automation-probe\\evidence\\native-recertification.json",
+    "M6_NATIVE_PACK": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-migration\\first-run-evidence\\codex-daily-automation-probe\\codex-daily-automation-probe\\evidence\\native-pack.json",
+    "M6_ARCHIVE_IDENTITY": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-migration\\first-run-evidence\\codex-daily-automation-probe\\codex-daily-automation-probe\\evidence\\archive-identity.json",
+    "M6_PUBLICATION_RECOVERY": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-migration\\publication-recovery-receipts\\publication-recovery.json",
+    "AUTOMATION_ROLE_WORDING_READBACK": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\automation-role-wording-readback.json",
+    "M6_TWO_MAIN_CLOUD_PAIRED": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\paired-proof.json",
+    "M6_FIRST_MAIN_PROOF": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\first-proof.json",
+    "M6_SECOND_MAIN_PROOF": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\second-proof.json",
+    "M6_SECOND_RAW_RESTORE": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\second\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-restore.json",
+    "M6_SECOND_RAW_ARCHIVE_ACCEPTANCE": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\second\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-archive-acceptance.json"
+  },
+  "source_closure": {
+    "auto_unchanged": [
+      {
+        "path": ".github/workflows/microcap-close-recovery.yml",
+        "old_sha256": "c1312dbf8a7b9f5e5596e2abe8d418618d85b3e01a9166e54db4f878313d4693",
+        "current_sha256": "c1312dbf8a7b9f5e5596e2abe8d418618d85b3e01a9166e54db4f878313d4693",
+        "unchanged": true
+      },
+      {
+        "path": ".github/workflows/microcap-metadata-recovery.yml",
+        "old_sha256": "1d08b3e47ce27b50b72a6ee8d3096d4784b44ed04bfc96a93d77cc87a72bbcd7",
+        "current_sha256": "1d08b3e47ce27b50b72a6ee8d3096d4784b44ed04bfc96a93d77cc87a72bbcd7",
+        "unchanged": true
+      },
+      {
+        "path": ".github/workflows/microcap-notice-boundary-diagnostic.yml",
+        "old_sha256": "cc6ac7164b28c4194baadeedc559f3164163a86aa020add370d9c1634695984f",
+        "current_sha256": "cc6ac7164b28c4194baadeedc559f3164163a86aa020add370d9c1634695984f",
+        "unchanged": true
+      },
+      {
+        "path": ".github/workflows/microcap-universe-deadline-probe.yml",
+        "old_sha256": "0f68a95fe2f526ba6d10dd64f8e073f2be21f2566b88ac8e75f13475ff9b8575",
+        "current_sha256": "0f68a95fe2f526ba6d10dd64f8e073f2be21f2566b88ac8e75f13475ff9b8575",
+        "unchanged": true
+      },
+      {
+        "path": ".github/workflows/microcap-archive-byte-relay-20261112.yml",
+        "old_sha256": "0ff9fc4bb5d3df3885ac43bad78d07d7895df4df6c620fa62e2f39b8a0840551",
+        "current_sha256": "0ff9fc4bb5d3df3885ac43bad78d07d7895df4df6c620fa62e2f39b8a0840551",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/microcap_archive_byte_relay_20261112.py",
+        "old_sha256": "f7b2bb96b09d182a8803ed6cb81c47173b6ff4091fe815a46074790e59f949ec",
+        "current_sha256": "f7b2bb96b09d182a8803ed6cb81c47173b6ff4091fe815a46074790e59f949ec",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/check_microcap_delivery.py",
+        "old_sha256": "a8e2421b9d179291f9486b475ee10a114064b1827fc4714f80373e903e00e650",
+        "current_sha256": "a8e2421b9d179291f9486b475ee10a114064b1827fc4714f80373e903e00e650",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/check_microcap_member_send.py",
+        "old_sha256": "9992dbf2e3de3ffa1481c07aa3026c0fcac723ca669b086099b9b64f4ae59303",
+        "current_sha256": "9992dbf2e3de3ffa1481c07aa3026c0fcac723ca669b086099b9b64f4ae59303",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/send_report.py",
+        "old_sha256": "cbef643ec606b62695d51bb2e1d12da7dafe5e65d038b29107f47542dc7a9cd9",
+        "current_sha256": "cbef643ec606b62695d51bb2e1d12da7dafe5e65d038b29107f47542dc7a9cd9",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/mail_utils.py",
+        "old_sha256": "a7f36f420223f6c2a42f529a437f7ad713469bbaf8866f7f82480fd5b057a642",
+        "current_sha256": "a7f36f420223f6c2a42f529a437f7ad713469bbaf8866f7f82480fd5b057a642",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/microcap_scoped_whole_recovery.py",
+        "old_sha256": "e696a967fce8a3ceec747137c16f2c3723524cdc6228e895b3a18e452cf7d5c9",
+        "current_sha256": "e696a967fce8a3ceec747137c16f2c3723524cdc6228e895b3a18e452cf7d5c9",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/run_microcap_scoped_rebalance.py",
+        "old_sha256": "b5f80e8e094c8d9c5ffa50395892d84b7b5195615733a9e08ee58c9009e3876e",
+        "current_sha256": "b5f80e8e094c8d9c5ffa50395892d84b7b5195615733a9e08ee58c9009e3876e",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/microcap_handoff_witness.py",
+        "old_sha256": "8963ed0e6af823fe228ad84b0fcbf8951e19d6e44d2a9536d8b9eaf3a3b457f7",
+        "current_sha256": "8963ed0e6af823fe228ad84b0fcbf8951e19d6e44d2a9536d8b9eaf3a3b457f7",
+        "unchanged": true
+      },
+      {
+        "path": "scripts/microcap_scoped_roster.py",
+        "old_sha256": "b86291a551d667ddabf36bed923982a1cdb3bf1cbb83bac78b6037e855cddf8f",
+        "current_sha256": "b86291a551d667ddabf36bed923982a1cdb3bf1cbb83bac78b6037e855cddf8f",
+        "unchanged": true
+      }
+    ],
+    "strategy_entrypoints_unchanged": [
+      {
+        "path": "microcap_top100_mom16_biweekly_live_v2_0.py",
+        "before_sha256": "3220146d1be8e8b305eb2333f17cdf57655a38ac6825595ffeb7cab1e25b2284",
+        "after_sha256": "3220146d1be8e8b305eb2333f17cdf57655a38ac6825595ffeb7cab1e25b2284",
+        "unchanged": true
+      },
+      {
+        "path": "microcap_top100_mom16_biweekly_live_v2_3.py",
+        "before_sha256": "db1f635f291473775d20aca2a57886512b2494c4fa871a534a0ea9f2c5568063",
+        "after_sha256": "db1f635f291473775d20aca2a57886512b2494c4fa871a534a0ea9f2c5568063",
+        "unchanged": true
+      },
+      {
+        "path": "microcap_top100_mom16_biweekly_live_v2_5.py",
+        "before_sha256": "c39b8fa5b4fe44142fb470944bf87c875c18dcc480cad0f705b4e653bba64f50",
+        "after_sha256": "c39b8fa5b4fe44142fb470944bf87c875c18dcc480cad0f705b4e653bba64f50",
+        "unchanged": true
+      }
+    ],
+    "native_old_release_assembly": {
+      "path": ".github/workflows/native-state-release.yml",
+      "baseline_sha256": "d047450f3126955ae054b9b2b66104f6cda9a026ab9c68d340ff9b91b8cf6ba8",
+      "reviewed_sha256": "d047450f3126955ae054b9b2b66104f6cda9a026ab9c68d340ff9b91b8cf6ba8",
+      "unchanged": true
+    },
+    "cloud_member_runtime": {
+      "path": "config/microcap_member_runtime.json",
+      "sha256": "4da95ef9826be2970489d9d19da382cd447a1afd66960de9ad07a8fac3dd92d1",
+      "unchanged": true,
+      "config": {
+        "schema": "member_daily_runtime_v1",
+        "strategy_sha": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
+        "core_strategy_sha": "ad4de441d35442616f91aa613146ffdf8cd479f3"
+      }
+    },
+    "final_local_and_C_readback": {
+      "auto_main": "a403909ac2a2b53c40ff0f3dee2e37ca6ba6235e",
+      "checked_at_UTC": "2026-11-11T23:49:50.197927+00:00",
+      "pointer_sha256": "fed85d83ce72338395f490ad1b6ee58c6ced6de95847a68748c0e0e2de3298ec",
+      "actual_manifest_sha256": "08bdd286ef98d65ac0bb15dafc4ea72d70792079b47666b4c741eb7a0ab2146f",
+      "strategy_root_exists": true,
+      "bundle_checks": [
+        {
+          "path": "scripts/run_microcap_member_local.py",
+          "sha256": "d978dc292c90f5293508b32daf44345b79d80a50a023cb47226e89716c3f04f1",
+          "manifest_match": true,
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/restore_microcap_member_checkpoint.py",
+          "sha256": "4b2a292494078c80ce355e75dc1f29de1582f48da4e8db7064f6b847d1be84ba",
+          "manifest_match": true,
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/member_checkpoint_policy.py",
+          "sha256": "d91b28c101fe06a045b06ad4a66f31d1b1dee1532b582aa32be961bb45b39f8b",
+          "manifest_match": true,
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/restore_microcap_verified_state.py",
+          "sha256": "61a6f6e60b9305402256c5f9eccde8abd004a254628ce6cf549b6c0c8edd61d9",
+          "manifest_match": true,
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/build_microcap_member_digest.py",
+          "sha256": "ae18d711ffe23a6ecd81f547758ebbb153d98e54bc3e6609c832ca97b84d8952",
+          "manifest_match": true,
+          "merged_main_match": true
+        },
+        {
+          "path": "config/microcap_member_runtime.json",
+          "sha256": "4da95ef9826be2970489d9d19da382cd447a1afd66960de9ad07a8fac3dd92d1",
+          "manifest_match": true,
+          "merged_main_match": true
+        },
+        {
+          "path": "config/microcap_member_local_runtime.json",
+          "sha256": "74671956813317cc4c1117ff99c3f57b17d75d525b782b98287fbaf5885573c6",
+          "manifest_match": true,
+          "merged_main_match": true
+        },
+        {
+          "path": "config/microcap_member_checkpoint.json",
+          "sha256": "eeaf4e954c16d7590e4222715888854d0403be447e1d92e49017add1cac98f05",
+          "manifest_match": true,
+          "merged_main_match": true
+        },
+        {
+          "path": "config/microcap_member_seed_20261109_4774966d.zip",
+          "sha256": "3fa87b093e46f81651a17a2c6de23ad4cf3e46d1853744211c1ff191c6d67c50",
+          "manifest_match": true,
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/microcap_member_report_contract.py",
+          "sha256": "5717c022c83fbcb7137a9530399934e7fcd83eefb040cfcb81a866d27497c54c",
+          "manifest_match": true,
+          "merged_main_match": true
+        }
+      ],
+      "active_source_checks": [
+        {
+          "path": "scripts/maintain_microcap_local.py",
+          "sha256_LF": "500b2715d5eb4fb2827f92e376fff88a7f0d5c9a9883942001efd86ab1d125cd",
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/member_checkpoint_policy.py",
+          "sha256_LF": "d91b28c101fe06a045b06ad4a66f31d1b1dee1532b582aa32be961bb45b39f8b",
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/microcap_local_due.py",
+          "sha256_LF": "366efbc3115eed3b7d31fb5d33ec9cf17efaa912cf8c13cb64cd7eede7a99d29",
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/microcap_local_workers.py",
+          "sha256_LF": "431129c9737ea947ec38222d55ac44bdf87c2136918ea40bb869600edffaed6c",
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/microcap_scoped_inputs.py",
+          "sha256_LF": "86b98c45c816787a06f147f41ee8bfa7e224a95d6588289adf2a403a4fb777e2",
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/prepare_microcap_member_local_bundle.py",
+          "sha256_LF": "e96692d3c284a70fd4c5bf229e67b3c9606128c4c22c93eb325edbe82478decf",
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/restore_microcap_member_checkpoint.py",
+          "sha256_LF": "4b2a292494078c80ce355e75dc1f29de1582f48da4e8db7064f6b847d1be84ba",
+          "merged_main_match": true
+        },
+        {
+          "path": "scripts/run_microcap_member_local.py",
+          "sha256_LF": "d978dc292c90f5293508b32daf44345b79d80a50a023cb47226e89716c3f04f1",
+          "merged_main_match": true
+        }
+      ],
+      "C_merged_source_checks": [
+        {
+          "path": "scripts/build_microcap_member_digest.py",
+          "reviewed_candidate_sha256": "ae18d711ffe23a6ecd81f547758ebbb153d98e54bc3e6609c832ca97b84d8952",
+          "merged_main_sha256": "ae18d711ffe23a6ecd81f547758ebbb153d98e54bc3e6609c832ca97b84d8952",
+          "identical": true
+        },
+        {
+          "path": "scripts/microcap_member_report_contract.py",
+          "reviewed_candidate_sha256": "5717c022c83fbcb7137a9530399934e7fcd83eefb040cfcb81a866d27497c54c",
+          "merged_main_sha256": "5717c022c83fbcb7137a9530399934e7fcd83eefb040cfcb81a866d27497c54c",
+          "identical": true
+        },
+        {
+          "path": "scripts/restore_microcap_member_report.py",
+          "reviewed_candidate_sha256": "7bf1994aed7a1549fdda9bc00ab2f0c97422efca0d685dbb35d5b0aec911564b",
+          "merged_main_sha256": "7bf1994aed7a1549fdda9bc00ab2f0c97422efca0d685dbb35d5b0aec911564b",
+          "identical": true
+        }
+      ],
+      "C_tests": [
+        {
+          "id": "7b47c59d3f0f471c96ff33f0d84a5aac",
+          "exit_code": 0,
+          "tests": 168,
+          "failures": 0,
+          "errors": 0
+        },
+        {
+          "id": "1b3d0888093c4cadb3bea61c22aca046",
+          "exit_code": 0,
+          "tests": 46,
+          "failures": 0,
+          "errors": 0
+        }
+      ]
+    },
+    "final_scoped_pin_transition": {
+      "previous_reviewed_main": "a403909ac2a2b53c40ff0f3dee2e37ca6ba6235e",
+      "new_main": "b8ff92f07a86edfe01bbb54ad2784ccd575668dd",
+      "changed_paths": [
+        "config/microcap_scoped_rebalance.json"
+      ],
+      "no_installed_bundle_or_source_worker_changes": true,
+      "runtime_sha": "14e9a9fa6f0487f1d5547598435089c43f2f9fd1",
+      "producer_sha": "f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5",
+      "whole_seed_sha256": "5f78da37688112128d4edbaf6cc5dc7f3dbeb8602193d1834ddd2334d0c72f7f",
+      "weekly_roster_date": "2026-11-09"
+    },
+    "M6_actual_pair_independent_readback": {
+      "checked_at_UTC": "2026-11-12T00:20:09.287630+00:00",
+      "proof_hashes": [
+        {
+          "path": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\paired-proof.json",
+          "sha256": "b000b752b9e2f2f4e3c31de20857f6d0316ffd72169c63552fbe8664d11a2e08"
+        },
+        {
+          "path": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\first-proof.json",
+          "sha256": "02c7b9a697ea596a2752c673a2083c9f1286184e8ba205d599f56ffcfb588980"
+        },
+        {
+          "path": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\second-proof.json",
+          "sha256": "6ef2aff26d1ccec8757f24e05b6703c286a0ee4d47046fd422f16e442b1b4030"
+        },
+        {
+          "path": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\first\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-restore.json",
+          "sha256": "165b670dc1762997c457fbe663720a61bbdbd142a03a5a9967aefd28ce6a4872"
+        },
+        {
+          "path": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\first\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-archive-acceptance.json",
+          "sha256": "5edbe07b8bd94e1f559928b12a9b054cda0409debaf3bd724b954de16ad10472"
+        },
+        {
+          "path": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\first\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-schedule.json",
+          "sha256": "4f020212d63f294198f4a17a9c72b61632559f97c971ac532d817d00fef7b788"
+        },
+        {
+          "path": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\second\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-restore.json",
+          "sha256": "ae444ca5072f70efcaeb43ba86f3bfd6b4af9ac8599b838ded0a24169771f37d"
+        },
+        {
+          "path": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\second\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-archive-acceptance.json",
+          "sha256": "5edbe07b8bd94e1f559928b12a9b054cda0409debaf3bd724b954de16ad10472"
+        },
+        {
+          "path": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\second\\codex-daily-automation-probe\\codex-daily-automation-probe\\scoped-schedule.json",
+          "sha256": "4f020212d63f294198f4a17a9c72b61632559f97c971ac532d817d00fef7b788"
+        }
+      ],
+      "first_vs_second_streams_identical": true,
+      "source_restored_reader_all_M6": true,
+      "exact_first_artifact_discovered_by_second": true,
+      "second_fallback_used": false,
+      "same_bundle_and_manifest": true,
+      "actual_archive_date": "2026-11-10",
+      "schedule_date": "2026-11-11",
+      "current_signal_ready": false,
+      "sending": "skipped",
+      "actual_future_R_claimed": false
+    }
+  },
+  "independent_local_sources": {
+    "record_id": "b62df3fe37b249dfa23d1c03dc2d7348",
+    "passed": 6,
+    "result": "no confirmed blocker"
+  },
+  "source_availability": {
+    "status": "INCOMPLETE_NOT_CERTIFIED_FOR_CURRENT_PUBLICATION",
+    "evidence_ref": "SOURCE_STATUS_READONLY",
+    "latest_stage_receipt_counts_from_root": {
+      "price_complete": 300,
+      "ratio_complete": 300,
+      "share_complete": 273,
+      "share_failed": 27
+    },
+    "aggregate_has_older_cutoff": true,
+    "not_903_complete": true,
+    "no_new_Nov12_0900_observation": true
+  },
+  "empirical_scopes": {
+    "real_observed": [
+      "Original D11 collection/compute/mail/Gmail loop",
+      "Original M5 archive two-run recovery",
+      "Final ten-file bundle actual-calendar/HTTP D11 discovery, native verify, prepare-only and installed-pointer/source-code readback without quote collection",
+      "Actual repaired Worker deployed module, five cron schedules and enabled flag read back; actual module passed eleven isolated fault counterexamples with no external POST",
+      "M6 exact 10-Nov archive original-source activation/recertification/packing/publication and two ordinary main restores; second discovers first artifact 13901524557 with fallback false"
+    ],
+    "software_only": [
+      "R12/R13/R26 market suffixes",
+      "second-day formal Sina precision value",
+      "M6 member CP compatibility on explicit software intraday quotes"
+    ],
+    "future_unobserved": [
+      "next actual R original market boundary/source300/formal gates",
+      "new R forward-v2 whole artifact -> next real cloud run",
+      "future weekly roster publishing"
+    ]
+  },
+  "pending_acceptance": {
+    "C3_C4_C5_FINAL": {
+      "state": "ACCEPTED_MERGED_CODE_FINAL_AND_INDEPENDENT_TESTS_NO_SMTP",
+      "receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\member_publication\\local_candidate_receipt.json",
+      "additional_receipts": [
+        "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\member_publication\\README.md",
+        "D:\\Codex\\test-lifecycle\\records\\1b3d0888093c4cadb3bea61c22aca046"
+      ],
+      "merged_auto_main": "a403909ac2a2b53c40ff0f3dee2e37ca6ba6235e",
+      "source_files_identical_to_reviewed_candidate": true,
+      "actual_live_new_mail_claimed": false
+    },
+    "M6_TWO_ORDINARY_CLOUD_RESTORES": {
+      "state": "ACCEPTED_TWO_ACTUAL_MAIN_RESTORES_SECOND_DISCOVERS_FIRST_NO_FALLBACK",
+      "receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloud-m6-ordinary\\paired-proof.json",
+      "first_run": 43122727666,
+      "second_run": 43124356822,
+      "source_artifact": 13901524557,
+      "source_artifact_digest": "sha256:dd858ff9dbfde674c7daea908e5ede9f1cb5b69f5645cbab64d22f149c5efe48",
+      "first_fallback_used": true,
+      "second_fallback_used": false,
+      "independently_matched_second_raw_receipts": true,
+      "scope": "exact_10_nov_archive_recovery_not_new_R_market_run"
+    },
+    "WORKER_DEPLOYMENT": {
+      "state": "ACCEPTED_ACTUAL_DEPLOYED_MODULE_READBACK_AND_INDEPENDENT_FAULT_TESTS",
+      "receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\readback.json",
+      "module": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\deployed-module-0.js",
+      "module_sha256": "b02277411d70b04148d9087110afd61f154cb258db05bb3ab60e5db25b080f11",
+      "version": "345055bb-1466-4309-a7d0-9e057b82dbe0",
+      "independent_record": "D:\\Codex\\test-lifecycle\\records\\26f9c0fb9b7a4691a020e7a0a78098b0",
+      "passed": 11,
+      "exit_code": 0,
+      "scratch_cleanup": "deleted",
+      "real_dispatches": 0,
+      "test_environment": {
+        "MICROCAP_WORKER_UNDER_TEST": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\cloudflare\\deployed-module-0.js",
+        "PYTHONUTF8": "1"
+      }
+    },
+    "FINAL_LOCAL_INSTALL": {
+      "state": "ACCEPTED_ACTUAL_POINTER_SOURCE_SYNC_AND_D11_PREPARE",
+      "receipt": "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\local-production-activation.json",
+      "required_evidence": [
+        "Final merged Auto SHA materialized member bundle including report-contract dependency, actual-calendar D11 prepare-only, atomic member_daily_install pointer readback",
+        "ACTIVE 09:00/11:00 source task actual code directory auto-maintenance-20261109 scripts synchronized to repaired due/workers/metadata/export code with existing unrelated changes preserved"
+      ],
+      "additional_receipts": [
+        "D:\\Codex\\repairs\\microcap-daily-chain-20261112\\local_links\\final-p2-install-preparation-20261112T073812-d4c87623\\actual-run-acceptance.json"
+      ],
+      "independent_readback": true
+    }
+  },
+  "tasks": [
+    {
+      "id": "T01",
+      "label": "本地09:00/11:00到期、日历及重复跳过",
+      "baseline_status": "软件正控+实际配置",
+      "baseline_boundary": "target=上一完成session；源码/快照已核，12日首次9点尚未发生",
+      "review_status": "FIXED_AND_INDEPENDENTLY_VERIFIED",
+      "evidence_refs": [
+        "A_FIX_HANDOFF",
+        "A_INDEPENDENT",
+        "SOURCE_STATUS_READONLY",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "原生日历/D+上午门槛与同scope重复跳过；同300仅scope hash换代也失效。来源不完整事实截止23:22 UTC只读回执；本轮未取得Nov12首次09:00新资料。 最终ACTIVE来源执行目录中对应修复源码与main逐文件核同；这不补齐真实缺源。"
+    },
+    {
+      "id": "T02",
+      "label": "每周300名单、当前100闭包及roster打包",
+      "baseline_status": "软件/真实原包通过",
+      "baseline_boundary": "每周更新职责确在ACTIVE prompt；未来发布未实跑，不断言下次必失败",
+      "review_status": "EXISTING_REAL_PACKAGE_AND_SOFTWARE_VERIFIED",
+      "evidence_refs": [
+        "WEEKLY_OWNER_PROMPT",
+        "B_ORIGINAL_HANDOFF",
+        "A_INDEPENDENT"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "准确300/实际100闭包与原roster原件恢复通过；周更发布/指针职责真实存在，未来周更运行未观察。"
+    },
+    {
+      "id": "T03",
+      "label": "bootstrap独立证券初始化",
+      "baseline_status": "缺陷LS-01",
+      "baseline_boundary": "部分初始化可继续，但完整资格聚合不足",
+      "review_status": "FIXED_AND_INDEPENDENTLY_VERIFIED",
+      "evidence_refs": [
+        "A_FIX_HANDOFF",
+        "A_INDEPENDENT",
+        "SOURCE_STATUS_READONLY",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "partial不抛弃独立证券；299 metadata不得认证；补原件后900阶段可复用。当前真实来源可用性另列，不能把代码修复当资料完成。 最终ACTIVE来源执行目录中对应修复源码与main逐文件核同；这不补齐真实缺源。"
+    },
+    {
+      "id": "T04",
+      "label": "双worker、903聚合、中断与复用",
+      "baseline_status": "缺陷LS-01/LS-02",
+      "baseline_boundary": "原生失败隔离/预算正控通过，停止代次和metadata全集有漏洞",
+      "review_status": "FIXED_AND_INDEPENDENTLY_VERIFIED",
+      "evidence_refs": [
+        "A_INDEPENDENT",
+        "A_FIX_HANDOFF",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "新dispatch身份隔离旧stop；新stop仍有效；真实活OS worker锁阻止改context/派第二写入者。903集合门槛保留。 最终ACTIVE来源执行目录中对应修复源码与main逐文件核同；这不补齐真实缺源。"
+    },
+    {
+      "id": "T05",
+      "label": "source export、角色/日期/哈希与发布指针",
+      "baseline_status": "软件通过+条件LS-03",
+      "baseline_boundary": "当前11日不完整export正确拒绝；同D换名单工具合同不足，下游仍挡住",
+      "review_status": "FIXED_SOFTWARE_CONTRACT_CURRENT_SOURCE_INCOMPLETE",
+      "evidence_refs": [
+        "A_INDEPENDENT",
+        "A_FIX_HANDOFF",
+        "SOURCE_STATUS_READONLY",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "metadata集合、当前pool scope、bootstrap、源哈希及master在export前/锁内复验；实际D11资料仍不得完整export/晋级。 最终ACTIVE来源执行目录中对应修复源码与main逐文件核同；这不补齐真实缺源。"
+    },
+    {
+      "id": "T06",
+      "label": "本地10:00小包准备",
+      "baseline_status": "缺陷LM-01/LM-02",
+      "baseline_boundary": "真实75文件安装与原CP已核",
+      "review_status": "REAL_D11_PREPARE_AND_FINAL_EXACT_BUNDLE_INSTALL_VERIFIED",
+      "evidence_refs": [
+        "D11_REAL_CALENDAR_PREPARE",
+        "A_INDEPENDENT",
+        "A_FIX_HANDOFF",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE",
+        "AUTOMATION_ROLE_WORDING_READBACK"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "原477 namespace+本地AB执行分角色；真实未冻结日历/HTTP发现D11并完成prepare-only。最终10文件bundle与main a403909逐字节相同，原子指针及ACTIVE来源脚本已读回；未取盘中行情。 10:00/14:15 ACTIVE prompt已仅校正本地09:00/11:00职责，仍动态读安装指针，原日程/模型等保持。"
+    },
+    {
+      "id": "T07",
+      "label": "本地14:15盘中计算和发布边界",
+      "baseline_status": "缺陷LM-01，错锚点仍阻断",
+      "baseline_boundary": "不审IC/IM内部策略；微盘与ICIM独立成败/15:00界限已检查",
+      "review_status": "ACTUAL_PINNED_FUNCTIONS_VERIFIED_ON_SOFTWARE_QUOTES",
+      "evidence_refs": [
+        "B_ACTUAL_AB_INTRADAY_RECORD",
+        "B_CROSS",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE",
+        "AUTOMATION_ROLE_WORDING_READBACK"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "AB214与477七源码一致，分别隔离实跑intraday消费M6桥CP，三版完整rows相等、100/100、confirmed=false；R13报价是软件数据，非真实Nov12盘中。 10:00/14:15 ACTIVE prompt已仅校正本地09:00/11:00职责，仍动态读安装指针，原日程/模型等保持。"
+    },
+    {
+      "id": "T08",
+      "label": "Cloudflare工作日9点维护触发",
+      "baseline_status": "实际部署+门控通过",
+      "baseline_boundary": "旧云端仍可触发空维护，owner=local使其跳过写入；不声称删除了cron",
+      "review_status": "EXISTING_OWNER_GATE_AND_ACTUAL_WORKER_DEPLOYMENT_VERIFIED",
+      "evidence_refs": [
+        "ORIGINAL_SCHEDULER",
+        "WEEKLY_OWNER_PROMPT",
+        "B_ROOT01_RECORD",
+        "WORKER_ACTUAL_READBACK",
+        "B_ROOT01_DEPLOYED_MODULE_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "旧cloud维护写步骤实际skipped、owner=local保持；新部署模块b0227741/版本345055bb已实读，5cron/flag匹配，实际模块11项独立故障正反例通过，无真实dispatch。"
+    },
+    {
+      "id": "T09",
+      "label": "Cloudflare15:10调仓触发",
+      "baseline_status": "实际部署+软件路由通过",
+      "baseline_boundary": "实际cron/flag/module一致；未知响应重复见ROOT-01",
+      "review_status": "FIXED_WORKER_ACTUAL_DEPLOYMENT_AND_INDEPENDENT_FAULT_TESTS_VERIFIED",
+      "evidence_refs": [
+        "B_ROOT01_RECORD",
+        "B_CROSS",
+        "ROOT_PROGRESS",
+        "WORKER_ACTUAL_READBACK",
+        "B_ROOT01_DEPLOYED_MODULE_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "15:10准确keyed输入/标题合同已上线；实读部署模块经11项独立故障测试，POST状态未知只读查同槽不重POST；没有启动未来实际R调仓。"
+    },
+    {
+      "id": "T10",
+      "label": "Cloudflare16:00成员日报触发",
+      "baseline_status": "实际部署+11日运行通过",
+      "baseline_boundary": "MEMBER_DAILY_ENABLED=true，实际走member daily",
+      "review_status": "EXISTING_REAL_D11_DAILY_AND_ACTUAL_NEW_WORKER_DEPLOYMENT_VERIFIED",
+      "evidence_refs": [
+        "D11_ORIGINALS",
+        "B_ROOT01_RECORD",
+        "ORIGINAL_DAILY",
+        "WORKER_ACTUAL_READBACK",
+        "B_ROOT01_DEPLOYED_MODULE_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "真实D11成员日报事实保留；新部署16:00路由/key/run-name/flag和模块读回通过，实际模块故障反例通过；未重发旧日报。"
+    },
+    {
+      "id": "T11",
+      "label": "完整状态发现/restore",
+      "baseline_status": "10日归档真实两次通过",
+      "baseline_boundary": "43065299195→43067983093，第二次禁seed回退；不能代替新R现场",
+      "review_status": "ACTUAL_M6_TWO_MAIN_RESTORES_AND_EXACT_ARTIFACT_DISCOVERY_VERIFIED",
+      "evidence_refs": [
+        "M6_OLD_ARCHIVE_REAL_RELAY",
+        "B_EXACT_SOURCE",
+        "ROOT_PROGRESS",
+        "M6_NATIVE_RECERTIFICATION",
+        "M6_ARCHIVE_IDENTITY",
+        "M6_PUBLICATION_RECOVERY",
+        "M6_TWO_MAIN_CLOUD_PAIRED",
+        "M6_SECOND_RAW_RESTORE",
+        "M6_SECOND_RAW_ARCHIVE_ACCEPTANCE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "真实main 43122727666从M6 release seed恢复、认证并发布artifact13901524557；43124356822实际发现该工件且digest验证、fallback=false。两次5f78…672169265B/a891…manifest相同，source/restored/reader均M6。仅10日归档，不是新R行情。"
+    },
+    {
+      "id": "T12",
+      "label": "scoped prepare、source warm/import及独立源读回",
+      "baseline_status": "软件正控通过",
+      "baseline_boundary": "旧source10保留be89身份，被正式baseline覆盖才跳过，不改签P1",
+      "review_status": "SOURCE_AND_FROZEN_ORIGINAL_CONTRACTS_VERIFIED",
+      "evidence_refs": [
+        "B_ORIGINAL_HANDOFF",
+        "B_EXACT_SOURCE",
+        "A_FIX_HANDOFF"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "source10保留be89原producer身份；P1 warm/import是独立源资料，不以source准备代替formal交付。真实新R补全300现场尚未发生。"
+    },
+    {
+      "id": "T13",
+      "label": "全市场轻量市值边界/池外候选",
+      "baseline_status": "缺陷F-B1",
+      "baseline_boundary": "需证券集合覆盖，不能仅行数足够",
+      "review_status": "FIXED_REAL_FROZEN_COUNTEREXAMPLE_AND_BASELINE_VERIFIED",
+      "evidence_refs": [
+        "B_FIX",
+        "B_FROZEN",
+        "B_EXACT_SOURCE",
+        "M6_NATIVE_RECERTIFICATION",
+        "M6_ARCHIVE_IDENTITY",
+        "M6_PUBLICATION_RECOVERY"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "M6证券集合覆盖修复：原5577行整个结果不变，漏真实rank29证券即拒绝，额外BJ/B/其他行不得抵消；非真实R12市场验收。"
+    },
+    {
+      "id": "T14",
+      "label": "原生refresh-all/check与三版正式门槛",
+      "baseline_status": "软件顺序/失败传播+旧归档实跑",
+      "baseline_boundary": "本轮不刷新生产；新R现场尚未发生",
+      "review_status": "ACTUAL_M6_RECERTIFICATION_PACK_AND_TWO_MAIN_ARCHIVE_CHECKS_VERIFIED",
+      "evidence_refs": [
+        "B_ORIGINAL_HANDOFF",
+        "B_EXACT_SOURCE",
+        "ROOT_PROGRESS",
+        "M6_NATIVE_RECERTIFICATION",
+        "M6_ARCHIVE_IDENTITY",
+        "M6_PUBLICATION_RECOVERY",
+        "M6_TWO_MAIN_CLOUD_PAIRED",
+        "M6_SECOND_RAW_RESTORE",
+        "M6_SECOND_RAW_ARCHIVE_ACCEPTANCE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "原M3→准确M6源码review→原生recert/pack及两次普通main三版归档检查均实际通过；边界v2精确旧新pair、7经济CSV和inventory原样。current_signal_ready=false，新R当日refresh/formal gate未实跑。"
+    },
+    {
+      "id": "T15",
+      "label": "指数精度witness与earned前缀",
+      "baseline_status": "真实冻结来源+软件正控通过",
+      "baseline_boundary": "明确原始EM/Sina角色，累计两日期桥可用；没有新Sina11实际证据",
+      "review_status": "REAL_FROZEN_ORIGINS_PLUS_MULTI_DATE_ALGORITHM_VERIFIED",
+      "evidence_refs": [
+        "B_ORIGINAL_HANDOFF",
+        "B_CROSS",
+        "D11_ORIGINALS"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "实际Sina10=6579.356/EM10=6579.36；实际EM11=6669.55。两日期桥算法通过，Sina11对照只是软件值，未获真实Sina11证据。"
+    },
+    {
+      "id": "T16",
+      "label": "R-1→R交接、同R及次日原477消费",
+      "baseline_status": "真实函数/冻结前缀软件时间线通过",
+      "baseline_boundary": "同R saved-close额外4正控；未把未来R价格称为已发生",
+      "review_status": "ACTUAL_NATIVE_AND_477_FUNCTION_CHAINS_VERIFIED_SOFTWARE_R",
+      "evidence_refs": [
+        "B_NATIVE_TWO_R_RECORD",
+        "B_ACTUAL_AB_INTRADAY_RECORD",
+        "B_CROSS"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "R-1→R、same-R saved-close、R+1、下一R late same-close及AB intraday实码通过；header producer与477 namespace分开，原字节保留。R12/R13/R26价格均软件。"
+    },
+    {
+      "id": "T17",
+      "label": "新R forward-v2包保存与下次云端读取",
+      "baseline_status": "源码/软件检查，现场未发生",
+      "baseline_boundary": "当前M5包为v1/end10；v2实际新R双云接力仍未观察",
+      "review_status": "FORWARD_V2_SOFTWARE_CLOSURE_VERIFIED_NEW_R_LIVE_UNOBSERVED",
+      "evidence_refs": [
+        "B_FIX",
+        "B_ORIGINAL_HANDOFF",
+        "B_EXACT_SOURCE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "v1→v2 replay、退池horizon、boundary/inventory依赖的软件验证通过；M5归档segments=0，不能替代未来真实新R v2包→下一云运行。"
+    },
+    {
+      "id": "T18",
+      "label": "小checkpoint按日期/phase发现、冲突与恢复",
+      "baseline_status": "云端软件正控通过；本地LM-01",
+      "baseline_boundary": "新cloud477选择正确；旧local ab214 namespace断链",
+      "review_status": "FIXED_LOCAL_AND_CLOUD_IDENTITY_FRESHNESS_AND_INSTALL_VERIFIED",
+      "evidence_refs": [
+        "A_INDEPENDENT",
+        "D11_REAL_CALENDAR_PREPARE",
+        "B_NATIVE_TWO_R_RECORD",
+        "B_CROSS",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "云477选择保持；AB只用明确core及正式M5/M6 producer角色并保留原字节，未知runtime/lineage拒绝。最终本地10文件闭包、实际D11下载/原生verify/安装读回完成。"
+    },
+    {
+      "id": "T19",
+      "label": "只取100成员/复权/指数的collect",
+      "baseline_status": "真实11日源快照+源码检查",
+      "baseline_boundary": "没有重新请求市场数据；缺字段保持partial",
+      "review_status": "EXISTING_REAL_D11_COLLECTION_UNCHANGED_CODE_CLOSURE",
+      "evidence_refs": [
+        "D11_ORIGINALS",
+        "ORIGINAL_DAILY"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "复用真实D11 100成员/指数原件；本次不重新抓行情，不用旧close冒充当前intraday。"
+    },
+    {
+      "id": "T20",
+      "label": "原477三版状态机及最终CSV",
+      "baseline_status": "真实11日复算通过",
+      "baseline_boundary": "全部signal字段/CSV逐值一致，历史前缀不改",
+      "review_status": "EXISTING_REAL_D11_RECOMPUTE_AND_UNCHANGED_STRATEGY_CLOSURE",
+      "evidence_refs": [
+        "ORIGINAL_DAILY",
+        "D11_ORIGINALS",
+        "B_ACTUAL_AB_INTRADAY_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "原477正式计算和三版entrypoint不改；D11原字段/CSV既有一致性证据保留，AB/477完整软件盘中行对照亦一致。"
+    },
+    {
+      "id": "T21",
+      "label": "报告render与dated动作",
+      "baseline_status": "缺陷C3/C4/C5",
+      "baseline_boundary": "JSON/CSV/时点和换成员动作的独立防线不足",
+      "review_status": "FIXED_FINAL_CSV_TIMING_DATED_ACTION_CONTRACT_INDEPENDENTLY_VERIFIED",
+      "evidence_refs": [
+        "ORIGINAL_DAILY",
+        "ROOT_PROGRESS",
+        "C_FINAL_RECEIPT",
+        "C_FINAL_HANDOFF",
+        "C_FINAL_RECORD",
+        "C_INDEPENDENT_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "C3–C5最终三源码已合并且与168项通过/独立46项审阅的07ec33d逐字节相同；D11正文/CSV/JSON保真，native M6 early/same-close软件R非cash各12/12动作及严格source闭包通过；未实发新邮件。"
+    },
+    {
+      "id": "T22",
+      "label": "正常/partial发送资格及事务",
+      "baseline_status": "新路径正控通过；旧C1/C2",
+      "baseline_boundary": "unknown intent阻断，partial独立事务不占正常marker",
+      "review_status": "EXISTING_NEW_TRANSACTIONS_PRESERVED_FINAL_REPORT_GATE_VERIFIED",
+      "evidence_refs": [
+        "C1_C2_FIX",
+        "ORIGINAL_DAILY",
+        "EXISTING_MAIL_TRANSACTIONS",
+        "C_FINAL_RECEIPT",
+        "C_FINAL_HANDOFF",
+        "C_FINAL_RECORD",
+        "C_INDEPENDENT_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "新normal/partial intent→accepted→marker事务源码保持；旧sender禁用；C3–C5最终门槛与事务前置连接测试通过且main源码相同。原有D11事务保留，无新增SMTP。"
+    },
+    {
+      "id": "T23",
+      "label": "SMTP receipt→marker→Gmail正文及附件",
+      "baseline_status": "11日真实闭环通过",
+      "baseline_boundary": "Message-ID、三重hash、INBOX/SENT、正文及原ZIP字节一致",
+      "review_status": "EXISTING_REAL_D11_MAIL_LOOP_PRESERVED_NO_RESEND",
+      "evidence_refs": [
+        "ORIGINAL_DAILY",
+        "D11_ORIGINALS",
+        "EXISTING_MAIL_TRANSACTIONS"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "既有Message-ID/正文/附件/INBOX证据只作为D11历史送达；未重发，不称Nov12已发。"
+    },
+    {
+      "id": "T24",
+      "label": "旧microcap-realtime-digest正常/异常发送",
+      "baseline_status": "缺陷C1/C2",
+      "baseline_boundary": "实际GitHub active且默认可发；Worker已改路由并不等于旧入口退役",
+      "review_status": "FIXED_LEGACY_SENDER_RETIRED_INDEPENDENTLY_VERIFIED",
+      "evidence_refs": [
+        "C1_C2_FIX",
+        "B_CROSS",
+        "ROOT_PROGRESS"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "send job literal false，任何correction/validation/error状态均不能进入旧SMTP或normal marker事务；归档恢复独立。"
+    },
+    {
+      "id": "T25",
+      "label": "旧11/02 close recovery",
+      "baseline_status": "源码退休门控通过",
+      "baseline_boundary": "GitHub显示active但job if:false，不会因默认手工dispatch重发",
+      "review_status": "UNCHANGED_SOURCE_RETIRED_GATE_REUSED",
+      "evidence_refs": [
+        "ORIGINAL_SCHEDULER"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "旧11/02 recovery if:false保持；不为验证退休路径实发或重dispatch。"
+    },
+    {
+      "id": "T26",
+      "label": "metadata recovery",
+      "baseline_status": "源码隔离通过",
+      "baseline_boundary": "仅人工恢复/证据，未发现SMTP路径，不作为正常member checkpoint来源",
+      "review_status": "UNCHANGED_ISOLATED_SOURCE_CLOSURE_REUSED",
+      "evidence_refs": [
+        "ORIGINAL_SCHEDULER"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "metadata recovery只人工恢复/证据，无SMTP，不作normal member CP来源。"
+    },
+    {
+      "id": "T27",
+      "label": "notice boundary diagnostic",
+      "baseline_status": "源码隔离通过",
+      "baseline_boundary": "仅诊断工件，无SMTP",
+      "review_status": "UNCHANGED_ISOLATED_SOURCE_CLOSURE_REUSED",
+      "evidence_refs": [
+        "ORIGINAL_SCHEDULER"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "notice boundary diagnostic只诊断工件，无SMTP。"
+    },
+    {
+      "id": "T28",
+      "label": "universe deadline probe",
+      "baseline_status": "源码隔离通过",
+      "baseline_boundary": "仅探针工件，无SMTP",
+      "review_status": "UNCHANGED_ISOLATED_SOURCE_CLOSURE_REUSED",
+      "evidence_refs": [
+        "ORIGINAL_SCHEDULER"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "universe deadline probe只探针工件，无SMTP。"
+    },
+    {
+      "id": "T29",
+      "label": "一次性M5字节接力发布",
+      "baseline_status": "既有实跑+本次源码检查",
+      "baseline_boundary": "固定base/delta/target全SHA及固定release，无clobber/任意输入",
+      "review_status": "EXISTING_REAL_RELAY_AND_UNCHANGED_SOURCE_CLOSURE",
+      "evidence_refs": [
+        "ORIGINAL_SCHEDULER",
+        "M6_OLD_ARCHIVE_REAL_RELAY"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "一次性M5 byte relay仍固定base/delta/target全SHA与release，无任意输入或clobber；不重复搬600MB。"
+    },
+    {
+      "id": "T30",
+      "label": "native旧状态release assembly",
+      "baseline_status": "源码静态检查",
+      "baseline_boundary": "固定旧tag/最终全SHA，不是日报或新信号；本轮不重组600MB包",
+      "review_status": "UNCHANGED_NATIVE_RELEASE_ASSEMBLY_CLOSURE",
+      "evidence_refs": [
+        "ORIGINAL_AUDIT"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "固定旧tag/完整SHA的旧native-state-release不是日报/当前信号；新M6变更未修改该workflow。"
+    },
+    {
+      "id": "T31",
+      "label": "相关回归/精确pin与本地安装验证",
+      "baseline_status": "分别执行，不以全绿代全链",
+      "baseline_boundary": "M5/P1/477/ab214/installed531各按真实角色审计",
+      "review_status": "EXACT_PINS_FINAL_INSTALL_REPORT_WORKER_AND_M6_TWO_CLOUD_LOOP_VERIFIED",
+      "evidence_refs": [
+        "B_FIX",
+        "A_FIX_HANDOFF",
+        "B_CROSS",
+        "A_INDEPENDENT",
+        "PROTECTED_BACKUP",
+        "ROOT_PROGRESS",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE",
+        "C_FINAL_RECEIPT",
+        "C_FINAL_HANDOFF",
+        "C_FINAL_RECORD",
+        "C_INDEPENDENT_RECORD",
+        "WORKER_ACTUAL_READBACK",
+        "B_ROOT01_DEPLOYED_MODULE_RECORD",
+        "M6_NATIVE_RECERTIFICATION",
+        "M6_ARCHIVE_IDENTITY",
+        "M6_PUBLICATION_RECOVERY",
+        "M6_TWO_MAIN_CLOUD_PAIRED",
+        "M6_SECOND_RAW_RESTORE",
+        "M6_SECOND_RAW_ARCHIVE_ACCEPTANCE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "精确main/native/AB/477角色、C最终合同、本地10文件/D11实际下载verify与安装、实际Worker模块11反例，以及M6双main恢复全部有独立收据。后续真实R/new-v2和当前27缺源仍单列，未冒充全现场通过。"
+    }
+  ],
+  "edges": [
+    {
+      "id": "E01",
+      "label": "每周名单→bootstrap→metadata完成→export",
+      "baseline_status": "缺陷LS-01",
+      "baseline_boundary": "本地误报/导出；最终M5仍拒绝缺失metadata",
+      "review_status": "FIXED_AND_INDEPENDENTLY_VERIFIED",
+      "evidence_refs": [
+        "A_INDEPENDENT",
+        "A_FIX_HANDOFF",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "299metadata不认证，补源后900阶段复用，export集合独立重验；真实当前来源仍incomplete。 最终ACTIVE来源执行目录中对应修复源码与main逐文件核同；这不补齐真实缺源。"
+    },
+    {
+      "id": "E02",
+      "label": "异常父进程→下一次同context恢复",
+      "baseline_status": "缺陷LS-02",
+      "baseline_boundary": "停止请求没有执行代次",
+      "review_status": "FIXED_AND_INDEPENDENTLY_VERIFIED",
+      "evidence_refs": [
+        "A_INDEPENDENT",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "旧stop保留，新dispatch不继承；新stop仍有效；活OS锁不被偷且不改context。 最终ACTIVE来源执行目录中对应修复源码与main逐文件核同；这不补齐真实缺源。"
+    },
+    {
+      "id": "E03",
+      "label": "同D新名单→due完成资格→export",
+      "baseline_status": "条件缺口LS-03",
+      "baseline_boundary": "真实import拒绝错roster；prompt可主动修复，不判未来必失败",
+      "review_status": "FIXED_AND_INDEPENDENTLY_VERIFIED",
+      "evidence_refs": [
+        "A_INDEPENDENT",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "同D新scope，哪怕同300仅排序/候选字节变化，due/export也不能继承旧complete。 最终ACTIVE来源执行目录中对应修复源码与main逐文件核同；这不补齐真实缺源。"
+    },
+    {
+      "id": "E04",
+      "label": "周更Agent→release→weekly_roster指针",
+      "baseline_status": "职责/CLI合同已核；未来运行未观察",
+      "baseline_boundary": "不是仅因Python无writer就判断链",
+      "review_status": "OWNER_AND_CLI_VERIFIED_FUTURE_WEEKLY_RUN_UNOBSERVED",
+      "evidence_refs": [
+        "WEEKLY_OWNER_PROMPT",
+        "A_FIX_HANDOFF"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "已核真实ACTIVE周更发布与配置更新职责；未来周更未发生，不声称已现场通过。"
+    },
+    {
+      "id": "E05",
+      "label": "本地source包→GitHub指针→scoped warm/import",
+      "baseline_status": "软件/既有10日原件验证",
+      "baseline_boundary": "source producer身份、日期、哈希与scope都独立",
+      "review_status": "SOURCE_ORIGINAL_IDENTITY_CONTRACT_VERIFIED",
+      "evidence_refs": [
+        "A_FIX_HANDOFF",
+        "B_ORIGINAL_HANDOFF",
+        "B_EXACT_SOURCE",
+        "SOURCE_STATUS_READONLY",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "源包/指针/独立warm保持原producer/date/scope/hash；未认证完整D11新来源，更未获未来R源码行情。 最终ACTIVE来源执行目录中对应修复源码与main逐文件核同；这不补齐真实缺源。"
+    },
+    {
+      "id": "E06",
+      "label": "云端477检查点→本地10点发现",
+      "baseline_status": "缺陷LM-01",
+      "baseline_boundary": "实际D11包兼容但被namespace排除",
+      "review_status": "FIXED_REAL_D11_DISCOVERY_VERIFY_AND_FINAL_INSTALL_VERIFIED",
+      "evidence_refs": [
+        "D11_REAL_CALENDAR_PREPARE",
+        "A_INDEPENDENT",
+        "B_CROSS",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE",
+        "AUTOMATION_ROLE_WORDING_READBACK"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "477 namespace映射到精确AB执行、core与M5/M6 R-producer角色；最终10文件bundle实际未冻结HTTP/日历发现并原生验证D11，安装指针及代码身份已读回。 10:00/14:15 ACTIVE prompt已仅校正本地09:00/11:00职责，仍动态读安装指针，原日程/模型等保持。"
+    },
+    {
+      "id": "E07",
+      "label": "本地晨间prepared→14:15所需D",
+      "baseline_status": "缺陷LM-02",
+      "baseline_boundary": "prepared只证明包闭包，不证明expected D",
+      "review_status": "FIXED_EXPECTED_D_PREPARE_FINAL_INSTALL_AND_SOFTWARE_INTRADAY_VERIFIED",
+      "evidence_refs": [
+        "A_INDEPENDENT",
+        "D11_REAL_CALENDAR_PREPARE",
+        "B_ACTUAL_AB_INTRADAY_RECORD",
+        "FINAL_LOCAL_ACTIVATION",
+        "FINAL_LOCAL_REAL_PREPARE",
+        "AUTOMATION_ROLE_WORDING_READBACK"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "旧D9/cache/seed不得冒D11 prepared；最终bundle真实D11 prepare后已安装；AB真intraday消费M6桥CP的软件报价全行与477相同，不冒充真实盘中行情。 10:00/14:15 ACTIVE prompt已仅校正本地09:00/11:00职责，仍动态读安装指针，原日程/模型等保持。"
+    },
+    {
+      "id": "E08",
+      "label": "本地owner→旧云维护写入门控",
+      "baseline_status": "真实通过",
+      "baseline_boundary": "43070342596所有旧写步骤skipped",
+      "review_status": "EXISTING_REAL_OWNER_GATE_PRESERVED",
+      "evidence_refs": [
+        "ORIGINAL_SCHEDULER",
+        "WEEKLY_OWNER_PROMPT"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "run43070342596旧cloud维护写步骤skipped，owner=local保持；未增加生产写入者。"
+    },
+    {
+      "id": "E09",
+      "label": "实际Worker cron/flag→GitHub任务输入",
+      "baseline_status": "实际源码/配置+隔离路由通过",
+      "baseline_boundary": "remote模块与当前main dry-run逐字节相同",
+      "review_status": "ACTUAL_DEPLOYED_MODULE_CRONS_FLAG_AND_GITHUB_FIELDS_VERIFIED",
+      "evidence_refs": [
+        "B_ROOT01_RECORD",
+        "B_CROSS",
+        "ROOT_PROGRESS",
+        "WORKER_ACTUAL_READBACK",
+        "B_ROOT01_DEPLOYED_MODULE_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "准确route/input/key/run-name合同、真实GitHub GET字段及部署模块b0227741/版本345055bb读回通过；5cron/启用flag匹配；不把调度配置当下游job或邮件成功。"
+    },
+    {
+      "id": "E10",
+      "label": "已接受但响应丢失的dispatch→重试",
+      "baseline_status": "缺陷ROOT-01",
+      "baseline_boundary": "同槽两次接受；未做真实派发",
+      "review_status": "FIXED_ACTUAL_DEPLOYED_MODULE_AMBIGUOUS_RESPONSE_COUNTEREXAMPLES_VERIFIED",
+      "evidence_refs": [
+        "B_ROOT01_RECORD",
+        "B_CROSS",
+        "WORKER_ACTUAL_READBACK",
+        "B_ROOT01_DEPLOYED_MODULE_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "实际部署模块经11项独立故障测试：连接丢失后一次POST仅查询精确同槽，权限拒绝/查询坏值/耗尽只读预算均明确unknown；并行cron不借用彼此结果；无真实POST。"
+    },
+    {
+      "id": "E11",
+      "label": "全市场两页→有效证券覆盖→池外候选保护",
+      "baseline_status": "缺陷F-B1",
+      "baseline_boundary": "漏低市值active证券可通过行数检查",
+      "review_status": "FIXED_ORIGINAL_REAL_ROWS_AND_OMISSION_COUNTEREXAMPLE_VERIFIED",
+      "evidence_refs": [
+        "B_FIX",
+        "B_FROZEN",
+        "M6_NATIVE_RECERTIFICATION",
+        "M6_ARCHIVE_IDENTITY",
+        "M6_PUBLICATION_RECOVERY"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "原5577原函数全结果不变；301098漏行及等数量noise均拒绝，原PIT/ST/price/share规则不放宽。"
+    },
+    {
+      "id": "E12",
+      "label": "scoped原生refresh→check→bootstrap period",
+      "baseline_status": "软件顺序和失败传播通过",
+      "baseline_boundary": "新R生产现场未执行",
+      "review_status": "ORIGINAL_FORMAL_GATE_ORDER_PRESERVED_NEW_R_UNOBSERVED",
+      "evidence_refs": [
+        "B_ORIGINAL_HANDOFF",
+        "B_EXACT_SOURCE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "两个原门槛成功后才bootstrap；此轮没有生产refresh/未来R发起。"
+    },
+    {
+      "id": "E13",
+      "label": "原始报告/指数收据→自动witness→精度桥",
+      "baseline_status": "冻结原件/函数正控通过",
+      "baseline_boundary": "获取层用实际原件传输夹具；未来R现场未执行",
+      "review_status": "REAL_FROZEN_WITNESS_PLUS_TWO_DATE_SOFTWARE_BRIDGE_VERIFIED",
+      "evidence_refs": [
+        "B_ORIGINAL_HANDOFF",
+        "B_CROSS"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "实核Sina10/EM10/EM11原件；多日支持已测，但实际Sina11与未来R真实witness未认证。"
+    },
+    {
+      "id": "E14",
+      "label": "R-1 CP→R precision handoff→同日477 saved-close",
+      "baseline_status": "补审软件正控通过",
+      "baseline_boundary": "排除了“缺确认字段”的源码误判",
+      "review_status": "ACTUAL_SAME_R_NATIVE_TO_477_SAVED_CLOSE_VERIFIED_SOFTWARE_SUFFIX",
+      "evidence_refs": [
+        "B_NATIVE_TWO_R_RECORD",
+        "B_CROSS"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "已排除缺确认字段假设；字段来自原renderer，三版true/close_confirmed，M6 producer字段不重标。"
+    },
+    {
+      "id": "E15",
+      "label": "新R handoff→原477下一session计算",
+      "baseline_status": "软件正控通过",
+      "baseline_boundary": "旧前缀/成员/日期合同保留",
+      "review_status": "ACTUAL_477_AND_AB_NEXT_SESSION_CONSUMPTION_VERIFIED_SOFTWARE_SUFFIX",
+      "evidence_refs": [
+        "B_NATIVE_TWO_R_RECORD",
+        "B_ACTUAL_AB_INTRADAY_RECORD",
+        "B_CROSS"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "477下一日保留M6字段/旧prefix；AB214真intraday与477全rows相同；后续R late分支也通过。"
+    },
+    {
+      "id": "E16",
+      "label": "新R远端CP发布→真实477远端日更",
+      "baseline_status": "未来运行未观察",
+      "baseline_boundary": "不能以10日archive成功代替",
+      "review_status": "FUTURE_NEW_R_REMOTE_PUBLICATION_TO_DAILY_UNOBSERVED",
+      "evidence_refs": [
+        "B_CROSS",
+        "B_ORIGINAL_HANDOFF"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "仅实码软件新R链；尚无真实新R CP远端发布→实际16:00日更运行，不以M6 archive回收冒充。"
+    },
+    {
+      "id": "E17",
+      "label": "10日M6归档发布→两次普通main恢复与产物发现",
+      "baseline_status": "既有真实闭环通过",
+      "baseline_boundary": "artifact13876647441、full SHA3326…、fallback=false",
+      "review_status": "ACTUAL_M6_PUBLICATION_TO_TWO_MAIN_RESTORES_SECOND_ARTIFACT_NO_FALLBACK_VERIFIED",
+      "evidence_refs": [
+        "M6_OLD_ARCHIVE_REAL_RELAY",
+        "ROOT_PROGRESS",
+        "M6_NATIVE_RECERTIFICATION",
+        "M6_ARCHIVE_IDENTITY",
+        "M6_PUBLICATION_RECOVERY",
+        "M6_TWO_MAIN_CLOUD_PAIRED",
+        "M6_SECOND_RAW_RESTORE",
+        "M6_SECOND_RAW_ARCHIVE_ACCEPTANCE"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "M6 canonical M3原包recert→仅恢复发布→普通main43122727666 seed→artifact13901524557→普通main43124356822精准发现，outer digest dd858…、内包5f78…和manifest a891…相同，第二次fallback=false；归档检查三版均通过且currentfalse/sending skipped。"
+    },
+    {
+      "id": "E18",
+      "label": "新R forward-v2整包→下一次真实cloud恢复",
+      "baseline_status": "软件清单/源检查；现场未观察",
+      "baseline_boundary": "M5当前原件segments=0，不作新R生产认证",
+      "review_status": "FORWARD_V2_SOFTWARE_CLOSURE_VERIFIED_LIVE_NEW_R_UNOBSERVED",
+      "evidence_refs": [
+        "B_FIX",
+        "B_EXACT_SOURCE",
+        "B_ORIGINAL_HANDOFF"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "sourceproof v2依赖、退休horizon及清单软件通过；新R实际v2整包下一运行未观察，M6旧归档回收也不能替代。"
+    },
+    {
+      "id": "E19",
+      "label": "三版计算JSON+最终CSV→正文/附件",
+      "baseline_status": "缺陷C3",
+      "baseline_boundary": "真实11日一致，但破坏输入不被门禁阻断",
+      "review_status": "FIXED_FINAL_JSON_CSV_BODY_ATTACHMENT_CONTRACT_VERIFIED",
+      "evidence_refs": [
+        "ORIGINAL_DAILY",
+        "C_FINAL_RECEIPT",
+        "C_FINAL_HANDOFF",
+        "C_FINAL_RECORD",
+        "C_INDEPENDENT_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "最终单行CSV全字段与JSON按原477序列化闭合，附件原CSV字节及SHA绑定；缺失/重复/损坏/矛盾均拒绝。真实D11正文/标题及CSV/JSON字节不变；新代码已合并、独立46项审阅通过。"
+    },
+    {
+      "id": "E20",
+      "label": "顶层mode+子signal timing→正常收盘身份",
+      "baseline_status": "缺陷C4",
+      "baseline_boundary": "矛盾输入仍可正常发布",
+      "review_status": "FIXED_TOP_MODE_PER_VERSION_TIMING_AND_CLOCK_CONTRACT_VERIFIED",
+      "evidence_refs": [
+        "ORIGINAL_DAILY",
+        "C_FINAL_RECEIPT",
+        "C_FINAL_HANDOFF",
+        "C_FINAL_RECORD",
+        "C_INDEPENDENT_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "逐版timing/official与顶层mode、市场日期和生成/发布时钟共同约束；矛盾资料拒绝，跨午夜保留原market_date。native saved-close仅认可完整原来源协议，不开放缺quote的一般绕过。"
+    },
+    {
+      "id": "E21",
+      "label": "正式dated成员动作→同持仓动作展示",
+      "baseline_status": "缺陷C5",
+      "baseline_boundary": "合法非空仓反例丢动作，不把历史事件变当前动作",
+      "review_status": "FIXED_NATIVE_DATED_MEMBER_ACTION_EARLY_AND_LATE_SOFTWARE_R_VERIFIED",
+      "evidence_refs": [
+        "B_ACTUAL_AB_INTRADAY_RECORD",
+        "ORIGINAL_DAILY",
+        "C_FINAL_RECEIPT",
+        "C_FINAL_HANDOFF",
+        "C_FINAL_RECORD",
+        "C_INDEPENDENT_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "真实D11前缀+明确软件R12/R13后缀：native M6 early/late same-close→原477 saved-close→最终builder，v2.5非cash同持仓准确显示R12信号/R13执行/12入12出；现金与历史不升级，原CSV/JSON不改。"
+    },
+    {
+      "id": "E22",
+      "label": "正常/partial intent→SMTP→receipt→marker",
+      "baseline_status": "新路径正控通过",
+      "baseline_boundary": "未知状态阻断、接收成功仅补marker，partial独立",
+      "review_status": "EXISTING_TRANSACTIONS_PRESERVED_AND_FINAL_REPORT_GATES_VERIFIED",
+      "evidence_refs": [
+        "ORIGINAL_DAILY",
+        "C1_C2_FIX",
+        "EXISTING_MAIL_TRANSACTIONS",
+        "C_FINAL_RECEIPT",
+        "C_FINAL_HANDOFF",
+        "C_FINAL_RECORD",
+        "C_INDEPENDENT_RECORD"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "normal/partial独立事务、unknown阻断、accepted只补marker源码保持；C最终发布合同与事务入口连接通过。只复用D11既有送达事实，本轮无新增SMTP或marker。"
+    },
+    {
+      "id": "E23",
+      "label": "旧FAILED邮件→持久事务/重试",
+      "baseline_status": "缺陷C2",
+      "baseline_boundary": "异常分支未被同一accepted事务查询覆盖",
+      "review_status": "FIXED_OLD_FAILED_SEND_PATH_UNREACHABLE",
+      "evidence_refs": [
+        "C1_C2_FIX",
+        "B_CROSS"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "旧FAILED与正常SMTP整job被禁，不再存在未纳入持久事务的旧错误发送分支。"
+    },
+    {
+      "id": "E24",
+      "label": "旧正常入口→共享normal marker→新日更",
+      "baseline_status": "缺陷C1",
+      "baseline_boundary": "串行不等于禁止旧入口占用事务",
+      "review_status": "FIXED_OLD_SENDER_CANNOT_OWN_NORMAL_TRANSACTION",
+      "evidence_refs": [
+        "C1_C2_FIX",
+        "B_CROSS"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "literal false不是仅串行；旧入口不能占normal intent/accepted/marker，新477保持原发送合同。"
+    },
+    {
+      "id": "E25",
+      "label": "11日SMTP元数据/附件→Gmail真实收件",
+      "baseline_status": "真实通过",
+      "baseline_boundary": "正文和19650B ZIP均与job原件一致，完整ZIP CRC通过",
+      "review_status": "EXISTING_REAL_D11_DELIVERY_PRESERVED_NO_RESEND",
+      "evidence_refs": [
+        "ORIGINAL_DAILY",
+        "D11_ORIGINALS",
+        "EXISTING_MAIL_TRANSACTIONS"
+      ],
+      "pending_signoffs": [],
+      "scope_and_limit": "真实D11正文/19650B附件ZIP/SMTP/Gmail闭环只作历史事实，本轮不重新发送，不称当前日已送达。"
+    }
+  ],
+  "reviewed_auto_main": "b8ff92f07a86edfe01bbb54ad2784ccd575668dd",
+  "updated_at_UTC": "2026-11-12T00:00:00.727646+00:00",
+  "actual_M6_archive_migration": {
+    "original_source_run": 43116277092,
+    "publication_recovery_run_reported_by_root": 43122103224,
+    "native_recertification_ok": true,
+    "recertification_revision": "exact_m3_20261110_boundary_coverage_source_only_v2",
+    "original_release_sha": "872abe41d48f818363d879cdf98b297d230377b4",
+    "validation_release_sha": "14e9a9fa6f0487f1d5547598435089c43f2f9fd1",
+    "source_bundle_sha256": "3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42",
+    "data_inventory_sha256": "42899f51e86c92ac4438bf25c45bd9419df3b9ba0c6997fa4fabe1c0af61d860",
+    "economic_csv_count": 7,
+    "economic_csv_hashes_unchanged": true,
+    "boundary_change": [
+      "54670a424c41ff805c7a87f1116e36975e782aaec56a7b8b7d8a7ea8b6831673",
+      "595950c1532ce927b1707c572ebb88a86e790e8e72afbb342d9e9728f0d9fc11"
+    ],
+    "validator_boundary_sha": "595950c1532ce927b1707c572ebb88a86e790e8e72afbb342d9e9728f0d9fc11",
+    "archive_sha256": "5f78da37688112128d4edbaf6cc5dc7f3dbeb8602193d1834ddd2334d0c72f7f",
+    "archive_bytes": 672169265,
+    "pack_entries": 170714,
+    "current_signal_ready": false,
+    "release_id": 442297118,
+    "asset_id": 737320728,
+    "ordinary_main_restore_pair": "VERIFIED_FIRST_SEED_SECOND_FIRST_ARTIFACT_NO_FALLBACK",
+    "first_main_run": 43122727666,
+    "second_main_run": 43124356822
+  },
+  "pending": [],
+  "pending_acceptance_count": 0,
+  "finalized_at_UTC": "2026-11-12T00:20:09.288842+00:00",
+  "review_summary": {
+    "task_count": 31,
+    "edge_count": 25,
+    "covered_task_count": 31,
+    "covered_edge_count": 25,
+    "missing_task_ids": [],
+    "missing_edge_ids": [],
+    "pending": [],
+    "confirmed_new_blockers": [],
+    "current_sources_complete": false,
+    "observed_missing_share_sources": 27,
+    "source_status_cutoff_UTC": "2026-11-11T23:22Z",
+    "future_R_live_acceptance_claimed": false,
+    "future_forward_v2_live_acceptance_claimed": false,
+    "new_SMTP_calls": 0,
+    "orders_placed": false
+  },
+  "unobserved_operational_edges": [
+    {
+      "id": "E04",
+      "scope": "future weekly roster publishing after current verified Nov9 package"
+    },
+    {
+      "id": "E16",
+      "scope": "next actual R remote member checkpoint publication consumed by actual 477 cloud daily"
+    },
+    {
+      "id": "E18",
+      "scope": "next actual R forward-v2 whole archive discovered/restored by a following actual cloud run"
+    }
+  ]
+}

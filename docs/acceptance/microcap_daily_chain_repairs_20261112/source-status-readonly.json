@@ -1,0 +1,65 @@
+{
+  "checked_at_utc": "2026-11-11T23:22:14.346617+00:00",
+  "target": "2026-11-11",
+  "per_stage_receipts": {
+    "price": {
+      "receipts": 300,
+      "statuses": {
+        "complete": 300
+      },
+      "incomplete": []
+    },
+    "share": {
+      "receipts": 300,
+      "statuses": {
+        "complete": 273,
+        "failed": 27
+      },
+      "incomplete": [
+        "300535-share.json",
+        "300644-share.json",
+        "688193-share.json",
+        "688251-share.json",
+        "688288-share.json",
+        "688310-share.json",
+        "688355-share.json",
+        "688393-share.json",
+        "688420-share.json",
+        "688450-share.json",
+        "688466-share.json",
+        "688528-share.json",
+        "688565-share.json",
+        "688573-share.json",
+        "688597-share.json",
+        "688613-share.json",
+        "688616-share.json",
+        "688619-share.json",
+        "688638-share.json",
+        "688659-share.json",
+        "688670-share.json",
+        "688671-share.json",
+        "688681-share.json",
+        "688695-share.json",
+        "688701-share.json",
+        "688737-share.json",
+        "688793-share.json"
+      ]
+    },
+    "ratio": {
+      "receipts": 300,
+      "statuses": {
+        "complete": 300
+      },
+      "incomplete": []
+    }
+  },
+  "last_aggregate": {
+    "status": "incomplete",
+    "complete": 272,
+    "completed_at": "2026-11-11T14:28:54.274768+00:00",
+    "notice_status": "failed",
+    "metadata_status": "waiting_for_notice_or_current_names"
+  },
+  "current_source_bundle_certified": false,
+  "no_collection_performed": true
+}
