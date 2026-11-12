@@ -1,0 +1,29 @@
+name: ICIM retained calendar render repair 20261112
+on:
+  push:
+    branches: [repair/icim-calendar-render-20261112]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Inspect the retained failed-render artifact without collection
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python -B -X utf8 scripts/icim_calendar_render_repair_20261112.py
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: icim-retained-render-input-20261112-${{ github.run_id }}
+          path: retained-readiness/
+          if-no-files-found: warn
+          retention-days: 30
