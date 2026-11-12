@@ -6,8 +6,8 @@ on:
       tested_native:
         description: 'Exact reviewed Native pair; software D13 acceptance only'
         type: choice
-        options: [m7, m8]
-        default: m8
+        options: [m7, m8, m9]
+        default: m9
       phase:
         type: choice
         options: [produce, readback]
@@ -47,7 +47,7 @@ jobs:
           import os
           phase=os.environ['MICROCAP_ACCEPTANCE_PHASE']
           source=os.environ['MICROCAP_ACCEPTANCE_SOURCE_RUN']
-          if os.environ['MICROCAP_ACCEPTANCE_TESTED_NATIVE'] not in ('m7','m8'):
+          if os.environ['MICROCAP_ACCEPTANCE_TESTED_NATIVE'] not in ('m7','m8','m9'):
               raise ValueError('Unknown reviewed Native test role')
           if phase not in ('produce','readback'):
               raise ValueError('Unknown no-send acceptance phase')
@@ -62,6 +62,7 @@ jobs:
           roles={
               'm7':('a7c1b9ac33454be4367880a0989dfc1466640503','3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'),
               'm8':('95d896fe58cc7cb84c0fcb7bd76534f62c9430f4','3344e403ff01e17ef45b745a704a240e0917720b'),
+              'm9':('906eca8a5dfede7fa1674fb17cd3c6ce12205e6d','3344e403ff01e17ef45b745a704a240e0917720b'),
           }
           native,producer=roles[os.environ['MICROCAP_ACCEPTANCE_TESTED_NATIVE']]
           print('sha='+native)

@@ -4,7 +4,11 @@
 
 核心修复已通过[PR197](https://github.com/liuruojiang/codex-daily-automation-probe/pull/197)合并为`b8d489a7da1f09db5e48ebff387b7042f9508906`。生产Auto、本地11文件读取包及09:00/11:00恢复指令已切换；两次真实云端无发送验收[produce43182489965](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43182489965)与[readback43182714966](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43182714966)均通过。第二次准确命中首轮工件13927066639，未使用fallback，成功阶段全部复用。软件故障后缀与当日真实行情状态分别验收。
 
-上述切换与回执属于已验收的原版本。本轮P3/M8后继候选增加双源股本备用和原公告页自动接续；实现及软件验证不等于新M8归档已发布或D12来源、调仓、日报全链已完成。实际release、包哈希、现场验收和本地安装须分别补记。策略参数及历史经济数据不改，候选恢复保持no-send。
+P3/M8双源股本备用和原公告页接续已完成发布及本地代码、11文件读取包切换。M8原归档为`866bcd2b884e95335f2e6b9b23ba836092b4bc5d916c6c8c20d577a06fa1aedf`；两次实际云端软件验收43234601428→43235219765通过且没有使用fallback。[D12实际恢复43241654331](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43241654331)已完成300只、903项来源，复用644项旧成功结果，但正式调仓在旧turnover混合日期读取处失败，未发布新的正式成员包，未发日报。不能把软件验收或完整资料当作正式调仓通过。
+
+M9 `906eca8a5dfede7fa1674fb17cd3c6ce12205e6d`仅修复历史比较中ISO日期与精确午夜的读取兼容，保留原CSV及其SHA、待定首收益日和全部经济比较。18项股票来源指纹和P3生产者不变。恢复先由原95d读取器正式核验原M8完整包，再按`microcap_midnight_runtime_review_20261112.json`完整三路径审阅切换代码，另存激活事务；不把旧归档改签为新版本，也不在新代码下给D10归档伪造重新认证。新版本直接执行当日原生refresh-all/check，旧归档认证保留为历史来源。
+
+原失败运行的300只资料由`microcap_completed_prepare_recovery.py`读取，限定原run/attempt、两个GitHub工件ID及完整SHA，保留原prepared、来源包、903回执及观察时钟。未随诊断上传的旧warm ZIP从原固定release按原SHA补齐。新读取器重新导入原来源包并验核；旧失败consumer输出和delivery context只作诊断，不能缓存为成功或放入新执行事务。后续正式调仓、下一次云端读取与日报无发送验收仍须各自取得真实回执。
 
 ## 09:00与11:00的同槽恢复
 
@@ -33,7 +37,9 @@ P3股本报价保留原EM事件库存、Sina历史、逐日市值窗口和旧候
 5. 新成员包显式使用`native_formal_gap_recovery_v1`，证明包含完整交易日序列、所有R、原正式历史前缀、原三版状态和精度依据。非R的D仍使用最后真实R的成员目标和执行日，不将D当成调仓日。
 6. 日报与本地读取器在采用前独立验证恢复证明。显式缓存与新下载包使用同一证明门槛；只改handoff标识不能绕过period内证明，缺证明、变更历史声明或伪controller均拒绝。相同D时当前新成员包优先旧参考包；相同日期和阶段的不同经济结果仍拒绝，不能用上传时间掩盖冲突。
 
-M8仅允许`native_formal_gap_recovery_v1`及当前已审`recovery_controller`关系，不能套用M5/M6/M7的`native_close_extends_previous`或`same_close_period_switch`正常模式。旧三种生产者的原正常血缘继续保留；M8仍须完整恢复证明，标记、父包类型或controller缺失均拒绝，不把结构性标记检查当作完整证明验收。
+M8/M9仅允许`native_formal_gap_recovery_v1`及已审`recovery_controller`关系，不能套用M5/M6/M7的`native_close_extends_previous`或`same_close_period_switch`正常模式。旧三种生产者的原正常血缘继续保留；两个新读取器仍须完整恢复证明，标记、父包类型或controller缺失均拒绝。原5d控制器8a52…只能证明它当时认识的M7/M8，不能借给M9；更早eea88…仍只允许M7。
+
+失败现场完整保留生产者、消费者及全部来源尝试。新state使用固定分角色容量和接收端重算的对象数，解决正常双角色缓存超过旧25万项及64MiB清单的问题；边界和旧格式继续原限制，压缩包2GiB、展开16GiB、逐项SHA、路径闭包及磁盘余量要求均保留。封存或上传失败不能晋级为正式完成。
 
 成功阶段的命令、原进程日志和输出闭包全部准确匹配才复用。未知进程终态、缺文件、改值、错源、错时钟或错日不转成成功。部分工件始终标记`resumable_partial`；来源准备或历史归档校验不能替代当前D的正式门槛。
 

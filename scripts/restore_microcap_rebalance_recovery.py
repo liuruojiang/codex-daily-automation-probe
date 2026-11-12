@@ -35,6 +35,14 @@ UPLOAD_STEPS = {'boundaries': 'Preserve original R boundary recovery evidence',
 MAX_BYTES = 2 * 1024**3
 MAX_EXPANDED = 16 * 1024**3
 MAX_FILES = 250000
+MAX_MANIFEST_BYTES = 64 * 1024**2
+# A normal failed refresh retains both the approved whole consumer baseline and
+# the private producer, including its original failed observations.  Bound that
+# topology by role instead of discarding evidence to fit the legacy total.
+STATE_BUDGET_PROFILE = 'microcap_scoped_state_roles_v1'
+STATE_ROLE_LIMITS = dict(consumer=280000, producer=150000, other=30000)
+STATE_MAX_FILES = sum(STATE_ROLE_LIMITS.values())
+STATE_MAX_MANIFEST_BYTES = 192 * 1024**2
 ROOT_FILES = {'scoped-recovery-plan.json', 'scoped-schedule.json', 'scoped-restore.json',
               'scoped-latest-restore.json', 'scoped-parent-restore.json'}
 DIRECTORIES = ('scoped-prepare', 'scoped-delivery', 'scoped-latest', 'scoped-previous',
@@ -83,6 +91,46 @@ def allowed(value, phase):
     return value in ROOT_FILES or value in STATE_FILES or any(value.startswith(p + '/') for p in DIRECTORIES)
 
 
+def object_role_counts(files):
+    counts = dict.fromkeys(STATE_ROLE_LIMITS, 0)
+    for name in files:
+        if not isinstance(name, str):
+            raise RecoveryError('recovery_manifest_object_invalid')
+        role = ('consumer' if name.startswith('scoped-consumer/') else
+                'producer' if name.startswith('scoped-source-state/runtime/.microcap_index_cache/') else 'other')
+        counts[role] += 1
+    return counts
+
+
+def manifest_budget(value):
+    """Return fixed receiver limits; declarations never choose their own caps."""
+    if 'object_budget_profile' not in value:
+        if 'object_role_counts' in value:
+            raise RecoveryError('recovery_role_counts_require_budget_profile')
+        return MAX_FILES, MAX_MANIFEST_BYTES
+    if value.get('phase') != 'state' or value['object_budget_profile'] != STATE_BUDGET_PROFILE:
+        raise RecoveryError('recovery_budget_profile_unknown')
+    counts = value.get('object_role_counts')
+    if (not isinstance(counts, dict) or set(counts) != set(STATE_ROLE_LIMITS)
+            or any(type(count) is not int or count < 0 for count in counts.values())):
+        raise RecoveryError('recovery_role_counts_invalid')
+    return STATE_MAX_FILES, STATE_MAX_MANIFEST_BYTES
+
+
+def parse_manifest(raw, *, phase=None):
+    """Bound raw JSON before parsing, then apply its exact known profile cap."""
+    hard_limit = STATE_MAX_MANIFEST_BYTES if phase in (None, 'state') else MAX_MANIFEST_BYTES
+    if len(raw) > hard_limit:
+        raise RecoveryError('recovery_manifest_budget_exceeded')
+    value = json.loads(raw)
+    if not isinstance(value, dict):
+        raise RecoveryError('recovery_manifest_context_differs')
+    _, limit = manifest_budget(value)
+    if len(raw) > limit:
+        raise RecoveryError('recovery_manifest_budget_exceeded')
+    return value
+
+
 def verify_manifest(value, runtime_sha, producer_sha, not_after):
     if (not isinstance(value, dict) or value.get('schema') != SCHEMA
             or value.get('status') != 'resumable_partial' or value.get('phase') not in MANIFESTS
@@ -99,8 +147,9 @@ def verify_manifest(value, runtime_sha, producer_sha, not_after):
     target = date.fromisoformat(value['target']).isoformat()
     if target != value['target'] or target > date.fromisoformat(not_after).isoformat():
         raise RecoveryError('recovery_manifest_target_is_future')
+    max_files, _ = manifest_budget(value)
     files, sizes = value.get('files'), value.get('sizes')
-    if (not isinstance(files, dict) or not files or len(files) > MAX_FILES
+    if (not isinstance(files, dict) or not files or len(files) > max_files
             or not isinstance(sizes, dict) or set(files) != set(sizes)
             or re.fullmatch('[0-9a-f]{64}', value.get('plan_sha256', '')) is None):
         raise RecoveryError('recovery_manifest_not_closed')
@@ -111,6 +160,12 @@ def verify_manifest(value, runtime_sha, producer_sha, not_after):
                 or type(sizes[name]) is not int or sizes[name] < 0):
             raise RecoveryError('recovery_manifest_object_invalid')
         casefold.add(name.casefold())
+    if 'object_budget_profile' in value:
+        counts = object_role_counts(files)
+        if counts != value['object_role_counts']:
+            raise RecoveryError('recovery_role_counts_differ')
+        if any(counts[role] > limit for role, limit in STATE_ROLE_LIMITS.items()):
+            raise RecoveryError('recovery_role_object_budget_exceeded')
     if sum(sizes.values()) > MAX_EXPANDED:
         raise RecoveryError('recovery_expanded_budget_exceeded')
     if files.get('scoped-recovery-plan.json') != value['plan_sha256']:
@@ -122,7 +177,10 @@ def verify_manifest(value, runtime_sha, producer_sha, not_after):
             or formal.get('bytes') != sizes.get(formal['path'])):
         raise RecoveryError('recovery_formal_archive_not_bound')
     if value.get('manifest_origin') is not None:
-        from microcap_legacy_source_recovery import validate_bridge_manifest
+        if value['manifest_origin'] == 'completed_prepare_artifact_bridge_20261112_v1':
+            from microcap_completed_prepare_recovery import validate_bridge_manifest
+        else:
+            from microcap_legacy_source_recovery import validate_bridge_manifest
         validate_bridge_manifest(value)
     return value
 
@@ -147,7 +205,7 @@ def seal(*, root, runtime_sha, producer_sha, plan, out, phase, run_id, run_attem
     if original_plan.get('consumer_sha') != runtime_sha or original_plan.get('schema') != 'microcap_scoped_recovery_plan_v1':
         raise RecoveryError('recovery_plan_runtime_differs')
     if out.exists():
-        old = verify_manifest(json.loads(out.read_bytes()), runtime_sha, producer_sha, original_plan['delivery_date'])
+        old = verify_manifest(parse_manifest(out.read_bytes(), phase=phase), runtime_sha, producer_sha, original_plan['delivery_date'])
         if (old['source_run_id'], old['source_run_attempt'], old['producer_commit'], old['plan_sha256']) != (
                 run_id, run_attempt, producer_commit, sha_file(plan)):
             raise RecoveryError('preserve_existing_recovery_manifest')
@@ -187,8 +245,13 @@ def seal(*, root, runtime_sha, producer_sha, plan, out, phase, run_id, run_attem
                      sha256=files['scoped-delivery/formal-state.zip'], bytes=sizes['scoped-delivery/formal-state.zip'])
                      if phase == 'state' and formal.is_file() else None),
                  native_adoption_required=True, final_strategy_delivery=False, email_sent=False, orders_placed=False)
+    if phase == 'state':
+        value.update(object_budget_profile=STATE_BUDGET_PROFILE, object_role_counts=object_role_counts(files))
     verify_manifest(value, runtime_sha, producer_sha, original_plan['delivery_date'])
-    atomic(out, encode(value))
+    raw = encode(value)
+    if len(raw) > manifest_budget(value)[1]:
+        raise RecoveryError('recovery_manifest_budget_exceeded')
+    atomic(out, raw)
     return value
 
 
@@ -267,6 +330,11 @@ def recover(*, runtime_sha, producer_sha, not_after, out, token, current_run_id=
                         excluded_artifact_ids=excluded)
         if item is None:
             if not orphan_only:
+                from microcap_completed_prepare_recovery import recover as recover_completed_prepare
+                completed = recover_completed_prepare(token=token, runtime_sha=runtime_sha,
+                    producer_sha=producer_sha, not_after=not_after, out=out)
+                if completed['restored']:
+                    return completed
                 from microcap_legacy_source_recovery import recover as recover_legacy_sources
                 return recover_legacy_sources(token=token,runtime_sha=runtime_sha,producer_sha=producer_sha,
                                               not_after=not_after,out=out)
@@ -308,7 +376,8 @@ def _recover_candidate(*, item, runtime_sha, producer_sha, not_after, out, token
         expected_sha=item['digest'].split(':')[1], expected_bytes=item['size_in_bytes'])
     with zipfile.ZipFile(outer) as archive:
         infos = archive.infolist(); seen = set()
-        if len(infos) > MAX_FILES + 256:
+        phase_max_files = STATE_MAX_FILES if item['phase'] == 'state' else MAX_FILES
+        if len(infos) > phase_max_files + 256:
             raise RecoveryError('recovery_archive_object_count_exceeded')
         for info in infos:
             name = info.filename.rstrip('/') if info.is_dir() else info.filename
@@ -317,10 +386,11 @@ def _recover_candidate(*, item, runtime_sha, producer_sha, not_after, out, token
                 raise RecoveryError('recovery_archive_duplicate_or_link')
             seen.add(name.casefold())
         manifest_name = MANIFESTS[item['phase']]
-        if archive.getinfo(manifest_name).file_size > 64 * 1024**2:
+        phase_max_manifest_bytes = STATE_MAX_MANIFEST_BYTES if item['phase'] == 'state' else MAX_MANIFEST_BYTES
+        if archive.getinfo(manifest_name).file_size > phase_max_manifest_bytes:
             raise RecoveryError('recovery_manifest_budget_exceeded')
         raw = archive.read(manifest_name)
-        manifest = verify_manifest(json.loads(raw), runtime_sha, producer_sha, not_after)
+        manifest = verify_manifest(parse_manifest(raw, phase=item['phase']), runtime_sha, producer_sha, not_after)
         if (manifest['source_run_id'] != item['original_run']['id']
                 or manifest['source_run_attempt'] != item['original_run'].get('run_attempt', 1)
                 or manifest['producer_commit'] != item['original_run']['head_sha']
@@ -334,6 +404,37 @@ def _recover_candidate(*, item, runtime_sha, producer_sha, not_after, out, token
         verify_plan_binding(manifest, archive.read('scoped-recovery-plan.json'))
         if orphan_only and manifest.get('formal_state_archive') is None:
             return dict(status='partial_state_has_no_orphan_formal_archive', restored=False, scan_older_state=True)
+        if not orphan_only:
+            from microcap_completed_prepare_recovery import (READER_CONSUMER, PRODUCER, TARGET,
+                recover as recover_completed_prepare)
+            if ((runtime_sha, producer_sha) == (READER_CONSUMER, PRODUCER)
+                    and manifest['phase'] == 'state' and manifest['target'] == not_after == TARGET
+                    and manifest.get('formal_state_archive') is None
+                    and not any(name in manifest['files'] for name in (
+                        'scoped-prepare/prepared.json', 'scoped-delivery/stage-receipts/refresh.json',
+                        'scoped-delivery/formal-state.zip'))):
+                # An early failed new runner can seal only its plan/latest.
+                # Authenticate every weak object before preferring the fixed
+                # already-completed source run; retain this outer as diagnosis.
+                for name, digest in manifest['files'].items():
+                    with archive.open(name) as body:
+                        if hashlib.file_digest(body, 'sha256').hexdigest() != digest:
+                            raise RecoveryError('recovered_partial_object_hash_differs')
+                prior_manifest = outer.with_suffix('.manifest.json')
+                if prior_manifest.exists() and prior_manifest.read_bytes() != raw:
+                    raise RecoveryError('preserve_existing_weak_partial_manifest')
+                if not prior_manifest.exists():
+                    atomic(prior_manifest, raw)
+                completed = recover_completed_prepare(token=token, runtime_sha=runtime_sha,
+                    producer_sha=producer_sha, not_after=not_after, out=out)
+                if completed['restored']:
+                    prior = dict(artifact_id=item['id'], source_run_id=manifest['source_run_id'],
+                        producer_commit=manifest['producer_commit'], outer=str(outer),
+                        outer_sha256=transport['sha256'], manifest=str(prior_manifest),
+                        manifest_sha256=hashlib.sha256(raw).hexdigest(), objects_hash_verified=True,
+                        status='weaker_partial_retained_completed_original_sources_preferred')
+                    atomic(outer.with_suffix('.precedence.json'), encode(prior))
+                    return dict(completed, prior_weaker_partial=prior)
         if shutil.disk_usage(out.parent).free < sum(manifest['sizes'].values()) + 4 * 1024**3:
             raise RecoveryError('recovery_disk_reserve_insufficient')
         out.mkdir(parents=True, exist_ok=False)
@@ -674,7 +775,7 @@ def _copy_private(source, destination, role_root):
     expected = sha_file(source)
     if destination.is_file() and sha_file(destination) == expected:
         return
-    temporary = destination.with_name(destination.name + '.admit-' + uuid.uuid4().hex)
+    temporary = destination.with_name('.admit-' + uuid.uuid4().hex)
     with Path(source).open('rb') as origin, temporary.open('xb') as target:
         shutil.copyfileobj(origin, target, 1024**2)
     if sha_file(temporary) != expected:
@@ -695,7 +796,12 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
     saved = manifest_path.parent
     original=json.loads(manifest_path.read_bytes())
     legacy_reader=None
-    if original.get('manifest_origin')=='legacy_source_artifact_bridge_v1':
+    completed_source = original.get('manifest_origin') == 'completed_prepare_artifact_bridge_20261112_v1'
+    if completed_source:
+        from microcap_completed_prepare_recovery import reader_identity, CONSUMER, PRODUCER
+        legacy_reader = reader_identity(consumer_sha, producer_sha)
+        value = verify_manifest(original, CONSUMER, PRODUCER, target)
+    elif original.get('manifest_origin')=='legacy_source_artifact_bridge_v1':
         from microcap_legacy_source_recovery import reader_identity, CONSUMER, PRODUCER
         reader=reader_identity(consumer_sha,producer_sha)
         # Authenticate the old manifest under its original identities. The Git
@@ -735,6 +841,11 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
                 or (legacy_reader is not None and old.get('validation_reader')!=legacy_reader)
                 or old.get('original_json_and_clocks_rewritten') is not False):
             raise RecoveryError('preserve_existing_resume_admission')
+        if old.get('prepared_source_reader') is not None:
+            from microcap_completed_prepare_recovery import validate_prepared_reader_admission
+            validate_prepared_reader_admission(old, prepared=prepare_out/'prepared.json',
+                config=prepare_out/'consumer-config.json', consumer=consumer, producer=producer,
+                target=target, consumer_sha=consumer_sha)
         return dict(old, admission_reused=True)
     same_target = value['target'] == target
     archive = value.get('formal_state_archive')
@@ -877,6 +988,11 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
         for prefix, (destination_root, role) in mappings.items():
             if name.startswith(prefix):
                 destination = destination_root / name[len(prefix):]
+                if prefix == 'scoped-prepare/' and name[len(prefix):].startswith('runtime-activation.'):
+                    # The former process owns this transaction. Keep its bytes
+                    # as prior evidence; the new process creates its own owner.
+                    destination = prepare_out / ('prior-runtime-activation-' + value['files'][name]
+                                                 + '-' + Path(name).name)
                 if name == 'scoped-delivery/resume-admission.json':
                     destination = delivery_out / ('prior-admission-' + value['files'][name] + '.json')
                 _copy_private(saved / name, destination, destination_root)
@@ -921,12 +1037,17 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
     if value.get('manifest_origin') is not None:
         # Keep the old run's source identity even if another day later seals
         # this admission.  The receiver is never presented as its producer.
+        source_evidence_key = 'source_preparation_evidence' if completed_source else 'legacy_source_evidence'
         report.update(manifest_origin=value['manifest_origin'],
                       manifest_issuer=value['manifest_issuer'],
                       original_source_was_sealed=value['original_source_was_sealed'],
-                      legacy_source_evidence=value['legacy_source_evidence'])
+                      **{source_evidence_key: value[source_evidence_key]})
     if legacy_reader is not None:
         report['validation_reader']=legacy_reader
+    if same_target and 'scoped-prepare/receipts/completed-prepare-source.json' in value['files']:
+        from microcap_completed_prepare_recovery import prepared_reader_admission
+        report['prepared_source_reader'] = prepared_reader_admission(manifest_path, value,
+            prepare_out=prepare_out, consumer=consumer, producer=producer, target=target)
     delivery_out.mkdir(parents=True, exist_ok=True)
     if admission_path.exists() and admission_path.read_bytes() != encode(report):
         raise RecoveryError('preserve_existing_resume_admission')

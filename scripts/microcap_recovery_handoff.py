@@ -29,8 +29,10 @@ BOOTSTRAP = 'recovery_formal_exports_v1'
 CONTROLLER = 'auto_formal_gap_recovery_20261112_v1'
 NATIVE = 'a7c1b9ac33454be4367880a0989dfc1466640503'
 M8 = '95d896fe58cc7cb84c0fcb7bd76534f62c9430f4'
-REVIEWED_NATIVES = frozenset({NATIVE, M8})
+M9 = '906eca8a5dfede7fa1674fb17cd3c6ce12205e6d'
+REVIEWED_NATIVES = frozenset({NATIVE, M8, M9})
 LEGACY_M7_CONTROLLER_SHA = 'eea88c4886baaba42256a4b57050432a0e3a4e4dfe12e827f99086d3b0389b16'
+LEGACY_M8_CONTROLLER_SHA = '8a52b8d9b1c6caaaba868cd447073f9d42c432d3d131e4646bfe9442814a2e4b'
 CORE = 'ad4de441d35442616f91aa613146ffdf8cd479f3'
 BRIDGE = 'hedge_precision_bridge_v1'
 VERSIONS = ('v2.0', 'v2.3', 'v2.5')
@@ -431,6 +433,9 @@ def reviewed_controller_identity(checkpoint):
     identity=checkpoint.get('recovery_controller',{})
     current=sha(Path(__file__).read_bytes().replace(b'\r\n',b'\n'))
     allowed={current}
+    if runtime in (NATIVE,M8):
+        # The deployed M8 controller predates the parser-only M9 runtime.
+        allowed.add(LEGACY_M8_CONTROLLER_SHA)
     if runtime==NATIVE:
         # Keep earned M7 packages readable after the source-only reader update.
         # This old controller never produced M8 and cannot be used to claim it.

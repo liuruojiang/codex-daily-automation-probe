@@ -33,6 +33,8 @@ POINTER_SCHEMA = 'microcap_notice_prefix_pointer_v1'
 PRODUCER = '3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
 CONSUMER = 'a7c1b9ac33454be4367880a0989dfc1466640503'
 ACTIVE_CONSUMER = '95d896fe58cc7cb84c0fcb7bd76534f62c9430f4'
+MIDNIGHT_CONSUMER = '906eca8a5dfede7fa1674fb17cd3c6ce12205e6d'
+CONSUMER_READERS = frozenset({CONSUMER,ACTIVE_CONSUMER,MIDNIGHT_CONSUMER})
 PRODUCER_READERS = frozenset({PRODUCER, ACTIVE_PRODUCER})
 TARGET = '2026-11-11'
 PREFIX = '.microcap_index_cache/st_notice_sources/'
@@ -190,7 +192,7 @@ print(json.dumps(result))
 def runtime_role(root, expected):
     root=Path(root).resolve()
     actual=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],encoding='utf-8').strip()
-    allowed=PRODUCER_READERS if expected==PRODUCER else {CONSUMER,ACTIVE_CONSUMER} if expected==CONSUMER else {expected}
+    allowed=PRODUCER_READERS if expected==PRODUCER else CONSUMER_READERS if expected==CONSUMER else {expected}
     if actual not in allowed:
         raise NoticePrefixError('notice_prefix_native_git_role_differs')
     dirty=subprocess.check_output(['git','-C',str(root),'diff','--name-only','HEAD'],encoding='utf-8').splitlines()

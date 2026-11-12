@@ -260,7 +260,7 @@ def validate_prepared(receipt, consumer, target, consumer_sha, admission=None):
     value = json.loads(receipt.read_bytes())
     if (value.get('schema') != 'microcap_scoped_rebalance_prepared_v1'
             or value.get('status') != 'prepared_sources_only' or value.get('target') != target
-            or value.get('consumer_sha') != consumer_sha or mapped_path(value['consumer_root'],admission) != consumer):
+            or mapped_path(value['consumer_root'],admission) != consumer):
         raise ValueError('Prepared rebalance belongs to another date/runtime/consumer')
     for name, digest in value['files'].items():
         path = (receipt.parent / name).resolve()
@@ -269,6 +269,11 @@ def validate_prepared(receipt, consumer, target, consumer_sha, admission=None):
     config = (receipt.parent / value['consumer_config']).resolve()
     if not config.is_relative_to(receipt.parent) or config.relative_to(receipt.parent).as_posix() not in value['files']:
         raise ValueError('Prepared consumer config is unbound')
+    if value.get('consumer_sha') != consumer_sha:
+        from microcap_completed_prepare_recovery import validate_prepared_reader_admission
+        validate_prepared_reader_admission(admission,prepared=receipt,config=config,
+            consumer=consumer,producer=mapped_path(value['producer_root'],admission),
+            target=target,consumer_sha=consumer_sha)
     if admission is not None:
         original=json.loads(config.read_bytes());current=json.loads(config.read_bytes())
         for field in ('source_root','bundle','producer_metadata_receipt'):
@@ -285,6 +290,28 @@ def validate_prepared(receipt, consumer, target, consumer_sha, admission=None):
                 resume_manifest_sha256=admission['manifest_sha256'],path_admission=admission['path_admission'])))
             config=active
     return value, config
+
+
+def ensure_resumed_receiver_stage(consumer,target,out,value,symbols,run):
+    # A failed refresh is not a successful consumer snapshot.  Its authenticated
+    # producer/preparation may be reused while the freshly restored consumer
+    # still needs its own original source bundle staged, without collection.
+    bundle=out/'sources.zip'
+    manifest,_,identity=read_bundle(bundle,target,value['files']['sources.zip'])
+    if manifest['target']!=target or manifest['symbols']!=symbols:
+        raise ValueError('Resumed source staging differs from the prepared date/roster')
+    directory=consumer/'.microcap_index_cache/local_input_imports'/identity
+    receipt=directory/'receipt.json'
+    if not receipt.exists():
+        run('stage-resumed-sources',[sys.executable,'-B',SCRIPTS/'microcap_scoped_inputs.py','import',
+            '--root',consumer,'--date',target,'--bundle',bundle,'--sha256',identity])
+    staged=json.loads(receipt.read_bytes())
+    if (staged.get('status')!='native_sources_staged' or staged.get('target')!=target
+            or staged.get('source_bundle_sha256')!=identity or staged.get('files')!=manifest['files']
+            or staged.get('production_pointers_changed') is not False
+            or staged.get('native_late_adoption_required') is not True
+            or hashes(directory/'root',manifest['files'])!=manifest['files']):
+        raise ValueError('Resumed consumer has no unchanged native source staging closure')
 
 
 def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resume_notice_generation=None, warm_source_config=None, warm_notice_prefix_config=None, recovery_plan=None, resume_state=None, run=None):
@@ -354,6 +381,7 @@ def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resum
             value, _ = validate_prepared(saved,consumer,target,consumer_sha,admission)
             if value['scope_sha256'] != scope_sha or mapped_path(value['producer_root'],admission) != producer:
                 raise ValueError('Preserved preparation has another roster/producer')
+            ensure_resumed_receiver_stage(consumer,target,out,value,symbols,run)
             warm_notice_prefix()
             select_notice_forward_checkpoint()
             return value
