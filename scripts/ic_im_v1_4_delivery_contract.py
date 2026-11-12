@@ -5,14 +5,59 @@ used by the official strategy.  Its source is
 liuruojiang/ic-im-rolling-arbitrage@e3f26824a8ff0a89b6125d4385f75e0a6cfa2a7e,
 poe_ic_im_mainline_v1_4_bot.py::_EXCHANGE_CLOSURES and
 _OFFICIAL_EXCHANGE_CALENDAR_YEARS.  This is an explicit covered-year snapshot,
-never a NAV-derived or weekday-only calendar.  New years fail closed until
-their official schedule is added and checked against the strategy calendar.
+never a NAV-derived calendar. Separately, the explicitly approved 2027
+State Council derivation is accepted only under the payload's policy day
+from 2026-11-12, with its source hashes and unconfirmed exchange status kept.
+Other unknown years fail closed.
 """
 from datetime import date, datetime, time, timedelta
+from contextvars import ContextVar
+from functools import wraps
 import math
 import re
 from typing import Any
 from zoneinfo import ZoneInfo
+import ic_im_state_council_calendar_v1 as approved_calendar
+
+
+_CALENDAR_POLICY_DAY = ContextVar('icim_delivery_calendar_policy_day', default=None)
+
+
+def with_calendar_policy(*, verify_source_metadata=False):
+    """Use the immutable payload's policy day; never today's wall clock."""
+    def decorate(function):
+        @wraps(function)
+        def scoped(payload, *args, **kwargs):
+            value = payload.get('market_date')
+            try:
+                policy_day = date.fromisoformat(value) if isinstance(value, str) and len(value) == 10 else None
+            except ValueError:
+                policy_day = None
+            token = _CALENDAR_POLICY_DAY.set(policy_day)
+            try:
+                result = function(payload, *args, **kwargs)
+                if verify_source_metadata:
+                    required = any(str(payload.get(field, '')).startswith('2027-') for field in
+                                   ('market_date', 'completed_day', 'verified_day', 'next_trade_day'))
+                    for signal in payload.get('signals', {}).values():
+                        evidence = signal.get('calendar_source_evidence')
+                        if evidence is None and not required:
+                            continue
+                        if policy_day is None or policy_day < approved_calendar.EFFECTIVE_SIGNAL_DATE:
+                            raise ValueError('derived calendar is outside its approved signal-day scope')
+                        expected = {'policy_revision': approved_calendar.REVISION,
+                                    'exchange_notice_verified': False,
+                                    'sources': [approved_calendar.load().evidence()]}
+                        if (not isinstance(evidence, dict) or evidence != expected
+                                or evidence.get('exchange_notice_verified') is not False
+                                or evidence['sources'][0].get('exchange_notice_verified') is not False
+                                or evidence['sources'][0].get('accepted_for_research') is not True):
+                            raise ValueError('derived calendar source identity/hash/evidence is invalid')
+                return result
+            finally:
+                _CALENDAR_POLICY_DAY.reset(token)
+        return scoped
+    return decorate
 
 
 CALENDAR_SOURCE_REVISION = "e3f26824a8ff0a89b6125d4385f75e0a6cfa2a7e"
@@ -74,6 +119,14 @@ EXCHANGE_CLOSURES = frozenset(
 
 def is_session(day: date) -> bool:
     if day.year not in CALENDAR_YEARS:
+        policy_day = _CALENDAR_POLICY_DAY.get()
+        if policy_day is not None:
+            try:
+                derived = approved_calendar.for_day(day, policy_day)
+            except approved_calendar.CalendarEvidenceError as exc:
+                raise ValueError(str(exc)) from exc
+            if derived is not None:
+                return derived.trading_day(day)
         raise ValueError(f"independent exchange calendar does not cover {day.year}")
     return day.weekday() < 5 and day not in EXCHANGE_CLOSURES
 
@@ -553,4 +606,5 @@ def validate_fear_publication(payload: dict[str, Any]) -> None:
     if missing and (payload.get("status") != "partial" or payload.get("signal_completeness") != "partial"
                     or set(payload.get("incomplete_components") or []) != set(missing)):
         raise ValueError("missing Fear requires an exact partial publication manifest")
+
 

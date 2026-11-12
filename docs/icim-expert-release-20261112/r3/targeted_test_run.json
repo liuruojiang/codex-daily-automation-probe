@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "files": [
+    "--rootdir=D:\\workspace\\icim_publish_20261112\\automation",
+    "tests/test_ic_im_v1_4_expert_release_20261112.py::test_exact_release_proof_keeps_both_new_modules_and_all_support",
+    "tests/test_ic_im_v1_4_expert_release_20261112.py::test_renderer_rejects_incomplete_or_changed_release_proof",
+    "tests/test_ic_im_v1_4_expert_release_20261112.py::test_source_verifier_checks_committed_inventory_and_every_support_byte",
+    "tests/test_ic_im_v1_4_expert_release_20261112.py::test_missing_new_manifest_cannot_downgrade_the_pinned_commit",
+    "tests/test_ic_im_v1_4_expert_release_20261112.py::test_current_packaging_rejects_older_release_even_with_current_sha",
+    "tests/test_ic_im_v1_4_expert_release_20261112.py::test_both_production_and_readiness_require_the_exact_release",
+    "tests/test_ic_im_v1_4_source_manifest_v3.py",
+    "tests/test_ic_im_v1_4_workflow.py::ICIMV14WorkflowTests::test_workflow_uses_r1_migration_persistence_and_gmail_gate"
+  ],
+  "state_dir": "C:\\Users\\ADMINI~1.DES\\AppData\\Local\\Temp\\icim_cloud_cloud_compat_r8\\icim_put_ca74c2c2\\state",
+  "test_only_windows_mkdir_mode_adjustment": true,
+  "implicit_pytest_addopts_removed": false
+}

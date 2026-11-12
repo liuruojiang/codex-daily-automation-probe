@@ -1,0 +1,38 @@
+{
+  "release": "20261112-expert-review-v5-r3",
+  "strategy_sha": "9ec8b91c5256155101faae3c84dba9ff95632db5",
+  "source": {
+    ".github/workflows/delivery-regression.yml": "fd8bc1c0dae634d1f774a03abdec25c17508831fef926a62c70fa14929d8bfd1",
+    ".github/workflows/ic-im-v1-4-daily-digest.yml": "3057a567f0eeacd998e2c18fd4af20002baadff08d3443d34ca630c7bc6f3ec4",
+    ".github/workflows/ic-im-v1-4-delivery-readiness.yml": "1c3daa7f04448d21be0244f0275b351110e61f59be152f7a4ec81a568f045dcb",
+    "scripts/build_ic_im_v1_4_digest.py": "d254956e1f517c3b6ec68acc1868e91726b51d8e9d3246c9c8761adc9b71eea3",
+    "scripts/verify_icim_source_release.py": "f8e4d7173d66d3947559171dbf2910ddf20dc437daa9b1a5fea45d5259683f24",
+    "scripts/ic_im_v1_4_delivery_contract.py": "46e845644a0002e1aeeaa887fabc59f07045ff948560b020a7687036db98dcb8",
+    "scripts/ic_im_state_council_calendar_v1.py": "4c2c2471872db7f7498f841649df934990a371b9b57778c3ae6805c6a55953af",
+    "docs/ic_im_expert_release_20261112_v2_manifest.json": "0329762ca1c7de33079de702ea6374384ebc02374f5d44326c21bf86c79bf124",
+    "tests/test_ic_im_v1_4_expert_release_20261112.py": "d3d586359b7cf2d9dc7fb497104b7168784a3a026950a43fe8f7927f7f446d0a",
+    "tests/test_ic_im_v1_4_workflow.py": "cc81b7a858fc7ed7adc95629a6a56a5dab47cf1b79c68c2924c3542dc911cc7c"
+  },
+  "targeted_checks": {
+    "exit_code": 0,
+    "watchdog_seconds": 60,
+    "started_at": "2026-11-12T15:16:28.118769+00:00",
+    "finished_at": "2026-11-12T15:16:33.480277+00:00",
+    "source_before_equals_after": true,
+    "bound_files": 41,
+    "counts": {
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "formal_cloud_gate_required": true,
+  "source_runtime_modules": 31,
+  "source_support_files": 3,
+  "original_cloud_failure_run": 43241651015,
+  "earlier_r2_audit_artifacts": "../candidate_pin.json",
+  "normal_schedule_and_smtp_gates_unchanged": true,
+  "shared_workflow_preserves_main_historical_fetch": "b8d489a7da1f09db5e48ebff387b7042f9508906",
+  "readiness_scope": "isolated ledger and report; SMTP envelope check with no DATA; no formal ledger promotion"
+}

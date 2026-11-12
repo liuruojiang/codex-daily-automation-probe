@@ -31,6 +31,7 @@ def jiu_reference_fields(payload: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in reference.items() if key in JIU_REFERENCE_FIELDS}
 
 
+@delivery_contract.with_calendar_policy()
 def calendar_notices(payload: dict[str, Any]) -> list[str]:
     return maintenance_notice.reminders(
         payload.get("signals", {}), signal_day=payload.get("market_date"),
@@ -1094,6 +1095,7 @@ def build_success_html(payload: dict[str, Any], run_url: str) -> str:
 </body></html>'''
 
 
+@delivery_contract.with_calendar_policy()
 def failed_calendar_notices(payload: dict[str, Any]) -> list[str]:
     """Derive only dated calendar facts from this attempt's generation clock.
 
@@ -1138,6 +1140,7 @@ def failed_calendar_notices(payload: dict[str, Any]) -> list[str]:
         return []
 
 
+@delivery_contract.with_calendar_policy()
 def partial_calendar_notices(payload: dict[str, Any]) -> list[str]:
     """Keep a partial grid warning while showing independently dated calendar facts."""
     if payload.get("status") != "partial":
@@ -1186,6 +1189,7 @@ def build_failure_html(payload: dict[str, Any], run_url: str) -> str:
 </div></body></html>'''
 
 
+@delivery_contract.with_calendar_policy(verify_source_metadata=True)
 def validate_success_payload(payload: dict[str, Any]) -> None:
     import math
     from check_ic_im_v1_4_delivery import expected_identity_for_day
@@ -1519,7 +1523,7 @@ def required_success_report(result_path: Path, report_arg: str, payload: dict[st
     return report
 
 
-def source_provenance(path: str, expected_sha: str) -> dict[str, Any] | None:
+def source_provenance(path: str, expected_sha: str, expected_release: str | None = None) -> dict[str, Any] | None:
     """Bind the displayed program version to this run's independently checked source."""
     if not path and not expected_sha:
         return None  # Read-only historical renderer compatibility.
@@ -1529,24 +1533,29 @@ def source_provenance(path: str, expected_sha: str) -> dict[str, Any] | None:
     files = proof.get("source_sha256")
     from hashlib import sha256
     releases = {
+        "20261112-expert-review-v5-r3": "docs/ic_im_expert_release_20261112_v2_manifest.json",
+        "20261112-expert-review-v5-r2": "docs/ic_im_expert_release_20261112_manifest.json",
         "20261109-fear-source-round2-v3": "docs/ic_im_fear_source_round2_20261109_manifest.json",
         "20261023-redteam-repairs-v3-r3": "docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json",
         "20261109-fear-source-split-v1": "docs/ic_im_fear_source_split_20261109_manifest.json",
         "20261109-fear-source-adversarial-v2": "docs/ic_im_fear_source_adversarial_20261109_manifest.json",
     }
     relative = releases.get(proof.get("release"))
-    if relative is None:
+    if relative is None or (expected_release is not None and proof.get("release") != expected_release):
         raise ValueError("source provenance does not match this run's execution inventory")
     expected_raw = (Path(__file__).resolve().parents[1] / relative).read_bytes()
     expected_files = json.loads(expected_raw)["files"]
     if (proof.get("status") != "verified" or proof.get("strategy_sha") != expected_sha
             or proof.get("release") not in releases
             or not re.fullmatch(r"[0-9a-f]{64}", str(proof.get("manifest_sha256", "")))
-            or not isinstance(files, dict) or len(files) != 29
+            or not isinstance(files, dict) or len(files) != (31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
             or "run_ic_im_v1_4_github_digest.py" not in files
             or files != expected_files or proof.get("manifest_sha256") != sha256(expected_raw).hexdigest()
             or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in files.values())):
         raise ValueError("source provenance does not match this run's execution inventory")
+    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"}:
+        if proof.get("support_sha256") != json.loads(expected_raw)["support_files"]:
+            raise ValueError("source provenance lacks exact approved-calendar support bytes")
     from datetime import datetime, timezone
     verified = datetime.fromisoformat(str(proof.get("verified_at")))
     if verified.tzinfo is None or verified > datetime.now(timezone.utc):
@@ -1562,11 +1571,13 @@ def main() -> int:
     parser.add_argument("--subject-prefix", default="")
     parser.add_argument("--source-provenance", default="")
     parser.add_argument("--expected-source-sha", default="")
+    parser.add_argument("--expected-source-release", default="")
     args = parser.parse_args()
-    proof = source_provenance(args.source_provenance, args.expected_source_sha)
+    proof = source_provenance(args.source_provenance, args.expected_source_sha,
+                              args.expected_source_release or None)
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
-    if (proof and proof.get("release") == "20261109-fear-source-round2-v3"
+    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"}
             and payload.get("status") in {"ok", "partial"} and "report_sha256" not in payload):
         raise ValueError("current IC/IM producer requires report_sha256")
     if str(payload.get("strategy_revision")) != "r1":
@@ -1617,6 +1628,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
 
 

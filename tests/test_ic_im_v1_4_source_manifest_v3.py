@@ -88,6 +88,8 @@ def test_verifier_reads_new_committed_manifest_and_rejects_tampered_source(tmp_p
         calls.append(args)
         if args[-2:] == ['rev-parse', 'HEAD']:
             return TEST_COMMIT + '\n'
+        if 'ls-tree' in args:
+            return CURRENT + '\n'
         assert args[-2:] == ['show', TEST_COMMIT + ':' + CURRENT]
         return raw
 
@@ -99,3 +101,4 @@ def test_verifier_reads_new_committed_manifest_and_rejects_tampered_source(tmp_p
     with pytest.raises(ValueError, match='source fingerprint mismatch'):
         verifier.verify(tmp_path, TEST_COMMIT)
     assert all(OLD not in arg for call in calls for arg in call)
+

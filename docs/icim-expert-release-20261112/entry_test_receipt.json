@@ -1,0 +1,14 @@
+{
+  "exit_code": 0,
+  "watchdog_seconds": 60,
+  "started_at": "2026-11-12T14:37:19.898842+00:00",
+  "finished_at": "2026-11-12T14:37:21.315177+00:00",
+  "source_before_equals_after": true,
+  "bound_files": 32,
+  "counts": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

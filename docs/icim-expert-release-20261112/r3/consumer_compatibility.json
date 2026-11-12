@@ -1,0 +1,44 @@
+{
+  "status": "static_compatibility_delta_and_shared_workflow_preservation_closed",
+  "created_at": "2026-11-12T23:14:47.764360+08:00",
+  "execution_actor": "/root/evidence_takeover",
+  "shared_main_blob_sha": "1496d4df887edbb85f0c4226525240879ed9dcfb",
+  "shared_main_sha256": "125b378391396efcf57c8a015cb47759e3b787197a5405b151b9887c8540cbd7",
+  "staged_shared_sha256": "fd8bc1c0dae634d1f774a03abdec25c17508831fef926a62c70fa14929d8bfd1",
+  "shared_workflow_only_changes": [
+    "ICIM failure process_output emission preserving exit code",
+    "Five additional ICIM regression artifact paths",
+    "One trailing blank line"
+  ],
+  "microcap_b8d489_fetch_preserved": true,
+  "independent_non_ICIM_logic_changed": false,
+  "old_r2_manifest_sha256": "64e8219f74667daf3dc1581fbc973138c2c356497bfbc36ec3ee19d36898c818",
+  "new_r3_manifest_sha256": "0329762ca1c7de33079de702ea6374384ebc02374f5d44326c21bf86c79bf124",
+  "manifest_modules": 31,
+  "support_files": 3,
+  "core_delta_only_requests_exception_initializer": true,
+  "pandas_requirement": "pandas==2.3.3",
+  "typed_codec_or_adapter_changed": false,
+  "old_r2_manifest_and_registration_preserved": true,
+  "current_publisher_requires_release": "20261112-expert-review-v5-r3",
+  "downgrade_guard_retained": true,
+  "tests_run_by_auditor": false,
+  "minimum_affected_reverification": [
+    "New r3 positive proof and exact 31+3 negative controls",
+    "Expected commit with v2+v1 manifests but missing v2 worktree must reject",
+    "Explicit current r3 must reject valid older r2 proof; historical r2 read-only API remains accepted",
+    "Both entrypoints require r3 and daily shell continuation remains exact",
+    "Original Python3.11 transport-init and Pandas replay counterexamples plus formally required release gates"
+  ],
+  "pending_release_wiring": "Daily strategy SHA is still intermediate 41aa in staging; root must update it to the new r3 compatibility commit before final release.",
+  "cloud_python311_actual_success_asserted": false,
+  "regression_or_SMTP_or_ledger_run": false,
+  "source_hashes": {
+    "scripts/verify_icim_source_release.py": "f8e4d7173d66d3947559171dbf2910ddf20dc437daa9b1a5fea45d5259683f24",
+    "scripts/build_ic_im_v1_4_digest.py": "d254956e1f517c3b6ec68acc1868e91726b51d8e9d3246c9c8761adc9b71eea3",
+    ".github/workflows/ic-im-v1-4-daily-digest.yml": "b6e3c63b4f140ea02a833c55cba4710f5c88c58c2952e612447059d623c8518f",
+    ".github/workflows/ic-im-v1-4-delivery-readiness.yml": "1c3daa7f04448d21be0244f0275b351110e61f59be152f7a4ec81a568f045dcb",
+    ".github/workflows/delivery-regression.yml": "fd8bc1c0dae634d1f774a03abdec25c17508831fef926a62c70fa14929d8bfd1"
+  },
+  "verifier_sha256": "d0ebca458e4b5c08e080fe90cd3360ebcd34897e4465c88e2708ede41e94f6c5"
+}
