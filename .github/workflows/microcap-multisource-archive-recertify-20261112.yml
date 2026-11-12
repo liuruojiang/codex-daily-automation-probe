@@ -84,6 +84,11 @@ jobs:
       - name: Verify exact M8 v4 source and no-history-change contracts
         working-directory: native
         run: |
+          git fetch --no-tags ../producer-contract \
+            f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5 \
+            3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36 \
+            d2d15cbaf5763333c74239b1ded3d1ac467adb3c \
+            3344e403ff01e17ef45b745a704a240e0917720b
           python -B -m pytest tests/test_scoped_archive_source_revalidation.py \
             tests/test_m8_archive_source_revalidation_20261112.py \
             tests/test_scoped_source_consumer.py tests/test_share_typed_quote_20261112.py \
