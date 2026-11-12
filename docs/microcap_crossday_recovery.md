@@ -8,10 +8,10 @@
 
 ## 09:00与11:00的同槽恢复
 
-资料维护仍由本地唯一写入者处理300只及903项。成功来源按原回执复用；`already_complete`只跳过重复采集，不跳过未完成的调仓或成员检查点接力。两个时槽使用同一个持久恢复目录和due给出的D：
+资料维护仍由本地唯一写入者处理300只及903项。成功来源按原回执复用；`already_complete`只跳过重复采集，不跳过未完成的调仓或成员检查点接力。`due.target`决定本轮早晨资料的目标日；恢复派发前，须从当前来源运行目录的原生`latest_completed_session()`再次取得恢复日D。若维护延续到收盘后，D可能已前进，不能沿用早晨的旧日期。两个时槽使用同一个持久恢复目录：
 
 ```powershell
-C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109\scripts\dispatch_microcap_recovery.py --root D:\Codex\microcap-local-maintenance\runtime --date <due.target> --state-root D:\Codex\microcap-local-maintenance\recovery\dispatch
+C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109\scripts\dispatch_microcap_recovery.py --root D:\Codex\microcap-local-maintenance\runtime --date <recovery.D> --state-root D:\Codex\microcap-local-maintenance\recovery\dispatch
 ```
 
 该入口只允许`rebalance_recovery`，不启动日报。它核对正式main的local owner、原生来源/消费者角色和独立完成日，按固定`microcap-recovery-v1-D`键保留启动意图。已有同工作流运行先跟踪；已成功不重复；明确失败后才能续同槽。请求已接受但响应丢失、进程中断或查询不明时，只读查询原意图，不重复POST。main在请求期间推进时，只有实际运行的精确新提交仍具有同一固定运行合同才接纳，并保留原expected head和实际observed head。

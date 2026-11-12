@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from types import ModuleType
 
 import pytest
 
@@ -35,6 +36,13 @@ def warm(software_issuers,monkeypatch):
     contract=sys.modules['scripts.stock_input_contract']
     contract.SOURCE_FILES=tuple(new)
     contract.source_fingerprint=lambda _root:dict(new)
+    # These Native proof boundaries are software spies. Isolate every real
+    # source name from prior recovery imports; monkeypatch restores the cache.
+    for name in new:
+        if name=='scripts/stock_input_contract.py' or not name.endswith('.py'):continue
+        qualified=name[:-3].replace('/','.')
+        module=ModuleType(qualified);module.__file__=str(case.root/name)
+        monkeypatch.setitem(sys.modules,qualified,module)
     monkeypatch.setattr(importer,'validate_runtime',lambda *_a:legacy.READER_PRODUCER)
     case.manifest['runtime_sha']=legacy.PRODUCER
     case.manifest['producer_context'].update(runtime_sha=legacy.PRODUCER,native_sources=old)
