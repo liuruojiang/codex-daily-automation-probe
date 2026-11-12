@@ -1,0 +1,44 @@
+{
+  "status": "AFTER_INSTALL_READONLY_PASS",
+  "automation_pin": "1d152fbd5fac2607d6f4cc9e50b0a864a0e91a5c",
+  "pointer_SHA256": "1d58c5e78cfa93925ba8c874852183d023a8dea5d81a397f495b59b3a6277864",
+  "manifest_SHA256": "c4989070a04579c708f890ecfa381ed143c2b7c8631ffcf84dfcb1aea1cdeb0c",
+  "files_verified": 10,
+  "selected_runner": "D:\\Codex\\home\\automations\\ic-im\\runtime\\local_intraday_bundles\\1d152fbd5fac2607d6f4cc9e50b0a864a0e91a5c\\scripts\\run_microcap_member_local.py",
+  "selected_policy_module": "D:\\Codex\\home\\automations\\ic-im\\runtime\\local_intraday_bundles\\1d152fbd5fac2607d6f4cc9e50b0a864a0e91a5c\\scripts\\member_checkpoint_policy.py",
+  "local_runtime_execution": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+  "cloud_namespace": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
+  "core_marker": "ad4de441d35442616f91aa613146ffdf8cd479f3",
+  "rebalance_producers": [
+    "1634a27c5a609a46ab35fc29ca2c65b94182671b",
+    "14e9a9fa6f0487f1d5547598435089c43f2f9fd1",
+    "a7c1b9ac33454be4367880a0989dfc1466640503"
+  ],
+  "changed_from_retained_old_bundle": [
+    "config/microcap_member_local_runtime.json",
+    "scripts/member_checkpoint_policy.py"
+  ],
+  "old_bundle_retained": true,
+  "software_packets": [
+    {
+      "original_packet": "D:\\Codex\\test-lifecycle\\records\\c94adcfab20542b5b0226e6e6a6ada39\\actual-M7-early-software-checkpoint.zip",
+      "SHA256": "493b455d06304df942261b13b5b98f8a64055dce0bad28d3fe7a84fb255a3fd1",
+      "mode": "native_close_extends_previous",
+      "exact_M7_accepted": true,
+      "unknown_producer_rejected": true
+    },
+    {
+      "original_packet": "D:\\Codex\\test-lifecycle\\records\\c94adcfab20542b5b0226e6e6a6ada39\\actual-M7-late-software-checkpoint.zip",
+      "SHA256": "32ba29d7db225b00950fa788ff69c5cb02bdd03eafe3d98bb073333cfe2e0313",
+      "mode": "same_close_period_switch",
+      "exact_M7_accepted": true,
+      "unknown_producer_rejected": true
+    }
+  ],
+  "protected_pointer_bundle_and_original_packets_unchanged": true,
+  "no_bootstrap": true,
+  "no_new_market_data": true,
+  "no_report_or_signal_run": true,
+  "no_SMTP": true,
+  "cloud_source_archive_activation": "Independent, pending; this check makes no cloud-activation claim"
+}

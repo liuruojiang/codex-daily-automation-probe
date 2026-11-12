@@ -1,0 +1,24 @@
+{
+  "schema": "exact_member_reader_switch_preparation_v1",
+  "old_pointer_sha256": "fed85d83ce72338395f490ad1b6ee58c6ced6de95847a68748c0e0e2de3298ec",
+  "new_pointer_sha256": "1d58c5e78cfa93925ba8c874852183d023a8dea5d81a397f495b59b3a6277864",
+  "old_automation_pin": "540009ba6ed9cbc01d81590978cb9ec3e4864b57",
+  "new_automation_pin": "1d152fbd5fac2607d6f4cc9e50b0a864a0e91a5c",
+  "candidate": "D:\\Codex\\home\\automations\\ic-im\\runtime\\local_intraday_bundles\\1d152fbd5fac2607d6f4cc9e50b0a864a0e91a5c-candidate-member_daily_install.json",
+  "manifest_sha256": "c4989070a04579c708f890ecfa381ed143c2b7c8631ffcf84dfcb1aea1cdeb0c",
+  "files": 10,
+  "changed_files": [
+    "scripts/member_checkpoint_policy.py",
+    "config/microcap_member_local_runtime.json"
+  ],
+  "original_policy_roles_preserved": true,
+  "original_seed_runner_contract_preserved": true,
+  "installation_changed": true,
+  "installed_pointer_sha256": "1d58c5e78cfa93925ba8c874852183d023a8dea5d81a397f495b59b3a6277864",
+  "strategy_pin": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+  "checkpoint_namespace": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
+  "old_bundle_retained": true,
+  "current_strategy_signal_or_order": false,
+  "email_sent": false,
+  "cloud_source_activation_independent_and_pending": true
+}

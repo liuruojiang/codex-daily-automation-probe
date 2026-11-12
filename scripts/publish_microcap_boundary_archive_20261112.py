@@ -3,11 +3,16 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path
+import re
+import ssl
 import subprocess
 import sys
+import time
+from urllib.parse import quote
 import zipfile
 
 REPOSITORY = 'liuruojiang/codex-daily-automation-probe'
@@ -16,11 +21,35 @@ TAG = 'microcap-scoped-whole-20261110-14e9a9fa'
 NAME = 'microcap-whole-delivery-state-archive-20261110-14e9a9fa.zip'
 
 
-def gh(*args):
-    return subprocess.check_output(['gh', *args])
+def gh(*args, input=None):
+    return subprocess.check_output(['gh', *args], input=input, stderr=subprocess.PIPE)
 
 
-def release():
+def release_identity(value, release_id=None):
+    if (not isinstance(value, dict) or type(value.get('id')) is not int or value['id'] <= 0
+            or (release_id is not None and value['id'] != release_id)
+            or value.get('tag_name') != TAG or value.get('prerelease') is not False
+            or type(value.get('draft')) is not bool or not isinstance(value.get('assets'), list)):
+        raise ValueError('Existing release identity differs')
+    return value
+
+
+def release(release_id=None):
+    if release_id is not None:
+        if type(release_id) is not int or release_id <= 0:
+            raise ValueError('Invalid exact release ID')
+        for attempt in range(4):
+            result = subprocess.run(['gh', 'api', f'repos/{REPOSITORY}/releases/{release_id}'],
+                                    capture_output=True)
+            if not result.returncode:
+                return release_identity(json.loads(result.stdout), release_id)
+            try:
+                status = str(json.loads(result.stdout).get('status'))
+            except (ValueError, AttributeError):
+                status = None
+            if status not in (None, '404', '429', '500', '502', '503', '504') or attempt == 3:
+                raise RuntimeError('Exact release ID lookup failed; reconcile before any repeat write')
+            time.sleep(0.2)
     result = subprocess.run(['gh', 'api', f'repos/{REPOSITORY}/releases/tags/{TAG}'],
                             capture_output=True)
     if result.returncode:
@@ -55,9 +84,133 @@ def release():
         value = matches[0]
     else:
         value = json.loads(result.stdout)
-    if value.get('tag_name') != TAG or value.get('prerelease') is not False:
-        raise ValueError('Existing release identity differs')
-    return value
+    return release_identity(value)
+
+
+def binding(identity):
+    return dict(repository=REPOSITORY, runtime_sha=RUNTIME, tag=TAG, asset_name=NAME,
+                archive_sha256=identity['sha256'], archive_bytes=identity['bytes'])
+
+
+def save_json(path, value):
+    path.write_text(json.dumps(value, indent=2)+'\n', encoding='utf-8')
+
+
+def write_once(evidence, role, intent, action):
+    """An unacknowledged write is not permission for another write."""
+    path = evidence/(role+'-intent.json')
+    if path.exists():
+        if json.loads(path.read_bytes()) != intent:
+            raise ValueError('Saved publication intent identity differs')
+        return None
+    if (evidence/(role+'-response.raw')).exists() or (evidence/(role+'-unknown.json')).exists():
+        raise RuntimeError('Publication response lacks its original intent; reconcile before any write')
+    with path.open('x', encoding='utf-8') as stream:
+        stream.write(json.dumps(intent, indent=2)+'\n')
+    try:
+        raw = action()
+    except Exception as error:
+        save_json(evidence/(role+'-unknown.json'), dict(outcome='unknown', error_type=type(error).__name__))
+        return None  # Only resource readback may resolve this; never retry it.
+    (evidence/(role+'-response.raw')).write_bytes(raw)
+    return raw
+
+
+def ensure_release(evidence, identity):
+    intent_path = evidence/'release-create-intent.json'
+    response_path = evidence/'release-create-response.raw'
+    receipt_path = evidence/'release-create-receipt.json'
+    if intent_path.exists():
+        intent = json.loads(intent_path.read_bytes())
+        request = intent.get('request', {})
+        # Resume the original target; a newer recovery workflow SHA must never
+        # retarget or recreate an already accepted draft.
+        if (intent.get('binding') != binding(identity) or intent.get('schema') != 'github_release_create_intent_v1'
+                or not isinstance(request, dict)
+                or request != create_request(request.get('target_commitish'))):
+            raise ValueError('Saved release creation intent identity differs')
+        if receipt_path.exists():
+            receipt = json.loads(receipt_path.read_bytes())
+            if (type(receipt.get('release_id')) is not int or receipt['release_id'] <= 0
+                    or receipt.get('intent_sha256') != hashlib.sha256(intent_path.read_bytes()).hexdigest()
+                    or not response_path.exists()
+                    or receipt.get('response_sha256') != hashlib.sha256(response_path.read_bytes()).hexdigest()):
+                raise ValueError('Saved creation receipt binding differs')
+            value = release_identity(json.loads(response_path.read_bytes()), receipt.get('release_id'))
+        elif response_path.exists():
+            value = release_identity(json.loads(response_path.read_bytes()))
+        else:
+            value = release()
+            if value is None:
+                raise RuntimeError('Release creation outcome unknown; reconcile saved intent before any repeat write')
+            response_path.write_bytes(json.dumps(value).encode())
+        save_json(receipt_path, dict(schema='github_release_create_receipt_v1', release_id=value['id'],
+            intent_sha256=hashlib.sha256(intent_path.read_bytes()).hexdigest(),
+            response_sha256=hashlib.sha256(response_path.read_bytes()).hexdigest()))
+        return release(value['id'])
+    if receipt_path.exists() or response_path.exists() or (evidence/'release-create-unknown.json').exists():
+        raise RuntimeError('Creation evidence lacks its original intent; reconcile before any write')
+    current = release()
+    if current is not None:
+        return current
+    request = create_request(os.environ['GITHUB_SHA'])
+    intent = dict(schema='github_release_create_intent_v1', binding=binding(identity), request=request)
+    raw = write_once(evidence, 'release-create', intent,
+        lambda: gh('api', '--method', 'POST', f'repos/{REPOSITORY}/releases', '--input', '-',
+                   input=json.dumps(request).encode()))
+    if raw is None:
+        return ensure_release(evidence, identity)  # The saved intent forbids another POST.
+    value = release_identity(json.loads(raw))
+    if value['draft'] is not True:
+        raise ValueError('New release was not created as a draft')
+    save_json(receipt_path, dict(schema='github_release_create_receipt_v1', release_id=value['id'],
+        intent_sha256=hashlib.sha256(intent_path.read_bytes()).hexdigest(),
+        response_sha256=hashlib.sha256(raw).hexdigest()))
+    return release(value['id'])
+
+
+def create_request(target):
+    if not isinstance(target, str) or re.fullmatch('[0-9a-f]{40}', target) is None:
+        raise ValueError('Release target commit differs')
+    return dict(tag_name=TAG, target_commitish=target, draft=True, prerelease=False,
+        name='Microcap verified 10-Nov archive with exact issuer coverage',
+        body='Source-only native recertification. Economic history preserved. No current signal or email.')
+
+
+def upload_asset(release_id, bundle):
+    """Stream to the fixed uploads host; HTTPSConnection never follows redirects."""
+    token = gh('auth', 'token').decode().strip()
+    if not token:
+        raise RuntimeError('GitHub authentication is unavailable')
+    connection = http.client.HTTPSConnection('uploads.github.com', timeout=60,
+                                              context=ssl.create_default_context())
+    try:
+        connection.putrequest('POST', f'/repos/{REPOSITORY}/releases/{release_id}/assets?name={quote(NAME, safe="")}')
+        for key, value in (('Authorization', 'Bearer '+token), ('Accept', 'application/vnd.github+json'),
+                           ('X-GitHub-Api-Version', '2022-11-28'), ('Content-Type', 'application/zip'),
+                           ('Content-Length', str(bundle.stat().st_size))):
+            connection.putheader(key, value)
+        connection.endheaders()
+        with bundle.open('rb') as stream:
+            while chunk := stream.read(1024*1024):
+                connection.send(chunk)
+        response = connection.getresponse()
+        raw = response.read()
+        if response.status != 201:
+            raise RuntimeError('Archive upload not acknowledged; reconcile before any repeat write')
+        return raw
+    finally:
+        connection.close()
+
+
+def confirmed_release(release_id, digest, size, published=False):
+    for attempt in range(4):
+        value = release(release_id)
+        if check_assets(value, digest, size) and (not published or value['draft'] is False):
+            return value
+        if attempt != 3:
+            time.sleep(0.2)
+    raise RuntimeError('Archive publication state unknown; reconcile before any repeat write')
 
 
 def check_assets(value, digest, size):
@@ -112,29 +265,22 @@ def publish(root, bundle, evidence):
                     data_inventory_sha256=BASELINE['state_inventory_sha256'],
                     current_signal_ready=False, email_sent=False, orders_placed=False)
     (evidence/'archive-identity.json').write_text(json.dumps(identity, indent=2)+'\n', encoding='utf-8')
-    current = release()
-    if current is None:
-        target = os.environ['GITHUB_SHA']
-        gh('release', 'create', TAG, '--repo', REPOSITORY, '--draft', '--target', target,
-           '--title', 'Microcap verified 10-Nov archive with exact issuer coverage',
-           '--notes', 'Source-only native recertification. Economic history preserved. No current signal or email.')
-        current = release()
-        if current is None:
-            raise RuntimeError('Created release is not yet visible; reconcile before any repeat write')
+    current = ensure_release(evidence, identity)
+    release_id = current['id']
     (evidence/'release-before.json').write_text(json.dumps(current, indent=2)+'\n', encoding='utf-8')
     if not check_assets(current, digest, size):
         if current.get('draft') is not True:
             raise ValueError('Refuse adding an unreviewed asset to a published release')
-        gh('release', 'upload', TAG, str(bundle), '--repo', REPOSITORY)
-    uploaded = release()
-    if not check_assets(uploaded, digest, size):
-        raise ValueError('Published archive asset is absent')
+        intent = dict(schema='github_release_upload_intent_v1', binding=binding(identity), release_id=release_id)
+        write_once(evidence, 'release-upload', intent, lambda: upload_asset(release_id, bundle))
+    uploaded = confirmed_release(release_id, digest, size)
     (evidence/'release-uploaded.json').write_text(json.dumps(uploaded, indent=2)+'\n', encoding='utf-8')
     if uploaded['draft']:
-        gh('release', 'edit', TAG, '--repo', REPOSITORY, '--draft=false')
-    published = release()
-    if published.get('draft') is not False or not check_assets(published, digest, size):
-        raise ValueError('Archive publication was not confirmed')
+        intent = dict(schema='github_release_publish_intent_v1', binding=binding(identity), release_id=release_id)
+        write_once(evidence, 'release-publish', intent,
+            lambda: gh('api', '--method', 'PATCH', f'repos/{REPOSITORY}/releases/{release_id}',
+                       '--input', '-', input=b'{"draft":false}'))
+    published = confirmed_release(release_id, digest, size, published=True)
     (evidence/'release-published.json').write_text(json.dumps(published, indent=2)+'\n', encoding='utf-8')
     identity['url'] = published['assets'][0]['browser_download_url']
     (evidence/'publication.json').write_text(json.dumps(identity, indent=2)+'\n', encoding='utf-8')
