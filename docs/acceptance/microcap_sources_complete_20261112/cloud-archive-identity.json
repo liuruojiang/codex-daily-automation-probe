@@ -1,0 +1,20 @@
+{
+  "schema": "microcap_boundary_archive_publication_v1",
+  "runtime_sha": "a7c1b9ac33454be4367880a0989dfc1466640503",
+  "date": "2026-11-10",
+  "sha256": "dadbbb46c831db8bd24f5b901242d03be4455f5bf91fdf99b934dc0bc17751ec",
+  "bytes": 672177030,
+  "economic_csvs": {
+    "outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv": "91e65fb772c28a65c4bc98d103218affda7f0e7952a08608bbaeb37425b78932",
+    "outputs/microcap_top100_mom16_plain_fixed1_v2_0_costed_nav.csv": "36d6afb692ea3795deeb803fca2b0063bd21b808536b329bc04f1d50a0c6f271",
+    "outputs/microcap_top100_mom16_lb25_hl2p5_r2off_eb0p08_no_overheat_exec0p8_v2_3_costed_nav.csv": "4c998666ad6d863e083ef24174e9974b32fe5ce78bf5d0dd47f3d41e96920d84",
+    "outputs/microcap_top100_mom16_lb20_hl3_entry0_exit0_no_targetvol_v2_5_costed_nav.csv": "89ba1ee56fb09b26073d47834811a0b9e675359299a0aa95a0fd8266f9522208",
+    "outputs/microcap_top100_mom16_biweekly_live_v2_0_performance_nav.csv": "ca3d407833224571cec8505625be9be4827b327abbb1372ce8b1b6b23648545f",
+    "outputs/microcap_top100_mom16_biweekly_live_v2_3_performance_nav.csv": "5f3fdea152fd6d7356e1dbaa4dc35962e1355528396c8ea2a84fb7bc8311a64d",
+    "outputs/microcap_top100_mom16_biweekly_live_v2_5_performance_nav.csv": "5f7755df4f08ec55c48bac8070d79dd1a50a266a1d901a5e5fdde97f83d54452"
+  },
+  "data_inventory_sha256": "42899f51e86c92ac4438bf25c45bd9419df3b9ba0c6997fa4fabe1c0af61d860",
+  "current_signal_ready": false,
+  "email_sent": false,
+  "orders_placed": false
+}

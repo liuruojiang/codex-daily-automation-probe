@@ -8,4 +8,10 @@
 
 [GitHub发布回执](source-publication.json)已核服务器digest；[原资料包](https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-20261111-3fe2e15e/microcap-local-sources-close-20261111-3fe2e15e.zip)与本地相同。
 
-新M7读取器为 `a7c1b9ac33454be4367880a0989dfc1466640503`，源码树与独立验收的c965候选相同，原三策略入口及member kernel未改。新v3云端归档认证和实际P2私有stage仍须由本轮oneoff取得真实回执；本页的数据维护完成不能代替当前信号、正式调仓、发送或部署。正式来源指针在这些接收检查通过前保留原10日包。
+新M7读取器为 `a7c1b9ac33454be4367880a0989dfc1466640503`，源码树与独立验收的c965候选相同，原三策略入口及member kernel未改。[云端接收原件](cloud-native-stage.json)记录真实M3恢复、精确源激活、214 Linux测试、新v3完整认证和原资料包300只私有stage；全局指针未提前改写，仍要求后续原生ST刷新及正式late adoption。
+
+[归档原始身份](cloud-archive-identity.json)为672177030字节、SHA `dadbbb46c831db8bd24f5b901242d03be4455f5bf91fdf99b934dc0bc17751ec`，170713历史对象与7经济CSV保持，current_signal_ready=false。首轮仅发布草稿查询失败；[恢复发布原件](cloud-publication-recovery.json)复用已赚取原包，精确核对原artifact、同release442481189/asset738049143及服务器digest，未重跑认证、打包或采集。
+
+[本地原子安装](local-reader-activation.json)与[安装后独立复核](local-reader-after-install.json)核对实际十文件包，仅policy/config两项变化，旧包、AB214/477/ad4与去重保持。真实新包经477 saved-close/R+1到AB214盘中的正控是明确软件fixture，不冒充生产R或当前信号。
+
+本页的数据维护完成与归档认证不能代替当前信号、正式调仓或邮件发送。M7普通云端恢复及下一次artifact发现仍以配置采用后的实际无发送运行回执为准。
