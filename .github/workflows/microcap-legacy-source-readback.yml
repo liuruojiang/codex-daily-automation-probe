@@ -16,7 +16,7 @@ jobs:
       TZ: Asia/Shanghai
       PYTHONDONTWRITEBYTECODE: '1'
       PYTHONUTF8: '1'
-      MPLCONFIGDIR: ${{ runner.temp }}/legacy-matplotlib-config
+      MPLCONFIGDIR: /tmp/microcap-legacy-matplotlib-${{ github.run_id }}
       GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v6
