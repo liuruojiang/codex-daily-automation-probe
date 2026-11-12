@@ -258,8 +258,9 @@ RESTORE = r'''
 import sys,json
 from pathlib import Path
 root=Path(sys.argv[1]).resolve();sys.path.insert(0,str(root))
-from scripts.top100_cloud_delivery import restore
-report=restore(root,Path(sys.argv[2]),sys.argv[3])
+sys.path.insert(0,sys.argv[5])
+from microcap_native_staged_validation import restore_isolated
+report=restore_isolated(root,Path(sys.argv[2]),sys.argv[3],Path(sys.argv[4]).parent/'native-staged-validation')
 if report.get('ok') is not True:raise ValueError('Native whole-state restore rejected its bundle')
 Path(sys.argv[4]).write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
 '''
@@ -275,7 +276,7 @@ def restore_bundle(root,bundle,runtime_sha,not_after,work):
     root,bundle,work=Path(root).resolve(),Path(bundle).resolve(),Path(work).resolve()
     identity=bundle_identity(bundle,runtime_sha,not_after)
     native_stage('source-release',VERIFY,[root,runtime_sha,identity['source_manifest_release_sha']],work)
-    native_stage('whole-restore',RESTORE,[root,bundle,identity['seed_date'],work/'native-restore.json'],work)
+    native_stage('whole-restore',RESTORE,[root,bundle,identity['seed_date'],work/'native-restore.json',Path(__file__).resolve().parent],work)
     restored=json.loads((root/MANIFEST).read_bytes())
     actual=restored.get('release_sha','')
     if re.fullmatch('[0-9a-f]{40}',str(actual)) is None:raise RecoveryError('restored_release_identity_invalid')
