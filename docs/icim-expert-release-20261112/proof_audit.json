@@ -1,0 +1,90 @@
+{
+  "status": "closed_P2_pinned_manifest_downgrade_final_cloud_r3",
+  "created_at": "2026-11-12T22:41:09.012334+08:00",
+  "execution_actor": "/root/evidence_takeover",
+  "candidate_pin_sha256": "8516ffe5b66c70ee33c87bf796197b4c184377a5f00923dd76e8c482edd892fe",
+  "candidate_source_files": 12,
+  "candidate_source_drift": [],
+  "strategy_sha": "41aa5accfe9413d7ad0134589e95819d7a1401a2",
+  "manifest_modules": 31,
+  "support_files": 3,
+  "reviewed_existing_runs": {
+    "cloud_proof_r6": {
+      "counts": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_files": 32,
+      "executed": [
+        "tests/test_ic_im_v1_4_expert_release_20261112.py::test_missing_new_manifest_cannot_downgrade_the_pinned_commit",
+        "tests/test_ic_im_v1_4_expert_release_20261112.py::test_current_packaging_rejects_older_release_even_with_current_sha",
+        "tests/test_ic_im_v1_4_expert_release_20261112.py::test_both_production_and_readiness_require_the_exact_release",
+        "tests/test_ic_im_v1_4_expert_release_20261112.py::test_source_verifier_checks_committed_inventory_and_every_support_byte[None]",
+        "tests/test_ic_im_v1_4_expert_release_20261112.py::test_source_verifier_checks_committed_inventory_and_every_support_byte[source]",
+        "tests/test_ic_im_v1_4_expert_release_20261112.py::test_source_verifier_checks_committed_inventory_and_every_support_byte[support]",
+        "tests/test_ic_im_v1_4_expert_release_20261112.py::test_source_verifier_checks_committed_inventory_and_every_support_byte[manifest]",
+        "tests/test_ic_im_v1_4_expert_release_20261112.py::test_source_verifier_checks_committed_inventory_and_every_support_byte[missing_module]",
+        "tests/test_ic_im_v1_4_source_manifest_v3.py::test_current_proof_accepted_without_relabeling_historical_identity",
+        "tests/test_ic_im_v1_4_source_manifest_v3.py::test_old_complete_proof_cannot_pass_current_consumer",
+        "tests/test_ic_im_v1_4_source_manifest_v3.py::test_current_proof_rejects_mismatched_or_unverified_fields[commit]",
+        "tests/test_ic_im_v1_4_source_manifest_v3.py::test_current_proof_rejects_mismatched_or_unverified_fields[release]",
+        "tests/test_ic_im_v1_4_source_manifest_v3.py::test_current_proof_rejects_mismatched_or_unverified_fields[manifest]",
+        "tests/test_ic_im_v1_4_source_manifest_v3.py::test_current_proof_rejects_mismatched_or_unverified_fields[missing_runner]",
+        "tests/test_ic_im_v1_4_source_manifest_v3.py::test_current_proof_rejects_mismatched_or_unverified_fields[source_hash]",
+        "tests/test_ic_im_v1_4_source_manifest_v3.py::test_current_proof_rejects_mismatched_or_unverified_fields[future_clock]",
+        "tests/test_ic_im_v1_4_source_manifest_v3.py::test_current_proof_rejects_mismatched_or_unverified_fields[naive_clock]",
+        "tests/test_ic_im_v1_4_source_manifest_v3.py::test_verifier_reads_new_committed_manifest_and_rejects_tampered_source"
+      ],
+      "changed_to_final": [
+        "tests/test_ic_im_v1_4_expert_release_20261112.py"
+      ],
+      "artifact_sha256": {
+        "receipt.json": "5fb15b06c54223cd1cb35e35e16fe59366e9f70a3770bf26d55663f2ed91696a",
+        "regression.xml": "5abcf0e84c5950e84b0ff976f6cac6cbe7ca21cb6c79f3486a7e40778e020f35",
+        "regression.txt": "89cab6eb88978569cd05470868bbadababcde342cf2c657d216dfd2e17ef64eb",
+        "source_before.json": "54d871aee7d56fb1a53e791f1cfe25d92615bfa5da08e94b90cdbfa379f9c7d4",
+        "source_after.json": "54d871aee7d56fb1a53e791f1cfe25d92615bfa5da08e94b90cdbfa379f9c7d4",
+        "test_run.json": "52aa0c3de14f620e803c5d0a71f2622276538f1c8f5ee21cc3e65c82b030ac09",
+        "collection.json": "14be981d02ad4de46e654ded6698cf7f0151a989af7545d8d4f9b268f989adc3",
+        "process_output.txt": "b6632d92a3405ae014056d36aab9ed2e43a11ad709b9d15fdc178252b9530030"
+      }
+    },
+    "cloud_workflow_flag_r7": {
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_files": 32,
+      "executed": [
+        "tests/test_ic_im_v1_4_expert_release_20261112.py::test_both_production_and_readiness_require_the_exact_release"
+      ],
+      "changed_to_final": [],
+      "artifact_sha256": {
+        "receipt.json": "733b0c4caa948073139cb51d2ac8678b6c28e44e7a68b393202d1f6ae668c918",
+        "regression.xml": "1b7c99cedad1124c922a94f5796815100c7b2fcf8dd78393c37364d7949240eb",
+        "regression.txt": "49a2111f8aec1fcae2c70cc8ef16ce196aec6259ac5eec52f5926f4e41ac8aea",
+        "source_before.json": "80ef19ca715f292177610e9410d42c86782841e61601f36f9b18281c4fe4263a",
+        "source_after.json": "80ef19ca715f292177610e9410d42c86782841e61601f36f9b18281c4fe4263a",
+        "test_run.json": "e8047262720fff542f5f7b7ed1f23abad296f485a60afc291a9ace239fe11ac2",
+        "collection.json": "dee426ac4dfcde9616939089cf60e88d63e6b499926ca67ad5305e6090038c8e",
+        "process_output.txt": "328f9d0dc452e1758bdd7cbcb6cf7e53ed1235cb2707d5a32c60918da61f8dc4"
+      }
+    }
+  },
+  "unique_targeted_cases": 18,
+  "workflow_stricter_followup_cases": 1,
+  "full_strategy_1571_repeated": false,
+  "tests_reexecuted_by_auditor": false,
+  "original_red_evidence_sha256": "7f4dd7619e1df8fdb0072f7cefbb7042774aada5504dc309f4d26c82b354f38a",
+  "real_remote_presence_sha256": "5533bd62ae145bd41dfec9b89b07f5d1c7ab7db805e3ebfd570b58edc8ab600c",
+  "git_read_boundary": "Root-supplied real GitHub API tree confirms prior manifests; closure tests use explicitly controlled git readers including ls-tree, not an unfetched local 41aa checkout.",
+  "compatibility": "Prior commits remain eligible for their 29-module committed inventory; optional renderer API remains historical read-only compatible, while both current workflows require the new release.",
+  "qualification": "P2 source proof closure only; no current-day producer, SMTP or INBOX claim.",
+  "product_source_changed_by_auditor": false,
+  "network_requests": 0,
+  "verifier_sha256": "e2c44d9ec4cc0e046a28854ce43fa654cfc6636b5859cd35e8d962da248695af"
+}

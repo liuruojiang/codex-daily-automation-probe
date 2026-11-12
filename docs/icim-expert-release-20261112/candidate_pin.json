@@ -1,0 +1,20 @@
+{
+  "strategy_sha": "41aa5accfe9413d7ad0134589e95819d7a1401a2",
+  "files": {
+    ".github/workflows/ic-im-v1-4-daily-digest.yml": "3f7bf637334508631ddd4166aab87afda5aded6ad1f9c53974518cffbd5e1ad9",
+    "scripts/verify_icim_source_release.py": "5ed710e84c8587747fcaa0ecdefaf867f4fffbc089f4ee18e1a0241d3209de5c",
+    "scripts/build_ic_im_v1_4_digest.py": "dc7cc1be04c3503609ff98d45c3b89a6b242fe45ede94a9a21785e7a7801d272",
+    "scripts/ic_im_v1_4_delivery_contract.py": "46e845644a0002e1aeeaa887fabc59f07045ff948560b020a7687036db98dcb8",
+    "scripts/ic_im_state_council_calendar_v1.py": "4c2c2471872db7f7498f841649df934990a371b9b57778c3ae6805c6a55953af",
+    "scripts/data/exchange_calendar/state_council_2027_v1.json": "da68c14c0ab24fc720f5aab1cceaa49646441b00e8162a0d552d10612cfdacca",
+    "scripts/data/exchange_calendar/state_council_2027_notice_search_snapshot.txt": "05f1bece35e93bfadfa93f811a135d9cffb1950766352a1aa7e6bc2cf43c47b7",
+    "docs/ic_im_expert_release_20261112_manifest.json": "64e8219f74667daf3dc1581fbc973138c2c356497bfbc36ec3ee19d36898c818",
+    "tests/test_ic_im_v1_4_expert_release_20261112.py": "bb0cc7bb1a19df0701e04c103ae22d6d54e2c4d2edff5ad2eb93efb6aedc6e46",
+    "tests/test_ic_im_v1_4_workflow.py": "c018ef2eee901d02ff17a4f6d03ff00bb6c90b301351bdad1196d3007153c270",
+    ".github/workflows/ic-im-v1-4-delivery-readiness.yml": "eb40b399fe3267ed8b1f31b0b585e6c1007407765d5cb9b4dcc2146b4ed8f091",
+    "tests/test_ic_im_v1_4_source_manifest_v3.py": "925eefeb348425187079809f831206310ca4694d2e5ae96899a30184b9374e4b"
+  },
+  "closed_finding": "pinned commit source manifest downgrade",
+  "scope": "cloud adapter final verification; no SMTP or formal ledger write",
+  "qualification": "The actual commit tree selects the release; current packagers require its exact release identity."
+}
