@@ -693,7 +693,17 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
     """
     manifest_path = Path(manifest_path).resolve()
     saved = manifest_path.parent
-    value = verify_manifest(json.loads(manifest_path.read_bytes()), consumer_sha, producer_sha, target)
+    original=json.loads(manifest_path.read_bytes())
+    legacy_reader=None
+    if original.get('manifest_origin')=='legacy_source_artifact_bridge_v1':
+        from microcap_legacy_source_recovery import reader_identity, CONSUMER, PRODUCER
+        reader=reader_identity(consumer_sha,producer_sha)
+        # Authenticate the old manifest under its original identities. The Git
+        # roles below remain the requested exact current receiver checkouts.
+        value=verify_manifest(original,CONSUMER,PRODUCER,target)
+        if (consumer_sha,producer_sha)!=(CONSUMER,PRODUCER):legacy_reader=reader
+    else:
+        value=verify_manifest(original,consumer_sha,producer_sha,target)
     roots = [Path(p).absolute() for p in (consumer, producer, state, prepare_out, delivery_out)]
     if any(p.is_symlink() or (hasattr(p, 'is_junction') and p.is_junction()) for p in roots):
         raise RecoveryError('resume_admission_role_contains_link')
@@ -722,6 +732,7 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
                 or old.get('status') != 'private_originals_admitted_native_check_required'
                 or old.get('manifest_sha256') != sha_file(manifest_path)
                 or old.get('target') != target or old.get('roots') != roots
+                or (legacy_reader is not None and old.get('validation_reader')!=legacy_reader)
                 or old.get('original_json_and_clocks_rewritten') is not False):
             raise RecoveryError('preserve_existing_resume_admission')
         return dict(old, admission_reused=True)
@@ -914,6 +925,8 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
                       manifest_issuer=value['manifest_issuer'],
                       original_source_was_sealed=value['original_source_was_sealed'],
                       legacy_source_evidence=value['legacy_source_evidence'])
+    if legacy_reader is not None:
+        report['validation_reader']=legacy_reader
     delivery_out.mkdir(parents=True, exist_ok=True)
     if admission_path.exists() and admission_path.read_bytes() != encode(report):
         raise RecoveryError('preserve_existing_resume_admission')

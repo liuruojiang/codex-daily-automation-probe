@@ -30,6 +30,8 @@ LEGACY_ATTEMPT = 1
 TARGET = '2026-11-12'
 CONSUMER = 'a7c1b9ac33454be4367880a0989dfc1466640503'
 PRODUCER = '3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
+READER_CONSUMER = '95d896fe58cc7cb84c0fcb7bd76534f62c9430f4'
+READER_PRODUCER = '3344e403ff01e17ef45b745a704a240e0917720b'
 SCOPE = '0d1b049a83afe6807f1ad61d13c6cd578ccc141d9101e2005d5bad869082b2e1'
 ORIGIN = 'legacy_source_artifact_bridge_v1'
 SOURCE_ROOT = '/home/runner/work/codex-daily-automation-probe/codex-daily-automation-probe'
@@ -48,6 +50,22 @@ CONTROLLERS = {
 
 class LegacyRecoveryError(RuntimeError):
     pass
+
+
+def reader_identity(runtime_sha, producer_sha):
+    """Receiver role is distinct from the frozen eec/M7/P2 source identity."""
+    pair=(runtime_sha,producer_sha)
+    if pair not in ((CONSUMER,PRODUCER),(READER_CONSUMER,READER_PRODUCER)):
+        raise LegacyRecoveryError('legacy_exact_receiver_role_differs')
+    value=dict(schema='legacy_source_reader_v1',source_consumer_sha=CONSUMER,source_producer_sha=PRODUCER,
+               reader_consumer_sha=runtime_sha,reader_producer_sha=producer_sha,
+               source_inputs_only=True,original_source_identity_preserved=True)
+    if pair==(READER_CONSUMER,READER_PRODUCER):
+        from import_microcap_producer_inputs import producer_profile, exact_p2_successor
+        old=producer_profile('microcap_local_producer_p2_20261112.json',PRODUCER)['calculation_sources']
+        new=producer_profile('microcap_local_producer_runtime.json',READER_PRODUCER)['calculation_sources']
+        value['producer_source_review']=exact_p2_successor(PRODUCER,old,new,READER_PRODUCER)
+    return value
 
 
 def sha_file(path):
@@ -70,8 +88,10 @@ def _pages(url, token, key):
 
 def discover(*, token, runtime_sha, producer_sha, not_after):
     """GET only; no general legacy name/branch/runtime fallback is allowed."""
-    if runtime_sha != CONSUMER or producer_sha != PRODUCER or date.fromisoformat(not_after).isoformat() < TARGET:
+    if ((runtime_sha,producer_sha) not in ((CONSUMER,PRODUCER),(READER_CONSUMER,READER_PRODUCER))
+            or date.fromisoformat(not_after).isoformat() < TARGET):
         return None
+    reader_identity(runtime_sha,producer_sha)
     if not token:
         raise LegacyRecoveryError('legacy_repository_authentication_required')
     base = f'https://api.github.com/repos/{REPOSITORY}/actions'
@@ -213,7 +233,8 @@ def _validate_sources(out):
     run_prefix = f'scoped-source-state/runs/{TARGET}/'
     result = read(run_prefix + 'result.json'); assignment = read(run_prefix + 'worker-context.json')
     context = result.get('context') or {}; symbols = result.get('symbols')
-    config = json.loads((Path(__file__).resolve().parents[1]/'config/microcap_local_producer_runtime.json').read_bytes())
+    from import_microcap_producer_inputs import producer_profile
+    config = producer_profile('microcap_local_producer_p2_20261112.json',PRODUCER)
     if (config.get('runtime_sha') != PRODUCER or config.get('role') != 'source_preparation_only'
             or result.get('status') != 'incomplete' or result.get('target') != TARGET
             or result.get('processed') != 300 or result.get('total') != 300
@@ -283,6 +304,7 @@ def recover(*, token, runtime_sha, producer_sha, not_after, out, issuer_head=Non
     source = discover(token=token,runtime_sha=runtime_sha,producer_sha=producer_sha,not_after=not_after)
     if source is None:
         return dict(restored=False,status='no_frozen_legacy_source_pair')
+    reader=reader_identity(runtime_sha,producer_sha)
     archives = {}
     for role, item in source['artifacts'].items():
         archive = out.with_name(out.name + '-legacy-' + role + '-' + str(item['id']) + '.zip')
@@ -342,7 +364,8 @@ def recover(*, token, runtime_sha, producer_sha, not_after, out, issuer_head=Non
         manifest=str(manifest_path),manifest_sha256=sha_file(manifest_path),manifest_origin=ORIGIN,
         source_run_id=LEGACY_RUN,source_run_attempt=LEGACY_ATTEMPT,producer_commit=LEGACY_HEAD,
         original_target=TARGET,requested_not_after=not_after,formal_archive='',summary=summary,
-        legacy_source_evidence=source,native_adoption_required=True,final_strategy_delivery=False,email_sent=False,orders_placed=False)
+        legacy_source_evidence=source,validation_reader=reader,native_adoption_required=True,
+        final_strategy_delivery=False,email_sent=False,orders_placed=False)
     atomic(out/'recovery-receipt.json',encode(receipt))
     return receipt
 

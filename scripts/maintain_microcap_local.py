@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 from contextlib import redirect_stdout, redirect_stderr
 import csv
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import hashlib
 import io
 import json
@@ -23,8 +23,9 @@ import uuid
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 
-RUNTIME = '3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
-SOURCE_RUNTIMES = frozenset({RUNTIME,'f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5','be89e87a0da728b27be0308d7c4c9e57a212b815','a016ce27ea86fca1fa0b5199f802b198c0ed99de',
+RUNTIME = '3344e403ff01e17ef45b745a704a240e0917720b'
+LEGACY_P2 = '3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
+SOURCE_RUNTIMES = frozenset({RUNTIME,LEGACY_P2,'f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5','be89e87a0da728b27be0308d7c4c9e57a212b815','a016ce27ea86fca1fa0b5199f802b198c0ed99de',
     '706af7ea9186bdb9b3948738deb5a5afda7a331e','63c7b16d77600c4aa9dadf58b86d31e034477e44'})
 BOOTSTRAP_RUNTIMES = {*SOURCE_RUNTIMES, '140b9c192e65a2b36a6b02106496e89f1143a4a6',
                       '24a41867408ebee570349de46d3ae37bcff2a6d4',
@@ -115,9 +116,10 @@ def validate_runtime(root, protected_root):
     if root == protected_root or root.is_relative_to(protected_root) or protected_root.is_relative_to(root):
         raise ValueError('Scoped maintenance requires a separate checkout')
     actual = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
-    if actual != RUNTIME:
+    if actual not in (RUNTIME,LEGACY_P2):
         raise ValueError('Native maintenance runtime differs from the reviewed exact commit')
-    config=json.loads((Path(__file__).resolve().parents[1]/'config/microcap_local_producer_runtime.json').read_bytes())
+    profile='microcap_local_producer_runtime.json' if actual==RUNTIME else 'microcap_local_producer_p2_20261112.json'
+    config=json.loads((Path(__file__).resolve().parents[1]/'config'/profile).read_bytes())
     if (config.get('schema')!='microcap_local_source_runtime_v1' or config.get('runtime_sha')!=actual
             or config.get('role')!='source_preparation_only' or config.get('max_candidates')!=300):
         raise ValueError('Local source producer role or runtime config differs')
@@ -127,6 +129,7 @@ def validate_runtime(root, protected_root):
     dirty = subprocess.check_output(['git', '-C', str(root), 'diff', '--name-only', 'HEAD'], text=True).splitlines()
     if any(not name.startswith((CACHE, 'outputs/')) for name in dirty):
         raise ValueError('Native runtime has executable edits')
+    return actual
 
 
 def load_pool(path, target, *, run_directory=None):
@@ -170,7 +173,7 @@ def require_complete_bootstrap(record, symbols):
     return coverage
 
 
-def bootstrap(root, source, symbols, state):
+def bootstrap(root, source, symbols, state, *, runtime_sha=None):
     """Copy exact verified source objects once, without changing the original."""
     from scripts.share_change_source import verify_share_cache
     from scripts.st_history_scope import source_closure
@@ -251,7 +254,7 @@ def bootstrap(root, source, symbols, state):
             except Exception as exc:
                 failures[symbol] = dict(error_type=type(exc).__name__, error=str(exc))
             if number % 25 == 0: print(f'[bootstrap] verified exact copies {number}/{len(symbols)}', flush=True)
-        result = dict(status='partial' if failures else 'complete', runtime_sha=RUNTIME, source_root=str(source),
+        result = dict(status='partial' if failures else 'complete', runtime_sha=runtime_sha or RUNTIME, source_root=str(source),
                       initialized_symbols=sorted(set(initialized)), failures=failures,
                       symbols=symbols, files=copied, reference_consumed_through=consumed_through,
                       reference_proxy_sha256=sha(reference_raw),
@@ -394,6 +397,250 @@ def scoped_metadata_marker(root, scope_sha):
 def observation_floor(now=None):
     now = now or datetime.now(timezone.utc)
     return now.astimezone(ZoneInfo('Asia/Shanghai')).replace(hour=9, minute=0, second=0, microsecond=0)
+
+
+def select_notice_generation(root,target,required_asof,out):
+    """Admit complete original pages only; Native still owns boundary promotion."""
+    root=Path(root).resolve();parent=root/CACHE/'st_notice_sources'
+    def regular(path,kind):
+        path=Path(path)
+        if not path.resolve().is_relative_to(root):raise ValueError('Notice resume source escaped root')
+        for part in (path,*path.parents):
+            if part==root:break
+            if part.is_symlink() or getattr(part,'is_junction',lambda:False)():
+                raise ValueError('Notice resume source contains a link')
+        if not (path.is_dir() if kind=='directory' else path.is_file()):
+            raise ValueError('Notice resume source is not a regular '+kind)
+        return path
+    if not parent.exists():return None
+    regular(parent,'directory')
+    candidates=[]
+    for folder in parent.iterdir():
+        if not folder.name.startswith('refresh_'):continue
+        regular(folder,'directory')
+        if not any((folder/name).exists() or (folder/name).is_symlink()
+                   for name in ('proof.json','archive.json','previous_pointer.json')):
+            candidates.append(folder)
+    if not candidates:return None
+    from scripts.st_history_scope import resolve_archive_reference,POINTER_PATH
+    from scripts.st_notice_incremental import verify_day,StNoticeEvidenceError
+    if (required_asof.tzinfo is None or required_asof>datetime.now(timezone.utc)):
+        raise ValueError('Notice resume requires an actual past aware morning floor')
+    files={}
+    def original(name,digest=None):
+        if Path(name).is_absolute() or '..' in Path(name).parts:raise ValueError('Nonportable notice resume source')
+        path=regular(root/name,'file');raw=path.read_bytes();actual=sha(raw)
+        if digest is not None and actual!=digest:raise ValueError('Notice resume authority source hash differs')
+        files[path.relative_to(root).as_posix()]=actual
+        return json.loads(raw)
+    original(POINTER_PATH)
+    reference=resolve_archive_reference(root)
+    archive=original(reference[0],reference[1])
+    if archive.get('schema_version')!=3 or not archive.get('daily_increments'):
+        raise ValueError('Notice resume requires an installed all-class daily boundary')
+    scope=original(archive['scope']['path'],archive['scope']['sha256'])
+    cursor=date.fromisoformat(scope['end_date'])+timedelta(days=1)
+    for item in archive['daily_increments']:
+        if item['date']!=cursor.isoformat():raise ValueError('Notice resume installed boundary is not contiguous')
+        cursor+=timedelta(days=1)
+    boundary=cursor-timedelta(days=1);end=date.fromisoformat(target)
+    if end<boundary:raise ValueError('Notice resume target precedes installed boundary')
+    last=archive['daily_increments'][-1]['manifest'];original(last['path'],last['sha256'])
+    days=[(boundary+timedelta(days=n)).isoformat() for n in range((end-boundary).days+1)]
+    eligible=[]
+    for folder in sorted(candidates):
+        if any(not (folder/day/'manifest.json').exists() for day in days):continue
+        observed=[];objects={};summaries=[];stale=False
+        for day in days:
+            daily=regular(folder/day,'directory');mp=regular(daily/'manifest.json','file')
+            manifest=json.loads(mp.read_bytes())
+            for number,page in enumerate(manifest['pages'],1):
+                for role,suffix in (('response','.json'),('receipt','.receipt.json')):
+                    if page.get(role)!=f'page_{number:04}'+suffix:raise ValueError('Notice resume page path differs')
+                    regular(daily/page[role],'file')
+            try:verified=verify_day(daily,day,required_asof=required_asof)
+            except StNoticeEvidenceError as exc:
+                if str(exc)!='Daily notice snapshot is older than required observation; use a new collection directory':raise
+                stale=True;break
+            objects[mp.relative_to(root).as_posix()]=verified['manifest_sha256']
+            for name,digest in verified['source_files'].items():objects[(daily/name).relative_to(root).as_posix()]=digest
+            observed.append(datetime.fromisoformat(verified['observation_end']))
+            summaries.append(dict(date=day,pages=verified['pages'],observation_end=verified['observation_end']))
+        if not stale:eligible.append((max(observed),folder,objects,summaries))
+    if not eligible:return None
+    eligible.sort(key=lambda item:item[0]);chosen=eligible[-1]
+    if len(eligible)>1 and eligible[-2][0]==chosen[0]:raise ValueError('Notice resume newest observation is ambiguous')
+    observed,folder,objects,summaries=chosen;files.update(objects)
+    for name,digest in files.items():
+        if sha(regular(root/name,'file').read_bytes())!=digest:raise ValueError('Notice resume source changed during admission')
+    receipt=dict(schema='microcap_notice_generation_admission_v1',status='original_complete_generation_selected_native_gate_required',
+        runtime_sha=RUNTIME,target=target,required_asof=required_asof.isoformat(),authority=list(reference),
+        boundary=boundary.isoformat(),generation=folder.relative_to(root).as_posix(),observation_end=observed.isoformat(),
+        days=summaries,source_files=files,native_verifier_sha256=sha(regular(root/'scripts/st_notice_incremental.py','file').read_bytes().replace(b'\r\n',b'\n')),
+        original_pages_and_clocks_rewritten=False,native_boundary_gate_required=True)
+    raw=encode(receipt);path=Path(out)/('notice-generation-admission-'+sha(raw)+'.json')
+    if path.exists():
+        if path.read_bytes()!=raw:raise ValueError('Notice generation admission changed')
+    else:atomic(path,raw)
+    return folder
+
+
+def refresh_notice_with_existing_pages(*,root,target,required_asof,out,refresh,resume_generation=None):
+    generation=resume_generation
+    if generation is None:generation=select_notice_generation(root,target,required_asof,out)
+    options=dict(resume_generation=generation,required_asof=required_asof) if generation is not None else {}
+    return refresh(root=root,target=target,**options)
+
+
+def select_local_notice_forward(*,root,protected_root,state,symbols,target,out,native=None,writer_locked=False):
+    """Select an original same-authority receipt for the actual AB214 owner.
+
+    The local run already owns writer.lock; independent callers acquire it.
+    No authority or target freshness is earned here. Cold M7/M8 admission keeps
+    its separate existing guard. All new control logic stays in this hashed file.
+    """
+    from contextlib import ExitStack
+    module_path=Path(__file__).with_name('microcap_notice_prefix.py').resolve()
+    # Pin this reused dependency through maintain's existing orchestrator hash.
+    if sha(module_path.read_bytes().replace(b'\r\n',b'\n'))!='f6746db692d5a1af0baca6431cd774e048564a794d42e1a11484719a39fc57f0':
+        raise ValueError('Local notice selector dependency is not the reviewed exact source')
+    import microcap_notice_prefix as prefix
+    if Path(prefix.__file__).resolve()!=module_path:raise ValueError('Foreign local notice selector module')
+    roles=[Path(p).absolute() for p in (root,protected_root,state,out)]
+    if any(p.is_symlink() or getattr(p,'is_junction',lambda:False)() for role in roles for p in (role,*role.parents)):
+        raise ValueError('Local notice role contains a link')
+    root,protected,state,out=map(lambda p:p.resolve(),roles)
+    ab214='ab214c20d92ca9bbda1dde7e447bb153e7f59028'
+    owner=subprocess.check_output(['git','-C',str(protected),'rev-parse','HEAD'],encoding='utf-8').strip()
+    if owner in (prefix.CONSUMER,prefix.ACTIVE_CONSUMER):
+        return dict(status='not_applicable_to_local_notice_forward',verification_consumer_runtime=owner,
+                    source_inputs_only=True,target_freshness_granted=False,current_signal_ready=False)
+    if owner!=ab214:raise ValueError('Local notice protected owner must be actual AB214')
+    if (root==state or not root.is_relative_to(state) or root.is_relative_to(protected)
+            or protected.is_relative_to(state) or state.is_relative_to(protected)
+            or out.is_relative_to(root) or root.is_relative_to(out)
+            or out.is_relative_to(protected) or protected.is_relative_to(out)):
+        raise ValueError('Local notice selector roles overlap or escape the state owner')
+    prefix.runtime_role(protected,ab214)
+    reader=validate_runtime(root,protected)
+    if reader!=RUNTIME:raise ValueError('Local notice selection requires the active P3 reader')
+    if date.fromisoformat(target).isoformat()!=target:raise ValueError('Noncanonical local notice target')
+    native=native or prefix.real_native
+    with ExitStack() as locks:
+        if not writer_locked:locks.enter_context(writer_lock(state/'writer.lock'))
+        for name in ('worker-slot-0.lock','worker-slot-1.lock','price-worker.lock'):
+            locks.enter_context(writer_lock(state/name))
+        locks.enter_context(prefix.native_refresh_lock(root))
+        proxy='outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv'
+        formal_name='outputs/top100_delivery_manifest.json'
+        refs={p:p.read_bytes() for p in (state/'bootstrap.json',state/'reference-proxy.csv',protected/proxy,protected/formal_name)}
+        record=json.loads(refs[state/'bootstrap.json']);require_complete_bootstrap(record,symbols)
+        if (record.get('runtime_sha') not in BOOTSTRAP_RUNTIMES
+                or Path(record.get('source_root','')).resolve()!=protected):
+            raise ValueError('Local notice bootstrap belongs to another source owner')
+        reference=refs[state/'reference-proxy.csv'];rows=list(csv.DictReader(io.StringIO(reference.decode('utf-8-sig'))))
+        if (not rows or reference!=refs[protected/proxy] or sha(reference)!=record.get('reference_proxy_sha256')):
+            raise ValueError('Local notice reference is not the actual protected proxy')
+        anchor=max(r['date'][:10] for r in rows);date.fromisoformat(anchor)
+        formal=json.loads(refs[protected/formal_name]);inputs={**formal.get('inputs',{}),**formal.get('artifacts',{})}
+        if (record.get('reference_consumed_through')!=anchor or anchor>target or formal.get('ok') is not True
+                or formal.get('status')!='complete' or formal.get('scope')!='whole_workspace_delivery'
+                or formal.get('expected_date')!=anchor
+                or inputs.get(proxy) not in (sha(reference),sha(reference.replace(b'\r\n',b'\n')))):
+            raise ValueError('Local notice formal bootstrap anchor differs')
+        for name in (prefix.POINTER,prefix.FRESHNESS):
+            path=prefix.bound(protected,name);refs[path]=path.read_bytes() if path.exists() else None
+        protected_pointer=refs[protected/prefix.POINTER]
+        pointer_binding=inputs.get(prefix.POINTER,record.get('files',{}).get(prefix.POINTER))
+        if (protected_pointer is None or pointer_binding not in (sha(protected_pointer),sha(protected_pointer.replace(b'\r\n',b'\n')))
+                or record.get('files',{}).get(prefix.POINTER) not in (sha(protected_pointer),sha(protected_pointer.replace(b'\r\n',b'\n')))):
+            raise ValueError('Local notice protected pointer is not its original bootstrap object')
+        before=prefix._pair(root)
+        if before[prefix.POINTER] is None:raise ValueError('Local notice current authority is missing')
+        pointer=json.loads(before[prefix.POINTER]);authority=[pointer.get('manifest_path'),pointer.get('manifest_sha256')]
+        archive_raw=prefix.bound(root,authority[0]).read_bytes();archive=json.loads(archive_raw)
+        if sha(archive_raw)!=authority[1]:raise ValueError('Local notice authority archive bytes differ')
+        authority_day=archive['daily_increments'][-1]['date']
+        plan=native(root,root,'forward',requested_target=target)
+        digest=sha(before[prefix.FRESHNESS]) if before[prefix.FRESHNESS] is not None else None
+        if (plan.get('mode')!='forward' or plan.get('native_runtime')!=reader or plan.get('authority')!=authority
+                or plan.get('authority_day')!=authority_day or plan.get('requested_target')!=target
+                or plan.get('active_sha256')!=digest or plan.get('state') not in ('noop','select')
+                or plan.get('old_prefix_unchanged') is not True or plan.get('original_clocks_retained') is not True
+                or prefix._pair(root)!=before or not prefix._same(refs)):
+            raise ValueError('Local notice original Native chain plan or owner changed')
+        if before[prefix.FRESHNESS] is None and target>authority_day:
+            known=json.loads(protected_pointer)
+            if [known.get('manifest_path'),known.get('manifest_sha256')]!=authority:
+                raise ValueError('Local notice unhanded authority has no active original proof')
+        if target<authority_day:raise ValueError('Local notice target precedes current source authority')
+        out.mkdir(parents=True,exist_ok=True);intent_path=out/'selection-intent.json';backup=out/'original-active-self.json'
+        roots=dict(root=str(root),protected=str(protected),state=str(state))
+        receipt=dict(schema='microcap_local_notice_forward_selection_v1',status='local_notice_forward_checkpoint_not_needed',
+            verification_runtime=reader,verification_consumer_runtime=owner,protected_formal_date=anchor,
+            protected_formal_manifest_sha256=sha(refs[protected/formal_name]),requested_target=target,authority=authority,
+            authority_day=authority_day,authority_pointer_unchanged=True,original_receipt_bytes_and_clocks_preserved=True,
+            target_freshness_granted=False,current_signal_ready=False,source_inputs_only=True,
+            final_strategy_delivery=False,email_sent=False,orders_placed=False)
+        if plan['state']=='select':
+            active=json.loads(before[prefix.FRESHNESS]) if before[prefix.FRESHNESS] is not None else {}
+            spec=plan.get('selected_spec') or {};self_spec=plan.get('active_spec') or {}
+            expected=str(Path(authority[0]).with_name('proof.json')).replace('\\','/')
+            if (not target>authority_day or active.get('authority')!=authority or active.get('previous_authority')!=authority
+                    or active.get('target')!=authority_day or spec.get('path')!=expected
+                    or not prefix.file_role(spec.get('path','')) or not prefix.file_role(self_spec.get('path',''))
+                    or self_spec.get('sha256')!=digest or prefix.bound(root,self_spec['path']).read_bytes()!=before[prefix.FRESHNESS]):
+                raise ValueError('Local notice selection is not an original same-authority self review')
+            wanted=prefix.bound(root,spec['path']).read_bytes();advance=json.loads(wanted)
+            if (sha(wanted)!=spec.get('sha256') or wanted==before[prefix.FRESHNESS]
+                    or advance.get('authority')!=authority or advance.get('previous_authority')==authority
+                    or advance.get('target')!=authority_day):raise ValueError('Local notice advancing original differs')
+            source_files=plan.get('source_files')
+            if (not isinstance(source_files,dict) or source_files.get(spec['path'])!=spec['sha256']
+                    or source_files.get(self_spec['path'])!=self_spec['sha256']):
+                raise ValueError('Local notice both original Native proofs are required')
+            for name,expected_sha in source_files.items():
+                if not prefix.file_role(name) or prefix.sha_file(prefix.bound(root,name))!=expected_sha:
+                    raise ValueError('Local notice original chain object changed')
+            intent=dict(schema='microcap_local_notice_forward_intent_v1',status='intent',roots=roots,requested_target=target,
+                pointer_sha256=sha(before[prefix.POINTER]),authority=authority,original_active_sha256=digest,
+                original_active_spec=self_spec,selected_spec=spec,protected_formal_manifest_sha256=receipt['protected_formal_manifest_sha256'])
+            if intent_path.exists():raise ValueError('Local notice prior selection outcome is unknown; no second write')
+            if backup.exists() and backup.read_bytes()!=before[prefix.FRESHNESS]:raise ValueError('Local notice original self backup differs')
+            if not backup.exists():atomic(backup,before[prefix.FRESHNESS])
+            atomic(intent_path,encode(intent))
+            if prefix._pair(root)!=before or not prefix._same(refs):raise ValueError('Local notice CAS owner changed')
+            reconciled=False
+            try:prefix._write_pair_member(prefix.bound(root,prefix.FRESHNESS),wanted)
+            except BaseException:
+                if prefix._pair(root)!={prefix.POINTER:before[prefix.POINTER],prefix.FRESHNESS:wanted} or not prefix._same(refs):
+                    atomic(intent_path,encode(dict(intent,status='write_not_confirmed')));raise
+                reconciled=True
+            if (prefix._pair(root)!={prefix.POINTER:before[prefix.POINTER],prefix.FRESHNESS:wanted} or not prefix._same(refs)
+                    or prefix.bound(root,self_spec['path']).read_bytes()!=before[prefix.FRESHNESS]):
+                raise ValueError('Local notice selected original readback changed')
+            atomic(intent_path,encode(dict(intent,status='complete',write_response_lost_reconciled=reconciled)))
+            receipt.update(status='original_local_notice_forward_checkpoint_selected',active_freshness_changed=True,
+                selected_spec=spec,original_active_spec=self_spec,write_response_lost_reconciled=reconciled)
+        elif intent_path.exists():
+            old=json.loads(intent_path.read_bytes());spec=plan.get('selected_spec') or {}
+            if (old.get('schema')!='microcap_local_notice_forward_intent_v1' or old.get('roots')!=roots
+                    or old.get('requested_target')!=target or old.get('pointer_sha256')!=sha(before[prefix.POINTER])
+                    or old.get('selected_spec')!=spec or spec.get('sha256')!=digest
+                    or not backup.is_file() or prefix.sha_file(backup)!=old.get('original_active_sha256')
+                    or prefix.sha_file(prefix.bound(root,old['original_active_spec']['path']))!=old.get('original_active_sha256')):
+                raise ValueError('Local notice prior intent cannot be reconciled from original bytes')
+            if old.get('status')!='complete':atomic(intent_path,encode(dict(old,status='reconciled')))
+            receipt.update(status='original_local_notice_forward_checkpoint_selected',active_freshness_changed=False,
+                selected_spec=spec,selection_reconciled=True)
+        elif target>authority_day and before[prefix.FRESHNESS] is not None and json.loads(before[prefix.FRESHNESS]).get('previous_authority')==authority:
+            raise ValueError('Local notice self review cannot skip its upcoming Native forward')
+        if prefix._pair(root)[prefix.POINTER]!=before[prefix.POINTER] or not prefix._same(refs):
+            raise ValueError('Local notice selection changed authority or protected anchor')
+        if validate_runtime(root,protected)!=reader:raise ValueError('Local notice reader runtime changed')
+        prefix.runtime_role(protected,ab214)
+        atomic(out/'receipt.json',encode(receipt))
+        return receipt
 
 
 def current_names_proof(root, target, required_asof=None, symbols=None):
@@ -560,14 +807,16 @@ def main(argv=None):
     p.add_argument('--resume-notice-generation', type=Path)
     args = p.parse_args(argv)
     root, state = args.root.resolve(), args.state_root.resolve()
-    validate_runtime(root, args.protected_root)
+    actual_runtime=validate_runtime(root, args.protected_root)
     if not root.is_relative_to(state) or state == root:
         raise ValueError('Persistent runtime must be inside its dedicated state root')
     roster, symbols, scope_sha = load_pool(args.pool, args.as_of)
     sys.path.insert(0, str(root))
     if args.action == 'bootstrap':
-        print(json.dumps(bootstrap(root, args.protected_root.resolve(), symbols, state))[:250])
+        print(json.dumps(bootstrap(root, args.protected_root.resolve(), symbols, state,runtime_sha=actual_runtime))[:250])
         return 0
+    if actual_runtime!=RUNTIME:
+        raise ValueError('Active maintenance requires the current reviewed runtime; legacy P2 is read-only bootstrap compatibility')
     import pandas as pd
     import microcap_top100_mom16_biweekly_live_v2_0 as v2
     from scripts.exchange_calendar import latest_completed_session, is_trading_day
@@ -582,7 +831,7 @@ def main(argv=None):
     from microcap_local_workers import run_workers
     floor=observation_floor()
     if datetime.now(timezone.utc)<floor: raise ValueError('Local morning maintenance is not due before 09:00')
-    context = dict(runtime_sha=RUNTIME, native_sources=source_fingerprint(root),
+    context = dict(runtime_sha=actual_runtime, native_sources=source_fingerprint(root),
                    observation_owner_date=floor.date().isoformat(), observation_floor=floor.isoformat(),
                    orchestrator_sources={name: sha((Path(__file__).parent / name).read_bytes())
                       for name in ('maintain_microcap_local.py', 'microcap_local_workers.py', 'prepare_microcap_local.py','microcap_local_http.py')},
@@ -601,12 +850,14 @@ def main(argv=None):
             if bound(root, FRESHNESS).exists():
                 try: notice_verify(); return
                 except ValueError: pass
+            select_local_notice_forward(root=root,protected_root=args.protected_root,state=state,symbols=symbols,
+                target=args.as_of,out=state/'runs'/args.as_of/'local-notice-forward',writer_locked=True)
             if args.notice_source_root:
                 import_notice_evidence(args.notice_source_root, root, args.as_of)
             else:
-                refresh_notice_archive(root=root, target=args.as_of,
-                    **({'resume_generation':args.resume_notice_generation,'required_asof':floor}
-                       if args.resume_notice_generation else {}))
+                refresh_notice_with_existing_pages(root=root,target=args.as_of,required_asof=floor,
+                    out=state/'runs'/args.as_of/'notice-generation-admissions',refresh=refresh_notice_archive,
+                    resume_generation=args.resume_notice_generation)
         notice = journal.run('notice', notice_action, notice_verify)
         current_names=journal.run('current-names',lambda:refresh_native_current_names(root,args.as_of,v2.base_mod.fetch_mod,
             symbols,v2.base_mod.fetch_tencent_realtime_quotes),

@@ -1,8 +1,13 @@
 name: Microcap Crossday Recovery No-send Acceptance
-run-name: microcap-crossday-acceptance:${{ inputs.phase }}:${{ github.run_id }}
+run-name: microcap-crossday-acceptance:${{ inputs.tested_native }}:${{ inputs.phase }}:${{ github.run_id }}
 on:
   workflow_dispatch:
     inputs:
+      tested_native:
+        description: 'Exact reviewed Native pair; software D13 acceptance only'
+        type: choice
+        options: [m7, m8]
+        default: m8
       phase:
         type: choice
         options: [produce, readback]
@@ -28,6 +33,7 @@ jobs:
       GITHUB_TOKEN: ${{ github.token }}
       MICROCAP_ACCEPTANCE_PHASE: ${{ inputs.phase }}
       MICROCAP_ACCEPTANCE_SOURCE_RUN: ${{ inputs.source_run }}
+      MICROCAP_ACCEPTANCE_TESTED_NATIVE: ${{ inputs.tested_native }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -41,23 +47,25 @@ jobs:
           import os
           phase=os.environ['MICROCAP_ACCEPTANCE_PHASE']
           source=os.environ['MICROCAP_ACCEPTANCE_SOURCE_RUN']
+          if os.environ['MICROCAP_ACCEPTANCE_TESTED_NATIVE'] not in ('m7','m8'):
+              raise ValueError('Unknown reviewed Native test role')
           if phase not in ('produce','readback'):
               raise ValueError('Unknown no-send acceptance phase')
           if (phase=='readback' and (not source.isascii() or not source.isdigit() or int(source)<=0)) or (phase=='produce' and source):
               raise ValueError('Readback needs one exact source run; produce cannot substitute a source')
           PY
-      - name: Read unchanged exact native runtime
+      - name: Select one exact reviewed native producer pair
         id: runtime
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          v=json.load(open('config/microcap_scoped_rebalance.json'))
-          if v['runtime_sha']!='a7c1b9ac33454be4367880a0989dfc1466640503':
-              raise ValueError('Acceptance native runtime requires a new explicit review')
-          if v['producer_sha']!='3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36':
-              raise ValueError('Acceptance source runtime requires a new explicit review')
-          print('sha='+v['runtime_sha'])
-          print('producer_sha='+v['producer_sha'])
+          import os
+          roles={
+              'm7':('a7c1b9ac33454be4367880a0989dfc1466640503','3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'),
+              'm8':('95d896fe58cc7cb84c0fcb7bd76534f62c9430f4','3344e403ff01e17ef45b745a704a240e0917720b'),
+          }
+          native,producer=roles[os.environ['MICROCAP_ACCEPTANCE_TESTED_NATIVE']]
+          print('sha='+native)
+          print('producer_sha='+producer)
           PY
       - uses: actions/checkout@v6
         with:

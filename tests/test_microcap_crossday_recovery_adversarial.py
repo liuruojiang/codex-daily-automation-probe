@@ -37,6 +37,46 @@ MANIFEST = 'acceptance-manifest.json'
 SCHEMA = 'microcap_crossday_software_acceptance_v1'
 MAX_BYTES = 32 * 1024 * 1024
 PRODUCE_STEP = 'Produce isolated recovery acceptance state'
+REVIEWED_ROLES = {
+    'm7': dict(tested_native='m7', native_runtime='a7c1b9ac33454be4367880a0989dfc1466640503',
+        producer_runtime='3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'),
+    'm8': dict(tested_native='m8', native_runtime='95d896fe58cc7cb84c0fcb7bd76534f62c9430f4',
+        producer_runtime='3344e403ff01e17ef45b745a704a240e0917720b'),
+}
+
+
+def reviewed_roles(value):
+    if not isinstance(value, dict) or value not in REVIEWED_ROLES.values():
+        raise ValueError('Unreviewed acceptance native/producer role pair')
+    return dict(value)
+
+
+def environment_roles(native_root=None, *, require_producer=False):
+    native_root = Path(native_root or os.environ.get('MICROCAP_NATIVE_ROOT')
+        or os.environ.get('MICROCAP_RECOVERY_NATIVE_ROOT')
+        or r'D:\Codex\workspaces\microcap-source-reader-m7-20261112').resolve()
+    actual = subprocess.check_output(['git', '-C', str(native_root), 'rev-parse', 'HEAD'],
+        text=True, encoding='utf-8').strip()
+    matches = [value for value in REVIEWED_ROLES.values() if value['native_runtime'] == actual]
+    if len(matches) != 1:
+        raise ValueError('Acceptance requires an exact reviewed actual Native Git checkout')
+    roles = reviewed_roles(matches[0])
+    chosen = os.environ.get('MICROCAP_ACCEPTANCE_TESTED_NATIVE')
+    if chosen is not None and chosen != roles['tested_native']:
+        raise ValueError('Acceptance selected Native differs from the actual checkout')
+    producer_root = Path(os.environ.get('MICROCAP_PRODUCER_ROOT') or (
+        r'D:\Codex\workspaces\microcap-quote-fallback-p3-20261112' if roles['tested_native'] == 'm8'
+        else r'D:\Codex\microcap-local-maintenance\runtime')).resolve()
+    verified = producer_root.is_dir()
+    if verified:
+        producer = subprocess.check_output(['git', '-C', str(producer_root), 'rev-parse', 'HEAD'],
+            text=True, encoding='utf-8').strip()
+        if producer != roles['producer_runtime']:
+            raise ValueError('Actual acceptance producer does not match the exact Native pair')
+    elif require_producer:
+        raise ValueError('Acceptance artifact lifecycle requires its actual producer Git checkout')
+    return dict(tested_roles=roles, native_root=native_root, producer_root=producer_root,
+        producer_git_verified=verified)
 
 
 def sha(body):
@@ -63,7 +103,7 @@ def confined_name(value):
     return path
 
 
-def pack_state(directory, head):
+def pack_state(directory, head, *, tested_roles=None):
     """Package only an explicitly isolated software acceptance state."""
     directory = Path(directory)
     files = {}
@@ -85,6 +125,8 @@ def pack_state(directory, head):
     record = dict(schema=SCHEMA, automation_head=exact_sha(head),
                   software_observations=True, current_signal_ready=False,
                   SMTP_calls=0, orders_placed=False, files=files)
+    if tested_roles is not None:
+        record['tested_roles'] = reviewed_roles(tested_roles)
     result = io.BytesIO()
     with zipfile.ZipFile(result, 'w', zipfile.ZIP_DEFLATED) as archive:
         archive.writestr(MANIFEST, json.dumps(record, sort_keys=True).encode())
@@ -93,7 +135,7 @@ def pack_state(directory, head):
     return result.getvalue()
 
 
-def unpack_state(raw, out, head):
+def unpack_state(raw, out, head, *, expected_roles=None):
     """Validate the complete inner closure before writing any member."""
     if len(raw) > MAX_BYTES:
         raise ValueError('Acceptance inner archive is oversized')
@@ -119,6 +161,8 @@ def unpack_state(raw, out, head):
             or manifest.get('current_signal_ready') is not False
             or manifest.get('SMTP_calls') != 0 or manifest.get('orders_placed') is not False):
         raise ValueError('Acceptance manifest is not an exact no-send software state')
+    if expected_roles is not None and manifest.get('tested_roles') != reviewed_roles(expected_roles):
+        raise ValueError('Acceptance artifact tested Native/producer role differs')
     expected = manifest.get('files')
     if not isinstance(expected, dict) or not expected or set(expected) != set(payload) - {MANIFEST}:
         raise ValueError('Acceptance manifest does not cover its exact files')
@@ -157,7 +201,7 @@ def download_artifact(artifact, token):
     return raw
 
 
-def restore_acceptance(source_run, head, out, *, token=None, read_json=None, download=None):
+def restore_acceptance(source_run, head, out, *, token=None, read_json=None, download=None, expected_roles=None):
     """Exactly one known successful producer; no latest search or seed fallback."""
     if type(source_run) is not int or source_run <= 0:
         raise ValueError('Exact source acceptance run is required')
@@ -204,13 +248,13 @@ def restore_acceptance(source_run, head, out, *, token=None, read_json=None, dow
                 or stat.S_IFMT(infos[0].external_attr >> 16) == stat.S_IFLNK):
             raise ValueError('Unexpected acceptance artifact outer member')
         inner = archive.read(infos[0])
-    manifest = unpack_state(inner, out, head)
+    manifest = unpack_state(inner, out, head, expected_roles=expected_roles)
     return dict(schema='microcap_crossday_acceptance_readback_v1', source_run=source_run,
                 artifact_id=artifact_id, artifact_name=artifact['name'],
                 github_artifact_sha256=sha(raw), inner_sha256=sha(inner),
                 automation_head=head, restored=True, fallback_used=False,
                 current_signal_ready=False, SMTP_calls=0, orders_placed=False,
-                restored_files=manifest['files'])
+                tested_roles=manifest.get('tested_roles'), restored_files=manifest['files'])
 
 
 @pytest.fixture(autouse=True)
@@ -310,6 +354,25 @@ def test_acceptance_artifact_cannot_be_mislabelled_as_formal_477_checkpoint():
         artifact_name('main')
 
 
+def test_only_exact_reviewed_native_producer_pairs_can_label_acceptance_state():
+    assert reviewed_roles(REVIEWED_ROLES['m7'])['native_runtime'].startswith('a7c1')
+    assert reviewed_roles(REVIEWED_ROLES['m8'])['native_runtime'].startswith('95d896')
+    for value in (dict(REVIEWED_ROLES['m8'], producer_runtime=REVIEWED_ROLES['m7']['producer_runtime']),
+                  dict(REVIEWED_ROLES['m7'], native_runtime='1' * 40)):
+        with pytest.raises(ValueError, match='role pair'):
+            reviewed_roles(value)
+
+
+@pytest.mark.parametrize('fault', ['wrong_native', 'missing_role_binding'])
+def test_readback_requires_the_same_tested_native_pair_before_extraction(acceptance_transport, fault):
+    f = acceptance_transport
+    inner = pack_state(f['state'], f['head'],
+        tested_roles=REVIEWED_ROLES['m7'] if fault == 'wrong_native' else None)
+    with pytest.raises(ValueError, match='tested Native/producer role differs'):
+        unpack_state(inner, f['out'], f['head'], expected_roles=REVIEWED_ROLES['m8'])
+    assert not f['out'].exists()
+
+
 def test_dedicated_cloud_acceptance_has_no_production_dispatch_or_smtp_path():
     import yaml
     flow = yaml.load((ROOT / WORKFLOW).read_text(encoding='utf-8'), Loader=yaml.BaseLoader)
@@ -328,6 +391,11 @@ def test_dedicated_cloud_acceptance_has_no_production_dispatch_or_smtp_path():
     assert producer['if'] == "inputs.phase == 'produce'"
     assert consumer['if'] == "inputs.phase == 'readback'"
     assert 'source-run' in consumer['run']
+    choice = flow['on']['workflow_dispatch']['inputs']['tested_native']
+    assert choice['options'] == ['m7', 'm8'] and choice['default'] == 'm8'
+    selector = next(step for step in steps if step.get('id') == 'runtime')
+    assert all(value['native_runtime'] in selector['run'] and value['producer_runtime'] in selector['run']
+               for value in REVIEWED_ROLES.values())
 
 
 def csv_bytes(rows, fields=None):
@@ -362,7 +430,7 @@ class SoftwareRecoveryClock(datetime):
 
 @pytest.fixture(scope='module')
 def independently_built_recovery(tmp_path_factory):
-    """Real M7 math and packaging on a named software suffix, no market data.
+    """Real reviewed Native math and packaging on a named software suffix, no market data.
 
     The source Git read is real. Only the data-root -> source-module binding
     and the independent calendar transport are redirected into this fixture.
@@ -374,9 +442,11 @@ def independently_built_recovery(tmp_path_factory):
         or os.environ.get('MICROCAP_RECOVERY_NATIVE_ROOT')
         or r'D:\Codex\workspaces\microcap-source-reader-m7-20261112').resolve()
     if not native_root.is_dir():
-        pytest.fail('Exact native M7 source checkout is required')
+        pytest.fail('Exact reviewed Native source checkout is required')
     real_runtime = api._runtime
     actual_identity = real_runtime(native_root)
+    role_context = environment_roles(native_root)
+    assert actual_identity == role_context['tested_roles']['native_runtime']
     native = api._native(native_root)
     h, daily, calendar_module, _, _ = native
     source_hashes = {}
@@ -443,7 +513,7 @@ def independently_built_recovery(tmp_path_factory):
         path.write_bytes(raw)
         inputs[name]=sha(raw.replace(b'\r\n',b'\n'))
     manifest=dict(ok=True,status='complete',scope='whole_workspace_delivery',expected_date='2026-11-13',
-        release_sha=api.NATIVE,inputs=inputs,artifacts={},explicit_software_formal_envelope=True,
+        release_sha=actual_identity,inputs=inputs,artifacts={},explicit_software_formal_envelope=True,
         verified_at='2026-11-13T16:58:00+08:00',
         observed_market_data=False,not_a_production_refresh_all_or_check=True)
     (data/'outputs/top100_delivery_manifest.json').write_bytes(api.encode(manifest))
@@ -463,7 +533,9 @@ def independently_built_recovery(tmp_path_factory):
         yield dict(api=api,native=native,native_root=native_root,temp=temp,data=data,
             parent=parent_path,parent_original=parent_path.read_bytes(),old_payload=old,
             candidate=candidate/'checkpoint.json',recovered=recovered,checkpoint=document,payload=payload,
-            sessions=sessions,native_identity=actual_identity,native_source_hashes=source_hashes,
+            sessions=sessions,native_identity=actual_identity,actual_runtime=actual_identity,
+            producer_identity=role_context['tested_roles']['producer_runtime'],tested_roles=role_context['tested_roles'],
+            producer_git_verified=role_context['producer_git_verified'],native_source_hashes=source_hashes,
             seed_sha256=sha(seed.read_bytes()))
     finally:
         for patcher in reversed(patches):
@@ -489,14 +561,14 @@ def _actual_recovery_plan(case, completed='2026-11-13', *, task='rebalance_recov
     h,_,_,base,_=case['native']
     parent=h.verify(case['parent'])
     period=json.loads(h.read_bound(parent,'period'))
-    observation=dict(consumer_sha=case['api'].NATIVE,latest_completed_session=completed,
+    observation=dict(consumer_sha=case['actual_runtime'],latest_completed_session=completed,
         sessions=case['sessions'],rebalance_dates=list(base.build_biweekly_rebalance_dates(
             pd.DatetimeIndex(case['sessions'])).strftime('%Y-%m-%d')),
         checkpoint_path=str(case['parent']),checkpoint_sha256=sha(case['parent'].read_bytes()),
         checkpoint_as_of_date=parent['as_of_date'],checkpoint_period_status=parent.get('period_status','current'),
         checkpoint_period_anchor=period['anchor_day'],checkpoint_period_sha256=parent['period']['sha256'],
         checkpoint_members=len(period['effective_members']),native_checkpoint_verified=True)
-    return planner.build_plan(observation,completed,case['api'].NATIVE,task=task)
+    return planner.build_plan(observation,completed,case['actual_runtime'],task=task)
 
 
 def test_independent_plan_keeps_both_missed_native_periods_in_order(independently_built_recovery):
@@ -533,7 +605,7 @@ def _exec_actual_preflight(case, path, plan, monkeypatch, *, target='2026-11-13'
     out=Path(path)
     result=out/'preflight-result.json'
     out.mkdir()
-    argv=['actual-native-preflight',str(case['data']),target,case['api'].NATIVE,str(result)]
+    argv=['actual-native-preflight',str(case['data']),target,case['actual_runtime'],str(result)]
     if plan is not None:
         planning=out/'recovery-plan.json'
         planning.write_bytes(case['api'].encode(plan))
@@ -546,7 +618,7 @@ def _exec_actual_preflight(case, path, plan, monkeypatch, *, target='2026-11-13'
         isolated.setenv('GIT_DIR',git_dir)
         isolated.setenv('GIT_WORK_TREE',str(case['native_root']))
         isolated.setattr(sys,'argv',argv)
-        isolated.setattr(native_delivery,'verify_release',lambda root:case['api'].NATIVE)
+        isolated.setattr(native_delivery,'verify_release',lambda root:case['actual_runtime'])
         isolated.setattr(authority,'resolve_archive_reference',lambda root:('software-authority', 'f'*64))
         exec(compile(driver.PREFLIGHT,'<unchanged-production-scoped-preflight>','exec'),{})
     return json.loads(result.read_bytes())
@@ -656,12 +728,12 @@ def _invoke_software_driver(case, paths, *, fail=None, forbid_execution=False):
                 raise RuntimeError('Independent injected failure at '+label)
             if label in ('refresh','check'):
                 # Model the external full-market gates; their native algebraic
-                # export data was generated by the exact actual M7 functions.
+                # export data was generated by the exact actually selected Native functions.
                 assert (consumer/'outputs/top100_delivery_manifest.json').is_file()
             elif label=='pack-formal':
                 original_manifest=(consumer/'outputs/top100_delivery_manifest.json').read_bytes()
                 packed_manifest=json.loads(original_manifest)
-                # Match the important behavior of actual M7
+                # Match the important behavior of actual Native
                 # _pack_shared_locked: ZIP manifest gets a fresh verified_at,
                 # while the completed consumer and prior stage receipts keep
                 # their original m1 bytes. This is not a real large pack.
@@ -700,7 +772,7 @@ def _invoke_software_driver(case, paths, *, fail=None, forbid_execution=False):
     preparation=dict(consumer_config='consumer-config.json',scope_sha256='d'*64,
         files={'sources.zip':sha(b'explicit software source-bundle identity'),
                'consumer-config.json':sha(config_raw)})
-    return driver.deliver_recovery(consumer=consumer,target='2026-11-13',consumer_sha=api.NATIVE,
+    return driver.deliver_recovery(consumer=consumer,target='2026-11-13',consumer_sha=case['actual_runtime'],
         preparation=preparation,config=config,current_checkpoint=parent,out=out,recovery_plan=plan,run=run)
 
 
@@ -734,7 +806,7 @@ def test_real_recovery_driver_resumes_after_check_and_checkpoint_verification_fa
     paths['config'].write_bytes(case['api'].encode(dict(schema='explicit_software_consumer_config_only')))
     paths['plan'].write_bytes(case['api'].encode(dict(schema='microcap_scoped_recovery_plan_v1',
         target='2026-11-13',delivery_date='2026-11-13',required_rebalance_dates=['2026-11-12'],
-        consumer_sha=case['api'].NATIVE,parent_not_after_date='2026-11-11')))
+        consumer_sha=case['actual_runtime'],parent_not_after_date='2026-11-11')))
     with pytest.raises(RuntimeError,match='check'):
         _invoke_software_driver(case,paths,fail='check')
     assert not (paths['out']/'candidate').exists() and not (paths['out']/'handoff').exists()
@@ -757,8 +829,8 @@ def test_real_recovery_driver_resumes_after_check_and_checkpoint_verification_fa
         # verbatim so the next cloud run can actually resume these stages.
         state.mkdir(exist_ok=True)
         admission=importlib.import_module('restore_microcap_rebalance_recovery')
-        producer='3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
-        sealed=admission.seal(root=paths['out'].parent,runtime_sha=case['api'].NATIVE,
+        producer=case['producer_identity']
+        sealed=admission.seal(root=paths['out'].parent,runtime_sha=case['actual_runtime'],
             producer_sha=producer,plan=paths['plan'],out=paths['out'].parent/admission.MANIFESTS['state'],
             phase='state',run_id=900000001,run_attempt=1,
             producer_commit=os.environ.get('GITHUB_SHA') or subprocess.check_output(
@@ -803,6 +875,7 @@ def test_recovered_D_checkpoint_is_consumed_by_report_without_smtp(independently
             shutil.copytree(directory,state/name)
         shutil.copytree(tmp_path/'rendered',state/'rendered-report')
         evidence=dict(scope='explicit_software_R_D_recovery_not_current_market_data',native_runtime=case['native_identity'],
+            tested_roles=case['tested_roles'],producer_git_verified=case['producer_git_verified'],
             native_source_hashes=case['native_source_hashes'],seed_sha256=case['seed_sha256'],
             parent_history_original_bytes_preserved=True,actual_native_math_and_packaging=True,
             production_formal_gates_executed=False,target='2026-11-13',recovered_R=['2026-11-12'],
@@ -830,12 +903,13 @@ def _admit_driver_state(saved, destination, native_root, monkeypatch):
     producer=destination/'scoped-source-state/runtime'
     paths['consumer'].mkdir(parents=True)
     producer.mkdir(parents=True)
-    producer_source=Path(os.environ.get('MICROCAP_PRODUCER_ROOT',
-        r'D:\Codex\microcap-local-maintenance\runtime')).resolve()
-    expected_producer='3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
+    roles=environment_roles(native_root,require_producer=True)
+    producer_source=roles['producer_root']
+    expected_producer=roles['tested_roles']['producer_runtime']
+    actual_runtime=roles['tested_roles']['native_runtime']
     real_read=subprocess.check_output
     assert real_read(['git','-C',str(producer_source),'rev-parse','HEAD'],text=True,encoding='utf-8').strip()==expected_producer
-    assert real_read(['git','-C',str(native_root),'rev-parse','HEAD'],text=True,encoding='utf-8').strip()=='a7c1b9ac33454be4367880a0989dfc1466640503'
+    assert real_read(['git','-C',str(native_root),'rev-parse','HEAD'],text=True,encoding='utf-8').strip()==actual_runtime
     observed=[]
     def actual_git_binding(argv,*args,**kwargs):
         if len(argv)>=5 and list(map(str,argv[:2]))==['git','-C']:
@@ -860,7 +934,7 @@ def _admit_driver_state(saved, destination, native_root, monkeypatch):
         report=admission.admit_resume(saved/admission.MANIFESTS['state'],
             consumer=paths['consumer'],producer=producer,state=producer.parent,
             prepare_out=paths['config'].parent,delivery_out=paths['out'],
-            target='2026-11-13',consumer_sha='a7c1b9ac33454be4367880a0989dfc1466640503',
+            target='2026-11-13',consumer_sha=actual_runtime,
             producer_sha=expected_producer,run=restore_native)
     assert report['original_json_and_clocks_rewritten'] is False
     assert report['original_formal_manifest_restored'] is True and len(observed)==1
@@ -889,12 +963,17 @@ def test_recovered_artifact_is_consumed_by_current_recovery_and_report_code(tmp_
     result=api.validate_recovery_payload(document,payload)
     assert result['target']=='2026-11-13'
     native_root=Path(os.environ['MICROCAP_NATIVE_ROOT']).resolve()
-    assert api._runtime(native_root)==api.NATIVE
+    roles=environment_roles(native_root,require_producer=True)['tested_roles']
+    actual_runtime=api._runtime(native_root)
+    assert actual_runtime==roles['native_runtime']==document['strategy_sha']
+    connected=json.loads((state/'connected-recovery.json').read_bytes())
+    assert connected['tested_roles']==roles and connected['native_runtime']==actual_runtime
     h,daily,calendar_module,_,_=api._native(native_root)
     sessions=json.loads((native_root/'tests/fixtures/exchange_sessions_20261015.json').read_bytes())['sessions']
     monkeypatch.setattr(calendar_module,'sessions_for_day',lambda _:tuple(date.fromisoformat(day) for day in sessions))
     monkeypatch.setattr(calendar_module,'latest_completed_session',lambda *args,**kwargs:date(2026,11,13))
-    case=dict(api=api,native=(h,daily,calendar_module,None,None),sessions=sessions)
+    case=dict(api=api,native=(h,daily,calendar_module,None,None),sessions=sessions,
+        actual_runtime=actual_runtime,producer_identity=roles['producer_runtime'],tested_roles=roles)
     _set_witness_calendar_transport(case,monkeypatch)
     paths,admission=_admit_driver_state(state/'driver-state',tmp_path/'new-private-run',native_root,monkeypatch)
     before_processes=_stage_call_counts(paths['out'])
@@ -922,6 +1001,7 @@ def test_recovered_artifact_is_consumed_by_current_recovery_and_report_code(tmp_
     out=Path(os.environ['MICROCAP_RECOVERY_ACCEPTANCE_OUT'])/'evidence'
     out.mkdir()
     (out/'readback-consumption.json').write_bytes(api.encode(dict(consumed=True,
+        tested_roles=roles,software_target='2026-11-13',software_rebalance='2026-11-12',
         target=result['target'],recovery_proof_revalidated=True,report_status=report['status'],
         production_driver_journal_exercised=True,all_successful_stages_reused=True,
         real_sealed_state_admission_exercised=True,
@@ -950,6 +1030,7 @@ def _acceptance_cli(argv=None):
         parser.error('Readback requires exactly one explicit previous source run')
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
+    tested_roles=environment_roles(require_producer=True)['tested_roles']
     head = exact_sha(os.environ.get('GITHUB_SHA') or subprocess.check_output(
         ['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True, encoding='utf-8').strip())
     if os.environ.get('GITHUB_ACTIONS') == 'true':
@@ -957,7 +1038,7 @@ def _acceptance_cli(argv=None):
     os.environ['MICROCAP_RECOVERY_ACCEPTANCE_OUT'] = str(out)
     readback = None
     if args.phase == 'readback':
-        readback = restore_acceptance(args.source_run, head, out / 'restored-state')
+        readback = restore_acceptance(args.source_run, head, out / 'restored-state',expected_roles=tested_roles)
         (out / 'readback-source.json').write_text(json.dumps(readback, indent=2) + '\n', encoding='utf-8')
         os.environ['MICROCAP_RECOVERY_ACCEPTANCE_RESTORED'] = str(out / 'restored-state')
         selection = 'test_recovered_artifact_is_consumed_by_current_recovery_and_report_code'
@@ -975,7 +1056,10 @@ def _acceptance_cli(argv=None):
     if args.phase == 'produce' and any(not (state / name).is_file() for name in required):
         raise ValueError('No complete isolated recovery execution was produced')
     if args.phase == 'produce':
-        body = pack_state(state, head)
+        connected=json.loads((state/'connected-recovery.json').read_bytes())
+        if connected.get('tested_roles')!=tested_roles:
+            raise ValueError('Produced recovery state differs from its actually tested Native roles')
+        body = pack_state(state, head,tested_roles=tested_roles)
         (out / ARTIFACT_FILE).write_bytes(body)
         inner_sha = sha(body)
     else:
@@ -984,6 +1068,8 @@ def _acceptance_cli(argv=None):
             raise ValueError('Restored artifact was not consumed by the recovery/report code')
         inner_sha = readback['inner_sha256']
     receipt = dict(schema='microcap_crossday_acceptance_execution_v1', phase=args.phase,
+                   tested_roles=tested_roles,software_target='2026-11-13',software_rebalance='2026-11-12',
+                   current_D12_production_gates_executed=False,
                    automation_head=head, success=True, software_observations=True,
                    current_signal_ready=False, production_refresh_all_or_check=False,
                    source_run=args.source_run, fallback_used=False if readback else None,
