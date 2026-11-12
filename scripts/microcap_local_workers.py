@@ -98,6 +98,18 @@ def worker(root, state, slot, context_path):
     return 0
 
 
+def read_worker_status(path):
+    # Windows can briefly deny opening a summary during atomic replacement.
+    # Retry only access contention; malformed bytes and identity checks still fail.
+    for attempt in range(5):
+        try:
+            return json.loads(path.read_bytes())
+        except PermissionError:
+            if attempt == 4:
+                raise
+            time.sleep(0.1)
+
+
 def run_workers(root, state, symbols, context):
     state = Path(state); directory = state / 'runs' / context['target']
     # An orphaned native worker continues to own its OS lock. A new parent must
@@ -120,7 +132,7 @@ def run_workers(root, state, symbols, context):
                 str(root), str(state), str(slot), str(context_path)], stdout=stdout, stderr=stderr))
         last = -1
         while True:
-            statuses = [json.loads((directory / f'worker-{slot}.json').read_bytes()) for slot in (0,1)]
+            statuses = [read_worker_status(directory / f'worker-{slot}.json') for slot in (0,1)]
             if any(s['context'] != context or s.get('dispatch_id') != dispatch_id for s in statuses):
                 raise ValueError('Worker summary context or dispatch changed')
             processed = sum(s['processed'] for s in statuses)
