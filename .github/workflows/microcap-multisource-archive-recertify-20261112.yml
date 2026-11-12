@@ -1,0 +1,130 @@
+name: One-off Microcap M8 v4 archive candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: microcap-independent-maintenance
+  cancel-in-progress: false
+jobs:
+  recertify:
+    if: github.repository == 'liuruojiang/codex-daily-automation-probe' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      TZ: Asia/Shanghai
+      PYTHONDONTWRITEBYTECODE: '1'
+      GITHUB_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14.4'
+      - name: Require a frozen source-only v4 candidate before any archive restore
+        id: refs
+        run: |
+          python -B automation/scripts/prepare_microcap_multisource_archive_20261112.py settings \
+            --config automation/config/microcap_multisource_archive_candidate_20261112.json \
+            --github-output "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: ${{ steps.refs.outputs.runtime_sha }}
+          path: candidate-source
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: ${{ steps.refs.outputs.producer_sha }}
+          path: producer-contract
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: 872abe41d48f818363d879cdf98b297d230377b4
+          path: native
+          persist-credentials: false
+      - name: Install exact native archive dependencies
+        run: python -m pip install 'numpy==2.4.3' 'pandas==2.3.3' requests matplotlib 'akshare==1.18.46' 'baostock==0.9.1' 'pytest>=8,<9'
+      - name: Validate the complete exact Git review and actual P3 M8 code contracts
+        run: |
+          mkdir -p evidence
+          python -B automation/scripts/prepare_microcap_multisource_archive_20261112.py preflight \
+            --config automation/config/microcap_multisource_archive_candidate_20261112.json \
+            --reader-root candidate-source --producer-root producer-contract \
+            --review-out evidence/full-source-review.json --out evidence/code-preflight.json
+      - name: Restore only the fixed original M3 archive under its original runtime
+        run: |
+          python -B automation/scripts/microcap_scoped_whole_recovery.py \
+            --root native --runtime-sha 872abe41d48f818363d879cdf98b297d230377b4 \
+            --not-after-date 2026-11-10 --bundle "$RUNNER_TEMP/original-m3.zip" \
+            --receipt evidence/original-restore.json \
+            --fallback-url https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-872abe41/microcap-whole-delivery-state-close-20261110.zip \
+            --fallback-sha256 3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42 > evidence/original-restore.stdout.json
+          python - <<'PY'
+          import json
+          value=json.load(open('evidence/original-restore.json'))
+          assert value['bundle_sha256']=='3d9aa183b614b272597bf81cfbd3b6fefdde021347fd36586e8047a6dc025e42'
+          assert value['bundle_bytes']==673074646
+          assert value['runtime_sha']=='872abe41d48f818363d879cdf98b297d230377b4'
+          assert value['seed_date']=='2026-11-10' and value['restored'] is True
+          PY
+      - name: Activate reviewed candidate source while preserving all restored data
+        run: |
+          python -B automation/scripts/activate_microcap_scoped_runtime.py --root native \
+            --config evidence/full-source-review.json --restore-receipt evidence/original-restore.json \
+            --bundle "$RUNNER_TEMP/original-m3.zip" --receipt evidence/source-activation.json > evidence/source-activation.stdout.json
+      - name: Verify exact M8 v4 source and no-history-change contracts
+        working-directory: native
+        run: |
+          python -B -m pytest tests/test_scoped_archive_source_revalidation.py \
+            tests/test_m8_archive_source_revalidation_20261112.py \
+            tests/test_scoped_source_consumer.py tests/test_share_typed_quote_20261112.py \
+            tests/test_typed_quote_source_compatibility_20261112.py \
+            tests/test_share_typed_quote_adversarial_20261112.py \
+            tests/test_st_notice_boundary_20261112_0726.py \
+            tests/test_share_later_quote_20261112.py tests/test_historical_share_close_20261109.py \
+            -q -p no:cacheprovider --junitxml ../evidence/m8-native-source-tests.xml
+      - name: Earn the native v4 complete archive certificate without refreshing history
+        run: |
+          python -B native/scripts/top100_delivery.py recertify-archive-source \
+            --expected-date 2026-11-10 > evidence/native-v4-recertification.json
+          cp native/outputs/top100_delivery_manifest.json evidence/recertified-manifest.json
+      - name: Pack the native-validated archive as a uniquely named v4 candidate
+        run: |
+          python -B native/scripts/top100_cloud_delivery.py pack-archive --root native \
+            --v23-root native --v25-root native --expected-date 2026-11-10 \
+            --bundle "$RUNNER_TEMP/microcap-whole-delivery-state-archive-20261110-m8-typed-dualquote-v4.zip" > evidence/native-v4-pack.json
+      - name: Verify the candidate certificate and unchanged original data inventory
+        id: verify
+        run: |
+          python -B automation/scripts/prepare_microcap_multisource_archive_20261112.py verify-candidate \
+            --config automation/config/microcap_multisource_archive_candidate_20261112.json --root native \
+            --bundle "$RUNNER_TEMP/microcap-whole-delivery-state-archive-20261110-m8-typed-dualquote-v4.zip" \
+            --pack-report evidence/native-v4-pack.json --out evidence/v4-candidate.json
+      - name: Preserve only the earned uniquely named v4 candidate
+        if: steps.verify.conclusion == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-m8-v4-archive-candidate-${{ steps.refs.outputs.runtime_sha }}
+          path: ${{ runner.temp }}/microcap-whole-delivery-state-archive-20261110-m8-typed-dualquote-v4.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve source-only candidate acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-m8-v4-archive-evidence-${{ github.run_id }}
+          path: |
+            evidence
+            ${{ runner.temp }}/scoped-whole-recovery-*/*.json
+            ${{ runner.temp }}/scoped-whole-recovery-*/*.log
+          if-no-files-found: warn
+          retention-days: 90
