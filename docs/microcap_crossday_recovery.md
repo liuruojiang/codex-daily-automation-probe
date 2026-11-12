@@ -2,7 +2,7 @@
 
 本修复将原调仓日R和最近完成交易日D分开处理。恢复在真实D执行原生完整刷新和独立检查，按原生双周日历覆盖遗漏的所有R，再发布D的当前成员检查点。不会把旧R冒充今天，不修改选股、成本、三版参数或既有正式历史前缀。
 
-生产切换和两次真实云端无发送验收尚待最终回执。本文件描述已实现的接口，不能作为已上线或当日信号就绪证明。
+核心修复已通过[PR197](https://github.com/liuruojiang/codex-daily-automation-probe/pull/197)合并为`b8d489a7da1f09db5e48ebff387b7042f9508906`。生产Auto、本地11文件读取包及09:00/11:00恢复指令已切换；两次真实云端无发送验收[produce43182489965](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43182489965)与[readback43182714966](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43182714966)均通过。第二次准确命中首轮工件13927066639，未使用fallback，成功阶段全部复用。软件故障后缀与当日真实行情状态分别验收。
 
 ## 09:00与11:00的同槽恢复
 
@@ -34,6 +34,14 @@ C:\Python314\python.exe -B -X utf8 D:\Codex\workspaces\auto-maintenance-20261109
 恢复只发布成员检查点和完整状态，不调用SMTP，也不清理或变更日报intent、SMTP receipt和发送marker。上传已被GitHub接收但回执丢失时，按原main/run/步骤资格、API摘要及原对象闭包只读调解；原producer身份和失败结论保留。成员包成功但完整状态上传未完成时，只补同一原包发布，不重新维护903项或重算三版。
 
 Native M7、P2、477检查点命名、ad4经济核心和AB214本地执行角色保持。新本地包增加恢复证明校验器；旧安装与指针备份保留。已经采用带新证明的数据时，不能单独退回不认识该证明的旧读者或改签检查点。
+
+## 旧格式来源现场的切换接力
+
+当天原15:10运行`43173346897/attempt1`仍使用eec旧代码，在来源准备失败前已完成300个价格、300个复权比例及44个股本阶段；256个股本阶段为HTTP502，公告重核D10边界有未审查事件，metadata等待。原正式handoff/CP/whole均未执行，不能把644个来源成功当作完整资料或信号成功。
+
+`microcap_legacy_source_recovery.py`仅接纳这一固定旧main提交、运行、attempt、日期、M7/P2与两个固定原工件。新sealed现场优先；明确miss后才读取原诊断与producer工件，orphan-only不触发旧来源恢复。双方API摘要、对象路径、原context及所有成功回执的原文件SHA必须闭合。原JSON、时钟、失败/恢复预算和eec身份保留；接收者新建的manifest显式声明`legacy_source_artifact_bridge_v1`、自己的签发身份以及“原运行未sealed”，只作为私有P2来源输入，不能携带consumer/formal成果或伪造旧执行计划。
+
+专用`microcap-legacy-source-readback.yml`只读接回原两工件，用实际私有admit与P2的price/share/ratio校验逐项验证644个成功来源。独立日历先通过真实原生函数取得并保留完整返回值及真实时钟，随后用同一真实日历读回，验证期间禁止股票HTTP和新子进程。日历采集单独记账，不冒称整个验收零网络。只发布小证据，不发布477成员包，不刷新903项，不派发日报。即使全部644项读回通过，256项和ST差异仍保持未完成，正式D门槛继续生效。
 
 ## 验收边界
 
