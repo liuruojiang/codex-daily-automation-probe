@@ -1,0 +1,11 @@
+{
+  "schema": "microcap_notice_prefix_pointer_v1",
+  "owner": "local",
+  "notice_prefix": {
+    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-notice-prefix-20261111-a9728405/microcap-notice-prefix-20261111-a9728405.zip",
+    "sha256": "b1a2beae9d229d67b06bce62b0705b00bf7bf4dd258adcd02927fd003f01fc6b",
+    "target": "2026-11-11",
+    "runtime_sha": "3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36",
+    "producer_commit": "a9728405b213dc677b761d454bf2f25759eec9c9"
+  }
+}

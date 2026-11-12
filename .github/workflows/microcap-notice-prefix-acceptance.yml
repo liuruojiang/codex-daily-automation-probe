@@ -1,0 +1,93 @@
+name: Microcap Native Notice Prefix No-send Acceptance
+run-name: microcap-notice-prefix-acceptance:${{ github.run_id }}
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: microcap-notice-prefix-no-send-acceptance
+  cancel-in-progress: false
+jobs:
+  native-prefix-readback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      TZ: Asia/Shanghai
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUTF8: '1'
+      MPLCONFIGDIR: /tmp/microcap-notice-matplotlib-${{ github.run_id }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14.4'
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: a7c1b9ac33454be4367880a0989dfc1466640503
+          path: scoped-consumer
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: 3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36
+          path: scoped-source-state/runtime
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*.py
+            /scripts/
+            /data/
+            /.gitattributes
+      - name: Install unchanged Native dependencies
+        run: python -m pip install 'numpy==2.4.3' 'pandas==2.3.3' requests matplotlib 'akshare==1.18.46' 'baostock==0.9.1'
+      - name: Resolve the actual completed exchange session
+        id: schedule
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import sys
+          from pathlib import Path
+          sys.path.insert(0,str(Path('scoped-consumer').resolve()))
+          from scripts.exchange_calendar import latest_completed_session
+          print('date='+latest_completed_session().isoformat())
+          PY
+      - name: Restore the already earned whole archive with an exact artifact hit
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+        run: python -B automation/scripts/microcap_scoped_whole_recovery.py --root scoped-consumer --runtime-sha a7c1b9ac33454be4367880a0989dfc1466640503 --not-after-date "$TARGET" --bundle "$RUNNER_TEMP/notice-whole.zip" --receipt notice-restoration.json --require-artifact
+      - name: Verify the historical three-version archive without a refresh
+        run: python -B automation/scripts/check_microcap_scoped_archive.py --root scoped-consumer --receipt notice-restoration.json --out notice-archive-acceptance.json
+      - name: Restore the original verified weekly roster
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+        run: |
+          python -B automation/scripts/microcap_scoped_settings.py --config automation/config/microcap_scoped_rebalance.json --roster-bundle notice-roster.zip
+          python -B automation/scripts/microcap_scoped_roster.py restore --bundle notice-roster.zip --sha256 a369c67c4a3d167fec5744fe0017b7e6acb370055665afd0f2472287ee0b623c --date "$TARGET" --out notice-roster
+      - name: Copy only the original protected sources into the private producer
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+        run: python -B automation/scripts/maintain_microcap_local.py bootstrap --root scoped-source-state/runtime --protected-root scoped-consumer --state-root scoped-source-state --pool notice-roster/latest.json --as-of "$TARGET"
+      - name: Natively accept the real released prefix and repeat the readback
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+        run: python -B automation/scripts/check_microcap_notice_prefix.py --consumer scoped-consumer --producer scoped-source-state/runtime --state scoped-source-state --pool notice-roster/latest.json --config automation/config/microcap_notice_prefix.json --restoration notice-restoration.json --date "$TARGET" --work "$RUNNER_TEMP/notice-native-readback" --out notice-prefix-acceptance.json
+      - name: Preserve only no-send acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-notice-prefix-acceptance-evidence
+          path: |
+            notice-restoration.json
+            notice-archive-acceptance.json
+            notice-prefix-acceptance.json
+            ${{ runner.temp }}/notice-native-readback/first-admission.json
+            ${{ runner.temp }}/notice-native-readback/second-admission.json
+            ${{ runner.temp }}/notice-native-readback/protected-snapshot.json
+            ${{ runner.temp }}/notice-native-readback/relay/admission/transaction.json
+          if-no-files-found: warn
+          retention-days: 90
