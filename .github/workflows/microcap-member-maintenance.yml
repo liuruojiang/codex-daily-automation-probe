@@ -334,7 +334,7 @@ jobs:
         run: |
           args=()
           if [[ "${{ steps.resume.outputs.restored }}" == 'true' ]]; then args+=(--resume-state '${{ steps.resume.outputs.manifest }}'); fi
-          python -B automation/scripts/run_microcap_scoped_rebalance.py prepare --consumer scoped-consumer --consumer-sha "$RUNTIME_SHA" --producer scoped-source-state/runtime --state scoped-source-state --pool scoped-weekly-roster/latest.json --date "$TARGET" --out scoped-prepare --warm-source-config automation/config/microcap_local_maintenance.json --recovery-plan scoped-recovery-plan.json "${args[@]}"
+          python -B automation/scripts/run_microcap_scoped_rebalance.py prepare --consumer scoped-consumer --consumer-sha "$RUNTIME_SHA" --producer scoped-source-state/runtime --state scoped-source-state --pool scoped-weekly-roster/latest.json --date "$TARGET" --out scoped-prepare --warm-source-config automation/config/microcap_local_maintenance.json --warm-notice-prefix-config automation/config/microcap_notice_prefix.json --recovery-plan scoped-recovery-plan.json "${args[@]}"
       - name: Restore previous daily member checkpoint
         if: steps.schedule.outputs.run == 'true' && steps.plan.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery')
         env:

@@ -287,7 +287,7 @@ def validate_prepared(receipt, consumer, target, consumer_sha, admission=None):
     return value, config
 
 
-def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resume_notice_generation=None, warm_source_config=None, recovery_plan=None, resume_state=None, run=None):
+def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resume_notice_generation=None, warm_source_config=None, warm_notice_prefix_config=None, recovery_plan=None, resume_state=None, run=None):
     consumer, producer, state, out = validate_paths(consumer, producer, state, out)
     out.mkdir(parents=True, exist_ok=True)
     run = run or Commands(out)
@@ -300,11 +300,37 @@ def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resum
         admission=admission_record(delivery_out,target)
         roster, symbols, scope_sha = load_pool(pool,target)
         validate_runtime(producer,consumer)
+        def warm_notice_prefix():
+            if warm_notice_prefix_config is None:
+                return {}
+            command=run('warm-approved-notice-prefix',[sys.executable,'-B',SCRIPTS/'microcap_notice_prefix.py','warm',
+                '--root',producer,'--protected-root',consumer,'--state',state,'--pool',Path(pool).resolve(),
+                '--date',target,'--config',Path(warm_notice_prefix_config).resolve(),'--out',out/'notice-prefix'])
+            if not isinstance(command,dict):raise ValueError('Notice prefix intake returned no command evidence')
+            report=json.loads(Path(command['stdout']).read_text(encoding='utf-8').strip().splitlines()[-1])
+            if report.get('status')!='no_notice_prefix_configured':
+                if (report.get('schema')!='microcap_notice_prefix_admission_v1'
+                        or report.get('status') not in ('approved_notice_prefix_imported_source_only','skipped_notice_prefix_already_covered')
+                        or report.get('profile')!='approved_d10_d11_notice_prefix_20261112_v1'
+                        or report.get('target')!='2026-11-11' or report.get('requested_not_after')!=target
+                        or report.get('source_inputs_only') is not True or report.get('original_clocks_retained') is not True
+                        or report.get('actual_consumer_anchor_and_bootstrap_unchanged') is not True
+                        or report.get('fresh_for_requested_date') is not False or report.get('current_signal_ready') is not False
+                        or report.get('final_strategy_delivery') is not False or report.get('email_sent') is not False
+                        or report.get('orders_placed') is not False):
+                    raise ValueError('Notice prefix intake escaped its authenticated source-only role')
+            raw=encode(report);name='receipts/notice-prefix-'+sha(raw)+'.json';save_once(out/name,raw)
+            result={name:sha(raw)}
+            for path in (Path(command['stdout']).resolve(),Path(command['process']).resolve()):
+                if not path.is_relative_to(out):raise ValueError('Notice prefix command evidence escaped preparation')
+                result[path.relative_to(out).as_posix()]=sha(path.read_bytes())
+            return result
         saved = out/'prepared.json'
         if saved.exists():
             value, _ = validate_prepared(saved,consumer,target,consumer_sha,admission)
             if value['scope_sha256'] != scope_sha or mapped_path(value['producer_root'],admission) != producer:
                 raise ValueError('Preserved preparation has another roster/producer')
+            warm_notice_prefix()
             return value
         # Boundary pages are real dated historical queries. Preserve them before
         # any expensive stock request, retaining their original observation time.
@@ -337,6 +363,9 @@ def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resum
                 for path in (Path(receipt['stdout']).resolve(),Path(receipt['process']).resolve()):
                     if not path.is_relative_to(out):raise ValueError('Producer import command evidence escaped preparation')
                     warm_files[path.relative_to(out).as_posix()]=sha(path.read_bytes())
+        # The reviewed ST prefix is an independent sidecar.  A reused bootstrap
+        # or stock warm cache must not bypass it or imply D12 notice freshness.
+        warm_files.update(warm_notice_prefix())
         resume = ['--resume-notice-generation',Path(resume_notice_generation).resolve()] if resume_notice_generation else []
         run('maintain',[sys.executable,'-B',SCRIPTS/'maintain_microcap_local.py','run',*common,*resume])
         directory = state/'runs'/target
@@ -482,7 +511,7 @@ def main():
         parser.add_argument('--'+name,type=Path,required=True)
     for name in ('date','consumer-sha'):
         parser.add_argument('--'+name,required=True)
-    for name in ('producer','state','pool','prepared','current-checkpoint','resume-notice-generation','warm-source-config','recovery-plan','resume-state','delivery-out'):
+    for name in ('producer','state','pool','prepared','current-checkpoint','resume-notice-generation','warm-source-config','warm-notice-prefix-config','recovery-plan','resume-state','delivery-out'):
         parser.add_argument('--'+name,type=Path)
     args=parser.parse_args()
     common=dict(consumer=args.consumer,target=args.date,consumer_sha=args.consumer_sha,out=args.out,recovery_plan=args.recovery_plan)
@@ -491,7 +520,7 @@ def main():
     elif args.action=='prepare':
         if any(getattr(args,n) is None for n in ('producer','state','pool')):parser.error('prepare requires --producer --state --pool')
         result=prepare(**common,producer=args.producer,state=args.state,pool=args.pool,resume_notice_generation=args.resume_notice_generation,
-            warm_source_config=args.warm_source_config,resume_state=args.resume_state)
+            warm_source_config=args.warm_source_config,warm_notice_prefix_config=args.warm_notice_prefix_config,resume_state=args.resume_state)
     else:
         if args.prepared is None or args.current_checkpoint is None:parser.error('deliver requires --prepared --current-checkpoint')
         result=deliver(**common,prepared=args.prepared,current_checkpoint=args.current_checkpoint,resume_state=args.resume_state)
