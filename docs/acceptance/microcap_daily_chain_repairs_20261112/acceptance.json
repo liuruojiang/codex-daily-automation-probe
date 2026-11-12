@@ -204,5 +204,23 @@
     "outputs/microcap_top100_mom16_biweekly_live_v2_3_performance_nav.csv": "5f3fdea152fd6d7356e1dbaa4dc35962e1355528396c8ea2a84fb7bc8311a64d",
     "outputs/microcap_top100_mom16_biweekly_live_v2_5_performance_nav.csv": "5f7755df4f08ec55c48bac8070d79dd1a50a266a1d901a5e5fdde97f83d54452"
   },
-  "historical_data_inventory_sha256": "42899f51e86c92ac4438bf25c45bd9419df3b9ba0c6997fa4fabe1c0af61d860"
+  "historical_data_inventory_sha256": "42899f51e86c92ac4438bf25c45bd9419df3b9ba0c6997fa4fabe1c0af61d860",
+  "main_push_recheck": {
+    "run": 43122095720,
+    "attempt": 2,
+    "all_five_checks_passed": true,
+    "only_failed_component_repeated": true,
+    "native_mandatory_testcases": 1922,
+    "native_mandatory_skips": 0,
+    "code_dependency_threshold_changes": false,
+    "original_process_fault_root_cause": "UNDETERMINED_NOT_ATTRIBUTED_TO_PLATFORM",
+    "receipt": "main-ci-targeted-recheck.json"
+  },
+  "worker_tested_deployment_version": "345055bb-1466-4309-a7d0-9e057b82dbe0",
+  "worker_later_implementation_equal_observation": {
+    "version": "d194a2bd-3ebb-4354-be54-83ef5d323811",
+    "implementation_sha256": "b02277411d70b04148d9087110afd61f154cb258db05bb3ab60e5db25b080f11",
+    "observed_at_utc": "2026-11-12T00:26:10.583438+00:00",
+    "new_fault_test_execution": false
+  }
 }

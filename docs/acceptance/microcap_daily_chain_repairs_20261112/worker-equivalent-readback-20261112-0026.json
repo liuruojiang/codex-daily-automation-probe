@@ -1,0 +1,43 @@
+{
+  "checked_at_utc": "2026-11-12T00:26:10.583438+00:00",
+  "read_only": true,
+  "version": "d194a2bd-3ebb-4354-be54-83ef5d323811",
+  "compiled_candidate_matches": true,
+  "schedules_match": true,
+  "member_daily_enabled": true,
+  "results": [
+    {
+      "name": "deployed-content",
+      "status": 200,
+      "bytes": 17745,
+      "sha256": "3de3cc85f7658d0636de2f65415cd2f1d9d706f08ce2d0969ee4d0ee4e8abbb8",
+      "modules": [
+        {
+          "name": "worker.js",
+          "file": "deployed-module-0.js",
+          "bytes": 6422,
+          "sha256": "b02277411d70b04148d9087110afd61f154cb258db05bb3ab60e5db25b080f11"
+        },
+        {
+          "name": "worker.js.map",
+          "file": "deployed-module-1.bin",
+          "bytes": 10886,
+          "sha256": "39ccfcb8aa3ba397b2a860c16bb35043909424c813255509ff411c1128626ad3"
+        }
+      ]
+    },
+    {
+      "name": "deployed-schedules",
+      "status": 200,
+      "bytes": 881,
+      "sha256": "26c4af344b89ea2d6a989fcb0fb30fa2d4c8bb09463da81d6e0695ecd78e6848"
+    },
+    {
+      "name": "deployed-deployments",
+      "status": 200,
+      "bytes": 4941,
+      "sha256": "fc8a5c38f91c272c92940172dbad01dc56ff8f21f39a8708b0391a5a6030883b"
+    }
+  ],
+  "credentials_printed": false
+}
