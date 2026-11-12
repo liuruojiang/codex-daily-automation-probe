@@ -237,7 +237,7 @@ def prepare_pipeline(notice_case,tmp_path,monkeypatch):
         elif label=='export':put(Path(argv[-1]).parent,Path(argv[-1]).name,b'explicit software source envelope')
         elif label=='stage':
             put(c['protected'],'.microcap_index_cache/local_input_imports/'+'c'*64+'/receipt.json',dict(
-                status='native_sources_staged',source_bundle_sha256='c'*64,files={},
+                status='native_sources_staged',target=target,source_bundle_sha256='c'*64,files={},
                 production_pointers_changed=False,native_late_adoption_required=True))
     args=dict(consumer=c['protected'],producer=c['root'],state=c['args']['state'],out=out,pool=pool,
         target=target,consumer_sha=m.CONSUMER,run=run,warm_notice_prefix_config=config)
