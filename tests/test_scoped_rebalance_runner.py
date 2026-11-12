@@ -70,7 +70,7 @@ def prepared(tmp_path,monkeypatch):
 def test_prepare_uses_only_verified_300_and_earns_bound_config(prepared):
     args,calls,_,_,_=prepared
     result=runner.prepare(**args)
-    assert [c[0] for c in calls]==['preflight','bootstrap','maintain','export','stage','boundary-2026-10-29']
+    assert [c[0] for c in calls]==['preflight','boundary-2026-10-29','bootstrap','maintain','export','stage']
     assert result['issuer_count']==300 and not result['formal_release_verified']
     value,config=runner.validate_prepared(args['out']/'prepared.json',args['consumer'],args['target'],args['consumer_sha'])
     actual=json.loads(config.read_bytes())
@@ -78,6 +78,19 @@ def test_prepare_uses_only_verified_300_and_earns_bound_config(prepared):
     assert actual['boundary_snapshots'].keys()=={'2026-10-29'}
     assert not value['email_sent'] and not value['orders_placed']
     assert not any('refresh-all' in item or 'bootstrap-period' in item for _,item in calls)
+
+
+def test_boundary_is_preserved_before_a_source_failure_and_original_observation_is_retained(prepared):
+    args,calls,failure,_,_=prepared
+    failure['stage']='maintain'
+    with pytest.raises(RuntimeError,match='software fixture failure'):
+        runner.prepare(**args)
+    early=json.loads((args['out']/'early-boundaries.json').read_bytes())
+    assert early['dates']==[args['target']] and early['formal_delivery'] is False
+    assert [label for label,_ in calls].index('boundary-'+args['target'])<[label for label,_ in calls].index('maintain')
+    spec=early['boundaries'][args['target']]
+    assert all(sha((args['out']/spec['directory']/name).read_bytes())==digest for name,digest in spec['files'].items())
+    assert not (args['out']/'prepared.json').exists()
 
 
 def test_completed_preparation_reuses_bound_source_package_without_recollection(prepared):
@@ -246,7 +259,7 @@ def warm_setup(prepared,monkeypatch,*,fault=False,stale=False):
 def test_local_warm_import_is_between_bootstrap_and_refresh_and_its_evidence_is_bound(prepared,monkeypatch):
     args,calls=warm_setup(prepared,monkeypatch)
     value=runner.prepare(**args)
-    assert [label for label,_ in calls][:4]==['preflight','bootstrap','warm-local-source-inputs','maintain']
+    assert [label for label,_ in calls][:5]==['preflight','boundary-2026-10-29','bootstrap','warm-local-source-inputs','maintain']
     warm=value['local_source_warm'];assert warm['producer_import']['status']=='producer_source_inputs_imported'
     assert {'local-source-warm.zip','local-source-download.json',warm['import_receipt']['path']}<=value['files'].keys()
     runner.validate_prepared(args['out']/'prepared.json',args['consumer'],args['target'],args['consumer_sha'])

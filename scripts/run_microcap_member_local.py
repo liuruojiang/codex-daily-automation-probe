@@ -8,7 +8,7 @@ import subprocess
 import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from member_checkpoint_policy import local_runtime, load_read_policy, validate_checkpoint_payload
+from member_checkpoint_policy import local_runtime, load_read_policy, validate_checkpoint_directory
 
 
 BJ=ZoneInfo('Asia/Shanghai')
@@ -95,8 +95,7 @@ def main():
         cp=cached
     if json.loads(cp.read_bytes()).get('as_of_date') != expected:
         raise ValueError('Local preparation requires the latest completed checkpoint session')
-    if read_policy is not None:
-        validate_checkpoint_payload(json.loads(cp.read_bytes()), load_read_policy(read_policy, runtime))
+    validate_checkpoint_directory(cp, load_read_policy(read_policy, runtime) if read_policy is not None else None)
     run([py,'-B',str(strategy/'scripts/member_period_handoff.py'),'verify','--checkpoint',str(cp)])
     if args.prepare_only:
         print(json.dumps({'status':'prepared','checkpoint':str(cp),'market_quotes_collected':False}))

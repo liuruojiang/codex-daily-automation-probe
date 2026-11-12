@@ -9,7 +9,7 @@ on:
         default: ''
       task:
         type: choice
-        options: [maintenance, rebalance, scoped_acceptance, scoped_readback]
+        options: [maintenance, rebalance, rebalance_recovery, scoped_acceptance, scoped_readback]
         default: maintenance
 permissions:
   contents: read
@@ -183,7 +183,7 @@ jobs:
       - name: Read exact scoped maintenance configuration
         id: config
         env:
-          TASK: ${{ inputs.task }}
+          TASK: ${{ inputs.task == 'rebalance_recovery' && 'rebalance' || inputs.task }}
         run: python -B automation/scripts/microcap_scoped_settings.py --config automation/config/microcap_scoped_rebalance.json --task "$TASK" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v6
         if: steps.config.outputs.run == 'true'
@@ -214,12 +214,47 @@ jobs:
           from scripts.member_period_handoff import schedule
           target=latest_completed_session().isoformat()
           value=schedule(Path('scoped-consumer').resolve(),target)
-          run=os.environ['TASK']!='rebalance' or value['is_rebalance']
+          # Small-state recovery planning decides whether expensive work is needed.
+          run=True
           print('run='+str(run).lower());print('date='+target)
           Path('scoped-schedule.json').write_text(json.dumps(value,indent=2)+'\n')
           PY
+      - name: Restore latest member checkpoint for recovery planning
+        if: steps.schedule.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery')
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+        run: |
+          daily=$(python -c "import json;print(json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha'])")
+          python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha "$daily" --seed-config automation/config/microcap_member_checkpoint.json --not-after-date "$TARGET" --out scoped-latest > scoped-latest-restore.json
+      - name: Plan original missed periods against the real completed session
+        id: plan
+        if: steps.schedule.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery')
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+          RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
+          TASK: ${{ inputs.task }}
+        run: python -B automation/scripts/microcap_recovery_plan.py --consumer scoped-consumer --consumer-sha "$RUNTIME_SHA" --checkpoint scoped-latest/checkpoint.json --date "$TARGET" --task "$TASK" --out scoped-recovery-plan.json --github-output "$GITHUB_OUTPUT"
+      - name: Restore sealed partial scoped recovery evidence
+        id: resume
+        if: steps.schedule.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery')
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+          RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
+          PRODUCER_SHA: ${{ steps.config.outputs.producer_sha }}
+        run: |
+          args=()
+          if [[ "${{ steps.plan.outputs.run }}" != 'true' ]]; then args+=(--orphan-only); fi
+          python -B automation/scripts/restore_microcap_rebalance_recovery.py recover --runtime-sha "$RUNTIME_SHA" --producer-sha "$PRODUCER_SHA" --not-after-date "$TARGET" --out scoped-resume --github-output "$GITHUB_OUTPUT" "${args[@]}"
+      - name: Validate preserved earned whole archive without refreshing
+        id: orphan
+        if: steps.plan.outputs.run != 'true' && steps.resume.outputs.restored == 'true' && steps.resume.outputs.formal_archive != ''
+        env:
+          TARGET: ${{ steps.schedule.outputs.date }}
+          RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
+          PRODUCER_SHA: ${{ steps.config.outputs.producer_sha }}
+        run: python -B automation/scripts/restore_microcap_rebalance_recovery.py orphan --consumer scoped-consumer --manifest '${{ steps.resume.outputs.manifest }}' --runtime-sha "$RUNTIME_SHA" --producer-sha "$PRODUCER_SHA" --not-after-date "$TARGET" --out scoped-orphan-publication --github-output "$GITHUB_OUTPUT"
       - name: Restore verified scoped whole delivery
-        if: steps.schedule.outputs.run == 'true'
+        if: steps.schedule.outputs.run == 'true' && ((inputs.task != 'rebalance' && inputs.task != 'rebalance_recovery') || steps.plan.outputs.run == 'true')
         env:
           TASK: ${{ inputs.task }}
           RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
@@ -235,10 +270,10 @@ jobs:
           fi
           python -B automation/scripts/microcap_scoped_whole_recovery.py "${args[@]}"
       - name: Verify complete restored three-version archive without sending
-        if: steps.schedule.outputs.run == 'true' && inputs.task != 'rebalance'
+        if: steps.schedule.outputs.run == 'true' && inputs.task != 'rebalance' && inputs.task != 'rebalance_recovery'
         run: python -B automation/scripts/check_microcap_scoped_archive.py --root scoped-consumer --receipt scoped-restore.json --out scoped-archive-acceptance.json
       - uses: actions/checkout@v6
-        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        if: steps.schedule.outputs.run == 'true' && steps.plan.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery')
         with:
           repository: liuruojiang/microcap
           ref: ${{ steps.config.outputs.producer_sha }}
@@ -251,41 +286,94 @@ jobs:
             /.gitattributes
             /AGENTS.md
       - name: Restore original verified weekly maintenance roster
-        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        if: steps.schedule.outputs.run == 'true' && steps.plan.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery')
         env:
           TARGET: ${{ steps.schedule.outputs.date }}
           ROSTER_SHA256: ${{ steps.config.outputs.roster_sha256 }}
         run: |
           python -B automation/scripts/microcap_scoped_settings.py --config automation/config/microcap_scoped_rebalance.json --roster-bundle scoped-weekly-roster.zip
           python -B automation/scripts/microcap_scoped_roster.py restore --bundle scoped-weekly-roster.zip --sha256 "$ROSTER_SHA256" --date "$TARGET" --out scoped-weekly-roster
-      - name: Prepare current close sources for exactly 300 candidates
-        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+      - name: Capture original R boundaries before source collection
+        if: steps.plan.outputs.run == 'true'
         env:
           TARGET: ${{ steps.schedule.outputs.date }}
           RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
-        run: python -B automation/scripts/run_microcap_scoped_rebalance.py prepare --consumer scoped-consumer --consumer-sha "$RUNTIME_SHA" --producer scoped-source-state/runtime --state scoped-source-state --pool scoped-weekly-roster/latest.json --date "$TARGET" --out scoped-prepare --warm-source-config automation/config/microcap_local_maintenance.json
-      - name: Restore previous daily member checkpoint
-        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        run: |
+          args=()
+          if [[ "${{ steps.resume.outputs.restored }}" == 'true' ]]; then args+=(--resume-state '${{ steps.resume.outputs.manifest }}'); fi
+          python -B automation/scripts/run_microcap_scoped_rebalance.py boundary --consumer scoped-consumer --consumer-sha "$RUNTIME_SHA" --producer scoped-source-state/runtime --state scoped-source-state --date "$TARGET" --out scoped-prepare --delivery-out scoped-delivery --recovery-plan scoped-recovery-plan.json "${args[@]}"
+      - name: Seal original R boundary recovery evidence
+        if: steps.plan.outputs.run == 'true'
+        env:
+          RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
+          PRODUCER_SHA: ${{ steps.config.outputs.producer_sha }}
+        run: python -B automation/scripts/restore_microcap_rebalance_recovery.py seal --root . --consumer-sha "$RUNTIME_SHA" --producer-sha "$PRODUCER_SHA" --plan scoped-recovery-plan.json --phase boundaries --out scoped-boundary-manifest.json
+      - name: Preserve original R boundary recovery evidence
+        if: steps.plan.outputs.run == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-scoped-boundaries-v1-${{ steps.config.outputs.runtime_sha }}
+          path: |
+            scoped-boundary-manifest.json
+            scoped-recovery-plan.json
+            scoped-schedule.json
+            scoped-restore.json
+            scoped-latest-restore.json
+            scoped-prepare/boundary-*.json
+            scoped-prepare/preflight-*.json
+            scoped-prepare/recovery-intent.json
+            scoped-prepare/early-boundaries.json
+            scoped-prepare/boundaries
+          if-no-files-found: error
+          retention-days: 90
+      - name: Prepare current close sources for exactly 300 candidates
+        if: steps.schedule.outputs.run == 'true' && steps.plan.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery')
         env:
           TARGET: ${{ steps.schedule.outputs.date }}
+          RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
+        run: |
+          args=()
+          if [[ "${{ steps.resume.outputs.restored }}" == 'true' ]]; then args+=(--resume-state '${{ steps.resume.outputs.manifest }}'); fi
+          python -B automation/scripts/run_microcap_scoped_rebalance.py prepare --consumer scoped-consumer --consumer-sha "$RUNTIME_SHA" --producer scoped-source-state/runtime --state scoped-source-state --pool scoped-weekly-roster/latest.json --date "$TARGET" --out scoped-prepare --warm-source-config automation/config/microcap_local_maintenance.json --recovery-plan scoped-recovery-plan.json "${args[@]}"
+      - name: Restore previous daily member checkpoint
+        if: steps.schedule.outputs.run == 'true' && steps.plan.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery')
+        env:
+          PARENT_CEILING: ${{ steps.plan.outputs.parent_not_after_date }}
         run: |
           daily=$(python -c "import json;print(json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha'])")
-          python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha "$daily" --seed-config automation/config/microcap_member_checkpoint.json --not-after-date "$TARGET" --out scoped-previous
+          python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha "$daily" --seed-config automation/config/microcap_member_checkpoint.json --not-after-date "$PARENT_CEILING" --out scoped-previous > scoped-parent-restore.json
       - name: Earn original formal rebalance and next-session handoff
-        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        if: steps.schedule.outputs.run == 'true' && steps.plan.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery')
         env:
           TARGET: ${{ steps.schedule.outputs.date }}
           RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
-        run: python -B automation/scripts/run_microcap_scoped_rebalance.py deliver --consumer scoped-consumer --consumer-sha "$RUNTIME_SHA" --prepared scoped-prepare/prepared.json --current-checkpoint scoped-previous/checkpoint.json --date "$TARGET" --out scoped-delivery
+        run: |
+          args=()
+          if [[ "${{ steps.resume.outputs.restored }}" == 'true' ]]; then args+=(--resume-state '${{ steps.resume.outputs.manifest }}'); fi
+          python -B automation/scripts/run_microcap_scoped_rebalance.py deliver --consumer scoped-consumer --consumer-sha "$RUNTIME_SHA" --prepared scoped-prepare/prepared.json --current-checkpoint scoped-previous/checkpoint.json --date "$TARGET" --out scoped-delivery --recovery-plan scoped-recovery-plan.json "${args[@]}"
       - name: Describe verified scoped member checkpoint
         id: checkpoint
-        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        if: steps.schedule.outputs.run == 'true' && steps.plan.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery')
         run: |
           daily=$(python -c "import json;print(json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha'])")
           name=$(python -B automation/scripts/restore_microcap_member_checkpoint.py --strategy-sha "$daily" --describe-checkpoint scoped-delivery/handoff/checkpoint.json)
           echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Reconcile exact checkpoint publication before writing
+        id: checkpoint_publication
+        if: steps.plan.outputs.run == 'true'
+        run: |
+          daily=$(python -c "import json;print(json.load(open('automation/config/microcap_member_runtime.json'))['strategy_sha'])")
+          python -B automation/scripts/restore_microcap_rebalance_recovery.py publication --kind checkpoint --checkpoint scoped-delivery/handoff/checkpoint.json --namespace-sha "$daily" --intent scoped-delivery/checkpoint-publication-intent.json --github-output "$GITHUB_OUTPUT"
+      - name: Preserve checkpoint publication intent before upload
+        if: steps.checkpoint_publication.outputs.should_publish == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.checkpoint_publication.outputs.intent_artifact_name }}
+          path: ${{ steps.checkpoint_publication.outputs.intent_file }}
+          if-no-files-found: error
+          retention-days: 90
       - name: Publish verified member checkpoint
-        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance' && success()
+        if: steps.schedule.outputs.run == 'true' && steps.plan.outputs.run == 'true' && (inputs.task == 'rebalance' || inputs.task == 'rebalance_recovery') && steps.checkpoint_publication.outputs.should_publish == 'true' && success()
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.checkpoint.outputs.name }}
@@ -293,19 +381,82 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Pack verified scoped whole state
-        if: steps.schedule.outputs.run == 'true' && inputs.task == 'rebalance'
+        if: steps.schedule.outputs.run == 'true' && (steps.plan.outputs.run == 'true' || steps.orphan.outputs.should_publish == 'true')
         env:
           TARGET: ${{ steps.schedule.outputs.date }}
-        run: python -B scoped-consumer/scripts/top100_cloud_delivery.py pack --root scoped-consumer --v23-root scoped-consumer --v25-root scoped-consumer --bundle "$RUNNER_TEMP/microcap-whole-delivery-state.zip" --expected-date "$TARGET"
+          ORPHAN_PUBLISH: ${{ steps.orphan.outputs.should_publish }}
+          ORPHAN_BUNDLE: ${{ steps.orphan.outputs.bundle }}
+        run: |
+          if [[ "$ORPHAN_PUBLISH" == 'true' ]]; then
+            cp "$ORPHAN_BUNDLE" "$RUNNER_TEMP/microcap-whole-delivery-state.zip"
+          else
+            test -f scoped-delivery/formal-state.zip
+            cp scoped-delivery/formal-state.zip "$RUNNER_TEMP/microcap-whole-delivery-state.zip"
+          fi
+      - name: Reconcile exact whole archive publication before writing
+        id: whole_publication
+        if: steps.plan.outputs.run == 'true'
+        env:
+          RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
+        run: python -B automation/scripts/restore_microcap_rebalance_recovery.py publication --kind whole --bundle scoped-delivery/formal-state.zip --runtime-sha "$RUNTIME_SHA" --intent scoped-delivery/whole-publication-intent.json --github-output "$GITHUB_OUTPUT"
+      - name: Preserve whole publication intent before upload
+        if: steps.whole_publication.outputs.should_publish == 'true' || steps.orphan.outputs.should_publish == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.orphan.outputs.intent_artifact_name || steps.whole_publication.outputs.intent_artifact_name }}
+          path: ${{ steps.orphan.outputs.intent_file || steps.whole_publication.outputs.intent_file }}
+          if-no-files-found: error
+          retention-days: 90
       - name: Publishable copy of verified restored archive
         if: steps.schedule.outputs.run == 'true' && inputs.task == 'scoped_acceptance'
         run: cp "$RUNNER_TEMP/restored-scoped-whole.zip" "$RUNNER_TEMP/microcap-whole-delivery-state.zip"
       - name: Publish verified scoped whole state
-        if: steps.schedule.outputs.run == 'true' && inputs.task != 'scoped_readback' && success()
+        if: steps.schedule.outputs.run == 'true' && (inputs.task == 'scoped_acceptance' || steps.whole_publication.outputs.should_publish == 'true' || steps.orphan.outputs.should_publish == 'true') && inputs.task != 'scoped_readback' && success()
         uses: actions/upload-artifact@v7
         with:
           name: microcap-scoped-whole-v1-${{ steps.config.outputs.runtime_sha }}
           path: ${{ runner.temp }}/microcap-whole-delivery-state.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Seal resumable scoped recovery state
+        id: sealed
+        if: always() && steps.plan.outputs.run == 'true'
+        env:
+          RUNTIME_SHA: ${{ steps.config.outputs.runtime_sha }}
+          PRODUCER_SHA: ${{ steps.config.outputs.producer_sha }}
+        run: |
+          python -B automation/scripts/restore_microcap_rebalance_recovery.py seal --root . --consumer-sha "$RUNTIME_SHA" --producer-sha "$PRODUCER_SHA" --plan scoped-recovery-plan.json --phase state --out scoped-recovery-manifest.json
+          if [[ -f scoped-delivery/formal-state.zip ]]; then
+            echo 'include_consumer=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'include_consumer=true' >> "$GITHUB_OUTPUT"
+          fi
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+      - name: Preserve resumable scoped recovery state
+        if: always() && steps.sealed.outputs.ready == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: microcap-scoped-resume-v1-${{ steps.config.outputs.runtime_sha }}
+          path: |
+            scoped-recovery-manifest.json
+            scoped-recovery-plan.json
+            scoped-schedule.json
+            scoped-restore.json
+            scoped-latest-restore.json
+            scoped-parent-restore.json
+            scoped-latest
+            scoped-previous
+            scoped-prepare
+            scoped-delivery
+            scoped-source-state/runs
+            scoped-source-state/bootstrap.json
+            scoped-source-state/reference-proxy.csv
+            scoped-source-state/runtime/.microcap_index_cache
+            ${{ steps.sealed.outputs.include_consumer == 'true' && 'scoped-consumer/.microcap_index_cache' || '' }}
+            ${{ steps.sealed.outputs.include_consumer == 'true' && 'scoped-consumer/outputs' || '' }}
+            !**/*.lock
+            !scoped-delivery/publication-readback/**
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 90
       - name: Preserve scoped maintenance evidence
@@ -315,6 +466,15 @@ jobs:
           name: microcap-scoped-maintenance-${{ inputs.task }}
           path: |
             scoped-schedule.json
+            scoped-recovery-plan.json
+            scoped-latest-restore.json
+            scoped-parent-restore.json
+            scoped-boundary-manifest.json
+            scoped-recovery-manifest.json
+            scoped-resume/recovery-receipt.json
+            scoped-orphan-publication
+            !scoped-orphan-publication/publication-readback/**
+            !scoped-delivery/publication-readback/**
             scoped-restore.json
             scoped-archive-acceptance.json
             ${{ runner.temp }}/scoped-whole-recovery-*/*.log
@@ -330,10 +490,11 @@ jobs:
             scoped-prepare/consumer-config.json
             scoped-prepare/boundaries
             scoped-delivery
+            ${{ steps.sealed.outputs.ready == 'true' && '!scoped-delivery/formal-state.zip' || '' }}
           if-no-files-found: warn
           retention-days: 90
       - name: Preserve failed scoped producer sources
-        if: failure() || cancelled()
+        if: (failure() || cancelled()) && steps.sealed.outputs.ready != 'true'
         uses: actions/upload-artifact@v7
         with:
           name: microcap-scoped-producer-recovery-${{ inputs.task }}

@@ -21,7 +21,10 @@ BUNDLE_FILES = (
     'config/microcap_member_checkpoint.json',
     'config/microcap_member_seed_20261109_4774966d.zip',
 )
-LOCAL_DEPENDENCIES = {'microcap_member_report_contract': 'scripts/microcap_member_report_contract.py'}
+LOCAL_DEPENDENCIES = {
+    'microcap_member_report_contract': 'scripts/microcap_member_report_contract.py',
+    'microcap_recovery_handoff': 'scripts/microcap_recovery_handoff.py',
+}
 
 
 def sha(raw):

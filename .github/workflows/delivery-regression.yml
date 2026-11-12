@@ -112,6 +112,9 @@ jobs:
   automation-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      MICROCAP_RECOVERY_NATIVE_ROOT: ${{ github.workspace }}/native-recovery
+      MICROCAP_LOCAL_READER_ROOT: ${{ github.workspace }}/local-reader
     steps:
       - uses: actions/checkout@v6
         with:
@@ -119,6 +122,40 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+      - name: Read exact unchanged native kernel for recovery regression
+        if: ${{ inputs.family != 'icim' }}
+        uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: a7c1b9ac33454be4367880a0989dfc1466640503
+          path: native-recovery
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*.py
+            /scripts/
+            /data/
+            /.gitattributes
+            /tests/fixtures/exchange_sessions_20261015.json
+      - name: Install recovery-kernel test imports
+        if: ${{ inputs.family != 'icim' }}
+        run: python -m pip install matplotlib 'akshare==1.18.46'
+      - name: Read exact unchanged local reader for recovery-cache adversaries
+        if: ${{ inputs.family != 'icim' }}
+        uses: actions/checkout@v6
+        with:
+          repository: liuruojiang/microcap
+          ref: ab214c20d92ca9bbda1dde7e447bb153e7f59028
+          path: local-reader
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/member_period_handoff.py
+            /scripts/member_hedge_precision_bridge.py
+            /.gitattributes
+      - name: Read immutable pre-fix local-runner counterexample
+        if: ${{ inputs.family != 'icim' }}
+        run: git fetch --no-tags --depth=1 origin eecf2c8fa7afb69426e9d8293517beb22f5a8c98
       - run: python -m pip install 'pytest>=8,<9' 'PyYAML>=6,<7' 'hypothesis>=6,<7' 'pandas<3' requests
       - name: Check delivery contracts and all automation regressions
         env:

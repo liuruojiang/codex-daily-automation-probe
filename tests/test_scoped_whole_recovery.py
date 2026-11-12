@@ -58,6 +58,41 @@ def test_discovery_accepts_only_exact_runtime_successful_main_upload(monkeypatch
     assert len(calls)==3 and all(recovery.REPOSITORY in url for url in calls)
 
 
+@pytest.mark.parametrize('conclusion', ['failure', 'cancelled', 'timed_out'])
+def test_closed_server_archive_after_lost_upload_response_is_readonly_reconciled(monkeypatch, conclusion):
+    item,workflow,job=artifact(),run(),jobs()
+    workflow.update(conclusion=conclusion,event='workflow_dispatch')
+    value=job['jobs'][0];value['conclusion']=conclusion
+    value['steps']=[
+        dict(name='Earn original formal rebalance and next-session handoff',status='completed',conclusion='success'),
+        dict(name='Pack verified scoped whole state',status='completed',conclusion='success'),
+        dict(name=recovery.UPLOAD_STEP,status='completed',conclusion=conclusion,started_at='2026-11-10T08:00:00Z')]
+    fake_api(monkeypatch,item=item,workflow=workflow,job=job)
+    result=recovery.fetch_latest('in-memory-test-secret',RUNTIME)
+    assert result['id']==31 and result['producer_head_sha']==workflow['head_sha']
+    assert result['publication_acceptance']=='closed_server_object_reconciled_after_publication_response_loss'
+    assert workflow['conclusion']==conclusion
+
+
+@pytest.mark.parametrize('fault',['unearned','no_pack','not_started','skipped','no_digest','wrong_event'])
+def test_whole_response_loss_without_an_earned_closed_publication_remains_unaccepted(monkeypatch,fault):
+    item,workflow,job=artifact(),run(),jobs()
+    workflow.update(conclusion='failure',event='workflow_dispatch')
+    value=job['jobs'][0];value['conclusion']='failure'
+    steps=[dict(name='Earn original formal rebalance and next-session handoff',status='completed',conclusion='success'),
+           dict(name='Pack verified scoped whole state',status='completed',conclusion='success'),
+           dict(name=recovery.UPLOAD_STEP,status='completed',conclusion='failure',started_at='2026-11-10T08:00:00Z')]
+    value['steps']=steps
+    if fault=='unearned':steps[0]['conclusion']='failure'
+    elif fault=='no_pack':steps[1]['conclusion']='failure'
+    elif fault=='not_started':steps[-1].pop('started_at')
+    elif fault=='skipped':steps[-1]['conclusion']='skipped'
+    elif fault=='no_digest':item.pop('digest')
+    else:workflow['event']='pull_request'
+    fake_api(monkeypatch,item=item,workflow=workflow,job=job)
+    assert recovery.fetch_latest('in-memory-test-secret',RUNTIME) is None
+
+
 @pytest.mark.parametrize('fault',['runtime','branch','workflow','repository','head_repository','cancelled','unfinished','run_id','upload_failed','job_failed','job_wrong_run'])
 def test_unapproved_artifact_producers_are_not_discovered(monkeypatch,fault):
     item,workflow,job=artifact(),run(),jobs()
