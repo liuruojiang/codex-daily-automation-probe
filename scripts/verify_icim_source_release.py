@@ -16,6 +16,7 @@ def verify(root, expected):
     if observed != expected:
         raise ValueError('strategy checkout does not match the production pin')
     releases = {
+        'docs/ic_im_expert_release_20261112_v2_manifest.json': '20261112-expert-review-v5-r3',
         'docs/ic_im_expert_release_20261112_manifest.json': '20261112-expert-review-v5-r2',
         'docs/ic_im_fear_source_round2_20261109_manifest.json': '20261109-fear-source-round2-v3',
         'docs/ic_im_fear_source_adversarial_20261109_manifest.json': '20261109-fear-source-adversarial-v2',
@@ -38,7 +39,7 @@ def verify(root, expected):
         raise ValueError('unregistered source release')
     files = manifest.get('files')
     if (manifest.get('schema') != 'icim_audited_daily_release_v1' or not isinstance(files, dict)
-            or len(files) != (31 if manifest['release'] == '20261112-expert-review-v5-r2' else 29)
+            or len(files) != (31 if manifest['release'] in {'20261112-expert-review-v5-r2', '20261112-expert-review-v5-r3'} else 29)
             or 'run_ic_im_v1_4_github_digest.py' not in files
             or 'ic_im_signal_evidence_v1.py' not in files or 'ic_im_evidence_adapter_v1.py' not in files):
         raise ValueError('incomplete execution inventory')
@@ -55,7 +56,7 @@ def verify(root, expected):
         if actual[name] != digest:
             raise ValueError('source fingerprint mismatch: ' + name)
     support = manifest.get('support_files', {})
-    if manifest['release'] == '20261112-expert-review-v5-r2':
+    if manifest['release'] in {'20261112-expert-review-v5-r2', '20261112-expert-review-v5-r3'}:
         if (not {'ic_im_expiry_evidence_v1.py', 'ic_im_state_council_calendar_v1.py'} <= files.keys()
                 or set(support) != {'requirements-poe-v1.4-server.txt',
                     'data/exchange_calendar/state_council_2027_v1.json',

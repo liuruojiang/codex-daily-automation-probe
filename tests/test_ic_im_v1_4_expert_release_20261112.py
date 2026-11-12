@@ -15,7 +15,7 @@ import ic_im_v1_4_delivery_contract as contract
 import ic_im_state_council_calendar_v1 as calendar
 import verify_icim_source_release as verifier
 
-MANIFEST = 'docs/ic_im_expert_release_20261112_manifest.json'
+MANIFEST = 'docs/ic_im_expert_release_20261112_v2_manifest.json'
 COMMIT = 'a' * 40
 
 
@@ -149,8 +149,9 @@ def test_exception_restores_outer_calendar_policy():
         contract._CALENDAR_POLICY_DAY.reset(token)
 
 
-def test_missing_new_manifest_cannot_downgrade_the_pinned_commit(tmp_path, monkeypatch):
-    old = 'docs/ic_im_fear_source_round2_20261109_manifest.json'
+@pytest.mark.parametrize('old', ['docs/ic_im_expert_release_20261112_manifest.json',
+                                 'docs/ic_im_fear_source_round2_20261109_manifest.json'])
+def test_missing_new_manifest_cannot_downgrade_the_pinned_commit(tmp_path, monkeypatch, old):
     old_raw = (ROOT / old).read_bytes()
     old_path = tmp_path / old
     old_path.parent.mkdir(parents=True, exist_ok=True); old_path.write_bytes(old_raw)
@@ -163,22 +164,25 @@ def test_missing_new_manifest_cannot_downgrade_the_pinned_commit(tmp_path, monke
         verifier.verify(tmp_path, COMMIT)
 
 
-def test_current_packaging_rejects_older_release_even_with_current_sha(tmp_path):
-    old = 'docs/ic_im_fear_source_round2_20261109_manifest.json'
+@pytest.mark.parametrize('old', ['docs/ic_im_expert_release_20261112_manifest.json',
+                                 'docs/ic_im_fear_source_round2_20261109_manifest.json'])
+def test_current_packaging_rejects_older_release_even_with_current_sha(tmp_path, old):
     raw = (ROOT / old).read_bytes(); manifest = json.loads(raw)
     proof = {'status': 'verified', 'release': manifest['release'], 'strategy_sha': COMMIT,
              'manifest_sha256': hashlib.sha256(raw).hexdigest(), 'source_sha256': manifest['files'],
              'verified_at': datetime.now(timezone.utc).isoformat()}
+    if manifest.get('support_files'):
+        proof['support_sha256'] = manifest['support_files']
     target = tmp_path / 'old-proof.json'; target.write_text(json.dumps(proof))
     assert digest.source_provenance(str(target), COMMIT) == proof
     with pytest.raises(ValueError, match='execution inventory'):
-        digest.source_provenance(str(target), COMMIT, '20261112-expert-review-v5-r2')
+        digest.source_provenance(str(target), COMMIT, '20261112-expert-review-v5-r3')
 
 
 def test_both_production_and_readiness_require_the_exact_release():
     for name in ['ic-im-v1-4-daily-digest.yml', 'ic-im-v1-4-delivery-readiness.yml']:
         workflow = (ROOT / '.github/workflows' / name).read_text()
-        assert '--expected-source-release 20261112-expert-review-v5-r2' in workflow
+        assert '--expected-source-release 20261112-expert-review-v5-r3' in workflow
         if name == 'ic-im-v1-4-daily-digest.yml':
             line = next(line for line in workflow.splitlines() if '--expected-source-release' in line)
             assert len(line) - len(line.rstrip(chr(92))) == 1

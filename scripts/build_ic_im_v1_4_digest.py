@@ -1533,6 +1533,7 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     files = proof.get("source_sha256")
     from hashlib import sha256
     releases = {
+        "20261112-expert-review-v5-r3": "docs/ic_im_expert_release_20261112_v2_manifest.json",
         "20261112-expert-review-v5-r2": "docs/ic_im_expert_release_20261112_manifest.json",
         "20261109-fear-source-round2-v3": "docs/ic_im_fear_source_round2_20261109_manifest.json",
         "20261023-redteam-repairs-v3-r3": "docs/ic_im_daily_release_20261023_repairs_v3_r3_manifest.json",
@@ -1547,12 +1548,12 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     if (proof.get("status") != "verified" or proof.get("strategy_sha") != expected_sha
             or proof.get("release") not in releases
             or not re.fullmatch(r"[0-9a-f]{64}", str(proof.get("manifest_sha256", "")))
-            or not isinstance(files, dict) or len(files) != (31 if proof.get("release") == "20261112-expert-review-v5-r2" else 29)
+            or not isinstance(files, dict) or len(files) != (31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
             or "run_ic_im_v1_4_github_digest.py" not in files
             or files != expected_files or proof.get("manifest_sha256") != sha256(expected_raw).hexdigest()
             or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in files.values())):
         raise ValueError("source provenance does not match this run's execution inventory")
-    if proof.get("release") == "20261112-expert-review-v5-r2":
+    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"}:
         if proof.get("support_sha256") != json.loads(expected_raw)["support_files"]:
             raise ValueError("source provenance lacks exact approved-calendar support bytes")
     from datetime import datetime, timezone
@@ -1576,7 +1577,7 @@ def main() -> int:
                               args.expected_source_release or None)
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
-    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2"}
+    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"}
             and payload.get("status") in {"ok", "partial"} and "report_sha256" not in payload):
         raise ValueError("current IC/IM producer requires report_sha256")
     if str(payload.get("strategy_revision")) != "r1":
