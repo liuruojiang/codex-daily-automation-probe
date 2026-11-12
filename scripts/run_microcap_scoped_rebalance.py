@@ -325,12 +325,37 @@ def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resum
                 if not path.is_relative_to(out):raise ValueError('Notice prefix command evidence escaped preparation')
                 result[path.relative_to(out).as_posix()]=sha(path.read_bytes())
             return result
+        def select_notice_forward_checkpoint():
+            if warm_notice_prefix_config is None:
+                return {}
+            command=run('select-original-notice-forward-checkpoint',[sys.executable,'-B',SCRIPTS/'microcap_notice_prefix.py',
+                'select-forward','--root',producer,'--protected-root',consumer,'--state',state,
+                '--pool',Path(pool).resolve(),'--date',target,'--out',out/'notice-forward-selection'])
+            if not isinstance(command,dict):raise ValueError('Notice forward selection returned no command evidence')
+            report=json.loads(Path(command['stdout']).read_text(encoding='utf-8').strip().splitlines()[-1])
+            if (report.get('schema')!='microcap_notice_forward_selection_v1'
+                    or report.get('status') not in ('original_notice_forward_checkpoint_selected','notice_forward_checkpoint_not_needed')
+                    or report.get('requested_target')!=target or report.get('source_inputs_only') is not True
+                    or report.get('authority_pointer_unchanged') is not True
+                    or report.get('original_receipt_bytes_and_clocks_preserved') is not True
+                    or report.get('actual_consumer_anchor_and_bootstrap_unchanged') is not True
+                    or report.get('target_freshness_granted') is not False or report.get('current_signal_ready') is not False
+                    or report.get('final_strategy_delivery') is not False or report.get('email_sent') is not False
+                    or report.get('orders_placed') is not False):
+                raise ValueError('Notice forward checkpoint selection escaped its source-only role')
+            raw=encode(report);name='receipts/notice-forward-'+sha(raw)+'.json';save_once(out/name,raw)
+            result={name:sha(raw)}
+            for path in (Path(command['stdout']).resolve(),Path(command['process']).resolve()):
+                if not path.is_relative_to(out):raise ValueError('Notice forward command evidence escaped preparation')
+                result[path.relative_to(out).as_posix()]=sha(path.read_bytes())
+            return result
         saved = out/'prepared.json'
         if saved.exists():
             value, _ = validate_prepared(saved,consumer,target,consumer_sha,admission)
             if value['scope_sha256'] != scope_sha or mapped_path(value['producer_root'],admission) != producer:
                 raise ValueError('Preserved preparation has another roster/producer')
             warm_notice_prefix()
+            select_notice_forward_checkpoint()
             return value
         # Boundary pages are real dated historical queries. Preserve them before
         # any expensive stock request, retaining their original observation time.
@@ -366,6 +391,7 @@ def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resum
         # The reviewed ST prefix is an independent sidecar.  A reused bootstrap
         # or stock warm cache must not bypass it or imply D12 notice freshness.
         warm_files.update(warm_notice_prefix())
+        warm_files.update(select_notice_forward_checkpoint())
         resume = ['--resume-notice-generation',Path(resume_notice_generation).resolve()] if resume_notice_generation else []
         run('maintain',[sys.executable,'-B',SCRIPTS/'maintain_microcap_local.py','run',*common,*resume])
         directory = state/'runs'/target

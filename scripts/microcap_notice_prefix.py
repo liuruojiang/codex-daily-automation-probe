@@ -92,7 +92,7 @@ def no_io(*a,**k):raise RuntimeError('Notice prefix verification forbids HTTP an
 socket.socket.connect=socket.socket.connect_ex=urllib.request.urlopen=no_io
 subprocess.Popen=no_io
 from scripts.st_history_scope import source_closure,resolve_archive_reference,read_bound
-from scripts.st_notice_refresh import freshness_source_files
+from scripts.st_notice_refresh import freshness_source_files,archived_freshness_source_files
 from scripts.scoped_source_consumer import verify_notice_chain
 def read(root,ref):
  raw=(root/ref[0]).read_bytes()
@@ -130,6 +130,42 @@ if str(mode)=='prefix':
   old_prefix_unchanged=True,receipt_count=2,files=files,
   baseline_files=baseline,proof_files=chain['source_files'],
   sizes={name:(data/name).stat().st_size for name in files})
+elif str(mode)=='forward':
+ from datetime import date
+ ref=list(resolve_archive_reference(data));current=read(data,ref)
+ source_closure(data,*ref)
+ day=current['daily_increments'][-1]['date'];requested=spec['forward_target']
+ date.fromisoformat(day);date.fromisoformat(requested)
+ active_path=data/spec['freshness']
+ result=dict(mode='forward',native_runtime=spec['producer'],authority=ref,authority_day=day,
+  requested_target=requested,old_prefix_unchanged=True,original_clocks_retained=True,
+  state='noop',reason='no_forward_required',active_sha256=None)
+ if active_path.exists():
+  raw=active_path.read_bytes();active=json.loads(raw);digest=hashlib.sha256(raw).hexdigest()
+  archived_freshness_source_files(data,spec['freshness'],digest,ref)
+  result['active_sha256']=digest
+  if requested>day:
+   advancing=(data/ref[0]).parent/'proof.json'
+   if active['previous_authority']!=ref:
+    if not advancing.exists() or advancing.read_bytes()!=raw:
+     raise ValueError('Active advancing checkpoint has no exact authority generation receipt')
+    result['reason']='already_original_advancing_checkpoint'
+    result['selected_spec']=dict(path=advancing.relative_to(data).as_posix(),sha256=digest)
+   else:
+    matches=[p for p in sorted((data/spec['prefix']).glob('refresh_*/proof.json')) if p.read_bytes()==raw]
+    if not matches:raise ValueError('Active self-review has no original immutable receipt')
+    body=advancing.read_bytes();old=json.loads(body)
+    if (old['authority']!=ref or old['previous_authority']==ref or old['target']!=day
+     or active['authority']!=ref or active['target']!=day):
+     raise ValueError('Authority generation is not its original advancing checkpoint')
+    selected=dict(path=advancing.relative_to(data).as_posix(),sha256=hashlib.sha256(body).hexdigest())
+    active_spec=dict(path=matches[0].relative_to(data).as_posix(),sha256=digest)
+    chain=verify_notice_chain(data,old['previous_authority'],[selected,active_spec],day)
+    if chain['authority']!=ref:raise ValueError('Forward checkpoint chain ends at another authority')
+    result.update(state='select',reason='original_advancing_checkpoint_for_next_native_forward',
+     selected_spec=selected,active_spec=active_spec,selected_previous_authority=old['previous_authority'],
+     source_files=chain['source_files'])
+ elif requested>day:result['reason']='baseline_has_no_active_refresh_receipt'
 else:
  ref=list(resolve_archive_reference(data));current=read(data,ref)
  source_closure(data,*ref)
@@ -159,10 +195,11 @@ def runtime_role(root, expected):
     return root
 
 
-def real_native(runtime_root,data_root,mode,profile_root=None):
+def real_native(runtime_root,data_root,mode,profile_root=None,requested_target=None):
     runtime_role(runtime_root,PRODUCER)
     spec=dict(start=START,end=END,target=TARGET,receipts=RECEIPTS,end_pointer=END_POINTER,
-              producer=PRODUCER,pointer=POINTER,freshness=FRESHNESS)
+              producer=PRODUCER,pointer=POINTER,freshness=FRESHNESS,prefix=PREFIX,
+              forward_target=requested_target)
     process=subprocess.run([sys.executable,'-B','-X','utf8','-c',NATIVE,str(runtime_root),str(data_root),
         mode,str(profile_root or data_root),json.dumps(spec)],capture_output=True,encoding='utf-8',
         env={**os.environ,'PYTHONDONTWRITEBYTECODE':'1'})
@@ -500,6 +537,139 @@ def load_config(path):
     return item
 
 
+def select_forward(*,root,protected_root,state,pool,target,out,native=real_native):
+    """Choose the original checkpoint for an upcoming Native advance.
+
+    Same-authority self reviews stay immutable evidence.  This changes only
+    the private active receipt, so Native backs up the real advancing receipt
+    that its unchanged older-chain walker expects.  No authority advances here.
+    """
+    if date.fromisoformat(target).isoformat()!=target:
+        raise NoticePrefixError('notice_forward_canonical_target_required')
+    for role in (root,protected_root,state,out):
+        p=Path(role).absolute()
+        if any(x.is_symlink() or (hasattr(x,'is_junction') and x.is_junction()) for x in (p,*p.parents)):
+            raise NoticePrefixError('notice_forward_role_contains_link')
+    root,protected,state,out=map(lambda p:Path(p).resolve(),(root,protected_root,state,out))
+    logical=str(root).replace('\\','/').casefold().rstrip('/')
+    if (any(logical==live or logical.startswith(live+'/') for live in (
+            'd:/codex/microcap-local-maintenance','d:/动量策略/微盘股对冲策略'))
+            or root==state or not root.is_relative_to(state) or root.is_relative_to(protected)
+            or state.is_relative_to(protected) or protected.is_relative_to(state)
+            or out.is_relative_to(root) or out.is_relative_to(protected)
+            or root.is_relative_to(out) or protected.is_relative_to(out)):
+        raise NoticePrefixError('notice_forward_requires_private_separate_roles')
+    runtime_role(root,PRODUCER);runtime_role(protected,CONSUMER);validate_runtime(root,protected)
+    _,symbols,_=load_pool(pool,target)
+    with ExitStack() as locks:
+        for name in ('writer.lock','worker-slot-0.lock','worker-slot-1.lock','price-worker.lock'):
+            locks.enter_context(writer_lock(state/name))
+        locks.enter_context(native_refresh_lock(root))
+        refs=checked_bootstrap(root,protected,state,symbols,target)
+        refs.update({protected/n:(protected/n).read_bytes() if (protected/n).exists() else None for n in (POINTER,FRESHNESS)})
+        before=_pair(root)
+        if before[POINTER] is None:raise NoticePrefixError('notice_forward_current_pointer_missing')
+        pointer=json.loads(before[POINTER]);authority=[pointer.get('manifest_path'),pointer.get('manifest_sha256')]
+        result=native(root,root,'forward',requested_target=target)
+        digest=hashlib.sha256(before[FRESHNESS]).hexdigest() if before[FRESHNESS] is not None else None
+        if (result.get('mode')!='forward' or result.get('native_runtime')!=PRODUCER
+                or result.get('authority')!=authority or result.get('requested_target')!=target
+                or result.get('active_sha256')!=digest or result.get('state') not in ('select','noop')
+                or result.get('old_prefix_unchanged') is not True or result.get('original_clocks_retained') is not True
+                or not isinstance(result.get('authority_day'),str)
+                or date.fromisoformat(result['authority_day']).isoformat()!=result['authority_day']):
+            raise NoticePrefixError('notice_forward_native_selection_proof_incomplete')
+        if _pair(root)!=before or not _same(refs):
+            raise NoticePrefixError('notice_forward_native_read_changed_owner_or_reference')
+        if before[FRESHNESS] is None and target>result['authority_day']:
+            protected_pointer=refs.get(protected/POINTER)
+            protected_ref=json.loads(protected_pointer) if protected_pointer is not None else {}
+            if [protected_ref.get('manifest_path'),protected_ref.get('manifest_sha256')]!=authority:
+                raise NoticePrefixError('notice_forward_missing_active_receipt_for_unhanded_source_authority')
+        if (result['state']=='noop' and target>result['authority_day'] and before[FRESHNESS] is not None
+                and json.loads(before[FRESHNESS]).get('previous_authority')==authority):
+            raise NoticePrefixError('notice_forward_self_review_cannot_skip_upcoming_advance')
+        out.mkdir(parents=True,exist_ok=True);intent_path=out/'selection-intent.json'
+        roots=dict(root=str(root),protected=str(protected),state=str(state))
+        receipt=dict(schema='microcap_notice_forward_selection_v1',status='notice_forward_checkpoint_not_needed',
+            requested_target=target,authority=authority,authority_day=result['authority_day'],reason=result.get('reason'),
+            active_freshness_changed=False,authority_pointer_unchanged=True,
+            original_receipt_bytes_and_clocks_preserved=True,actual_consumer_anchor_and_bootstrap_unchanged=True,
+            target_freshness_granted=False,current_signal_ready=False,source_inputs_only=True,
+            final_strategy_delivery=False,email_sent=False,orders_placed=False)
+        if result['state']=='noop':
+            if intent_path.exists():
+                old=json.loads(intent_path.read_bytes())
+                if (old.get('schema')=='microcap_notice_forward_intent_v1' and old.get('roots')==roots
+                        and old.get('requested_target')==target and old.get('pointer_sha256')==hashlib.sha256(before[POINTER]).hexdigest()
+                        and old.get('selected_spec')==result.get('selected_spec')
+                        and old.get('selected_spec',{}).get('sha256')==digest):
+                    backup=out/'original-active-self.json'
+                    if (not backup.is_file() or sha_file(backup)!=old.get('original_active_sha256')
+                            or not file_role(old.get('original_active_spec',{}).get('path',''))
+                            or sha_file(bound(root,old['original_active_spec']['path']))!=old['original_active_sha256']):
+                        raise NoticePrefixError('notice_forward_original_self_evidence_missing')
+                    atomic(intent_path,encode(dict(old,status='reconciled')))
+                    receipt.update(status='original_notice_forward_checkpoint_selected',selection_reconciled=True,
+                                   selected_spec=result['selected_spec'],original_active_sha256=old['original_active_sha256'])
+        else:
+            if before[FRESHNESS] is None or not target>result['authority_day']:
+                raise NoticePrefixError('notice_forward_selection_without_actual_forward')
+            active=json.loads(before[FRESHNESS]);spec=result.get('selected_spec') or {};self_spec=result.get('active_spec') or {}
+            expected_path=PurePosixPath(authority[0]).with_name('proof.json').as_posix()
+            if (active.get('previous_authority')!=authority or active.get('authority')!=authority
+                    or active.get('target')!=result['authority_day'] or spec.get('path')!=expected_path
+                    or not file_role(spec.get('path','')) or not file_role(self_spec.get('path',''))
+                    or self_spec.get('sha256')!=digest or bound(root,self_spec['path']).read_bytes()!=before[FRESHNESS]):
+                raise NoticePrefixError('notice_forward_active_is_not_original_same_authority_self_review')
+            wanted=bound(root,spec['path']).read_bytes();advancing=json.loads(wanted)
+            if (hashlib.sha256(wanted).hexdigest()!=spec.get('sha256') or wanted==before[FRESHNESS]
+                    or advancing.get('authority')!=authority or advancing.get('previous_authority')==authority
+                    or advancing.get('target')!=result['authority_day']):
+                raise NoticePrefixError('notice_forward_original_advancing_receipt_differs')
+            source_files=result.get('source_files')
+            if (not isinstance(source_files,dict) or source_files.get(spec['path'])!=spec['sha256']
+                    or source_files.get(self_spec['path'])!=self_spec['sha256']):
+                raise NoticePrefixError('notice_forward_both_original_native_proofs_required')
+            for name,expected in source_files.items():
+                if not file_role(name) or sha_file(bound(root,name))!=expected:
+                    raise NoticePrefixError('notice_forward_native_chain_object_changed')
+            intent=dict(schema='microcap_notice_forward_intent_v1',status='intent',roots=roots,requested_target=target,
+                pointer_sha256=hashlib.sha256(before[POINTER]).hexdigest(),authority=authority,
+                original_active_sha256=digest,original_active_spec=self_spec,selected_spec=spec,
+                authority_pointer_unchanged=True,source_inputs_only=True,original_clocks_retained=True)
+            backup=out/'original-active-self.json'
+            if backup.exists() and backup.read_bytes()!=before[FRESHNESS]:
+                raise NoticePrefixError('notice_forward_preserve_original_self_backup')
+            if not backup.exists():atomic(backup,before[FRESHNESS])
+            if intent_path.exists():
+                old=json.loads(intent_path.read_bytes())
+                if any(old.get(k)!=v for k,v in intent.items() if k!='status'):
+                    raise NoticePrefixError('notice_forward_preserve_other_selection_intent')
+            else:atomic(intent_path,encode(intent))
+            if _pair(root)!=before or not _same(refs):raise NoticePrefixError('notice_forward_cas_owner_changed')
+            write_reconciled=False
+            try:_write_pair_member(bound(root,FRESHNESS),wanted)
+            except BaseException:
+                actual=_pair(root)
+                if actual!={POINTER:before[POINTER],FRESHNESS:wanted} or not _same(refs):
+                    atomic(intent_path,encode(dict(intent,status='write_not_confirmed')))
+                    raise
+                write_reconciled=True
+            if (_pair(root)!={POINTER:before[POINTER],FRESHNESS:wanted} or not _same(refs)
+                    or sha_file(bound(root,spec['path']))!=spec['sha256']
+                    or bound(root,self_spec['path']).read_bytes()!=before[FRESHNESS]):
+                raise NoticePrefixError('notice_forward_selected_checkpoint_readback_changed')
+            atomic(intent_path,encode(dict(intent,status='complete',write_response_lost_reconciled=write_reconciled)))
+            receipt.update(status='original_notice_forward_checkpoint_selected',active_freshness_changed=True,
+                selected_spec=spec,original_active_spec=self_spec,original_active_sha256=digest,
+                write_response_lost_reconciled=write_reconciled,native_forward_still_required=True)
+        if before[POINTER]!=_pair(root)[POINTER] or not _same(refs):
+            raise NoticePrefixError('notice_forward_changed_authority_or_protected_anchor')
+        atomic(out/'receipt.json',encode(receipt))
+        return receipt
+
+
 def warm(*,config,root,protected_root,state,pool,target,out,native=real_native):
     import urllib.request
     item=load_config(config)
@@ -518,18 +688,19 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='action',required=True)
     export=sub.add_parser('export');export.add_argument('--root',type=Path,required=True);export.add_argument('--bundle',type=Path,required=True);export.add_argument('--issuer-head',required=True)
     inspect=sub.add_parser('inspect');inspect.add_argument('--bundle',type=Path,required=True);inspect.add_argument('--sha256',required=True);inspect.add_argument('--not-after-date',required=True)
-    for action in ('import','warm'):
+    for action in ('import','warm','select-forward'):
         p=sub.add_parser(action)
         for name in ('root','protected-root','state','pool','out'):p.add_argument('--'+name,type=Path,required=True)
         p.add_argument('--date',required=True)
         if action=='warm':p.add_argument('--config',type=Path,required=True)
-        else:p.add_argument('--bundle',type=Path,required=True);p.add_argument('--sha256',required=True)
+        elif action=='import':p.add_argument('--bundle',type=Path,required=True);p.add_argument('--sha256',required=True)
     args=parser.parse_args()
     if args.action=='export':value=export_prefix(root=args.root,bundle=args.bundle,issuer_head=args.issuer_head)
     elif args.action=='inspect':value=inspect_bundle(bundle=args.bundle,expected_sha=args.sha256,not_after=args.not_after_date)
     else:
         common=dict(root=args.root,protected_root=args.protected_root,state=args.state,pool=args.pool,out=args.out)
         if args.action=='warm':value=warm(**common,config=args.config,target=args.date)
+        elif args.action=='select-forward':value=select_forward(**common,target=args.date)
         else:value=import_prefix(**common,bundle=args.bundle,expected_sha=args.sha256,not_after=args.date)
     print(json.dumps(value,ensure_ascii=False))
 
