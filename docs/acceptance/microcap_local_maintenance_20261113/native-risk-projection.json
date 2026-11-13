@@ -1,0 +1,64 @@
+{
+  "kind": "diagnostic_only_not_review_approval",
+  "changed_rows": {
+    "AN202611101831591478": {
+      "previous_projection": [
+        {
+          "source_provider": "eastmoney",
+          "announcement_id": "AN202611101831591478",
+          "issuer_symbol": "002731",
+          "notice_date": "2026-11-11",
+          "provider_title": "萃华退:关于公司股票进入退市整理期交易的第七次风险提示公告",
+          "title": "关于公司股票进入退市整理期交易的第七次风险提示公告",
+          "title_transform": {
+            "removed_prefix": "萃华退:"
+          },
+          "source_url": "https://pdf.dfcfw.com/pdf/H2_AN202611101831591478_1.pdf"
+        }
+      ],
+      "current_projection": [
+        {
+          "source_provider": "eastmoney",
+          "announcement_id": "AN202611101831591478",
+          "issuer_symbol": "002731",
+          "notice_date": "2026-11-11",
+          "provider_title": "萃华退:关于公司股票进入退市整理期交易的第七次风险提示公告",
+          "title": "关于公司股票进入退市整理期交易的第七次风险提示公告",
+          "title_transform": {
+            "removed_prefix": "萃华退:"
+          },
+          "source_url": "https://pdf.dfcfw.com/pdf/H2_AN202611101831591478_1.pdf"
+        }
+      ]
+    },
+    "AN202611111831630634": {
+      "previous_projection": [],
+      "current_projection": []
+    },
+    "AN202611111831630633": {
+      "previous_projection": [],
+      "current_projection": []
+    },
+    "AN202611111831631588": {
+      "previous_projection": [],
+      "current_projection": []
+    },
+    "AN202611111831629479": {
+      "previous_projection": [],
+      "current_projection": []
+    },
+    "AN202611111831628757": {
+      "previous_projection": [],
+      "current_projection": []
+    }
+  },
+  "added_rows": {
+    "AN202611121831660319": [],
+    "AN202611111831636184": [],
+    "AN202611111831632312": [],
+    "AN202611121831660320": [],
+    "AN202611111831636086": []
+  },
+  "changed_projection_equal": true,
+  "added_projection_empty": true
+}
