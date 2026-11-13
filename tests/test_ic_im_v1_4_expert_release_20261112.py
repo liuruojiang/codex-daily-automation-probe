@@ -183,7 +183,7 @@ def test_current_packaging_rejects_older_release_even_with_current_sha(tmp_path,
 def test_both_production_and_readiness_require_the_exact_release():
     for name in ['ic-im-v1-4-daily-digest.yml', 'ic-im-v1-4-delivery-readiness.yml']:
         workflow = (ROOT / '.github/workflows' / name).read_text()
-        assert '--expected-source-release 20261112-expert-review-v5-r3' in workflow
+        assert '--expected-source-release 20261113-held-put-close-v2' in workflow
         if name == 'ic-im-v1-4-daily-digest.yml':
             line = next(line for line in workflow.splitlines() if '--expected-source-release' in line)
             assert len(line) - len(line.rstrip(chr(92))) == 1
