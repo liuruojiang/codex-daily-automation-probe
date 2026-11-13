@@ -1,0 +1,600 @@
+{
+  "observed_at": "2026-11-13T09:06:13.709494+08:00",
+  "boundary": "2026-11-11",
+  "previous": "D:\\Codex\\microcap-local-maintenance\\runtime\\.microcap_index_cache\\st_notice_sources\\refresh_20261111T143208796316Z_2e7092817919\\2026-11-11",
+  "current": "D:\\Codex\\microcap-local-maintenance\\runtime\\.microcap_index_cache\\st_notice_sources\\refresh_20261113T010432325547Z_1c2fc91f13ae\\2026-11-11",
+  "previous_count": 1244,
+  "current_count": 1249,
+  "previous_native_sha256": "75f1237e5118d2116fd1181e9f315245bd1a181a06caa7a8b43077a4b833e791",
+  "current_native_sha256": "e6e92975cf82916056a3f099475faae59b2d82e5cab7d48352a3dd415c898713",
+  "added": {
+    "AN202611121831660319": {
+      "art_code": "AN202611121831660319",
+      "codes": [
+        {
+          "ann_type": "A,KCB,SHA",
+          "inner_code": "22257120230341",
+          "market_code": "1",
+          "short_name": "伟测科技",
+          "stock_code": "688372"
+        }
+      ],
+      "columns": [
+        {
+          "column_code": "010002011001009",
+          "column_name": "科创板再融资审核注册结果通知"
+        }
+      ],
+      "display_time": "2026-11-12 17:32:30:725",
+      "eiTime": "2026-11-12 17:32:01:000",
+      "language": "0",
+      "listing_state": "0",
+      "notice_date": "2026-11-11 00:00:00",
+      "product_code": "",
+      "sort_date": "2026-11-11 12:00:00",
+      "source_type": "313",
+      "title": "关于同意上海伟测半导体科技股份有限公司向不特定对象发行可转换公司债券注册的批复",
+      "title_ch": "关于同意上海伟测半导体科技股份有限公司向不特定对象发行可转换公司债券注册的批复",
+      "title_en": ""
+    },
+    "AN202611111831636184": {
+      "art_code": "AN202611111831636184",
+      "codes": [
+        {
+          "ann_type": "INV",
+          "inner_code": "26327328894282",
+          "market_code": "0",
+          "short_name": "天邑股份",
+          "stock_code": "300504"
+        }
+      ],
+      "columns": [
+        {
+          "column_code": "050003",
+          "column_name": "调研活动"
+        }
+      ],
+      "display_time": "2026-11-11 23:14:06:680",
+      "eiTime": "2026-11-11 23:13:29:000",
+      "language": "0",
+      "listing_state": "0",
+      "notice_date": "2026-11-11 00:00:00",
+      "product_code": "",
+      "sort_date": "2026-11-11 12:00:00",
+      "source_type": "324",
+      "title": "天邑股份:2026年11月11日天邑股份投资者关系活动记录表",
+      "title_ch": "天邑股份:2026年11月11日天邑股份投资者关系活动记录表",
+      "title_en": ""
+    },
+    "AN202611111831632312": {
+      "art_code": "AN202611111831632312",
+      "codes": [
+        {
+          "ann_type": "A,SZA",
+          "inner_code": "18917319792058",
+          "market_code": "0",
+          "short_name": "山东路桥",
+          "stock_code": "000498"
+        }
+      ],
+      "columns": [
+        {
+          "column_code": "001002008",
+          "column_name": "其他"
+        }
+      ],
+      "display_time": "2026-11-11 23:03:30:712",
+      "eiTime": "2026-11-11 18:34:33:000",
+      "language": "0",
+      "listing_state": "0",
+      "notice_date": "2026-11-11 00:00:00",
+      "product_code": "",
+      "sort_date": "2026-11-11 12:00:00",
+      "source_type": "331",
+      "title": "山东路桥:山东路桥山东高速路桥集团股份有限公司2026年跟踪评级报告",
+      "title_ch": "山东路桥:山东路桥山东高速路桥集团股份有限公司2026年跟踪评级报告",
+      "title_en": ""
+    },
+    "AN202611121831660320": {
+      "art_code": "AN202611121831660320",
+      "codes": [
+        {
+          "ann_type": "A,SHA",
+          "inner_code": "17014215183579",
+          "market_code": "1",
+          "short_name": "豫光金铅",
+          "stock_code": "600531"
+        }
+      ],
+      "columns": [
+        {
+          "column_code": "010002015001009",
+          "column_name": "沪主板再融资审核注册结果通知"
+        }
+      ],
+      "display_time": "2026-11-12 17:32:30:731",
+      "eiTime": "2026-11-12 17:32:01:000",
+      "language": "0",
+      "listing_state": "0",
+      "notice_date": "2026-11-11 00:00:00",
+      "product_code": "",
+      "sort_date": "2026-11-11 12:02:30",
+      "source_type": "31",
+      "title": "关于同意河南豫光金铅股份有限公司向特定对象发行股票注册的批复",
+      "title_ch": "关于同意河南豫光金铅股份有限公司向特定对象发行股票注册的批复",
+      "title_en": ""
+    },
+    "AN202611111831636086": {
+      "art_code": "AN202611111831636086",
+      "codes": [
+        {
+          "ann_type": "INV",
+          "inner_code": "30350591796710",
+          "market_code": "0",
+          "short_name": "柳工",
+          "stock_code": "000528"
+        }
+      ],
+      "columns": [
+        {
+          "column_code": "050003",
+          "column_name": "调研活动"
+        }
+      ],
+      "display_time": "2026-11-11 23:33:39:647",
+      "eiTime": "2026-11-11 23:33:02:000",
+      "language": "0",
+      "listing_state": "0",
+      "notice_date": "2026-11-11 00:00:00",
+      "product_code": "",
+      "sort_date": "2026-11-11 12:00:00",
+      "source_type": "324",
+      "title": "柳工:11月10日柳工全球客户节投资者交流活动",
+      "title_ch": "柳工:11月10日柳工全球客户节投资者交流活动",
+      "title_en": ""
+    }
+  },
+  "removed": {},
+  "substantive_changes": {
+    "AN202611101831591478": {
+      "previous": {
+        "art_code": "AN202611101831591478",
+        "codes": [
+          {
+            "ann_type": "A,ZXB,SZA",
+            "inner_code": "36181347136570",
+            "market_code": "0",
+            "short_name": "萃华退",
+            "stock_code": "002731"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001002004003004",
+            "column_name": "实施退市风险警示"
+          },
+          {
+            "column_code": "001002004012",
+            "column_name": "其它风险提示公告"
+          }
+        ],
+        "display_time": "2026-11-10 17:39:06:299",
+        "eiTime": "2026-11-10 17:40:15:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "331",
+        "title": "萃华退:关于公司股票进入退市整理期交易的第七次风险提示公告",
+        "title_ch": "萃华退:关于公司股票进入退市整理期交易的第七次风险提示公告",
+        "title_en": ""
+      },
+      "current": {
+        "art_code": "AN202611101831591478",
+        "codes": [
+          {
+            "ann_type": "A",
+            "inner_code": "36181347136570",
+            "market_code": "0",
+            "short_name": "萃华退",
+            "stock_code": "002731"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001002004003004",
+            "column_name": "实施退市风险警示"
+          },
+          {
+            "column_code": "001002004012",
+            "column_name": "其它风险提示公告"
+          }
+        ],
+        "display_time": "2026-11-10 17:39:06:299",
+        "eiTime": "2026-11-10 17:40:15:000",
+        "language": "0",
+        "listing_state": "2",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "331",
+        "title": "萃华退:关于公司股票进入退市整理期交易的第七次风险提示公告",
+        "title_ch": "萃华退:关于公司股票进入退市整理期交易的第七次风险提示公告",
+        "title_en": ""
+      },
+      "changed_fields": [
+        "listing_state",
+        "codes"
+      ]
+    },
+    "AN202611111831630634": {
+      "previous": {
+        "art_code": "AN202611111831630634",
+        "codes": [
+          {
+            "ann_type": "A,CYB",
+            "inner_code": "41362118977942",
+            "market_code": "0",
+            "short_name": "中胤时尚",
+            "stock_code": "300901"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001002009",
+            "column_name": "董事会决议公告"
+          }
+        ],
+        "display_time": "2026-11-11 17:37:16:393",
+        "eiTime": "2026-11-11 17:38:16:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "333",
+        "title": "中胤时尚:2026年第八次临时董事会决议公告",
+        "title_ch": "中胤时尚:2026年第八次临时董事会决议公告",
+        "title_en": ""
+      },
+      "current": {
+        "art_code": "AN202611111831630634",
+        "codes": [
+          {
+            "ann_type": "A,CYB",
+            "inner_code": "41362118977942",
+            "market_code": "0",
+            "short_name": "中胤科技",
+            "stock_code": "300901"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001002009",
+            "column_name": "董事会决议公告"
+          }
+        ],
+        "display_time": "2026-11-11 17:37:16:393",
+        "eiTime": "2026-11-11 17:38:16:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "333",
+        "title": "中胤时尚:2026年第八次临时董事会决议公告",
+        "title_ch": "中胤时尚:2026年第八次临时董事会决议公告",
+        "title_en": ""
+      },
+      "changed_fields": [
+        "codes"
+      ]
+    },
+    "AN202611111831630633": {
+      "previous": {
+        "art_code": "AN202611111831630633",
+        "codes": [
+          {
+            "ann_type": "A,CYB",
+            "inner_code": "41362118977942",
+            "market_code": "0",
+            "short_name": "中胤时尚",
+            "stock_code": "300901"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001002005001001",
+            "column_name": "证券简称变更"
+          }
+        ],
+        "display_time": "2026-11-11 17:37:16:413",
+        "eiTime": "2026-11-11 17:38:16:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "333",
+        "title": "中胤时尚:关于变更公司证券简称的公告",
+        "title_ch": "中胤时尚:关于变更公司证券简称的公告",
+        "title_en": ""
+      },
+      "current": {
+        "art_code": "AN202611111831630633",
+        "codes": [
+          {
+            "ann_type": "A,CYB",
+            "inner_code": "41362118977942",
+            "market_code": "0",
+            "short_name": "中胤科技",
+            "stock_code": "300901"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001002005001001",
+            "column_name": "证券简称变更"
+          }
+        ],
+        "display_time": "2026-11-11 17:37:16:413",
+        "eiTime": "2026-11-11 17:38:16:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "333",
+        "title": "中胤时尚:关于变更公司证券简称的公告",
+        "title_ch": "中胤时尚:关于变更公司证券简称的公告",
+        "title_en": ""
+      },
+      "changed_fields": [
+        "codes"
+      ]
+    },
+    "AN202611111831631588": {
+      "previous": {
+        "art_code": "AN202611111831631588",
+        "codes": [
+          {
+            "ann_type": "KZZ,Bond",
+            "inner_code": "44906952756938",
+            "market_code": "0",
+            "short_name": "百洋转债",
+            "stock_code": "123194"
+          },
+          {
+            "ann_type": "A,CYB",
+            "inner_code": "29284054924581",
+            "market_code": "0",
+            "short_name": "百洋医药",
+            "stock_code": "301015"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001002005001001",
+            "column_name": "证券简称变更"
+          },
+          {
+            "column_code": "001002005001002",
+            "column_name": "公司名称变更"
+          },
+          {
+            "column_code": "001002005001004",
+            "column_name": "公司经营范围变更"
+          },
+          {
+            "column_code": "001002005003",
+            "column_name": "公司章程修订"
+          },
+          {
+            "column_code": "003014",
+            "column_name": "其它"
+          }
+        ],
+        "display_time": "2026-11-11 18:08:06:263",
+        "eiTime": "2026-11-11 18:08:47:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "333",
+        "title": "百洋医药:关于变更公司名称、证券简称、经营范围及修订《公司章程》暨完成工商变更登记的公告",
+        "title_ch": "百洋医药:关于变更公司名称、证券简称、经营范围及修订《公司章程》暨完成工商变更登记的公告",
+        "title_en": ""
+      },
+      "current": {
+        "art_code": "AN202611111831631588",
+        "codes": [
+          {
+            "ann_type": "A,CYB",
+            "inner_code": "29284054924581",
+            "market_code": "0",
+            "short_name": "百洋制药",
+            "stock_code": "301015"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001002005001001",
+            "column_name": "证券简称变更"
+          },
+          {
+            "column_code": "001002005001002",
+            "column_name": "公司名称变更"
+          },
+          {
+            "column_code": "001002005001004",
+            "column_name": "公司经营范围变更"
+          },
+          {
+            "column_code": "001002005003",
+            "column_name": "公司章程修订"
+          },
+          {
+            "column_code": "003014",
+            "column_name": "其它"
+          }
+        ],
+        "display_time": "2026-11-11 18:08:06:267",
+        "eiTime": "2026-11-11 18:08:47:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "333",
+        "title": "百洋医药:关于变更公司名称、证券简称、经营范围及修订《公司章程》暨完成工商变更登记的公告",
+        "title_ch": "百洋医药:关于变更公司名称、证券简称、经营范围及修订《公司章程》暨完成工商变更登记的公告",
+        "title_en": ""
+      },
+      "changed_fields": [
+        "codes",
+        "display_time"
+      ]
+    },
+    "AN202611111831629479": {
+      "previous": {
+        "art_code": "AN202611111831629479",
+        "codes": [
+          {
+            "ann_type": "A,CYB",
+            "inner_code": "20285678968630",
+            "market_code": "0",
+            "short_name": "汇金股份",
+            "stock_code": "300368"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001002006014",
+            "column_name": "诉讼仲裁"
+          },
+          {
+            "column_code": "001002008",
+            "column_name": "其他"
+          }
+        ],
+        "display_time": "2026-11-11 17:11:04:364",
+        "eiTime": "2026-11-11 17:12:05:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "333",
+        "title": "汇金股份:关于子公司诉讼案件进展情况的公告",
+        "title_ch": "汇金股份:关于子公司诉讼案件进展情况的公告",
+        "title_en": ""
+      },
+      "current": {
+        "art_code": "AN202611111831629479",
+        "codes": [
+          {
+            "ann_type": "A,CYB",
+            "inner_code": "20285678968630",
+            "market_code": "0",
+            "short_name": "汇金股份",
+            "stock_code": "300368"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001002008",
+            "column_name": "其他"
+          }
+        ],
+        "display_time": "2026-11-11 17:11:04:364",
+        "eiTime": "2026-11-11 17:12:05:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "333",
+        "title": "汇金股份:关于子公司诉讼案件进展情况的公告",
+        "title_ch": "汇金股份:关于子公司诉讼案件进展情况的公告",
+        "title_en": ""
+      },
+      "changed_fields": [
+        "columns"
+      ]
+    },
+    "AN202611111831628757": {
+      "previous": {
+        "art_code": "AN202611111831628757",
+        "codes": [
+          {
+            "ann_type": "A,BJA",
+            "inner_code": "21420514080001",
+            "market_code": "0",
+            "short_name": "胜业电气",
+            "stock_code": "920128"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001003001001003",
+            "column_name": "专项说明/独立意见"
+          },
+          {
+            "column_code": "001003002001",
+            "column_name": "保荐/核查意见"
+          }
+        ],
+        "display_time": "2026-11-11 17:00:00:764",
+        "eiTime": "2026-11-11 17:01:04:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "39",
+        "title": "胜业电气:董事会薪酬与考核委员会关于2026年股权激励计划授予事项的核查意见",
+        "title_ch": "胜业电气:董事会薪酬与考核委员会关于2026年股权激励计划授予事项的核查意见",
+        "title_en": ""
+      },
+      "current": {
+        "art_code": "AN202611111831628757",
+        "codes": [
+          {
+            "ann_type": "A,BJA",
+            "inner_code": "21420514080001",
+            "market_code": "0",
+            "short_name": "胜业电气",
+            "stock_code": "920128"
+          }
+        ],
+        "columns": [
+          {
+            "column_code": "001003001001003",
+            "column_name": "专项说明/独立意见"
+          }
+        ],
+        "display_time": "2026-11-11 17:00:00:764",
+        "eiTime": "2026-11-11 17:01:04:000",
+        "language": "0",
+        "listing_state": "0",
+        "notice_date": "2026-11-11 00:00:00",
+        "product_code": "",
+        "sort_date": "2026-11-11 12:00:00",
+        "source_type": "39",
+        "title": "胜业电气:董事会薪酬与考核委员会关于2026年股权激励计划授予事项的核查意见",
+        "title_ch": "胜业电气:董事会薪酬与考核委员会关于2026年股权激励计划授予事项的核查意见",
+        "title_en": ""
+      },
+      "changed_fields": [
+        "columns"
+      ]
+    }
+  },
+  "pointer_preserved": {
+    "manifest_path": ".microcap_index_cache/st_notice_sources/refresh_20261111T143208796316Z_2e7092817919/archive.json",
+    "manifest_sha256": "db23caa0f8ecc65e0720bb5f797023ec57313773dbc513284cc404608edbdc94"
+  },
+  "decision": "blocked_exact_hash_review_required_no_migration_authorized"
+}
