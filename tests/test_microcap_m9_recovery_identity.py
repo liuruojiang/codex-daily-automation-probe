@@ -32,6 +32,8 @@ OLD_AUTO = '5d27efb1986837b1b66083521ecf2ac543aaa650'
 OLD_CONTROLLER = '8a52b8d9b1c6caaaba868cd447073f9d42c432d3d131e4646bfe9442814a2e4b'
 M9 = '906eca8a5dfede7fa1674fb17cd3c6ce12205e6d'
 P3 = '3344e403ff01e17ef45b745a704a240e0917720b'
+P4 = 'ae439a1eec4dae5729483f43356473bcb9b1dff1'
+M10 = '074a40d762df73a09a00369d1cc841645212cf37'
 
 
 @pytest.fixture(scope='module')
@@ -161,17 +163,19 @@ def test_M9_envelope_cannot_drop_proof_cross_bind_or_change_native_state(recover
         policy.validate_checkpoint_directory(package(tmp_path, cp, payload), policy.LOCAL_READ_POLICY)
 
 
-def test_M9_configs_add_only_consumer_role_and_keep_source_P3_and_seed():
+def test_M10_configs_preserve_M9_P3_identity_and_only_select_reviewed_successors():
     old = json.loads(subprocess.check_output(['git', '-C', str(ROOT), 'show', OLD_AUTO + ':config/microcap_scoped_rebalance.json']))
     current = settings.load(ROOT / 'config/microcap_scoped_rebalance.json', require_seed=True)
-    assert current['runtime_sha'] == M9
-    assert current['producer_sha'] == maintenance.RUNTIME == P3
-    old['runtime_sha'] = M9
+    assert current['runtime_sha'] == M10
+    assert current['producer_sha'] == maintenance.RUNTIME == P4
+    assert json.loads((ROOT/'config/microcap_local_producer_p3_20261112.json').read_bytes())['runtime_sha']==P3
+    old['runtime_sha'] = M10
+    old['producer_sha'] = P4
     assert current == old
     old_policy = json.loads(subprocess.check_output(['git', '-C', str(ROOT), 'show', OLD_AUTO + ':config/microcap_member_local_runtime.json']))
-    expected = copy.deepcopy(old_policy); expected['rebalance_producer_shas'].append(M9)
+    expected = copy.deepcopy(old_policy); expected['rebalance_producer_shas'].extend([M9,M10])
     assert policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json') == expected
-    assert M9 in m.REVIEWED_NATIVES and M9 in scoped_inputs.REVIEWED_CONSUMERS
+    assert {M9,M10} <= m.REVIEWED_NATIVES and {M9,M10} <= scoped_inputs.REVIEWED_CONSUMERS
     assert M9 in prefix.CONSUMER_READERS and M9 not in prefix.PRODUCER_READERS
 
 

@@ -29,6 +29,7 @@ PROXY='outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv'
 FORMAL='outputs/top100_delivery_manifest.json'
 P2_RUNTIME='3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
 P3_RUNTIME='3344e403ff01e17ef45b745a704a240e0917720b'
+P4_RUNTIME='ae439a1eec4dae5729483f43356473bcb9b1dff1'
 P2_P3_READERS={
     'scripts/share_change_source.py': (
         'be9e393f09196a812d60b9eb867d21e32b6afbd1e7862d7605accb8bf809d93c',
@@ -53,13 +54,18 @@ def producer_profile(name, runtime):
 def exact_p2_successor(source_runtime,sources,current,reader_runtime):
     """Read original P2 inputs with this exact P3 reader, never resign inputs."""
     old=producer_profile('microcap_local_producer_p2_20261112.json',P2_RUNTIME)['calculation_sources']
-    new=producer_profile('microcap_local_producer_runtime.json',P3_RUNTIME)['calculation_sources']
+    profile='microcap_local_producer_p3_20261112.json' if reader_runtime==P3_RUNTIME else 'microcap_local_producer_runtime.json'
+    new=producer_profile(profile,reader_runtime)['calculation_sources']
+    readers=dict(P2_P3_READERS)
+    if reader_runtime==P4_RUNTIME:
+        readers['scripts/share_change_source.py']=(readers['scripts/share_change_source.py'][0],
+            '9c89824455dc295683d918bc6f5444bd2df5786a86db2643425590b68a603b3f')
     changed={name for name in old if old.get(name)!=new.get(name)}
-    if (source_runtime!=P2_RUNTIME or reader_runtime!=P3_RUNTIME or set(old)!=set(new)
-            or sources!=old or current!=new or changed!=set(P2_P3_READERS)
-            or any((old[name],new[name])!=pair for name,pair in P2_P3_READERS.items())):
+    if (source_runtime!=P2_RUNTIME or reader_runtime not in (P3_RUNTIME,P4_RUNTIME) or set(old)!=set(new)
+            or sources!=old or current!=new or changed!=set(readers)
+            or any((old[name],new[name])!=pair for name,pair in readers.items())):
         raise ValueError('Unreviewed P2 to P3 source-only reader successor')
-    return dict(schema='exact_p2_p3_source_reader_v1',source_runtime=P2_RUNTIME,reader_runtime=P3_RUNTIME,
+    return dict(schema='exact_p2_p3_source_reader_v1',source_runtime=P2_RUNTIME,reader_runtime=reader_runtime,
                 source_fingerprints=old,reader_fingerprints=new,changed_sources=sorted(changed),
                 original_source_identity_preserved=True,native_proof_required=True)
 

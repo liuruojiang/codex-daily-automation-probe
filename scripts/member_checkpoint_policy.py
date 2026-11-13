@@ -15,7 +15,7 @@ LOCAL_READ_POLICY = {
         '14e9a9fa6f0487f1d5547598435089c43f2f9fd1',
         'a7c1b9ac33454be4367880a0989dfc1466640503',
         '95d896fe58cc7cb84c0fcb7bd76534f62c9430f4',
-        '906eca8a5dfede7fa1674fb17cd3c6ce12205e6d',
+        '906eca8a5dfede7fa1674fb17cd3c6ce12205e6d','074a40d762df73a09a00369d1cc841645212cf37',
     ],
 }
 
@@ -54,8 +54,8 @@ def validate_checkpoint_payload(checkpoint, policy):
         return
     if marker not in policy['rebalance_producer_shas']:
         raise ValueError('Checkpoint core identity or reviewed producer differs from the local reader contract')
-    from microcap_recovery_handoff import M8,M9,MODE
-    if marker in (M8,M9) and checkpoint.get('handoff_mode')!=MODE:
+    from microcap_recovery_handoff import M8,M9,M10,MODE
+    if marker in (M8,M9,M10) and checkpoint.get('handoff_mode')!=MODE:
         raise ValueError('The reviewed M8/M9 producer requires its formal recovery proof route')
     # Native R handoff records the exact full-state producer, not the older
     # model-core marker. The 477 daily reader preserves this original lineage.

@@ -268,7 +268,7 @@ jobs:
           else
             args+=(--fallback-url "$SEED_URL" --fallback-sha256 "$SEED_SHA256")
           fi
-          args+=(--review automation/config/microcap_midnight_runtime_review_20261112.json --activation-receipt scoped-prepare/runtime-activation.json)
+          args+=(--review automation/config/microcap_exact_runtime_review_20261113.json --activation-receipt scoped-prepare/runtime-activation.json)
           if [[ "$TASK" == 'rebalance' || "$TASK" == 'rebalance_recovery' ]]; then args+=(--allow-activation); fi
           python -B automation/scripts/microcap_reviewed_runtime_recovery.py "${args[@]}"
       - name: Verify complete restored three-version archive without sending
