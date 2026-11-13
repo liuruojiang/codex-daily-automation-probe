@@ -1,0 +1,17 @@
+{
+  "observed_at": "2026-11-13T11:30:06.032784+08:00",
+  "status": "903_complete",
+  "target": "2026-11-12",
+  "issuer_count": 300,
+  "stage_count": 903,
+  "original_successful_stages_reused": 900,
+  "worker_reused_stages": 899,
+  "bound_files": 34888,
+  "bound_file_hashes_match": true,
+  "source_runtime": "ae439a1eec4dae5729483f43356473bcb9b1dff1",
+  "csv_000663_unchanged": true,
+  "completed_receipt_sha256": "c1fc4208b8b570e184bfa99e10fc09e3e2980f0a9535626e11c5d59fef32af56",
+  "formal_strategy_delivery": false,
+  "email_sent": false,
+  "orders_placed": false
+}
