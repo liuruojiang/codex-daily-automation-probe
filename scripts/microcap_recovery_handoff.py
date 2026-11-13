@@ -33,6 +33,7 @@ M9 = '906eca8a5dfede7fa1674fb17cd3c6ce12205e6d'
 REVIEWED_NATIVES = frozenset({NATIVE, M8, M9})
 LEGACY_M7_CONTROLLER_SHA = 'eea88c4886baaba42256a4b57050432a0e3a4e4dfe12e827f99086d3b0389b16'
 LEGACY_M8_CONTROLLER_SHA = '8a52b8d9b1c6caaaba868cd447073f9d42c432d3d131e4646bfe9442814a2e4b'
+LEGACY_M9_CONTROLLER_SHA = '6056bbc4a25bacefb74d554c3aec02eaae64ab7f824cb7768c9a08936ae8f958'
 CORE = 'ad4de441d35442616f91aa613146ffdf8cd479f3'
 BRIDGE = 'hedge_precision_bridge_v1'
 VERSIONS = ('v2.0', 'v2.3', 'v2.5')
@@ -432,7 +433,9 @@ def reviewed_controller_identity(checkpoint):
     runtime=checkpoint.get('strategy_sha')
     identity=checkpoint.get('recovery_controller',{})
     current=sha(Path(__file__).read_bytes().replace(b'\r\n',b'\n'))
-    allowed={current}
+    # This reader-only repair does not reissue already earned native proofs.
+    # The preceding controller reviewed exactly these three native runtimes.
+    allowed={current, LEGACY_M9_CONTROLLER_SHA}
     if runtime in (NATIVE,M8):
         # The deployed M8 controller predates the parser-only M9 runtime.
         allowed.add(LEGACY_M8_CONTROLLER_SHA)
@@ -456,8 +459,13 @@ def validate_recovery_payload(checkpoint, payload_bytes):
     """
     period = json.loads(payload_bytes['period'])
     proof = period.get(KEY)
+    # M8/M9 were admitted only through formal recovery. Mode/controller fields
+    # are untrusted transport data and cannot opt these producers out of proof.
+    if checkpoint.get('strategy_sha') in (M8, M9) and checkpoint.get('handoff_mode') != MODE:
+        raise ValueError('The reviewed M8/M9 producer requires its formal recovery proof route')
     if proof is None:
-        if checkpoint.get('handoff_mode') == MODE or 'recovery_controller' in checkpoint:
+        if (checkpoint.get('strategy_sha') in (M8, M9)
+                or checkpoint.get('handoff_mode') == MODE or 'recovery_controller' in checkpoint):
             raise ValueError('Recovery checkpoint lacks its proof')
         return None
     if len(encode(proof)) > MAX_PROOF or proof.get('schema') != SCHEMA or proof.get('controller') != CONTROLLER:
@@ -627,8 +635,7 @@ def build(root, current_checkpoint, candidate_path, target, out, hedge_precision
     h, daily, _, _, precision = _native(root)
     current, old_payload = _read_package(Path(current_checkpoint), h)
     candidate, candidate_payload = _read_package(Path(candidate_path), h)
-    if current.get('handoff_mode') == MODE:
-        validate_recovery_payload(current, old_payload)
+    validate_recovery_payload(current, old_payload)
     old_period, old_rows, _ = _package(current, old_payload)
     formal_period, formal_rows, formal_states = _package(candidate, candidate_payload)
     precision.checked_bridge(old_period, old_payload['history'], current['as_of_date'], version_state_raw=old_payload['version_state'])

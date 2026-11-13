@@ -44,8 +44,9 @@ def test_all_missing_is_explicit_information_report_and_separate_transaction():
     for item in value['versions']: item.update(status='partial',signal=None,reason='no prices')
     meta=render(value,expected_date='2026-11-06')
     assert '未形成当日完整信号' in meta['subject']
-    assert choose(meta,'normal')=='normal-partial-information'
-    assert choose(render(result(),expected_date='2026-11-06'),'normal')=='normal'
+    marker='microcap-v2-close_confirmed-digest-delivered-2026-11-06'
+    assert choose(meta,marker)==marker+'-partial-information'
+    assert choose(render(result(),expected_date='2026-11-06'),marker)==marker
 
 
 def test_old_basket_reference_is_not_verified_target():

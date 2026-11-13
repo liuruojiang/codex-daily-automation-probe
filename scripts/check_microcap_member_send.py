@@ -5,13 +5,30 @@ import json
 import os
 from pathlib import Path
 from datetime import date
-from check_microcap_delivery import fetch_artifacts, marker_exists, verify_smtp_receipt, write_outputs
+from check_microcap_delivery import delivery_marker_name, fetch_artifacts, marker_exists, verify_smtp_receipt, write_outputs
 
 
 def choose(metadata, normal_marker):
     if metadata.get('schema') != 'member_daily_report_v1' or metadata.get('status') not in {'OK', 'PARTIAL'}:
         raise ValueError('Unsupported member report identity')
+    raw_day=metadata.get('signal_date')
+    try:
+        day=date.fromisoformat(raw_day)
+    except (TypeError,ValueError) as exc:
+        raise ValueError('Member report requires its canonical signal date') from exc
+    if day.isoformat()!=raw_day or metadata.get('publication_mode') not in {'realtime','close_confirmed'}:
+        raise ValueError('Member report date/publication mode differs')
+    if normal_marker!=delivery_marker_name(day,metadata['publication_mode']):
+        raise ValueError('Member report and delivery transaction date/mode differ')
     return normal_marker + ('-partial-information' if metadata['status'] == 'PARTIAL' else '')
+
+
+def validate_member_delivery_marker(metadata, marker):
+    """Check the exact transaction immediately before any SMTP side effect."""
+    normal=marker.removesuffix('-partial-information')
+    if choose(metadata,normal)!=marker:
+        raise ValueError('Member report and complete/partial transaction differ')
+    return marker
 
 
 def main():

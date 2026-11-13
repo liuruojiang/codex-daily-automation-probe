@@ -930,8 +930,15 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
                     raise RecoveryError('resume_refresh_completed_manifest_not_closed')
             consumer_partial = True
     if archive:
-        run('restore-earned-formal-state', [sys.executable, '-B', consumer / 'scripts/top100_cloud_delivery.py',
-             'restore', '--root', consumer, '--bundle', saved / archive['path'], '--expected-date', value['target']])
+        # This is the same foreign staged tree as a published whole restore.
+        # Keep the original Native gates and report, isolating only their
+        # staged imports; receiver validation remains in the Native process.
+        from microcap_scoped_whole_recovery import RESTORE
+        native_restore = delivery_out / 'earned-native-restore' / uuid.uuid4().hex
+        native_restore.mkdir(parents=True)
+        run('restore-earned-formal-state', [sys.executable, '-B', '-c', RESTORE,
+             consumer, saved / archive['path'], value['target'],
+             native_restore / 'native-restore.json', Path(__file__).resolve().parent])
     original_manifest_restored = False
     original_manifest_name = 'scoped-delivery/formal-manifest-original.json'
     if archive and original_manifest_name in value['files']:

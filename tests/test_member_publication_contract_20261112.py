@@ -136,7 +136,8 @@ def test_partial_and_old_basket_reference_keep_independent_information_transacti
     result['versions'][0].update(status='partial',signal=None,reason='isolated hedge failure')
     write_result(original,result);(original/'v2_0_signal.csv').unlink()
     meta=run_main(monkeypatch,original,tmp_path/'partial')
-    assert meta['status']=='PARTIAL' and choose(meta,'normal')=='normal-partial-information'
+    marker='microcap-v2-close_confirmed-digest-delivered-'+meta['signal_date']
+    assert meta['status']=='PARTIAL' and choose(meta,marker)==marker+'-partial-information'
     assert set(meta['final_signal_sha256'])=={'v2.3','v2.5'}
 
 

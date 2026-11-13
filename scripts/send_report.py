@@ -35,11 +35,20 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("metadata", type=Path)
     parser.add_argument("--receipt", type=Path)
+    parser.add_argument("--member-delivery-marker", default="")
     args = parser.parse_args()
     metadata_bytes = args.metadata.read_bytes()
     meta = json.loads(metadata_bytes.decode("utf-8"))
     if not isinstance(meta, dict) or not isinstance(meta.get("subject"), str) or not isinstance(meta.get("body"), str):
         raise ValueError("Mail metadata requires subject and body strings")
+    member_report=meta.get("schema")=="member_daily_report_v1"
+    if member_report:
+        from check_microcap_member_send import validate_member_delivery_marker
+        if not args.member_delivery_marker:
+            raise ValueError("Member mail requires its frozen delivery transaction")
+        validate_member_delivery_marker(meta,args.member_delivery_marker)
+    elif args.member_delivery_marker:
+        raise ValueError("A member delivery transaction requires member report metadata")
     if "delivery_test_id" in meta:
         test_id = meta["delivery_test_id"]
         if (not isinstance(test_id, str) or re.fullmatch(r"[a-z0-9][a-z0-9-]{7,63}", test_id, flags=re.ASCII) is None
@@ -73,6 +82,8 @@ def main() -> int:
             "sender": sender,
             "recipients": recipients,
         }
+        if member_report:
+            receipt["member_delivery_marker"] = args.member_delivery_marker
         write_receipt(args.receipt, receipt)
     return 0
 

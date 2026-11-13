@@ -47,16 +47,16 @@ def local_runtime(automation_root):
 
 
 def validate_checkpoint_payload(checkpoint, policy):
+    from microcap_recovery_handoff import M8,M9,MODE
+    marker = checkpoint.get('strategy_sha')
+    if marker in (M8,M9) and checkpoint.get('handoff_mode')!=MODE:
+        raise ValueError('The reviewed M8/M9 producer requires its formal recovery proof route')
     if policy is None:
         return
-    marker = checkpoint.get('strategy_sha')
     if marker == policy['core_strategy_sha']:
         return
     if marker not in policy['rebalance_producer_shas']:
         raise ValueError('Checkpoint core identity or reviewed producer differs from the local reader contract')
-    from microcap_recovery_handoff import M8,M9,MODE
-    if marker in (M8,M9) and checkpoint.get('handoff_mode')!=MODE:
-        raise ValueError('The reviewed M8/M9 producer requires its formal recovery proof route')
     # Native R handoff records the exact full-state producer, not the older
     # model-core marker. The 477 daily reader preserves this original lineage.
     if (checkpoint.get('handoff_mode') not in ('native_close_extends_previous', 'same_close_period_switch', 'native_formal_gap_recovery_v1')
@@ -70,8 +70,6 @@ def validate_checkpoint_payload(checkpoint, policy):
 
 def validate_checkpoint_core(raw, policy):
     """Authenticate the original payload identity; never rewrite checkpoint bytes."""
-    if policy is None:
-        return
     import io
     import zipfile
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
