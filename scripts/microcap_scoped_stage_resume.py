@@ -5,6 +5,7 @@ the independent native delivery check. Failed/unknown commands are never cached.
 """
 from pathlib import Path
 import json
+import re
 from prepare_microcap_local import atomic, encode, sha
 
 
@@ -27,7 +28,7 @@ def _save_original(path, raw):
         atomic(path, raw)
 
 
-def _admit_proof_reader(directory, original_raw, current_raw):
+def reviewed_reader_context(original_raw, current_raw):
     original, current = json.loads(original_raw), json.loads(current_raw)
     expected = dict(LEGACY_CONTROLLER_SOURCES)
     expected['microcap_recovery_handoff.py'] = REVIEWED_PROOF_READER
@@ -44,13 +45,33 @@ def _admit_proof_reader(directory, original_raw, current_raw):
         if sha((Path(__file__).parent / name).read_bytes().replace(b'\r\n', b'\n')) != digest:
             raise ValueError('Scoped recovery reader source differs from its reviewed relationship')
     current_sha, original_sha = sha(current_raw), sha(original_raw)
-    path = directory / ('context-reader-' + current_sha + '.json')
-    _save_original(path, current_raw)
-    _save_original(directory / ('reader-admission-' + current_sha + '.json'), encode(dict(
-        schema='microcap_scoped_proof_reader_admission_v1',
+    return dict(schema='microcap_scoped_proof_reader_admission_v1',
         original_context_sha256=original_sha, reader_context_sha256=current_sha,
         original_controller_sources=LEGACY_CONTROLLER_SOURCES, reader_controller_sources=expected,
-        original_context_and_receipts_rewritten=False, native_outputs_recomputed=False)))
+        original_context_and_receipts_rewritten=False, native_outputs_recomputed=False)
+
+
+def receipt_context(original_raw, receipt_sha, read_closed):
+    """Select only the exact closed context that earned a successful receipt."""
+    if receipt_sha == sha(original_raw):
+        return original_raw
+    if not isinstance(receipt_sha, str) or re.fullmatch('[0-9a-f]{64}', receipt_sha) is None:
+        raise ValueError('Scoped receipt context is not a closed source identity')
+    current_raw = read_closed('context-reader-' + receipt_sha + '.json')
+    if sha(current_raw) != receipt_sha:
+        raise ValueError('Scoped receipt reader context hash differs')
+    admission = reviewed_reader_context(original_raw, current_raw)
+    if json.loads(read_closed('reader-admission-' + receipt_sha + '.json')) != admission:
+        raise ValueError('Scoped receipt lacks its exact original reader admission')
+    return current_raw
+
+
+def _admit_proof_reader(directory, original_raw, current_raw):
+    admission = reviewed_reader_context(original_raw, current_raw)
+    current_sha = admission['reader_context_sha256']
+    path = directory / ('context-reader-' + current_sha + '.json')
+    _save_original(path, current_raw)
+    _save_original(directory / ('reader-admission-' + current_sha + '.json'), encode(admission))
     return path
 
 

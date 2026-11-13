@@ -124,3 +124,42 @@ def test_rebound_legacy_handoff_is_rechecked_by_the_new_proof_reader(tmp_path):
     with pytest.raises(ValueError, match='proof route'):
         resumed.call('handoff', ['handoff', consumer], [checkpoint, *paths])
     assert calls == ['handoff']
+
+
+def test_first_new_refresh_keeps_its_own_closed_context_across_a_second_cold_admission(tmp_path):
+    out, consumer, original, current, calls, run = setup_case(tmp_path)
+    m.StageResume(out, consumer, original, run)
+    data = consumer / 'formal.csv'
+    data.write_bytes(b'new software refresh,original source\n')
+    resumed = m.StageResume(out, consumer, current, run)
+    resumed.call('refresh', ['refresh-all', consumer, out], [data])
+    receipt = json.loads((out / 'stage-receipts/refresh.json').read_bytes())
+    closed = {p.name: p.read_bytes() for p in (out / 'stage-receipts').glob('*.json')}
+    selected = m.receipt_context(encode(original), receipt['context_sha256'], closed.__getitem__)
+    assert selected == encode(current)
+    assert closed['context.json'] == encode(original)
+    assert receipt['context_sha256'] == sha(selected) != sha(closed['context.json'])
+    assert m.receipt_context(encode(original), sha(encode(original)),
+        lambda name: pytest.fail('Original receipt does not require a reader sidecar')) == encode(original)
+    assert calls == ['refresh']
+
+
+@pytest.mark.parametrize('fault', ['missing_context', 'missing_admission', 'context_hash', 'admission', 'changed_parent'])
+def test_second_cold_admission_cannot_select_an_unproved_or_changed_reader_context(tmp_path, fault):
+    out, consumer, original, current, calls, run = setup_case(tmp_path)
+    m.StageResume(out, consumer, original, run)
+    resumed = m.StageResume(out, consumer, current, run)
+    digest = sha(encode(current))
+    context_name, admission_name = 'context-reader-' + digest + '.json', 'reader-admission-' + digest + '.json'
+    closed = {p.name: p.read_bytes() for p in (out / 'stage-receipts').glob('*.json')}
+    if fault == 'missing_context': closed.pop(context_name)
+    if fault == 'missing_admission': closed.pop(admission_name)
+    if fault == 'context_hash': closed[context_name] = b'{}'
+    if fault == 'admission': closed[admission_name] = b'{}'
+    if fault == 'changed_parent':
+        current['parent_checkpoint_sha256'] = 'f' * 64
+        digest = sha(encode(current))
+        closed['context-reader-' + digest + '.json'] = encode(current)
+    with pytest.raises((ValueError, KeyError)):
+        m.receipt_context(encode(original), digest, closed.__getitem__)
+    assert not calls

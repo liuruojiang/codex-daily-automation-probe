@@ -883,6 +883,19 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
         if refresh_name in value['files'] and context_name in value['files']:
             refresh = json.loads((saved / refresh_name).read_bytes())
             context_raw = (saved / context_name).read_bytes()
+            def closed_reader_context(name):
+                key = 'scoped-delivery/stage-receipts/' + name
+                path = saved / key
+                if (key not in value['files'] or not path.is_file() or path.is_symlink()
+                        or not path.resolve().is_relative_to(saved.resolve())
+                        or sha_file(path) != value['files'][key]):
+                    raise ValueError('Reader receipt context is not in the sealed closure')
+                return path.read_bytes()
+            from microcap_scoped_stage_resume import receipt_context
+            try:
+                context_raw = receipt_context(context_raw, refresh.get('context_sha256'), closed_reader_context)
+            except (ValueError, KeyError, OSError) as exc:
+                raise RecoveryError('resume_partial_consumer_refresh_receipt_invalid') from exc
             context = json.loads(context_raw)
             if (refresh.get('schema') != 'microcap_scoped_successful_stage_v1'
                     or refresh.get('exit_code') != 0

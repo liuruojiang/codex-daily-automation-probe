@@ -149,6 +149,7 @@ def test_original_receipt_compatibility_and_new_receipt_transaction_binding(monk
     metadata['schema']='member_daily_report_v1';raw=json.dumps(metadata).encode()
     receipt['metadata_sha256']=hashlib.sha256(raw).hexdigest()
     marker=gate.delivery_marker_name(date(2026,11,2),'close_confirmed')
+    artifact['name']=marker+'-smtp-accepted'
     if new_marker is not None:
         receipt['member_delivery_marker']=(marker if new_marker=='matching' else
             marker.replace('2026-11-02','2026-11-03') if new_marker=='wrong-day' else marker+'-partial-information')
@@ -164,3 +165,29 @@ def test_original_receipt_compatibility_and_new_receipt_transaction_binding(monk
     else:
         with pytest.raises(RuntimeError,match='transaction date/mode/status'):
             gate.verify_smtp_receipt('o/r','software','https://api.github.com',artifact,date(2026,11,2),'close_confirmed')
+
+
+@pytest.mark.parametrize('status',['OK','PARTIAL'])
+@pytest.mark.parametrize('has_marker',[False,True])
+def test_receipt_cannot_recover_the_other_complete_or_partial_namespace(monkeypatch,status,has_marker):
+    artifact,responses,payload=trusted_receipt()
+    run=json.loads(responses[0].getvalue());run['path']='.github/workflows/microcap-member-daily.yml'
+    jobs=json.loads(responses[1].getvalue())
+    with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+        metadata=json.loads(archive.read('metadata.json'));receipt=json.loads(archive.read('smtp-accepted.json'))
+    metadata.update(schema='member_daily_report_v1',status=status)
+    raw=json.dumps(metadata).encode()
+    receipt['metadata_sha256']=hashlib.sha256(raw).hexdigest()
+    normal=gate.delivery_marker_name(date(2026,11,2),'close_confirmed')
+    correct=normal+('-partial-information' if status=='PARTIAL' else '')
+    artifact['name']=normal+('' if status=='PARTIAL' else '-partial-information')+'-smtp-accepted'
+    if has_marker:receipt['member_delivery_marker']=correct
+    packed=io.BytesIO()
+    with zipfile.ZipFile(packed,'w') as archive:
+        archive.writestr('metadata.json',raw);archive.writestr('smtp-accepted.json',json.dumps(receipt))
+    monkeypatch.setattr(gate,'now_utc',lambda:datetime.fromisoformat('2026-11-03T01:00:00+00:00'))
+    responses=[io.BytesIO(json.dumps(v).encode()) for v in (run,jobs)]
+    monkeypatch.setattr(gate.urllib.request,'urlopen',lambda *a,**k:responses.pop(0))
+    monkeypatch.setattr(helper,'download',lambda *a:packed.getvalue())
+    with pytest.raises(RuntimeError,match='artifact transaction differs'):
+        gate.verify_smtp_receipt('o/r','software','https://api.github.com',artifact,date(2026,11,2),'close_confirmed')

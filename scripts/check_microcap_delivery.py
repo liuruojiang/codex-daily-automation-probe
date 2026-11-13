@@ -163,10 +163,12 @@ def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dic
     if ((metadata.get("status") != "OK" and not member_report) or metadata.get("publication_mode") != publication_mode
             or metadata.get("delivery_test_id", "") != test_id):
         raise RuntimeError("BLOCKED: SMTP receipt metadata identity does not match delivery")
+    expected_marker=delivery_marker_name(day,publication_mode)
+    if member_report and metadata['status']=='PARTIAL':
+        expected_marker+='-partial-information'
+    if member_report and artifact.get('name')!=expected_marker+'-smtp-accepted':
+        raise RuntimeError("BLOCKED: SMTP receipt artifact transaction differs from report date/mode/status")
     if "member_delivery_marker" in receipt:
-        expected_marker=delivery_marker_name(day,publication_mode)
-        if metadata.get('status')=='PARTIAL':
-            expected_marker+='-partial-information'
         if not member_report or receipt['member_delivery_marker']!=expected_marker:
             raise RuntimeError("BLOCKED: SMTP receipt transaction date/mode/status differs")
     try:
