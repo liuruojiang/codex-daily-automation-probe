@@ -26,7 +26,7 @@ from test_microcap_legacy_source_recovery import originals,network
 
 def profiles():
     old=importer.producer_profile('microcap_local_producer_p2_20261112.json',legacy.PRODUCER)['calculation_sources']
-    new=importer.producer_profile('microcap_local_producer_runtime.json',legacy.READER_PRODUCER)['calculation_sources']
+    new=importer.producer_profile('microcap_local_producer_p3_20261112.json',legacy.READER_PRODUCER)['calculation_sources']
     return old,new
 
 
