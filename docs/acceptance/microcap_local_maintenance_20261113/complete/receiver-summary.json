@@ -1,0 +1,13 @@
+{
+  "status": "native_scoped_sources_staged",
+  "source_target": "2026-11-12",
+  "issuer_count": 300,
+  "bundle_sha256": "d36869a18aedda50e6363d2f899390f9c529d975df4c04bde3584ab51cef0b92",
+  "production_pointers_changed": false,
+  "native_late_adoption_required": true,
+  "native_ST_refresh_required": true,
+  "final_strategy_delivery": false,
+  "native_receipt_sha256": "3ef4b8ec26ac290927598e73d6bc281f656d8d1b2ed06ca9ce65618f274529f9",
+  "receipt_file": "native-stage-receipt.json.gz",
+  "managed_record": "0db0e0de58f543e589301b71c9abcf8c"
+}
