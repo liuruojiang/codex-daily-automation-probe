@@ -1523,6 +1523,85 @@ def required_success_report(result_path: Path, report_arg: str, payload: dict[st
     return report
 
 
+def verified_failure_diagnostic(
+    result_path: Path, payload: dict[str, Any], proof: dict[str, Any] | None,
+) -> tuple[str | None, str | None]:
+    """Read one native failure report; it never becomes a signal payload."""
+    fields = {
+        "diagnostic_report_contract", "diagnostic_report_file", "diagnostic_report_sha256",
+        "diagnostic_report_market_date", "diagnostic_report_generated_at", "diagnostic_report_mode",
+    }
+    if not fields.intersection(payload):
+        if isinstance(proof, dict) and proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2"}:
+            raise ValueError("current producer requires a bound failure diagnostic")
+        return None, None  # Old failures retain their original warning-only form.
+    from datetime import datetime, timezone
+    from hashlib import sha256
+    from zoneinfo import ZoneInfo
+    source_files = proof.get("source_sha256") if isinstance(proof, dict) else None
+    if (not isinstance(proof, dict) or proof.get("status") != "verified"
+            or proof.get("release") not in {"20261113-held-put-close-v1", "20261113-held-put-close-v2"}
+            or not re.fullmatch(r"[0-9a-f]{40}", str(proof.get("strategy_sha", "")))
+            or not isinstance(source_files, dict)
+            or not re.fullmatch(r"[0-9a-f]{64}", str(
+                source_files.get("run_ic_im_v1_4_github_digest.py", "")))):
+        raise ValueError("failure diagnostic requires verified producer source provenance")
+    mode = {"close_confirmed": "close", "realtime": "realtime"}.get(payload.get("publication_mode"))
+    day = _iso_day(payload.get("market_date"))
+    generated = payload.get("generated_at")
+    if (payload.get("status") != "failed" or day is None or mode is None
+            or payload.get("diagnostic_report_contract") != "icim_failure_diagnostic_v1"
+            or payload.get("diagnostic_report_file") != "diagnostic_report.md"
+            or payload.get("diagnostic_report_market_date") != day
+            or payload.get("diagnostic_report_generated_at") != generated
+            or payload.get("diagnostic_report_mode") != mode
+            or not isinstance(generated, str)):
+        raise ValueError("failure diagnostic contract/date/mode does not match result")
+    try:
+        stamp = datetime.fromisoformat(generated)
+        if (stamp.tzinfo is None or stamp.utcoffset() is None
+                or stamp > datetime.now(timezone.utc)
+                or stamp.astimezone(ZoneInfo("Asia/Shanghai")).date() < date.fromisoformat(day)):
+            raise ValueError("unverified diagnostic generation time")
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("failure diagnostic generation time is invalid") from exc
+    expected = payload.get("diagnostic_report_sha256")
+    if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
+        raise ValueError("failure diagnostic lacks an exact SHA-256")
+    base = result_path.resolve().parent
+    path = base / "diagnostic_report.md"
+    if path.is_symlink() or path.resolve().parent != base:
+        raise ValueError("failure diagnostic must remain beside result")
+    if not path.is_file():
+        raise FileNotFoundError("failure diagnostic report is missing")
+    if path.stat().st_size > 1024 * 1024:
+        raise ValueError("failure diagnostic exceeds the bounded report size")
+    raw = path.read_bytes()
+    if sha256(raw).hexdigest() != expected:
+        raise ValueError("failure diagnostic hash does not match result")
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError("failure diagnostic must be native UTF-8 text") from exc
+    for label, value in (("生成时间", generated), ("目标行情日", day), ("模式", mode)):
+        if re.findall(r"^" + label + r"：([^\r\n]*)\r?$", text, re.M) != [value]:
+            raise ValueError("failure diagnostic header identity does not match result")
+    return str(path.resolve()), text
+
+
+def failure_diagnostic_display(text: str) -> tuple[str, str]:
+    """Show native text literally, including already available per-leg evidence."""
+    warning = ("整体信号尚未确认，账本未确认推进。以下仅保留失败前取得的原生逐腿诊断；"
+               "其中单腿文字不构成整份日报确认或账户执行建议。")
+    fence = "`" * max(3, 1 + max((len(run) for run in re.findall(r"`+", text)), default=0))
+    markdown = "\n\n## 已取得信息与缺项（原生诊断）\n\n" + warning + "\n\n" + fence + "text\n" + text + "\n" + fence
+    html_block = ("<section style=\"margin:20px auto;max-width:640px;\"><h2>已取得信息与缺项（原生诊断）</h2>"
+                  + "<p><strong>" + html.escape(warning) + "</strong></p>"
+                  + '<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.65;">'
+                  + html.escape(text) + "</pre></section>")
+    return markdown, html_block
+
+
 def source_provenance(path: str, expected_sha: str, expected_release: str | None = None) -> dict[str, Any] | None:
     """Bind the displayed program version to this run's independently checked source."""
     if not path and not expected_sha:
@@ -1533,6 +1612,8 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     files = proof.get("source_sha256")
     from hashlib import sha256
     releases = {
+        "20261113-held-put-close-v2": "docs/ic_im_held_put_close_20261113_v2_manifest.json",
+        "20261113-held-put-close-v1": "docs/ic_im_held_put_close_20261113_v1_manifest.json",
         "20261112-expert-review-v5-r3": "docs/ic_im_expert_release_20261112_v2_manifest.json",
         "20261112-expert-review-v5-r2": "docs/ic_im_expert_release_20261112_manifest.json",
         "20261109-fear-source-round2-v3": "docs/ic_im_fear_source_round2_20261109_manifest.json",
@@ -1548,12 +1629,12 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     if (proof.get("status") != "verified" or proof.get("strategy_sha") != expected_sha
             or proof.get("release") not in releases
             or not re.fullmatch(r"[0-9a-f]{64}", str(proof.get("manifest_sha256", "")))
-            or not isinstance(files, dict) or len(files) != (31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
+            or not isinstance(files, dict) or len(files) != (32 if proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2"} else 31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
             or "run_ic_im_v1_4_github_digest.py" not in files
             or files != expected_files or proof.get("manifest_sha256") != sha256(expected_raw).hexdigest()
             or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in files.values())):
         raise ValueError("source provenance does not match this run's execution inventory")
-    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"}:
+    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2"}:
         if proof.get("support_sha256") != json.loads(expected_raw)["support_files"]:
             raise ValueError("source provenance lacks exact approved-calendar support bytes")
     from datetime import datetime, timezone
@@ -1577,7 +1658,7 @@ def main() -> int:
                               args.expected_source_release or None)
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
-    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"}
+    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2"}
             and payload.get("status") in {"ok", "partial"} and "report_sha256" not in payload):
         raise ValueError("current IC/IM producer requires report_sha256")
     if str(payload.get("strategy_revision")) != "r1":
@@ -1595,7 +1676,11 @@ def main() -> int:
     else:
         subject, body = build_failure(payload, run_url, args.subject_prefix)
         html_body = build_failure_html(payload, run_url)
-        attachment = None
+        attachment, diagnostic = verified_failure_diagnostic(Path(args.result), payload, proof)
+        if diagnostic is not None:
+            diagnostic_body, diagnostic_html = failure_diagnostic_display(diagnostic)
+            body += diagnostic_body
+            html_body = html_body.replace("</body>", diagnostic_html + "</body>")
     if proof is not None:
         label = f"运行程序版本：{proof['release']}（源码 {proof['strategy_sha'][:12]}）；历史信号保留原日生成记录。"
         body = label + "\n\n" + body
