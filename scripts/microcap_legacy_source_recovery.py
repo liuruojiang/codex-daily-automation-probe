@@ -63,7 +63,7 @@ def reader_identity(runtime_sha, producer_sha):
     if pair==(READER_CONSUMER,READER_PRODUCER):
         from import_microcap_producer_inputs import producer_profile, exact_p2_successor
         old=producer_profile('microcap_local_producer_p2_20261112.json',PRODUCER)['calculation_sources']
-        new=producer_profile('microcap_local_producer_runtime.json',READER_PRODUCER)['calculation_sources']
+        new=producer_profile('microcap_local_producer_p3_20261112.json',READER_PRODUCER)['calculation_sources']
         value['producer_source_review']=exact_p2_successor(PRODUCER,old,new,READER_PRODUCER)
     return value
 

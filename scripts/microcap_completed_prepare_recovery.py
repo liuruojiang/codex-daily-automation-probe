@@ -97,7 +97,7 @@ def reader_identity(runtime_sha, producer_sha):
 
 
 def _producer_profile():
-    raw = (Path(__file__).resolve().parents[1] / 'config/microcap_local_producer_runtime.json').read_bytes()
+    raw = (Path(__file__).resolve().parents[1] / 'config/microcap_local_producer_p3_20261112.json').read_bytes()
     if hashlib.sha256(raw.replace(b'\r\n', b'\n')).hexdigest() != PRODUCER_PROFILE_SHA:
         fail('frozen_producer_profile_differs')
     profile = json.loads(raw)
