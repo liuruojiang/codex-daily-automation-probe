@@ -923,7 +923,14 @@ def _admit_driver_state(saved, destination, native_root, monkeypatch):
         return real_read(argv,*args,**kwargs)
     def restore_native(label,argv):
         assert label=='restore-earned-formal-state'
-        bundle=Path(argv[list(map(str,argv)).index('--bundle')+1])
+        from microcap_scoped_whole_recovery import RESTORE
+        command=list(map(str,argv))
+        assert command[1:4]==['-B','-c',RESTORE]
+        assert Path(command[4]).resolve()==paths['consumer'].resolve()
+        assert command[6]=='2026-11-13'
+        assert Path(command[7]).name=='native-restore.json'
+        assert Path(command[8]).resolve()==Path(admission.__file__).resolve().parent
+        bundle=Path(command[5])
         with zipfile.ZipFile(bundle) as archive:
             for name in archive.namelist():
                 confined_name(name)
@@ -1043,18 +1050,22 @@ def _acceptance_cli(argv=None):
         readback = restore_acceptance(args.source_run, head, out / 'restored-state',expected_roles=tested_roles)
         (out / 'readback-source.json').write_text(json.dumps(readback, indent=2) + '\n', encoding='utf-8')
         os.environ['MICROCAP_RECOVERY_ACCEPTANCE_RESTORED'] = str(out / 'restored-state')
-        selection = 'test_recovered_artifact_is_consumed_by_current_recovery_and_report_code'
+        selection = ('test_recovered_artifact_is_consumed_by_current_recovery_and_report_code or '
+                     'test_earned_archive_resume_keeps_native_isolation_and_original_stages')
     else:
         selection = 'not test_recovered_artifact_is_consumed_by_current_recovery_and_report_code'
     scratch=args.scratch.resolve() if args.scratch is not None else out/'scratch'
-    status = pytest.main([str(Path(__file__).resolve()), '-q', '-p', 'no:cacheprovider',
+    status = pytest.main([str(Path(__file__).resolve()),
+                          str(ROOT/'tests/test_microcap_earned_archive_resume_20261113.py'),
+                          '-q', '-p', 'no:cacheprovider',
                           '--basetemp', str(scratch), '--junitxml', str(out / 'junit.xml'), '-k', selection])
     if status:
         return int(status)
     state = out / 'state'
     # These are written only by the actual cross-module recovery case below.
     # Transport-only tests can never earn a misleading successful producer.
-    required = ('connected-recovery.json', 'recovered/checkpoint.json', 'source-journal.json')
+    required = ('connected-recovery.json', 'recovered/checkpoint.json', 'source-journal.json',
+                'earned-native-isolation.json')
     if args.phase == 'produce' and any(not (state / name).is_file() for name in required):
         raise ValueError('No complete isolated recovery execution was produced')
     if args.phase == 'produce':

@@ -171,6 +171,12 @@ def saved_close_identity(result,context,expected_date,revisions):
             decoded=(list(csv.DictReader(io.StringIO(value.decode('utf-8-sig'))))
                      if key in ('history','turnover') else json.loads(value))
             if decoded!=proof[key]:raise ValueError('Saved-close decoded proof differs: '+key)
+        # Publication can be called directly with a saved context, without the
+        # downloader/local cache gate. Recheck the same original recovery proof
+        # here after binding its raw dependency bytes; never retag old packages.
+        from microcap_recovery_handoff import validate_recovery_payload
+        validate_recovery_payload(cp, {key: files[cp[key]['path']]
+            for key in ('period','history','turnover','version_state','prices')})
         if (proof['sha256']!=result.get('checkpoint_sha256') or cp['as_of_date']!=expected_date
                 or cp['period']['sha256']!=result.get('period_sha256')
                 or _strict_day(cp.get('next_trade_date')) is None or cp['next_trade_date']<=expected_date

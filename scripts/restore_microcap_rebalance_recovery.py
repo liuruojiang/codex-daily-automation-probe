@@ -883,6 +883,19 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
         if refresh_name in value['files'] and context_name in value['files']:
             refresh = json.loads((saved / refresh_name).read_bytes())
             context_raw = (saved / context_name).read_bytes()
+            def closed_reader_context(name):
+                key = 'scoped-delivery/stage-receipts/' + name
+                path = saved / key
+                if (key not in value['files'] or not path.is_file() or path.is_symlink()
+                        or not path.resolve().is_relative_to(saved.resolve())
+                        or sha_file(path) != value['files'][key]):
+                    raise ValueError('Reader receipt context is not in the sealed closure')
+                return path.read_bytes()
+            from microcap_scoped_stage_resume import receipt_context
+            try:
+                context_raw = receipt_context(context_raw, refresh.get('context_sha256'), closed_reader_context)
+            except (ValueError, KeyError, OSError) as exc:
+                raise RecoveryError('resume_partial_consumer_refresh_receipt_invalid') from exc
             context = json.loads(context_raw)
             if (refresh.get('schema') != 'microcap_scoped_successful_stage_v1'
                     or refresh.get('exit_code') != 0
@@ -930,8 +943,15 @@ def _admit_resume(manifest_path, *, consumer, producer, state, prepare_out, deli
                     raise RecoveryError('resume_refresh_completed_manifest_not_closed')
             consumer_partial = True
     if archive:
-        run('restore-earned-formal-state', [sys.executable, '-B', consumer / 'scripts/top100_cloud_delivery.py',
-             'restore', '--root', consumer, '--bundle', saved / archive['path'], '--expected-date', value['target']])
+        # This is the same foreign staged tree as a published whole restore.
+        # Keep the original Native gates and report, isolating only their
+        # staged imports; receiver validation remains in the Native process.
+        from microcap_scoped_whole_recovery import RESTORE
+        native_restore = delivery_out / 'earned-native-restore' / uuid.uuid4().hex
+        native_restore.mkdir(parents=True)
+        run('restore-earned-formal-state', [sys.executable, '-B', '-c', RESTORE,
+             consumer, saved / archive['path'], value['target'],
+             native_restore / 'native-restore.json', Path(__file__).resolve().parent])
     original_manifest_restored = False
     original_manifest_name = 'scoped-delivery/formal-manifest-original.json'
     if archive and original_manifest_name in value['files']:

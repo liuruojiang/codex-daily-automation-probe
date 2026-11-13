@@ -163,6 +163,14 @@ def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dic
     if ((metadata.get("status") != "OK" and not member_report) or metadata.get("publication_mode") != publication_mode
             or metadata.get("delivery_test_id", "") != test_id):
         raise RuntimeError("BLOCKED: SMTP receipt metadata identity does not match delivery")
+    expected_marker=delivery_marker_name(day,publication_mode)
+    if member_report and metadata['status']=='PARTIAL':
+        expected_marker+='-partial-information'
+    if member_report and artifact.get('name')!=expected_marker+'-smtp-accepted':
+        raise RuntimeError("BLOCKED: SMTP receipt artifact transaction differs from report date/mode/status")
+    if "member_delivery_marker" in receipt:
+        if not member_report or receipt['member_delivery_marker']!=expected_marker:
+            raise RuntimeError("BLOCKED: SMTP receipt transaction date/mode/status differs")
     try:
         signal_day = date.fromisoformat(metadata.get("signal_date", ""))
         accepted_at = datetime.fromisoformat(receipt.get("accepted_at", ""))
@@ -269,6 +277,7 @@ def validate_catch_up_date(value: str, now: datetime, *, publication_mode: str,
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--delivery-date", default="", help="Session date already resolved by the member workflow")
     parser.add_argument("--catch-up-date", default="")
     parser.add_argument("--correction", action="store_true")
     parser.add_argument("--validation-only", action="store_true")
@@ -281,14 +290,22 @@ def main() -> int:
 
     if args.delivery_test_id and (args.correction or args.validation_only):
         parser.error("delivery test cannot be combined with correction or validation-only")
+    if args.delivery_date and (args.catch_up_date or args.delivery_test_id):
+        parser.error("a resolved session cannot be combined with catch-up or delivery-test identity")
 
     now = now_utc()
     delivery_date = beijing_delivery_date(now)
+    if args.delivery_date:
+        delivery_date = date.fromisoformat(args.delivery_date)
+        if (delivery_date.isoformat() != args.delivery_date
+                or delivery_date > beijing_delivery_date(now)
+                or (args.publication_mode == "realtime" and delivery_date != beijing_delivery_date(now))):
+            raise ValueError("Resolved delivery session has an invalid date/mode")
     if args.catch_up_date:
         delivery_date = validate_catch_up_date(args.catch_up_date, now,
             publication_mode=args.publication_mode, correction=args.correction,
             validation_only=args.validation_only, test_id=args.delivery_test_id)
-    if (not args.catch_up_date and not args.correction and not args.validation_only and not args.delivery_test_id
+    if (not args.delivery_date and not args.catch_up_date and not args.correction and not args.validation_only and not args.delivery_test_id
             and args.publication_mode == "close_confirmed"):
         if not args.repository or not args.token:
             raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required for scheduled delivery checks")

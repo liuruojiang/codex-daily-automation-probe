@@ -118,7 +118,7 @@ jobs:
         run: |
           args=()
           if [[ "$VALIDATE" == 'true' ]]; then args+=(--validation-only); fi
-          python automation/scripts/check_microcap_delivery.py --publication-mode "$MODE" "${args[@]}"
+          python automation/scripts/check_microcap_delivery.py --publication-mode "$MODE" --delivery-date '${{ steps.session.outputs.date }}' "${args[@]}"
       - name: Recover delivery marker from accepted SMTP receipt
         if: inputs.validation_only != true && steps.gate.outputs.recover_marker == 'true'
         run: |
@@ -245,7 +245,7 @@ jobs:
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
           MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
-        run: python automation/scripts/send_report.py artifacts/metadata.json --receipt artifacts/smtp-accepted.json
+        run: python automation/scripts/send_report.py artifacts/metadata.json --receipt artifacts/smtp-accepted.json --member-delivery-marker '${{ steps.transaction.outputs.marker_name }}'
       - name: Preserve accepted SMTP receipt
         id: receipt
         if: inputs.validation_only != true && steps.intent.outcome == 'success' && success()
