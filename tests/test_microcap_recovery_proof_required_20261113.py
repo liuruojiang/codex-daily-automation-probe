@@ -1,6 +1,6 @@
 """Producer-mandated recovery proof across transport, cache and publication.
 
-The small formal fixture executes reviewed M7 math. M8/M9 envelopes below are
+The small formal fixture executes reviewed M7 math. M8/M9/M10 envelopes below are
 explicit software identities, not new prices, production gates or publications.
 """
 import copy
@@ -44,7 +44,7 @@ def downgraded(source, producer, mode):
     return seal(checkpoint, payload, period)
 
 
-@pytest.mark.parametrize('producer', [recovery.M8, recovery.M9])
+@pytest.mark.parametrize('producer', [recovery.M8, recovery.M9, recovery.M10])
 @pytest.mark.parametrize('mode', [None, recovery.MODE, 'native_close_extends_previous',
                                 'same_close_period_switch', 'unsupported_unproved_mode'])
 def test_producer_cannot_remove_all_proof_markers_at_any_reader_boundary(recovery_case, tmp_path, producer, mode):
@@ -73,7 +73,7 @@ def test_original_605_controller_keeps_exact_preceding_native_relationships(prod
     assert checkpoint == before
 
 
-@pytest.mark.parametrize('producer', [recovery.CORE, '1634a27c5a609a46ab35fc29ca2c65b94182671b', '0' * 40])
+@pytest.mark.parametrize('producer', [recovery.M10, recovery.CORE, '1634a27c5a609a46ab35fc29ca2c65b94182671b', '0' * 40])
 def test_original_605_controller_does_not_approve_other_native_producers(producer):
     checkpoint = dict(strategy_sha=producer, handoff_mode=recovery.MODE,
         recovery_controller=dict(revision=recovery.CONTROLLER, source_sha256=recovery.LEGACY_M9_CONTROLLER_SHA))
@@ -81,7 +81,7 @@ def test_original_605_controller_does_not_approve_other_native_producers(produce
         recovery.reviewed_controller_identity(checkpoint)
 
 
-@pytest.mark.parametrize('producer', [recovery.M8, recovery.M9])
+@pytest.mark.parametrize('producer', [recovery.M8, recovery.M9, recovery.M10])
 def test_new_recovery_build_cannot_launder_an_unproved_parent(recovery_case, tmp_path, producer):
     # Only the declared producer is adversarial software input; the real saved
     # D11 data bytes and all their dependency hashes remain unchanged.
@@ -96,6 +96,13 @@ def test_new_recovery_build_cannot_launder_an_unproved_parent(recovery_case, tmp
         recovery.build(recovery_case['data'], parent, recovery_case['candidate'],
                        '2026-11-13', tmp_path / 'must-not-publish')
     assert not (tmp_path / 'must-not-publish').exists()
+
+
+@pytest.mark.parametrize('producer', [recovery.NATIVE, recovery.M8, recovery.M9, recovery.M10])
+def test_original_239_controller_keeps_its_exact_four_reviewed_relationships(producer):
+    checkpoint = dict(strategy_sha=producer, handoff_mode=recovery.MODE,
+        recovery_controller=dict(revision=recovery.CONTROLLER, source_sha256=recovery.LEGACY_M10_CONTROLLER_SHA))
+    assert recovery.reviewed_controller_identity(checkpoint) == checkpoint['recovery_controller']
 
 
 def load_fixture(name, module_name):

@@ -30,10 +30,12 @@ CONTROLLER = 'auto_formal_gap_recovery_20261112_v1'
 NATIVE = 'a7c1b9ac33454be4367880a0989dfc1466640503'
 M8 = '95d896fe58cc7cb84c0fcb7bd76534f62c9430f4'
 M9 = '906eca8a5dfede7fa1674fb17cd3c6ce12205e6d'
-REVIEWED_NATIVES = frozenset({NATIVE, M8, M9})
+M10 = '074a40d762df73a09a00369d1cc841645212cf37'
+REVIEWED_NATIVES = frozenset({NATIVE, M8, M9, M10})
 LEGACY_M7_CONTROLLER_SHA = 'eea88c4886baaba42256a4b57050432a0e3a4e4dfe12e827f99086d3b0389b16'
 LEGACY_M8_CONTROLLER_SHA = '8a52b8d9b1c6caaaba868cd447073f9d42c432d3d131e4646bfe9442814a2e4b'
 LEGACY_M9_CONTROLLER_SHA = '6056bbc4a25bacefb74d554c3aec02eaae64ab7f824cb7768c9a08936ae8f958'
+LEGACY_M10_CONTROLLER_SHA = '3f6beee9a2832e6d8f8f0e026f241215f1e9078a3b5650505976fd3bdd2e86fb'
 CORE = 'ad4de441d35442616f91aa613146ffdf8cd479f3'
 BRIDGE = 'hedge_precision_bridge_v1'
 VERSIONS = ('v2.0', 'v2.3', 'v2.5')
@@ -433,9 +435,10 @@ def reviewed_controller_identity(checkpoint):
     runtime=checkpoint.get('strategy_sha')
     identity=checkpoint.get('recovery_controller',{})
     current=sha(Path(__file__).read_bytes().replace(b'\r\n',b'\n'))
-    # This reader-only repair does not reissue already earned native proofs.
-    # The preceding controller reviewed exactly these three native runtimes.
-    allowed={current, LEGACY_M9_CONTROLLER_SHA}
+    # Each preceding reader keeps only the producer relationships it reviewed.
+    allowed={current, LEGACY_M10_CONTROLLER_SHA}
+    if runtime in (NATIVE,M8,M9):
+        allowed.add(LEGACY_M9_CONTROLLER_SHA)
     if runtime in (NATIVE,M8):
         # The deployed M8 controller predates the parser-only M9 runtime.
         allowed.add(LEGACY_M8_CONTROLLER_SHA)
@@ -459,12 +462,12 @@ def validate_recovery_payload(checkpoint, payload_bytes):
     """
     period = json.loads(payload_bytes['period'])
     proof = period.get(KEY)
-    # M8/M9 were admitted only through formal recovery. Mode/controller fields
+    # M8/M9/M10 were admitted only through formal recovery. Mode/controller fields
     # are untrusted transport data and cannot opt these producers out of proof.
-    if checkpoint.get('strategy_sha') in (M8, M9) and checkpoint.get('handoff_mode') != MODE:
-        raise ValueError('The reviewed M8/M9 producer requires its formal recovery proof route')
+    if checkpoint.get('strategy_sha') in (M8, M9, M10) and checkpoint.get('handoff_mode') != MODE:
+        raise ValueError('The reviewed M8/M9/M10 producer requires its formal recovery proof route')
     if proof is None:
-        if (checkpoint.get('strategy_sha') in (M8, M9)
+        if (checkpoint.get('strategy_sha') in (M8, M9, M10)
                 or checkpoint.get('handoff_mode') == MODE or 'recovery_controller' in checkpoint):
             raise ValueError('Recovery checkpoint lacks its proof')
         return None
