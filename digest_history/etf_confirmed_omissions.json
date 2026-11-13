@@ -6163,6 +6163,32 @@
       "zh_summary": "发行人报告季度净值回报-3.99%对基准+0.45%，解释科技、消费股及软件贡献。",
       "evidence_level": "机构/发行人季报，web正文与表格可读；非独立验证，三季度非当日行情。",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "43310963811",
+      "origin_report_date": "2026-11-13",
+      "source": "HKEX News Releases",
+      "title": "香港交易所ETF峰會2026 ETF市場屢創新高",
+      "zh_title": "香港交易所ETF峰会2026：ETF市场屡创新高",
+      "url": "https://www.hkex.com.hk/News/News-Release/2026/261112news?sc_lang=zh-HK",
+      "published": "2026-11-12T08:00:00+00:00",
+      "summary": "截至10月底ETP资产6165亿港元，含ETF及杠杆反向产品；讨论跨境、流动性与代币化。交易所原文全文，不等同纯ETF规模。",
+      "zh_summary": "截至10月底ETP资产6165亿港元，含ETF及杠杆反向产品；讨论跨境、流动性与代币化。交易所原文全文，不等同纯ETF规模。",
+      "evidence_level": "发布者原页全文；港交所时分取冻结feed、原页确认日期；白银时分取原页元数据。",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "43310963811",
+      "origin_report_date": "2026-11-13",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "What $10,000 in Silver on Jan. 1 Is Worth Today",
+      "zh_title": "年初一万美元白银投资如今价值多少",
+      "url": "https://www.fool.com/investing/2026/11/12/what-10000-in-silver-on-jan-1-is-worth-today/?.tsrc=rss",
+      "published": "2026-11-12T16:15:00+00:00",
+      "summary": "文章比较白银工业需求与黄金的差异，涉及SLV与GLD；可见全文，投资倾向属于媒体观点，未独立核验表现或需求统计。",
+      "zh_summary": "文章比较白银工业需求与黄金的差异，涉及SLV与GLD；可见全文，投资倾向属于媒体观点，未独立核验表现或需求统计。",
+      "evidence_level": "发布者原页全文；港交所时分取冻结feed、原页确认日期；白银时分取原页元数据。",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
