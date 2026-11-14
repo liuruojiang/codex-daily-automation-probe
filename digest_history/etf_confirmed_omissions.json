@@ -6189,6 +6189,71 @@
       "zh_summary": "文章比较白银工业需求与黄金的差异，涉及SLV与GLD；可见全文，投资倾向属于媒体观点，未独立核验表现或需求统计。",
       "evidence_level": "发布者原页全文；港交所时分取冻结feed、原页确认日期；白银时分取原页元数据。",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "43511341156",
+      "origin_report_date": "2026-11-14",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Where These 4 Sector ETFs Stand Heading Into Year-End",
+      "zh_title": "年末四只行业ETF处于什么位置",
+      "url": "https://www.fool.com/investing/2026/11/13/where-these-4-sector-etfs-stand-heading-into-year/?.tsrc=rss",
+      "published": "2026-11-13T15:43:00+00:00",
+      "summary": "比较科技、金融、能源和医疗ETF，讨论估值、利率和行业内部差异。",
+      "zh_summary": "比较科技、金融、能源和医疗ETF，讨论估值、利率和行业内部差异。",
+      "evidence_level": "原始页面正文及日期；港交所时分取冻结RSS，其余取原页元数据",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "43511341156",
+      "origin_report_date": "2026-11-14",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "$1 Million In SCHD Five Years Ago: What Is It Worth Now?",
+      "zh_title": "五年前投入SCHD的100万美元如今价值多少",
+      "url": "https://www.trefis.com/stock/schd/articles/624814/1-million-in-schd-five-years-ago-what-is-it-worth-now/2026-11-13?.tsrc=rss",
+      "published": "2026-11-13T12:05:55+00:00",
+      "summary": "作者比较2021年11月至2026年11月含分红再投资回报及回撤，含营销引导，未独立复算。",
+      "zh_summary": "作者比较2021年11月至2026年11月含分红再投资回报及回撤，含营销引导，未独立复算。",
+      "evidence_level": "原始页面正文及日期；港交所时分取冻结RSS，其余取原页元数据",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "43511341156",
+      "origin_report_date": "2026-11-14",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "How to Use the Years Between 62 and 75 to Turn a $1.05 Million IRA Into $5,100 a Month Tax-Free",
+      "zh_title": "如何利用62至75岁窗口转换IRA并规划退休现金流",
+      "url": "https://247wallst.com/personal-finance/2026/11/13/how-to-use-the-years-between-62-and-75-to-turn-a-1-05-million-ira-into-5100-a-month-tax-free/?.tsrc=rss",
+      "published": "2026-11-13T15:04:48+00:00",
+      "summary": "以105万美元IRA转Roth和七项持仓构建现金流案例；税率、资格及持续分配尚待独立验证，不视为税务建议。",
+      "zh_summary": "以105万美元IRA转Roth和七项持仓构建现金流案例；税率、资格及持续分配尚待独立验证，不视为税务建议。",
+      "evidence_level": "原始页面正文及日期；港交所时分取冻结RSS，其余取原页元数据",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "43511341156",
+      "origin_report_date": "2026-11-14",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Nvidia Is 6.1% Of Your S&P 500 Fund. What Is Your Number?",
+      "zh_title": "英伟达占标普基金6.1%，占你全部组合多少",
+      "url": "https://www.trefis.com/stock/nvda/articles/624815/nvidia-is-6-1-of-your-s-p-500-fund-what-is-your-number/2026-11-13?.tsrc=rss",
+      "published": "2026-11-13T12:06:05+00:00",
+      "summary": "比较SPY/QQQ/RSP/DGRO/VYM穿透集中度与长期总回报；持仓日期混用，营销材料，数字未独立复算。",
+      "zh_summary": "比较SPY/QQQ/RSP/DGRO/VYM穿透集中度与长期总回报；持仓日期混用，营销材料，数字未独立复算。",
+      "evidence_level": "原始页面正文及日期；港交所时分取冻结RSS，其余取原页元数据",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "43511341156",
+      "origin_report_date": "2026-11-14",
+      "source": "HKEX Market Communications",
+      "title": "香港交易所將於2026年12月推出適用於衍生產品收市後交易時段的數碼支付方案",
+      "zh_title": "港交所拟为衍生品夜盘推出数码按金支付",
+      "url": "https://www.hkex.com.hk/News/Market-Communications/2026/261113news?sc_lang=zh-HK",
+      "published": "2026-11-13T07:40:00+00:00",
+      "summary": "官方称12月14日推出夜盘预缴按金支付，申请时间17时至次日1时30分；影响抵押品与执行安排，不直接证明ETF收益。",
+      "zh_summary": "官方称12月14日推出夜盘预缴按金支付，申请时间17时至次日1时30分；影响抵押品与执行安排，不直接证明ETF收益。",
+      "evidence_level": "原始页面正文及日期；港交所时分取冻结RSS，其余取原页元数据",
+      "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
     }
   ]
 }
