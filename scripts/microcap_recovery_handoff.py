@@ -438,7 +438,9 @@ def reviewed_controller_identity(checkpoint):
     identity=checkpoint.get('recovery_controller',{})
     current=sha(Path(__file__).read_bytes().replace(b'\r\n',b'\n'))
     # Each preceding reader keeps only the producer relationships it reviewed.
-    allowed={current, LEGACY_M10_CONTROLLER_SHA, LEGACY_M11_CONTROLLER_SHA}
+    allowed={current}
+    if runtime!=M11:
+        allowed.update({LEGACY_M10_CONTROLLER_SHA, LEGACY_M11_CONTROLLER_SHA})
     if runtime in (NATIVE,M8,M9):
         allowed.add(LEGACY_M9_CONTROLLER_SHA)
     if runtime in (NATIVE,M8):

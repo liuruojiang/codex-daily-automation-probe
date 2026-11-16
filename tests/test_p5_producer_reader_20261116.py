@@ -12,3 +12,10 @@ def test_exact_p5_retains_p2_reader_and_original_identity():
  assert old==saved
  broken=dict(current);broken['scripts/share_change_source.py']='0'*64
  with pytest.raises(ValueError):r.exact_p2_successor(r.P2_RUNTIME,old,broken,r.P5_RUNTIME)
+
+
+def test_m11_cannot_borrow_predecessor_controller_identity():
+ import microcap_recovery_handoff as handoff
+ for old in (handoff.LEGACY_M10_CONTROLLER_SHA,handoff.LEGACY_M11_CONTROLLER_SHA):
+  cp=dict(strategy_sha=handoff.M11,recovery_controller=dict(revision=handoff.CONTROLLER,source_sha256=old))
+  with pytest.raises(ValueError):handoff.reviewed_controller_identity(cp)
