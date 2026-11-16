@@ -6553,6 +6553,84 @@
       "zh_summary": "CBS解释指数基金穿透持仓及关键人物风险；同时指出分散指数可能抵消单股冲击，非所有持仓同步下跌。",
       "evidence_level": "原页正文及发布时间；未独立核验报道中的其他来源",
       "verify_next": "核对正式持仓、样本区间、收益与分配口径、成本及反例；公开摘要不代表读过全文。"
+    },
+    {
+      "origin_run_id": "43764082943",
+      "origin_report_date": "2026-11-16",
+      "source": "Seeking Alpha ETFs",
+      "title": "ARKF: Tech Trouble Via Microsoft & The FAA - Bitcoin's Plunge Adds Pressure",
+      "zh_title": "ARKF：金融科技与加密风险集中",
+      "url": "https://seekingalpha.com/article/4968404-arkf-tech-trouble-via-microsoft-and-the-faa-bitcoins-plunge-adds-pressure?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-15T19:02:06+00:00",
+      "summary": "作者认为主题集中、加密相关性和0.75%费用构成约束；公开摘要，未读全文。",
+      "zh_summary": "作者认为主题集中、加密相关性和0.75%费用构成约束；公开摘要，未读全文。",
+      "evidence_level": "发布者原页公开摘要与截断开头；发布时间取冻结RSS，未读付费全文",
+      "verify_next": "核对正式持仓、样本与执行时点、成本和反例；媒体观点不作为正式信号。"
+    },
+    {
+      "origin_run_id": "43764082943",
+      "origin_report_date": "2026-11-16",
+      "source": "Seeking Alpha ETFs",
+      "title": "SCHD: This Is Where The AI Money Is Going",
+      "zh_title": "SCHD：作者认为资金正从AI转向股息",
+      "url": "https://seekingalpha.com/article/4968361-schd-this-is-where-the-ai-money-is-going?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-15T17:00:00+00:00",
+      "summary": "作者将股息基金流入与盈利改善联系，18.6倍估值及38.88美元公允价值是其估计，不是独立验证。",
+      "zh_summary": "作者将股息基金流入与盈利改善联系，18.6倍估值及38.88美元公允价值是其估计，不是独立验证。",
+      "evidence_level": "发布者原页公开摘要与截断开头；发布时间取冻结RSS，未读付费全文",
+      "verify_next": "核对正式持仓、样本与执行时点、成本和反例；媒体观点不作为正式信号。"
+    },
+    {
+      "origin_run_id": "43764082943",
+      "origin_report_date": "2026-11-16",
+      "source": "Seeking Alpha ETFs",
+      "title": "Revealing My Full Portfolio: 18.27% Return In October",
+      "zh_title": "披露六家公司组合：10月回报18.27%",
+      "url": "https://seekingalpha.com/article/4968353-revealing-my-full-portfolio-18-27-percent-return-in-october?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-15T14:00:00+00:00",
+      "summary": "作者披露六家公司集中组合与10月18.27%表现；单月自报回报不是可复制超额收益，19.17个百分点差值可能含舍入。",
+      "zh_summary": "作者披露六家公司集中组合与10月18.27%表现；单月自报回报不是可复制超额收益，19.17个百分点差值可能含舍入。",
+      "evidence_level": "发布者原页公开摘要与截断开头；发布时间取冻结RSS，未读付费全文",
+      "verify_next": "核对正式持仓、样本与执行时点、成本和反例；媒体观点不作为正式信号。"
+    },
+    {
+      "origin_run_id": "43764082943",
+      "origin_report_date": "2026-11-16",
+      "source": "Seeking Alpha ETFs",
+      "title": "EOS: An Attractive Tech-Focused Income Fund With Nearly 10% Yield",
+      "zh_title": "EOS：科技集中与期权收入并存",
+      "url": "https://seekingalpha.com/article/4967006-eos-an-attractive-tech-focused-income-fund-with-nearly-10-percent-yield?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-15T13:30:00+00:00",
+      "summary": "公开摘要列科技53%、约一半资产卖出看涨期权、无杠杆；高分配不等于下跌保护。",
+      "zh_summary": "公开摘要列科技53%、约一半资产卖出看涨期权、无杠杆；高分配不等于下跌保护。",
+      "evidence_level": "发布者原页公开摘要与截断开头；发布时间取冻结RSS，未读付费全文",
+      "verify_next": "核对正式持仓、样本与执行时点、成本和反例；媒体观点不作为正式信号。"
+    },
+    {
+      "origin_run_id": "43764082943",
+      "origin_report_date": "2026-11-16",
+      "source": "Seeking Alpha ETFs",
+      "title": "Brazilian Stocks After The Runoff: Cheap Again, But With Rates High For Longer",
+      "zh_title": "巴西大选后股票便宜，高利率仍有压力",
+      "url": "https://seekingalpha.com/article/4968356-brazilian-stocks-after-the-runoff-cheap-again-but-with-rates-high-for-longer?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-15T08:04:32+00:00",
+      "summary": "作者讨论EWZ银行商品集中，前十大近60%，估值与利率及汇率风险；未读付费全文。",
+      "zh_summary": "作者讨论EWZ银行商品集中，前十大近60%，估值与利率及汇率风险；未读付费全文。",
+      "evidence_level": "发布者原页公开摘要与截断开头；发布时间取冻结RSS，未读付费全文",
+      "verify_next": "核对正式持仓、样本与执行时点、成本和反例；媒体观点不作为正式信号。"
+    },
+    {
+      "origin_run_id": "43764082943",
+      "origin_report_date": "2026-11-16",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Michael Saylor’s Strategy Just Lost Its MSCI Index Spot as Bitcoin Plunges. Is MSTR Stock a Sell?",
+      "zh_title": "Strategy被剔出MSCI指数的报道与被动资金风险",
+      "url": "https://247wallst.com/investing/2026/11/15/michael-saylors-strategy-just-lost-its-msci-index-spot-as-bitcoin-plunges-is-mstr-stock-a-sell/?.tsrc=rss",
+      "published": "2026-11-15T17:28:50+00:00",
+      "summary": "媒体讨论MSCI指数资格、被动卖出和比特币融资链；未独立核验MSCI公告，不将报道当正式决定。",
+      "zh_summary": "媒体讨论MSCI指数资格、被动卖出和比特币融资链；未独立核验MSCI公告，不将报道当正式决定。",
+      "evidence_level": "原页媒体全文及页面发布时间",
+      "verify_next": "核对正式持仓、样本与执行时点、成本和反例；媒体观点不作为正式信号。"
     }
   ]
 }
