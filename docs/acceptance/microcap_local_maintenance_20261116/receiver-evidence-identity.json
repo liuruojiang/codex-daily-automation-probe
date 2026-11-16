@@ -1,0 +1,9 @@
+{
+  "runtime_sha": "8467393b197b91d527395fe2024f6f1988afaced",
+  "source_runtime": "e3c855f980e503372fd9fc4268aeea2aa4b5aeeb",
+  "managed_record": "919844bc5380456bb3c16e5cf476e17e",
+  "original_stage_receipt_sha256": "70781dcbc80da74c348fd062d2acdb282d476dbc80e6ce1af7747b1c1f435bbf",
+  "original_bytes": 8232888,
+  "scratch_retired": true,
+  "calendar_observed_before_source_HTTP_disabled": true
+}

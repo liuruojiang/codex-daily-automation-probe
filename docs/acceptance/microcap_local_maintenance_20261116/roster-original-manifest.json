@@ -1,0 +1,15 @@
+{
+  "schema": "microcap_portable_weekly_roster_v1",
+  "date": "2026-11-13",
+  "files": {
+    "original-summary.json": "f3111667de304f7e6630d0a9af71ef3ac3785562ef1f485fb2070c6207ba8d9c",
+    "candidates.json": "2cfbf51de01cf96bf95300563383f847a8653b5e4919f59e8c810a8b915b5ad3",
+    "st-reference.csv": "ca14e8a5db42421f163e8b056d4612094873d73369dd251c92323f32dea3cd05",
+    "source/page-01.json": "d6f5981c7ca2551ee07c6721f106d0e34fcc2a335d46da8a07e73f55ee833d17",
+    "source/page-01.receipt.json": "c55a22d0dd658fe42c1d3be3718e5472fdd2906e32ea5f8754dbdb8dc728c49c",
+    "source/page-02.json": "fa1c1d8fdcbbe3ce92fa7c26d632bf22cf58046cacbbfc6faf4d0e61c60f4ef9",
+    "source/page-02.receipt.json": "3bd5d4f686ea4cf2065b0fa24d34bc738ee87692807ac753965c8c77de001256"
+  },
+  "original_observation_clocks_preserved": true,
+  "final_strategy_delivery": false
+}
