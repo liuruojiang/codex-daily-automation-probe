@@ -6472,17 +6472,29 @@ def build_ai(out_dir: Path, requested_date: str | None = None) -> None:
     date_s = daily.get("date")
     if date_s != expected_date:
         raise ValueError(f"AI HOT report date mismatch: expected {expected_date}, received {date_s}")
-    if not daily.get("sections"):
-        raise ValueError("AI HOT report contains no sections")
-    sections = daily.get("sections") or []
+    sections = daily.get("sections")
+    flashes = daily.get("flashes", [])
+    if not isinstance(sections, list) or not isinstance(flashes, list):
+        raise ValueError("AI HOT report sections and flashes must be arrays")
     lead = daily.get("lead")
     if isinstance(lead, dict):
         conclusion = clean_text(lead.get("leadParagraph") or lead.get("title"))
     else:
         conclusion = clean_text(lead)
-    conclusion = conclusion or "今日 AI 热点以模型、产品和行业动态为主。"
     flat = [it for sec in sections for it in (sec.get("items") or [])]
+    # A dated quiet-day report can legitimately contain only the source lead.
+    # Reject an empty response rather than inventing a generic news conclusion.
+    if not flat and not flashes and not conclusion:
+        raise ValueError("AI HOT report contains no items or source lead")
+    conclusion = conclusion or (
+        "今日 AI HOT 仅提供快讯。" if not flat and flashes
+        else "今日 AI 热点以模型、产品和行业动态为主。"
+    )
     counts = " · ".join(f"{sec.get('label') or '其他'} {len(sec.get('items') or [])} 条" for sec in sections)
+    if not flat and not flashes:
+        counts = "本期来源未列出新闻或快讯（0 条）"
+    elif not sections:
+        counts = f"快讯 {len(flashes)} 条"
     why_it_matters = "可能影响模型选择、产品工作流、成本结构或行业竞争格局，建议结合实际使用场景判断是否跟进。"
 
     plain_lines = [
@@ -6538,7 +6550,6 @@ def build_ai(out_dir: Path, requested_date: str | None = None) -> None:
             f'{"".join(html_cards)}</section>'
         )
 
-    flashes = daily.get("flashes") or []
     if flashes:
         plain_lines += ["快讯", ""]
         flash_rows: list[str] = []
@@ -6623,3 +6634,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
