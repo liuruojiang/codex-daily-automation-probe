@@ -177,6 +177,102 @@ class AiHotFetchRetryTests(unittest.TestCase):
         with patch.object(dr.urllib.request, "urlopen", return_value=response):
             self.assertEqual(dr.fetch_bytes("https://aihot.news/api/v1/dailies/latest"), b'{"schemaVersion":1}')
 
+    def test_counts_include_news_and_flashes_in_every_summary(self) -> None:
+        original = json.loads((ROOT / "tests/fixtures/ai_hot/2026-11-01.json").read_bytes())
+        for case in ("mixed", "news_only", "flash_only", "flash_with_empty_section"):
+            payload = json.loads(json.dumps(original))
+            report = payload["report"]
+            if case == "news_only":
+                report["flashes"] = []
+            elif case == "flash_only":
+                report["sections"] = []
+            elif case == "flash_with_empty_section":
+                report["sections"] = [{"label": "模型", "items": []}]
+            news_count = sum(len(section["items"]) for section in report["sections"])
+            flash_count = len(report["flashes"])
+            total_count = news_count + flash_count
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as tmp:
+                with patch.object(dr, "fetch_bytes", return_value=json.dumps(payload).encode("utf-8")):
+                    dr.build_ai(Path(tmp), requested_date=report["date"])
+                metadata = json.loads((Path(tmp) / "metadata.json").read_text(encoding="utf-8"))
+            self.assertIn(f"共 {total_count} 条：", metadata["body"])
+            self.assertIn(f"{report['date']} · 共 {total_count} 条", metadata["html_body"])
+            self.assertIn(f"今日 {total_count} 条 AI 动态", metadata["html_body"])
+            if flash_count:
+                for body in (metadata["body"], metadata["html_body"]):
+                    self.assertIn(f"快讯 {flash_count} 条", body)
+
+    def test_unfinished_or_ambiguous_empty_reports_cannot_create_metadata(self) -> None:
+        original = json.loads((ROOT / "tests/fixtures/ai_hot/2026-11-16.json").read_bytes())
+        variants = [
+            {"lead": {"title": "日报生成中", "leadParagraph": "新闻内容稍后更新。"}},
+            {"lead": "新闻内容稍后更新。"},
+            {"lead": {"title": "今日 AI 热点", "leadParagraph": "今天发布多个新模型。"}},
+            {"lead": {"title": "今日安静，无大事发生", "leadParagraph": "新闻内容稍后更新。"}},
+            {"lead": {"title": "日报生成中", "leadParagraph": original["report"]["lead"]["leadParagraph"]}},
+            {"lead": {"title": "今日安静，无大事发生"}},
+            {"lead": {"title": "今日安静，无大事发生", "leadParagraph": "北京时间 11 月 14 日 08:00 至 11 月 15 日 08:00，没有新的 AI 大事。"}},
+            {"windowStart": "2026-11-14T00:00:00Z"},
+            {"windowEnd": "2026-11-17T00:00:00Z"},
+            {"windowStart": None},
+            {"windowEnd": "not-a-timestamp"},
+            {"generatedAt": "2026-11-15T23:59:59Z"},
+            {"generatedAt": "2026-11-16T08:00:43"},
+            {"generatedAt": None},
+            {"flashes": None},
+            {"highlights": [{"title": "尚有待处理的看点"}]},
+            {"sections": [{"label": "模型", "items": []}]},
+        ]
+        for changes in variants:
+            payload = json.loads(json.dumps(original))
+            payload["report"].update(changes)
+            with self.subTest(changes=changes), tempfile.TemporaryDirectory() as tmp:
+                raw = json.dumps(payload).encode("utf-8")
+                with patch.object(dr, "fetch_bytes", return_value=raw):
+                    with self.assertRaises(ValueError):
+                        dr.build_ai(Path(tmp), requested_date="2026-11-16")
+                self.assertEqual(list(Path(tmp).iterdir()), [])
+
+    def test_quiet_day_coverage_handles_year_boundary_and_timezone_offsets(self) -> None:
+        payload = json.loads((ROOT / "tests/fixtures/ai_hot/2026-11-16.json").read_bytes())
+        payload["report"].update({
+            "date": "2027-01-01",
+            "windowStart": "2026-12-31T08:00:00+08:00",
+            "windowEnd": "2027-01-01T08:00:00+08:00",
+            "generatedAt": "2027-01-01T08:00:43+08:00",
+            "lead": {
+                "title": "今日安静，无大事发生",
+                "leadParagraph": "北京时间 12 月 31 日 08:00 至 1 月 1 日 08:00，没有新的 AI 大事。",
+            },
+        })
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(dr, "fetch_bytes", return_value=json.dumps(payload).encode("utf-8")):
+                dr.build_ai(Path(tmp), requested_date="2027-01-01")
+            metadata = json.loads((Path(tmp) / "metadata.json").read_text(encoding="utf-8"))
+        self.assertIn("共 0 条：", metadata["body"])
+        self.assertIn("本期来源未列出新闻或快讯（0 条）", metadata["html_body"])
+
+    def test_real_quiet_day_passes_main_and_validation_only_delivery_gate(self) -> None:
+        import check_daily_digest_delivery as delivery
+        raw = (ROOT / "tests/fixtures/ai_hot/2026-11-16.json").read_bytes()
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp)
+            with patch.object(dr, "fetch_bytes", return_value=raw), patch.object(
+                sys, "argv", ["daily_reports.py", "ai-hot", "--report-date", "2026-11-16", "--out-dir", tmp]
+            ):
+                self.assertEqual(dr.main(), 0)
+            output = io.StringIO()
+            with patch.object(sys, "argv", [
+                "check_daily_digest_delivery.py", "--family", "ai-hot",
+                "--metadata", str(out_dir / "metadata.json"), "--validation-only",
+            ]), patch.dict(delivery.os.environ, {"GITHUB_OUTPUT": ""}), patch("sys.stdout", output), patch.object(
+                delivery.GitHub, "get", side_effect=AssertionError("validation must not access delivery history")
+            ):
+                self.assertEqual(delivery.main(), 0)
+            self.assertIn("should_send=false", output.getvalue())
+            self.assertIn("delivery_state=validation_only", output.getvalue())
+            self.assertEqual(sorted(path.name for path in out_dir.iterdir()), ["metadata.json"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -6456,6 +6456,50 @@ def fetch_json_with_retries(
     raise RuntimeError(f"Failed to fetch JSON after {attempts} attempts: {url}") from last_error
 
 
+def ai_hot_confirmed_quiet_day(daily: dict) -> bool:
+    """Accept only the observed, explicit AIHOT no-news edition and its window.
+
+    The public DailyReport contract has no ready/status flag: a quiet edition
+    declares no new events in its lead and names the covered hours, with empty
+    sections, flashes and highlights (https://aihot.news/openapi-v1.json).
+    Keep this conservative: unknown wording or a partial edition must fail
+    before metadata is created, so it cannot consume the day's delivery slot.
+    """
+    if (daily.get("sections") != [] or daily.get("flashes") != []
+            or daily.get("highlights", []) != []):
+        return False
+    lead = daily.get("lead")
+    if not isinstance(lead, dict) or not all(
+        isinstance(lead.get(key), str) for key in ("title", "leadParagraph")
+    ):
+        return False
+    try:
+        report_date = date.fromisoformat(daily["date"])
+        window_end = datetime.combine(report_date, datetime_time(8), tzinfo=BJ)
+        window_start = window_end - timedelta(days=1)
+        stamps = []
+        for key in ("windowStart", "windowEnd", "generatedAt"):
+            value = daily.get(key)
+            if not isinstance(value, str):
+                return False
+            stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if stamp.utcoffset() is None:
+                return False
+            stamps.append(stamp)
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+    if stamps[0] != window_start or stamps[1] != window_end or stamps[2] < window_end:
+        return False
+    expected_lead = (
+        f"北京时间 {window_start.month} 月 {window_start.day} 日 08:00 至 "
+        f"{window_end.month} 月 {window_end.day} 日 08:00，没有新的 AI 大事。"
+    )
+    return (
+        clean_text(lead["title"]) == "今日安静，无大事发生"
+        and clean_text(lead["leadParagraph"]) == expected_lead
+    )
+
+
 def build_ai(out_dir: Path, requested_date: str | None = None) -> None:
     started = now_bj()
     expected_date = requested_date or started.date().isoformat()
@@ -6482,19 +6526,21 @@ def build_ai(out_dir: Path, requested_date: str | None = None) -> None:
     else:
         conclusion = clean_text(lead)
     flat = [it for sec in sections for it in (sec.get("items") or [])]
-    # A dated quiet-day report can legitimately contain only the source lead.
-    # Reject an empty response rather than inventing a generic news conclusion.
-    if not flat and not flashes and not conclusion:
-        raise ValueError("AI HOT report contains no items or source lead")
+    if not flat and not flashes and not ai_hot_confirmed_quiet_day(daily):
+        raise ValueError("AI HOT empty report is not a confirmed quiet-day edition")
     conclusion = conclusion or (
         "今日 AI HOT 仅提供快讯。" if not flat and flashes
         else "今日 AI 热点以模型、产品和行业动态为主。"
     )
-    counts = " · ".join(f"{sec.get('label') or '其他'} {len(sec.get('items') or [])} 条" for sec in sections)
-    if not flat and not flashes:
+    total_count = len(flat) + len(flashes)
+    count_parts = [
+        f"{sec.get('label') or '其他'} {len(sec.get('items') or [])} 条" for sec in sections
+    ]
+    if flashes:
+        count_parts.append(f"快讯 {len(flashes)} 条")
+    counts = " · ".join(count_parts)
+    if total_count == 0:
         counts = "本期来源未列出新闻或快讯（0 条）"
-    elif not sections:
-        counts = f"快讯 {len(flashes)} 条"
     why_it_matters = "可能影响模型选择、产品工作流、成本结构或行业竞争格局，建议结合实际使用场景判断是否跟进。"
 
     plain_lines = [
@@ -6504,7 +6550,7 @@ def build_ai(out_dir: Path, requested_date: str | None = None) -> None:
         conclusion,
         "",
         "今日速览",
-        f"共 {len(flat)} 条：{counts}",
+        f"共 {total_count} 条：{counts}",
         "",
     ]
     html_sections: list[str] = []
@@ -6582,12 +6628,12 @@ def build_ai(out_dir: Path, requested_date: str | None = None) -> None:
     body = "\n".join(plain_lines)
     html_body = f'''<!doctype html>
 <html lang="zh-CN"><body style="margin:0;padding:0;background:#f3f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',Arial,sans-serif;color:#172033;">
-<div style="display:none;max-height:0;overflow:hidden;">今日 {len(flat)} 条 AI 动态，完整内容直接在邮件正文查看。</div>
+<div style="display:none;max-height:0;overflow:hidden;">今日 {total_count} 条 AI 动态，完整内容直接在邮件正文查看。</div>
 <div style="max-width:760px;margin:0 auto;padding:24px 14px 40px;">
   <header style="background:#35378f;padding:30px 26px;border-radius:16px;color:#ffffff;">
     <div style="font-size:13px;letter-spacing:1.5px;opacity:.85;">AI HOT · 每日中文简报</div>
     <h1 style="margin:8px 0 6px;font-size:30px;line-height:1.3;">AI HOT 日报</h1>
-    <div style="font-size:15px;opacity:.9;">{html.escape(date_s)} · 共 {len(flat)} 条</div>
+    <div style="font-size:15px;opacity:.9;">{html.escape(date_s)} · 共 {total_count} 条</div>
   </header>
   <div style="margin-top:16px;padding:20px 22px;background:#fff8e8;border:1px solid #f3d38b;border-radius:12px;">
     <div style="font-size:13px;font-weight:700;color:#8a5a00;margin-bottom:6px;">一句话结论</div>
