@@ -1,0 +1,19 @@
+{
+  "revision": "dac5e4b760a7ba0a8f96427addd09075cbd3da32",
+  "old_pointer_sha256": "108f07c8136e95608afd7dbbca7f8c5e29cadb74d7ec86569132f993bd24be4a",
+  "candidate_sha256": "7a8fe507757a10ba8ad16e6a3fa4006f1269f35bdcf6653978acbf271268651e",
+  "changed_files": [
+    "config/microcap_member_local_runtime.json",
+    "scripts/member_checkpoint_policy.py",
+    "scripts/microcap_recovery_handoff.py"
+  ],
+  "strategy_pin_preserved": true,
+  "source_runtime_unchanged": true,
+  "email_sent": false,
+  "orders_placed": false,
+  "status": "reviewed_reader_installed",
+  "observed_at": "2026-11-16T10:25:34.693887+08:00",
+  "files": 11,
+  "manifest_sha256": "6aa5450db76d97127d818f60fdab6531fee3951e38cb611a9cdddfa0ce06da68",
+  "previous_bundle_retained": true
+}
