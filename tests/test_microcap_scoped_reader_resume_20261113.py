@@ -163,3 +163,17 @@ def test_second_cold_admission_cannot_select_an_unproved_or_changed_reader_conte
     with pytest.raises((ValueError, KeyError)):
         m.receipt_context(encode(original), digest, closed.__getitem__)
     assert not calls
+
+
+def test_exact_old_reader_admission_is_still_readable_by_current_code(tmp_path):
+    out,consumer,original,current,calls,run=setup_case(tmp_path)
+    old=copy.deepcopy(current)
+    old['controller_sources']['microcap_scoped_stage_resume.py']=m.LEGACY_REVIEWED_STAGE_READER
+    old['controller_sources']['microcap_recovery_handoff.py']=m.LEGACY_REVIEWED_PROOF_READER
+    admission=m.reviewed_reader_context(encode(original),encode(old))
+    assert admission['reader_controller_sources']==old['controller_sources']
+    assert admission['original_context_and_receipts_rewritten'] is False
+    rebound=copy.deepcopy(old)
+    rebound['controller_sources']['microcap_recovery_handoff.py']=m.REVIEWED_PROOF_READER
+    with pytest.raises(ValueError,match='transaction changed'):
+        m.reviewed_reader_context(encode(original),encode(rebound))
