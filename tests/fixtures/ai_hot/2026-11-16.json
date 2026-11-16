@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "report": {
+    "date": "2026-11-16",
+    "generatedAt": "2026-11-16T00:00:43.682Z",
+    "windowStart": "2026-11-15T00:00:00.000Z",
+    "windowEnd": "2026-11-16T00:00:00.000Z",
+    "links": {
+      "aihot": "https://aihot.news/daily/2026-11-16"
+    },
+    "attribution": {
+      "name": "AIHOT",
+      "url": "https://aihot.news/daily/2026-11-16"
+    },
+    "lead": {
+      "title": "今日安静，无大事发生",
+      "leadParagraph": "北京时间 11 月 15 日 08:00 至 11 月 16 日 08:00，没有新的 AI 大事。"
+    },
+    "sections": [],
+    "flashes": [],
+    "highlights": []
+  }
+}
+

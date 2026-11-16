@@ -124,6 +124,53 @@ class AiHotFetchRetryTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "date mismatch"):
                     dr.build_ai(Path(tmp))
 
+
+    def test_quiet_day_renders_real_source_lead_and_explicit_zero_items(self) -> None:
+        raw = (ROOT / "tests/fixtures/ai_hot/2026-11-16.json").read_bytes()
+        report = json.loads(raw)["report"]
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(dr, "fetch_bytes", return_value=raw):
+                dr.build_ai(Path(tmp), requested_date=report["date"])
+            metadata = json.loads((Path(tmp) / "metadata.json").read_text(encoding="utf-8"))
+        self.assertEqual(metadata["subject"], "AI HOT 日报 - 2026-11-16")
+        for body in (metadata["body"], metadata["html_body"]):
+            self.assertIn(report["lead"]["leadParagraph"], body)
+            self.assertIn("本期来源未列出新闻或快讯（0 条）", body)
+            self.assertNotIn("模型、产品和行业动态为主", body)
+        self.assertIsNone(metadata["attachment"])
+
+    def test_flash_only_report_is_not_rejected_for_empty_sections(self) -> None:
+        payload = json.loads((ROOT / "tests/fixtures/ai_hot/2026-11-01.json").read_bytes())
+        payload["report"]["sections"] = []
+        payload["report"]["lead"] = None
+        self.assertTrue(payload["report"]["flashes"])
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(dr, "fetch_bytes", return_value=json.dumps(payload).encode("utf-8")):
+                dr.build_ai(Path(tmp), requested_date="2026-11-01")
+            metadata = json.loads((Path(tmp) / "metadata.json").read_text(encoding="utf-8"))
+        self.assertIn(payload["report"]["flashes"][0]["title"], metadata["body"])
+        self.assertIn("快讯", metadata["html_body"])
+        self.assertNotIn("本期来源未列出新闻或快讯", metadata["body"])
+
+    def test_empty_or_malformed_reports_cannot_produce_sendable_metadata(self) -> None:
+        valid = json.loads((ROOT / "tests/fixtures/ai_hot/2026-11-16.json").read_bytes())
+        invalid_reports = [
+            {key: value for key, value in valid["report"].items() if key != "sections"},
+            {**valid["report"], "sections": None},
+            {**valid["report"], "sections": {}},
+            {**valid["report"], "flashes": {}},
+            {**valid["report"], "lead": None},
+            {**valid["report"], "lead": {"title": " ", "leadParagraph": " "}},
+            {**valid["report"], "lead": None, "sections": [{"label": "模型", "items": []}]},
+        ]
+        for report in invalid_reports:
+            with self.subTest(report=report), tempfile.TemporaryDirectory() as tmp:
+                raw = json.dumps({"schemaVersion": 1, "report": report}).encode("utf-8")
+                with patch.object(dr, "fetch_bytes", return_value=raw):
+                    with self.assertRaises(ValueError):
+                        dr.build_ai(Path(tmp), requested_date="2026-11-16")
+                self.assertFalse((Path(tmp) / "metadata.json").exists())
+
     def test_gzip_response_is_decoded_before_json_parsing(self) -> None:
         response = io.BytesIO(gzip.compress(b'{"schemaVersion":1}'))
         response.headers = {"Content-Encoding": "gzip"}
@@ -133,3 +180,4 @@ class AiHotFetchRetryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
