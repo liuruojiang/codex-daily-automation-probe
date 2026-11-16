@@ -166,14 +166,14 @@ def test_M9_envelope_cannot_drop_proof_cross_bind_or_change_native_state(recover
 def test_M10_configs_preserve_M9_P3_identity_and_only_select_reviewed_successors():
     old = json.loads(subprocess.check_output(['git', '-C', str(ROOT), 'show', OLD_AUTO + ':config/microcap_scoped_rebalance.json']))
     current = settings.load(ROOT / 'config/microcap_scoped_rebalance.json', require_seed=True)
-    assert current['runtime_sha'] == M10
-    assert current['producer_sha'] == maintenance.RUNTIME == P4
+    assert current['runtime_sha'] == m.M11
+    assert current['producer_sha'] == maintenance.RUNTIME == 'e3c855f980e503372fd9fc4268aeea2aa4b5aeeb'
     assert json.loads((ROOT/'config/microcap_local_producer_p3_20261112.json').read_bytes())['runtime_sha']==P3
-    old['runtime_sha'] = M10
-    old['producer_sha'] = P4
+    old['runtime_sha'] = m.M11
+    old['producer_sha'] = 'e3c855f980e503372fd9fc4268aeea2aa4b5aeeb'
     assert current == old
     old_policy = json.loads(subprocess.check_output(['git', '-C', str(ROOT), 'show', OLD_AUTO + ':config/microcap_member_local_runtime.json']))
-    expected = copy.deepcopy(old_policy); expected['rebalance_producer_shas'].extend([M9,M10])
+    expected = copy.deepcopy(old_policy); expected['rebalance_producer_shas'].extend([M9,M10,m.M11])
     assert policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json') == expected
     assert {M9,M10} <= m.REVIEWED_NATIVES and {M9,M10} <= scoped_inputs.REVIEWED_CONSUMERS
     assert M9 in prefix.CONSUMER_READERS and M9 not in prefix.PRODUCER_READERS
