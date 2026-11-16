@@ -1,0 +1,15 @@
+{
+  "schema": "microcap_local_publication_v1",
+  "runtime_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+  "producer_commit": "9034f6ba3f1b1959cda5beaa4e4e5bed332d9af6",
+  "target": "2026-11-13",
+  "sha256": "f57de1d30015c104f064a1f9f4eb27355bfc0f475b7b68ad35854ab31a2d13eb",
+  "bytes": 202894,
+  "status": "published",
+  "release_id": 446530408,
+  "asset_id": 753092442,
+  "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-weekly-roster-20261113/microcap-weekly-roster-20261113.zip",
+  "server_digest": "sha256:f57de1d30015c104f064a1f9f4eb27355bfc0f475b7b68ad35854ab31a2d13eb",
+  "remote_manifest_sha256": "7f324af9df82a656c39086ff421204511372f5d17e23687724af6a203c56e9f3",
+  "whole_zip_readback": true
+}

@@ -1,0 +1,34 @@
+{
+  "observed_at": "2026-11-16T09:39:01.671238+08:00",
+  "head": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+  "files": {
+    ".microcap_index_cache/active_universe.csv": {
+      "sha256": "dfa9034af13351f1c921087983fd12c3823d741b6a938356da328179683623e4",
+      "matches_preserved_baseline": true
+    },
+    ".microcap_index_cache/current_st.csv": {
+      "sha256": "072ecac4836a16d6b5425c5f8d4fbfd324a4ecb5f4126764c86791769cf99696",
+      "matches_preserved_baseline": true
+    },
+    "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_panel_refreshed.csv": {
+      "sha256": "f74c66cda0725691352c530398aa20b348a52afa5b23dd7b5bace1074dc32f40",
+      "matches_preserved_baseline": true
+    },
+    "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_meta.json": {
+      "sha256": "bfa0da0cceba7279f32f4a458223c33bf4330ff20172306adf0fe233b5f9e06a",
+      "matches_preserved_baseline": true
+    },
+    "outputs/microcap_top100_mom16_biweekly_live_v2_0_base_summary.json": {
+      "sha256": "67c9d26310da2a3e30a694a97ea24a19669b507994284d61038091b4361accca",
+      "matches_preserved_baseline": true
+    },
+    "outputs/microcap_top100_mom16_hedge_zz1000_0p8x_biweekly_thursday_16y_v2_0_base_costed_nav.csv": {
+      "sha256": "2fd07b636c7510a5232fb548f64edbdb31105b997855b19b64c84278233955f3",
+      "matches_preserved_baseline": true
+    },
+    "outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv": {
+      "sha256": "8743bd1d2448cf8a86158483d5aa449c47b6bc4e568bfe25f913b6ee0079c57a",
+      "matches_preserved_baseline": true
+    }
+  }
+}

@@ -9,8 +9,8 @@
     "date": "2026-11-10"
   },
   "weekly_roster": {
-    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-20261109-63c7b16d/microcap-weekly-roster-20261109.zip",
-    "sha256": "a369c67c4a3d167fec5744fe0017b7e6acb370055665afd0f2472287ee0b623c",
-    "date": "2026-11-09"
+    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-weekly-roster-20261113/microcap-weekly-roster-20261113.zip",
+    "sha256": "f57de1d30015c104f064a1f9f4eb27355bfc0f475b7b68ad35854ab31a2d13eb",
+    "date": "2026-11-13"
   }
 }

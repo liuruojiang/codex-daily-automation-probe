@@ -1,0 +1,16 @@
+{
+  "status": "903_complete",
+  "observed_at": "2026-11-16T09:58:59.750417+08:00",
+  "target": "2026-11-13",
+  "stages": 903,
+  "issuers": 300,
+  "bound_files": 39004,
+  "all_hashes_match": true,
+  "original_successes_byte_maps_reused": 898,
+  "worker_reused_stages": 897,
+  "source_runtime": "e3c855f980e503372fd9fc4268aeea2aa4b5aeeb",
+  "result_sha256": "5413a951a03cc1b2cd4c2cdba94a4fceafcbda0cf4c448851e27222f6fe2057d",
+  "full_strategy_delivery": false,
+  "email_sent": false,
+  "orders_placed": false
+}
