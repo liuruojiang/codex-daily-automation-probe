@@ -177,3 +177,16 @@ def test_exact_old_reader_admission_is_still_readable_by_current_code(tmp_path):
     rebound['controller_sources']['microcap_recovery_handoff.py']=m.REVIEWED_PROOF_READER
     with pytest.raises(ValueError,match='transaction changed'):
         m.reviewed_reader_context(encode(original),encode(rebound))
+
+
+def test_exact_pre_m12_closed_reader_pair_remains_readable(tmp_path):
+    _, _, original, current, _, _ = setup_case(tmp_path)
+    predecessor = copy.deepcopy(current)
+    predecessor['controller_sources']['microcap_scoped_stage_resume.py'] = m.PRE_M12_STAGE_READER
+    predecessor['controller_sources']['microcap_recovery_handoff.py'] = m.PRE_M12_PROOF_READER
+    admitted = m.reviewed_reader_context(encode(original), encode(predecessor))
+    assert admitted['reader_controller_sources'] == predecessor['controller_sources']
+    assert admitted['original_context_and_receipts_rewritten'] is False
+    predecessor['controller_sources']['microcap_recovery_handoff.py'] = m.REVIEWED_PROOF_READER
+    with pytest.raises(ValueError, match='transaction changed'):
+        m.reviewed_reader_context(encode(original), encode(predecessor))
