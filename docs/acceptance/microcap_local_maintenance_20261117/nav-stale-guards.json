@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "scope": "software_negative_cases_not_live_signal",
+  "observed_at": "2026-11-17T12:20:08.726441+08:00",
+  "old_D16_quotes_rejected_for_D17": true,
+  "stale_D13_checkpoint_rejected_for_D16_anchor": true,
+  "current_D16_checkpoint_accepted": true,
+  "legacy_NAV_date": "2026-11-05",
+  "legacy_default_freshness": {
+    "latest_trade_date": "2026-11-05",
+    "current_date": "2026-11-17",
+    "stale_calendar_days": 12,
+    "stale_trading_days": null,
+    "staleness_unit": "calendar_days",
+    "max_stale_anchor_days": 5,
+    "is_stale": true,
+    "status": "stale"
+  },
+  "legacy_command_not_executed": true,
+  "new_stock_quotes": 0,
+  "SMTP": false
+}
