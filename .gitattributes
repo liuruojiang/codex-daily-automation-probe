@@ -20,3 +20,4 @@ docs/acceptance/microcap_local_cutover_20261111/** -text -whitespace
 tests/fixtures/microcap_notice_prefix_20261111/*.json -text
 docs/ic_im_held_put_close_20261113_v1_manifest.json -text
 docs/ic_im_held_put_close_20261113_v2_manifest.json -text
+tests/fixtures/microcap_p5_published_pointer_20261116.json -text
