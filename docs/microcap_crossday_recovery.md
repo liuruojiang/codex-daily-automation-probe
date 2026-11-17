@@ -1,5 +1,7 @@
 # 微盘股跨日故障恢复
 
+17日当前读取关系为P6来源/M12消费者，原M9/M10/M11回执及精确控制器身份继续保留。16日来源300只/903项、独立M12接收及远端整包读回完成后，固定恢复运行44010940155实际读回16日current成员包，确认无遗漏R、无需推进检查点、无需新一轮正式刷新；原12日完整状态仍按12日归档记账。见[本轮验收](acceptance/microcap_local_maintenance_20261117/README.md)。以下旧运行和版本段落保留各自原日期，不把来源发布或成员日更冒称新完整NAV。
+
 本修复将原调仓日R和最近完成交易日D分开处理。恢复在真实D执行原生完整刷新和独立检查，按原生双周日历覆盖遗漏的所有R，再发布D的当前成员检查点。不会把旧R冒充今天，不修改选股、成本、三版参数或既有正式历史前缀。
 
 核心修复已通过[PR197](https://github.com/liuruojiang/codex-daily-automation-probe/pull/197)合并为`b8d489a7da1f09db5e48ebff387b7042f9508906`。生产Auto、本地11文件读取包及09:00/11:00恢复指令已切换；两次真实云端无发送验收[produce43182489965](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43182489965)与[readback43182714966](https://github.com/liuruojiang/codex-daily-automation-probe/actions/runs/43182714966)均通过。第二次准确命中首轮工件13927066639，未使用fallback，成功阶段全部复用。软件故障后缀与当日真实行情状态分别验收。

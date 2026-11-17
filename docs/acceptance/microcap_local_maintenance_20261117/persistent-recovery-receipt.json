@@ -1,0 +1,24 @@
+{
+  "schema": "microcap-recovery-v1",
+  "target": "2026-11-16",
+  "repository": "liuruojiang/codex-daily-automation-probe",
+  "key": "microcap-recovery-v1-2026-11-16",
+  "status": "already_succeeded",
+  "expected_head": "dafef8c633685f510f289ccdbc88e624d9a9bd77",
+  "runtime_contract": {
+    "owner": "local",
+    "enabled": true,
+    "consumer_sha": "c16c59411ca8efa86728ed0cc136235be4e60170",
+    "producer_sha": "f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5",
+    "calendar_sha256": "8c5f82f72fee80b8ffb5ca381bb894bdf82eeb267678800ba972bf9bad64abcb",
+    "host_schema": "microcap_local_maintenance_host_v1",
+    "scoped_schema": "microcap_scoped_rebalance_runtime_v1",
+    "producer_schema": "microcap_local_source_runtime_v1",
+    "producer_role": "source_preparation_only"
+  },
+  "created_after": "2026-11-17T03:32:31Z",
+  "after_run_id": 0,
+  "history": [],
+  "run_id": 44010940155,
+  "conclusion": "success"
+}
