@@ -1,0 +1,13 @@
+# 17-November local source maintenance
+
+Morning source target is 16-November from the native exchange calendar. Remote host remains `owner=local`. The dated 13-November weekly roster remains within seven days and preserves the actual 100 members. Original primary workspace AB214 installation and user changes are not switched.
+
+Native PR109 merged the exact six-row 13-November catalog review. Source-only P6 is `f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5`; full reader M12 is `c16c59411ca8efa86728ed0cc136235be4e60170`. Six original issuer PDFs and both 1579-row snapshots are hash-bound. Native ST projections are identical; mutated title, issuer, missing-row and listing-state examples fail closed. The original historical authority, strategy parameters, economic streams and observation clocks are preserved.
+
+The Auto change adds the exact P6/M12 roles while retaining P5's original profile and prior controller identities. A controller predating M12 cannot issue M12 proofs. The published P5 source pointer remains unchanged until new 903-stage completion, export, exact receiver verification and remote asset readback.
+
+The initial source process exited without completing its current-name stage. No source executor remained before a single hidden persistent replacement continued in the same directory. The original generation `refresh_20261117T021610145414Z_c81cc610d8f9` has two all-zero 16-November page receipts. Those files and the failed validation remain untouched. Original valid boundary pages remain the review basis; the damaged day was recollected separately through the unchanged native collector with actual new observation times. No fabricated replacement receipts or HTTP clocks are allowed.
+
+Prior actual 15:10 run43821958228 succeeded with `no_recovery_due`, no missing rebalance dates, but `needs_checkpoint_advance=true` and checkpoint13-November. It does not certify 16-November formal delivery. After source publication, the fixed persistent recovery entry must reacquire real completed D, follow its unique workflow, and separately verify formal gates, member checkpoint and whole-state publication. No SMTP, orders, repeated daily dispatch or QVeris.
+
+Validation receipts remain under `D:/Codex/test-lifecycle/records/` and the persistent run directory `D:/Codex/microcap-local-maintenance/recovery/maintenance-20261117*`. Source/native consumer tests passed; unrelated old archive-recertification tests retained 18 old share-reader fingerprint failures, with their implementation, share reader and test unchanged from M11. This path does not recertify that archive. Actual source, release, formal recovery and closeout statuses will be recorded after their respective gates.
