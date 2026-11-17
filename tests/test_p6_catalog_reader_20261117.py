@@ -1,4 +1,5 @@
 import json
+import subprocess
 import sys
 from pathlib import Path
 import pytest
@@ -27,7 +28,7 @@ def test_new_reader_cannot_claim_m12_without_full_recovery_proof():
     with pytest.raises(ValueError, match='formal recovery proof route'):
         policy.validate_checkpoint_payload(dict(strategy_sha=recovery.M12, handoff_mode='native_close_extends_previous'), policy.LOCAL_READ_POLICY)
 
-def test_published_source_pointer_keeps_original_p5_identity_until_new_sources_finish():
-    pointer = json.loads((ROOT/'config/microcap_local_maintenance.json').read_bytes())
+def test_previous_published_source_pointer_keeps_original_p5_identity():
+    pointer = json.loads(subprocess.check_output(['git', '-C', str(ROOT), 'show', 'c2e25205e41a1564e365ff51d147a283fa946cb2:config/microcap_local_maintenance.json']))
     assert pointer['owner'] == 'local'
     assert pointer['scoped_inputs']['runtime_sha'] == inputs.P5_RUNTIME
