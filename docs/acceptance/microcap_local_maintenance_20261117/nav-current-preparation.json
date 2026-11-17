@@ -1,0 +1,33 @@
+{
+  "observed_at": "2026-11-17T12:21:53.988543+08:00",
+  "installation": {
+    "schema": "member_daily_local_install_v1",
+    "automation_pin": "fb60c79e6efc28c41d306310366ea35356812770",
+    "automation_root": "D:\\Codex\\home\\automations\\ic-im\\runtime\\local_intraday_bundles\\fb60c79e6efc28c41d306310366ea35356812770",
+    "strategy_pin": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
+    "strategy_root": "D:\\\u52a8\u91cf\u7b56\u7565\\\u5fae\u76d8\u80a1\u5bf9\u51b2\u7b56\u7565",
+    "manifest_sha256": "456612b0dd5729e68f0ef999920998559ccef8ace522e1965f92c26f561c5edb"
+  },
+  "bundle_files_verified": 11,
+  "result": {
+    "status": "prepared",
+    "checkpoint": "D:\\Codex\\home\\automations\\ic-im\\runs\\20261117\\morning_preparation\\microcap\\checkpoint\\checkpoint.json",
+    "market_quotes_collected": false
+  },
+  "commands": [
+    {
+      "command": [
+        "C:\\Python314\\python.exe",
+        "-B",
+        "D:\\\u52a8\u91cf\u7b56\u7565\\\u5fae\u76d8\u80a1\u5bf9\u51b2\u7b56\u7565\\scripts\\member_period_handoff.py",
+        "verify",
+        "--checkpoint",
+        "D:\\Codex\\home\\automations\\ic-im\\runs\\20261117\\morning_preparation\\microcap\\checkpoint\\checkpoint.json"
+      ],
+      "started_at": "2026-11-17T12:19:03.863510+08:00",
+      "completed_at": "2026-11-17T12:19:04.036539+08:00",
+      "exit_code": 0
+    }
+  ],
+  "scope": "prepare_only_no_today_stock_quotes_no_SMTP"
+}

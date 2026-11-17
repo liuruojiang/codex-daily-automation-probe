@@ -7,6 +7,14 @@ signals, publishes a validated close checkpoint, renders, then sends. It has no
 whole-state restore, all-market refresh, regression, or maintenance dependency.
 Same-day confirmed checkpoints are rendered without fetching prices again.
 
+The whole-state archive date is separate from the daily calculation-history date.
+The 17-November audit verified a D12 whole archive, a current D16 checkpoint with
+4094 history sessions, and a separately preserved D5 legacy local NAV. Frozen
+real D16 inputs reproduced all301 signal fields while legacy full-state reads
+and new market acquisition were forbidden; the installed local entry also passed
+its D16 checkpoint prepare gate without quotes. See the [consumer-impact audit](acceptance/microcap_local_maintenance_20261117/nav-consumer-impact.md).
+This verifies the daily route's readiness, not future D17 quotes or delivery.
+
 `config/microcap_member_checkpoint.json` must contain the exact reviewed small
 seed (`schema=member_daily_seed_v1`, `strategy_sha`, official release `url`,
 `sha256`). It is used only when no previously published member checkpoint is

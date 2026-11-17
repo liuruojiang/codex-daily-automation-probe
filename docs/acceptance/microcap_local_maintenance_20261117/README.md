@@ -1,5 +1,7 @@
 # 17-November local source maintenance
 
+关于完整归档12日、成员计算历史16日和主项目旧NAV5日的区别，以及17日实时/日报入口的原生复算、旧数据拒绝和准备校验，见[消费者影响核查](nav-consumer-impact.md)。该核查没有重抓来源、生成今日信号或发送邮件。
+
 Morning source target is 16-November from the native exchange calendar. Remote host remains `owner=local`. The dated 13-November weekly roster remains within seven days and preserves the actual 100 members. Original primary workspace AB214 installation and user changes are not switched.
 
 Native PR109 merged the exact six-row 13-November catalog review. Source-only P6 is `f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5`; full reader M12 is `c16c59411ca8efa86728ed0cc136235be4e60170`. Six original issuer PDFs and both 1579-row snapshots are hash-bound. Native ST projections are identical; mutated title, issuer, missing-row and listing-state examples fail closed. The original historical authority, strategy parameters, economic streams and observation clocks are preserved.

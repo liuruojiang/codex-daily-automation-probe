@@ -1,0 +1,40 @@
+{
+  "status": "passed",
+  "scope": "frozen_real_D16_compatibility_not_D17_live_signal",
+  "observed_at": "2026-11-17T12:18:14.229659+08:00",
+  "native_strategy_root": "D:\\\u52a8\u91cf\u7b56\u7565\\\u5fae\u76d8\u80a1\u5bf9\u51b2\u7b56\u7565",
+  "history_rows": 4094,
+  "history_start": "2010-01-05",
+  "history_end": "2026-11-16",
+  "current_checkpoint_sha256": "506ea92ddeb749501f0c6e2d894e0bafaba88f79c50cef14390a4b9924cbc2d2",
+  "expected_D17_anchor": "2026-11-16",
+  "legacy_full_state_read_attempts": [],
+  "network_after_calendar": "forbidden",
+  "new_stock_quotes": 0,
+  "SMTP": false,
+  "comparisons": [
+    {
+      "version": "v2.0",
+      "fields": 81,
+      "exact": 81,
+      "floating_rounding": []
+    },
+    {
+      "version": "v2.3",
+      "fields": 111,
+      "exact": 111,
+      "floating_rounding": []
+    },
+    {
+      "version": "v2.5",
+      "fields": 109,
+      "exact": 109,
+      "floating_rounding": []
+    }
+  ],
+  "real_inputs_sha256": {
+    "D:\\Codex\\microcap-local-maintenance\\checkpoints\\verified-20261113\\checkpoint.json": "d30f2cb87983e0faf4d43374c287efa49ddf37ce4d342215a96ce7f5181e51f3",
+    "D:\\Codex\\microcap-local-maintenance\\recovery\\nav-consumer-audit-20261117\\original-D16-daily\\daily-inputs\\quotes.json": "7f18745987be7dd4e6508194ed77618fe187d3703dc76af1ca2b68303d965a1c",
+    "D:\\Codex\\microcap-local-maintenance\\recovery\\nav-consumer-audit-20261117\\original-D16-daily\\daily-inputs\\hedge.json": "f69b7629ed2ce54231a367b5ff16fcd6f9844111f04c53119f808074793d33d5"
+  }
+}
