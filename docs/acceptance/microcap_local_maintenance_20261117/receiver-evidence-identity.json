@@ -1,0 +1,8 @@
+{
+  "record_id": "09a8dc59cb464414a0b04a64cc7589e2",
+  "native_stage_receipt_sha256": "2c5fcf1d428b0d2a20c87dce08e50ded3c914ae2aa1b64631210a6abb4198540",
+  "native_stage_receipt_bytes": 9567917,
+  "native_runtime": "c16c59411ca8efa86728ed0cc136235be4e60170",
+  "stocks": 300,
+  "stock_HTTP_permitted": false
+}

@@ -1,0 +1,11 @@
+{
+  "runtime_sha": "f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5",
+  "producer_commit": "fb60c79e6efc28c41d306310366ea35356812770",
+  "target": "2026-11-16",
+  "symbols": 300,
+  "files": 44415,
+  "original_manifest_sha256": "25367d20622a99cca94c382fe320dd0d2cd2bbf0885b3ac04a548878528b64fd",
+  "scope_sha256": "2cfbf51de01cf96bf95300563383f847a8653b5e4919f59e8c810a8b915b5ad3",
+  "source_inputs_only": true,
+  "final_strategy_delivery": false
+}
