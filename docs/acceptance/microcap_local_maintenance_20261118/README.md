@@ -1,3 +1,5 @@
+Final status: **complete** for local sources, GitHub publication/adoption and same-slot recovery check. PointerPR226 merged7a231cb3. RealD17 fixed recovery run44219278848 succeeded; original artifact14389697842 independently read back. Plan no_recovery_due/runfalse/missingR[]/needs_checkpoint_advancefalse/native_formal_gates_requiredfalse. Exact sameD17 current checkpoint SHA matches local. Persistent dispatcher records already_succeeded; one POST, no repeated rebalance or daily. All five source/preparation/worker/price locks available and released. No pending item in this run. Source maintenance is not a new fullNAV archive. Normal15:10 and16:00 schedules remain independent.
+
 # 18 November source publication and recovery
 
 17-November sources completed all300 issuers and903 stages at09:32. Independent48,680-object readback confirms all900 original stock-stage maps unchanged. Current-name alias repair PR225 merged5e9c832a after all five CI groups44213719381 pass. The unchanged P6 source-only runtime is f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5; actual exporter5e9c832a1ff0be116ea62b0c019c46fb405aa34a. No history, strategy parameter or native source-code change.
