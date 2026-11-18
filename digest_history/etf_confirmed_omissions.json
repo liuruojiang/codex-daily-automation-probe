@@ -6891,6 +6891,58 @@
       "zh_summary": "港交所全文确认点心债基准、彭博管理与产品授权筹备。",
       "evidence_level": "发布者全文；日期结合冻结RSS和页面",
       "verify_next": "需正式数据、持仓、样本外与成本核验；观点不是交易信号。"
+    },
+    {
+      "origin_run_id": "44180568685",
+      "origin_report_date": "2026-11-18",
+      "source": "Seeking Alpha ETFs",
+      "title": "RDVI: The Rare Option Income ETF That Moved Its Portfolio In Time",
+      "zh_title": "RDVI：期权收入基金的组合调整",
+      "url": "https://seekingalpha.com/article/4969222-rdvi-the-rare-option-income-etf-that-moved-its-portfolio-in-time?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-17T19:54:52+00:00",
+      "summary": "发布者公开摘要：金融权重增6.6个百分点、前十23%、约20%看涨覆盖；作者观点，需持仓日期和净值验证。",
+      "zh_summary": "发布者公开摘要：金融权重增6.6个百分点、前十23%、约20%看涨覆盖；作者观点，需持仓日期和净值验证。",
+      "evidence_level": "发布者公开摘要",
+      "verify_next": "需核实原始数据、持仓及成本，不是交易信号。"
+    },
+    {
+      "origin_run_id": "44180568685",
+      "origin_report_date": "2026-11-18",
+      "source": "Seeking Alpha ETFs",
+      "title": "ARGT: Argentina Is A Great Opportunity, But Beware The Political Risk",
+      "zh_title": "ARGT：阿根廷机会与政治风险",
+      "url": "https://seekingalpha.com/article/4968980-argt-argentina-is-a-great-opportunity-but-beware-the-political-risk?source=feed_tag_etf_portfolio_strategy",
+      "published": "2026-11-17T11:21:28+00:00",
+      "summary": "发布者公开摘要：区分银行、能源与跨境企业，便宜不等于低风险。",
+      "zh_summary": "发布者公开摘要：区分银行、能源与跨境企业，便宜不等于低风险。",
+      "evidence_level": "发布者公开摘要",
+      "verify_next": "需核实原始数据、持仓及成本，不是交易信号。"
+    },
+    {
+      "origin_run_id": "44180568685",
+      "origin_report_date": "2026-11-18",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Your “Safe” Health Care ETF Just Got Hit by UnitedHealth Again",
+      "zh_title": "医疗ETF的防御标签与单股集中风险",
+      "url": "https://247wallst.com/investing/etf/2026/11/17/your-safe-health-care-etf-just-got-hit-by-unitedhealth-again/?.tsrc=rss",
+      "published": "2026-11-17T16:47:29+00:00",
+      "summary": "媒体全文：XLV/VHT/IHF受UnitedHealth与政策消息影响，需穿透持仓和官方政策。",
+      "zh_summary": "媒体全文：XLV/VHT/IHF受UnitedHealth与政策消息影响，需穿透持仓和官方政策。",
+      "evidence_level": "媒体全文",
+      "verify_next": "需核实原始数据、持仓及成本，不是交易信号。"
+    },
+    {
+      "origin_run_id": "44180568685",
+      "origin_report_date": "2026-11-18",
+      "source": "Yahoo Finance ETF Headlines",
+      "title": "Gold Falls Below $4,000: Is Now the Time to Invest in This Gold-Backed ETF?",
+      "zh_title": "黄金回落与实物黄金ETF的配置问题",
+      "url": "https://www.fool.com/investing/2026/11/17/gold-falls-below-4-000-is-now-the-time-to-invest-in-this-gold-backed-etf/?.tsrc=rss",
+      "published": "2026-11-17T15:48:02+00:00",
+      "summary": "媒体全文：GLD五年表现比较，不代表低点或未来收益；需统一总回报和实际利率。",
+      "zh_summary": "媒体全文：GLD五年表现比较，不代表低点或未来收益；需统一总回报和实际利率。",
+      "evidence_level": "媒体全文",
+      "verify_next": "需核实原始数据、持仓及成本，不是交易信号。"
     }
   ]
 }
