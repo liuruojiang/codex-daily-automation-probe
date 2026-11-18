@@ -1,0 +1,14 @@
+{
+  "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-23/fb4ca608-cf09-4821-b39a-bb8ad024967a.PDF",
+  "observed_at": "2026-11-18T09:07:52.483167+08:00",
+  "status": 200,
+  "sha256": "ad172506c7aca3004e2385e99be547c994b7ad07e36cb001d8105b6c2f33f60a",
+  "bytes": 87602,
+  "headers": {
+    "Content-Type": "application/pdf",
+    "Content-Length": "87602",
+    "Date": "Fri, 09 Oct 2026 05:42:18 GMT",
+    "Last-Modified": "Wed, 22 Apr 2026 13:20:01 GMT",
+    "ETag": "\"69e8cb01-15632\""
+  }
+}

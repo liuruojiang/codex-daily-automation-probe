@@ -698,13 +698,21 @@ def current_names_proof(root, target, required_asof=None, symbols=None):
     return hashes(root,files)
 
 
+def current_st_names_agree(code, board_name, quote_name):
+    # Exact provider alias reviewed against SZSE issuer notice 2026-012,
+    # PDF SHA256 ad172506c7aca3004e2385e99be547c994b7ad07e36cb001d8105b6c2f33f60a.
+    # Both raw names retain *ST; never generalize truncation or risk prefixes.
+    return board_name == quote_name or (code, board_name, quote_name) == (
+        '300295', '*ST三六', '*ST三六五')
+
+
 def validate_publication_names(root):
     rows=list(csv.DictReader(io.StringIO(bound(root,CACHE+'active_universe.csv').read_text(encoding='utf-8-sig'))))
     current=list(csv.DictReader(io.StringIO(bound(root,CACHE+'current_st.csv').read_text(encoding='utf-8-sig'))))
     mapping={r['code']:r['name'].strip() for r in rows}
     import re
     if (not rows or len(mapping)!=len(rows) or any(not re.fullmatch('[0-9]{6}',s) or not n for s,n in mapping.items())
-            or not current or any(r['code'] not in mapping or mapping[r['code']]!=r['name'].strip()
+            or not current or any(r['code'] not in mapping or not current_st_names_agree(r['code'],r['name'].strip(),mapping[r['code']])
                 for r in current if re.fullmatch('[036][0-9]{5}',r['code']))):
         raise ValueError('Current name and ST snapshots disagree; refresh the original lightweight name sources')
     return len(rows)
@@ -771,7 +779,7 @@ def refresh_native_current_names(root,target,native,symbols,quote_fetch):
         if set(quotes)!=set(requested) or len(quotes)!=len(rows) or any(not r.get('name','').strip() for r in rows):
             raise ValueError('Native scoped name quotes are incomplete; keep the prior publication map')
         expected=dict(old);expected.update({s:r['name'].strip() for s,r in quotes.items()})
-        if any(expected.get(r['code'])!=r['name'].strip() for r in current if re.fullmatch('[036][0-9]{5}',r['code'])):
+        if any(not current_st_names_agree(r['code'],r['name'].strip(),expected.get(r['code'])) for r in current if re.fullmatch('[036][0-9]{5}',r['code'])):
             raise ValueError('Independent native name quotes disagree with the ST board')
         prior=CACHE+'local_current_names/observations/'+sha(previous)+'.universe.csv'
         if not bound(root,prior).exists():atomic(bound(root,prior),previous)
