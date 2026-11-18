@@ -1,0 +1,24 @@
+{
+  "observed_at": "2026-11-18T09:06:33.823530+08:00",
+  "conflicts": [
+    {
+      "st": {
+        "code": "300295",
+        "name": "*ST三六"
+      },
+      "prior": "*ST三六五",
+      "quote": {
+        "code": "300295",
+        "name": "*ST三六五",
+        "rt_price": 9.01,
+        "pre_close": 9.39,
+        "trade_date": "2026-11-17",
+        "quote_time": "20261117161451",
+        "quoted_at": "2026-11-17T16:14:51+08:00",
+        "fetched_at": "2026-11-18T09:06:33.816739+08:00",
+        "price_origin": "provider_latest",
+        "quote_source": "tencent_batch_free"
+      }
+    }
+  ]
+}

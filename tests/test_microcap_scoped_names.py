@@ -44,6 +44,30 @@ def test_native_names_query_only_maintained_pool_and_actual_st_conflict(names):
     assert m.pd_read_names(m.bound(root,m.CACHE+'active_universe.csv').read_bytes())['600999']=='cold preserved'
 
 
+def test_reviewed_alias_keeps_both_raw_names_and_native_st_membership(names):
+    root,symbols,_,_=names
+    def st(**kwargs):
+        m.atomic(m.bound(root,m.CACHE+'current_st.csv'),'code,name\n300295,*ST三六\n'.encode())
+    def quotes(requested):
+        return pd.DataFrame([dict(code=s,name='*ST三六五' if s=='300295' else 'ordinary '+s,
+            fetched_at=datetime.now(timezone.utc).isoformat(),quote_source='tencent_batch_free') for s in requested])
+    native=SimpleNamespace(fetch_current_st_codes=st)
+    m.refresh_native_current_names(root,'2000-01-04',native,symbols,quotes)
+    m.current_names_proof(root,'2000-01-04',symbols=symbols)
+    assert m.bound(root,m.CACHE+'current_st.csv').read_text(encoding='utf-8')=='code,name\n300295,*ST三六\n'
+    assert m.pd_read_names(m.bound(root,m.CACHE+'active_universe.csv').read_bytes())['300295']=='*ST三六五'
+    receipt=json.loads(m.bound(root,m.CACHE+'local_current_names/2000-01-04.json').read_bytes())
+    assert next(r for r in receipt['scoped_observation']['quote_rows'] if r['code']=='300295')['name']=='*ST三六五'
+
+
+@pytest.mark.parametrize('code,board,quote',[
+    ('300296','*ST三六','*ST三六五'),('300295','ST三六','*ST三六五'),
+    ('300295','*ST三六','三六五'),('300295','*ST三六','*ST三六六'),
+    ('300295','*ST三六五','*ST三六'),('300295','*ST三','*ST三六五')])
+def test_reviewed_alias_never_generalizes_identity_risk_or_truncation(code,board,quote):
+    assert not m.current_st_names_agree(code,board,quote)
+
+
 @pytest.mark.parametrize('fault',['outside','quote_clock','quote_source','coverage','roster','prior','scope','full_scope','fake_conflict'])
 def test_forged_or_incomplete_name_observation_is_not_a_complete_stage(names,fault):
     root,symbols,prior,calls=names;path=m.bound(root,m.CACHE+'local_current_names/2000-01-04.json')
