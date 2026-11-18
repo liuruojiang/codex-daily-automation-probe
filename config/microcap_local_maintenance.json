@@ -2,10 +2,10 @@
   "schema": "microcap_local_maintenance_host_v1",
   "owner": "local",
   "scoped_inputs": {
-    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-20261116-f2ded109/microcap-local-sources-close-20261116-f2ded109.zip",
-    "sha256": "ae29fd1afeb190baba42be59ad2371dccf10752fbcec33a015e152291ae76980",
-    "target": "2026-11-16",
+    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-20261117-f2ded109/microcap-local-sources-close-20261117-f2ded109.zip",
+    "sha256": "18a8bc24d4b91bef3f20f6ab6b6a2ee6461c9e17b0bc5b9635a51065a05fb295",
+    "target": "2026-11-17",
     "runtime_sha": "f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5",
-    "producer_commit": "fb60c79e6efc28c41d306310366ea35356812770"
+    "producer_commit": "5e9c832a1ff0be116ea62b0c019c46fb405aa34a"
   }
 }
