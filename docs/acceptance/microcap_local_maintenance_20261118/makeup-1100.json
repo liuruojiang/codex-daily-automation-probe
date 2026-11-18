@@ -1,0 +1,433 @@
+{
+  "observed_at": "2026-11-18T11:02:49.463900+08:00",
+  "slot": "11:00",
+  "due": {
+    "status": "already_complete",
+    "target": "2026-11-17",
+    "all_bound_hashes_revalidated": true
+  },
+  "issuers": 300,
+  "stages": 903,
+  "bound_files": 48680,
+  "recovery_D": "2026-11-17",
+  "dispatch": {
+    "schema": "microcap-recovery-v1",
+    "target": "2026-11-17",
+    "repository": "liuruojiang/codex-daily-automation-probe",
+    "key": "microcap-recovery-v1-2026-11-17",
+    "status": "already_succeeded",
+    "expected_head": "7a231cb30134eefcc6f4bd98d92dc24fdb153a3a",
+    "runtime_contract": {
+      "owner": "local",
+      "enabled": true,
+      "consumer_sha": "c16c59411ca8efa86728ed0cc136235be4e60170",
+      "producer_sha": "f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5",
+      "calendar_sha256": "8c5f82f72fee80b8ffb5ca381bb894bdf82eeb267678800ba972bf9bad64abcb",
+      "host_schema": "microcap_local_maintenance_host_v1",
+      "scoped_schema": "microcap_scoped_rebalance_runtime_v1",
+      "producer_schema": "microcap_local_source_runtime_v1",
+      "producer_role": "source_preparation_only"
+    },
+    "created_after": "2026-11-18T01:54:02Z",
+    "after_run_id": 0,
+    "history": [],
+    "run_id": 44219278848,
+    "conclusion": "success"
+  },
+  "remote": {
+    "observed_at": "2026-11-18T11:01:47.949258+08:00",
+    "assets": [
+      {
+        "id": 761407519,
+        "size": 157207142,
+        "digest": "sha256:18a8bc24d4b91bef3f20f6ab6b6a2ee6461c9e17b0bc5b9635a51065a05fb295",
+        "state": "uploaded"
+      },
+      {
+        "id": 753092442,
+        "size": 202894,
+        "digest": "sha256:f57de1d30015c104f064a1f9f4eb27355bfc0f475b7b68ad35854ab31a2d13eb",
+        "state": "uploaded"
+      }
+    ],
+    "runs": [
+      {
+        "id": 44219278848,
+        "display_title": "microcap-dispatch:microcap-recovery-v1-2026-11-17",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "7a231cb30134eefcc6f4bd98d92dc24fdb153a3a",
+        "created_at": "2026-11-18T01:54:03Z"
+      },
+      {
+        "id": 44212369649,
+        "display_title": "microcap-dispatch:microcap-maintenance-20261118T010006721Z",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "daad49bf2962998e61a50f12deee7affc45d24ec",
+        "created_at": "2026-11-18T01:00:09Z"
+      },
+      {
+        "id": 44036689452,
+        "display_title": "microcap-dispatch:microcap-rebalance-20261117T071044828Z",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "06fbc708c653d7026d43884c2d4099842fb0557d",
+        "created_at": "2026-11-17T07:10:47Z"
+      },
+      {
+        "id": 44010940155,
+        "display_title": "microcap-dispatch:microcap-recovery-v1-2026-11-16",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "dafef8c633685f510f289ccdbc88e624d9a9bd77",
+        "created_at": "2026-11-17T03:32:33Z"
+      },
+      {
+        "id": 43992122782,
+        "display_title": "microcap-dispatch:microcap-maintenance-20261117T010006721Z",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "0c9bee1133a5bee0c53c2999c0b8675e0048ee38",
+        "created_at": "2026-11-17T01:00:09Z"
+      },
+      {
+        "id": 43821958228,
+        "display_title": "microcap-dispatch:microcap-rebalance-20261116T071044828Z",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "c2e25205e41a1564e365ff51d147a283fa946cb2",
+        "created_at": "2026-11-16T07:10:47Z"
+      },
+      {
+        "id": 43792131760,
+        "display_title": "microcap-dispatch:microcap-recovery-v1-2026-11-13",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "dac5e4b760a7ba0a8f96427addd09075cbd3da32",
+        "created_at": "2026-11-16T02:26:02Z"
+      },
+      {
+        "id": 43783648810,
+        "display_title": "microcap-dispatch:microcap-maintenance-20261116T010006721Z",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "5bebcd06c5acd279a8830d9c75b8b468fba5a76c",
+        "created_at": "2026-11-16T01:00:08Z"
+      },
+      {
+        "id": 43383868849,
+        "display_title": "microcap-dispatch:microcap-rebalance-20261113T071044828Z",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "9034f6ba3f1b1959cda5beaa4e4e5bed332d9af6",
+        "created_at": "2026-11-13T07:10:47Z"
+      },
+      {
+        "id": 43341497661,
+        "display_title": "microcap-dispatch:microcap-maintenance-20261113T010006721Z",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "7f7df23d64199d2217e88df5fea9234f40df7612",
+        "created_at": "2026-11-13T01:00:08Z"
+      },
+      {
+        "id": 43281731910,
+        "display_title": "microcap-dispatch:microcap-actual-readback-43261210223-rootfix-20261113",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "827494305cbafaf5586437bafec4050c8e83e389",
+        "created_at": "2026-11-12T18:37:14Z"
+      },
+      {
+        "id": 43273276700,
+        "display_title": "microcap-dispatch:microcap-actual-readback-43261210223-20261113",
+        "status": "completed",
+        "conclusion": "failure",
+        "head_sha": "9033b7619395897212c186115e10fca175b34f61",
+        "created_at": "2026-11-12T17:48:22Z"
+      },
+      {
+        "id": 43261210223,
+        "display_title": "microcap-dispatch:microcap-recovery-v1-2026-11-12",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "9033b7619395897212c186115e10fca175b34f61",
+        "created_at": "2026-11-12T16:40:23Z"
+      },
+      {
+        "id": 43241654331,
+        "display_title": "microcap-dispatch:microcap-recovery-v1-2026-11-12",
+        "status": "completed",
+        "conclusion": "failure",
+        "head_sha": "5d27efb1986837b1b66083521ecf2ac543aaa650",
+        "created_at": "2026-11-12T14:52:04Z"
+      },
+      {
+        "id": 43173346897,
+        "display_title": "microcap-dispatch:microcap-rebalance-20261112T071044828Z",
+        "status": "completed",
+        "conclusion": "failure",
+        "head_sha": "eecf2c8fa7afb69426e9d8293517beb22f5a8c98",
+        "created_at": "2026-11-12T07:10:47Z"
+      },
+      {
+        "id": 43157936417,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "eecf2c8fa7afb69426e9d8293517beb22f5a8c98",
+        "created_at": "2026-11-12T04:55:33Z"
+      },
+      {
+        "id": 43155919174,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "eecf2c8fa7afb69426e9d8293517beb22f5a8c98",
+        "created_at": "2026-11-12T04:36:34Z"
+      },
+      {
+        "id": 43131379392,
+        "display_title": "microcap-dispatch:microcap-maintenance-20261112T010006721Z",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "3bb65eda3af7783630edd129b27fe307317ffe06",
+        "created_at": "2026-11-12T01:00:09Z"
+      },
+      {
+        "id": 43124356822,
+        "display_title": "microcap-dispatch:microcap-archive-readback-20261112-m6",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "b8ff92f07a86edfe01bbb54ad2784ccd575668dd",
+        "created_at": "2026-11-12T00:02:47Z"
+      },
+      {
+        "id": 43122727666,
+        "display_title": "microcap-dispatch:microcap-archive-acceptance-20261112-m6",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "b8ff92f07a86edfe01bbb54ad2784ccd575668dd",
+        "created_at": "2026-11-11T23:49:26Z"
+      },
+      {
+        "id": 43070342596,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "538169e67ce5f71cd4b4a13fde13c3d85348eb80",
+        "created_at": "2026-11-11T17:39:58Z"
+      },
+      {
+        "id": 43067983093,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "50387f2b7a3693d224884a1de1925b39010202a5",
+        "created_at": "2026-11-11T17:25:12Z"
+      },
+      {
+        "id": 43065299195,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "50387f2b7a3693d224884a1de1925b39010202a5",
+        "created_at": "2026-11-11T17:09:01Z"
+      },
+      {
+        "id": 43040757263,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "86aa4124b7fa720700c6f3343b7f4e4c350f4921",
+        "created_at": "2026-11-11T14:40:39Z"
+      },
+      {
+        "id": 43038784464,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "86aa4124b7fa720700c6f3343b7f4e4c350f4921",
+        "created_at": "2026-11-11T14:28:21Z"
+      },
+      {
+        "id": 43037529937,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "failure",
+        "head_sha": "759da4cf481da8d155960e9ee879edcad79d8990",
+        "created_at": "2026-11-11T14:20:30Z"
+      },
+      {
+        "id": 42977594896,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "failure",
+        "head_sha": "c49142c5bc7492ff00026ae14bda8f422e93c99a",
+        "created_at": "2026-11-11T07:10:47Z"
+      },
+      {
+        "id": 42935674311,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "failure",
+        "head_sha": "c49142c5bc7492ff00026ae14bda8f422e93c99a",
+        "created_at": "2026-11-11T01:00:09Z"
+      },
+      {
+        "id": 42773476536,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "1582cc2ada1ff663634efc320d832d9bf3c78843",
+        "created_at": "2026-11-10T07:10:46Z"
+      },
+      {
+        "id": 42732532385,
+        "display_title": "Microcap Independent Maintenance",
+        "status": "completed",
+        "conclusion": "failure",
+        "head_sha": "525be8add6e4fe60cf685c1c5034f450c36a7266",
+        "created_at": "2026-11-10T01:00:09Z"
+      }
+    ]
+  },
+  "formal_config": {
+    "observed_at": "2026-11-18T11:01:07.944127+08:00",
+    "remote_head": "f90d323ed150ad0ec9e0b51ca06d35f7b96e196c",
+    "files": {
+      "microcap_local_maintenance.json": {
+        "blob": "3b45aeea1ecf839955ba6d30fac9648797e72d36",
+        "sha256": "8af6311ae58547a76cca72de56e21df1425fa562ef40cbc2c4a388f7a4f29369",
+        "local_sha256": "6a77d4eaa50269a2e5124036d89060045cab58f45f89bfcf6b845e89c5f3b823",
+        "newline_normalized_match": true,
+        "config": {
+          "schema": "microcap_local_maintenance_host_v1",
+          "owner": "local",
+          "scoped_inputs": {
+            "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-20261117-f2ded109/microcap-local-sources-close-20261117-f2ded109.zip",
+            "sha256": "18a8bc24d4b91bef3f20f6ab6b6a2ee6461c9e17b0bc5b9635a51065a05fb295",
+            "target": "2026-11-17",
+            "runtime_sha": "f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5",
+            "producer_commit": "5e9c832a1ff0be116ea62b0c019c46fb405aa34a"
+          }
+        }
+      },
+      "microcap_scoped_rebalance.json": {
+        "blob": "8bec462f116f88d4835917858df4fa306abca418",
+        "sha256": "00ee33181ac8787de986a92a26603877b506e2ae0ba0aa569c81d49384cda974",
+        "local_sha256": "e97644521749455c2f79806331581946b0a112bcb4428860d9886461d7d04422",
+        "newline_normalized_match": true,
+        "config": {
+          "schema": "microcap_scoped_rebalance_runtime_v1",
+          "enabled": true,
+          "runtime_sha": "c16c59411ca8efa86728ed0cc136235be4e60170",
+          "producer_sha": "f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5",
+          "whole_seed": {
+            "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-95d896fe/microcap-whole-delivery-state-archive-20261110-m8-multisource.zip",
+            "sha256": "866bcd2b884e95335f2e6b9b23ba836092b4bc5d916c6c8c20d577a06fa1aedf",
+            "date": "2026-11-10"
+          },
+          "weekly_roster": {
+            "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-weekly-roster-20261113/microcap-weekly-roster-20261113.zip",
+            "sha256": "f57de1d30015c104f064a1f9f4eb27355bfc0f475b7b68ad35854ab31a2d13eb",
+            "date": "2026-11-13"
+          }
+        }
+      },
+      "microcap_local_producer_runtime.json": {
+        "blob": "7e407ade9b04f19f92b45057a156ff10453f99e4",
+        "sha256": "ad84b993671f271ab85b6438cc99e76a273847cd46de1f390e3c112b4619fd1c",
+        "local_sha256": "5876d92ed1345895e06698084adfd48f66a8b38355f34145fd3eb553e7f7129e",
+        "newline_normalized_match": true,
+        "config": {
+          "schema": "microcap_local_source_runtime_v1",
+          "role": "source_preparation_only",
+          "runtime_sha": "f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5",
+          "max_candidates": 300,
+          "calculation_sources": {
+            "scripts/exchange_calendar.py": "8c5f82f72fee80b8ffb5ca381bb894bdf82eeb267678800ba972bf9bad64abcb",
+            "scripts/stock_input_contract.py": "b39102cf9a2be829dc1adf6c9305bf29fd5f2119d2ab42db91e363d87aec0e23",
+            "scripts/stock_return_basis.py": "4e67e8a31a216e6d0f8069fe869c9b6961ff52e503e1921a75e75e00c6046e59",
+            "scripts/stock_return_basis_store.py": "fe1dfce2c961cff1e63ff9f2a1284f4b150897b83b521d85795a0aaf210fff39",
+            "scripts/stock_return_pipeline.py": "3c248e53500ea3952057f953bfe8e87e03f47eeb076d7b1a4a224ddf9b599ecb",
+            "scripts/tradeability_evidence.py": "9fbccd9b30003cc6bf590f678ba95da56e7bfc96f1488369d093285055159832",
+            "scripts/st_notice_archive.py": "625483138aebda935a852953a1645ec95eeff9fdf10ab259c463af198c7b7c9c",
+            "scripts/st_history_scope.py": "e4ee3b06d91ba562c68354217def93d1d72482924138963ff34a706b9c15a063",
+            "scripts/st_notice_incremental.py": "0592bd87c515af2c7e819681e9c87714737d21c8d833050e4db0403625d2cdc3",
+            "scripts/st_notice_refresh.py": "0091610545f494d3c3e347596049bee39494fc9c4a4b557fa0dbdcb838443351",
+            "scripts/st_metadata_refresh.py": "14f7162e90accc385499155aed55ab540b293ec23a0ad6d357abcd212e64ca6a",
+            "scripts/stock_tail_returns.py": "fc5875bdb53ed1786c7c851b8e3c9b8028f79f49a71c72cd4eb22c8f1c14d5c6",
+            "scripts/share_change_source.py": "cc51abb0834eae664f198440f0de95d7c1ba2a3d017860976f34737d7f0e675b",
+            "scripts/share_unchanged_tail.py": "80ca426b78cfda4e63fc32be0157be188ebbe31d68e2f9758664b2d7d2342491",
+            "data/share_source_future_plan_reviews.json": "86c353677ec35023bc451c00ca1fd13966f117e3cc7352958d0d5b28bd1b7aa8",
+            "scripts/sina_share_history.py": "fe726fa2ba56a8321d2ded915ed8c20d71a1666b4eef375ab3707a6c0380c702",
+            "scripts/stock_daily_inputs.py": "d5a7f4b496798ef4e2c834b9317ebf435cf8600de0f880a202a4fc5ce6e381f5",
+            "scripts/stock_daily_alternative.py": "95dad1ffa24d13903fe845990afb2e370308ed44284f4428fd900c634a04be7d"
+          },
+          "formal_deployment_or_seed_activation": false
+        }
+      }
+    }
+  },
+  "member": {
+    "observed_at": "2026-11-18T11:01:08.498845+08:00",
+    "status": "current_D17_member_closure_verified",
+    "checkpoint_sha256": "c61b35782da7b3ef69e7a97796865369106bef92dec73ecf6e3bf7212ac7582a",
+    "as_of": "2026-11-17",
+    "unique_members": 100,
+    "current_ST_intersections": 0,
+    "members_within_maintenance_pool": 100,
+    "period_unchanged_from_D13": true,
+    "original_R": "2026-11-12",
+    "effective_from": "2026-11-13",
+    "next_rebalance": "2026-11-26",
+    "full_native_NAV_claimed": false
+  },
+  "cloud_plan": {
+    "schema": "microcap_scoped_recovery_plan_v1",
+    "status": "no_recovery_due",
+    "run": false,
+    "action": "noop",
+    "scheduled_task": "rebalance_recovery",
+    "target": "2026-11-17",
+    "delivery_date": "2026-11-17",
+    "consumer_sha": "c16c59411ca8efa86728ed0cc136235be4e60170",
+    "recovery_R": null,
+    "required_rebalance_dates": [],
+    "last_required_R": "2026-11-12",
+    "parent_not_after_date": "2026-11-17",
+    "recovery_next_session": null,
+    "needs_checkpoint_advance": false,
+    "latest_checkpoint_path": "/home/runner/work/codex-daily-automation-probe/codex-daily-automation-probe/scoped-latest/checkpoint.json",
+    "latest_checkpoint_sha256": "c61b35782da7b3ef69e7a97796865369106bef92dec73ecf6e3bf7212ac7582a",
+    "latest_checkpoint_as_of_date": "2026-11-17",
+    "latest_checkpoint_period_status": "current",
+    "latest_checkpoint_period_anchor": "2026-11-12",
+    "latest_checkpoint_period_sha256": "d135470bbd260b29e9ead7f6e01e30270b47838cbd29bfbc18ce7f40240dc658",
+    "latest_completed_session": "2026-11-17",
+    "calendar_source": "independent_native_exchange_calendar",
+    "source_collection_complete_does_not_skip_recovery": true,
+    "formal_parent_is_latest_checkpoint": true,
+    "native_formal_gates_required": false,
+    "email_sent": false,
+    "orders_placed": false
+  },
+  "whole_state": {
+    "date": "2026-11-12",
+    "artifact": 13969276381,
+    "expired": false,
+    "sha256": "52d1beb174b1c9b3acb0126056f6acb3341dc8abbfcf2ec667646327a0b760fd",
+    "new_full_NAV_claimed": false
+  },
+  "locks": "all_five_available_and_released",
+  "primary_pin_seven_dirty_hashes_preserved": true,
+  "collection_repeated": false,
+  "export_repeated": false,
+  "upload_repeated": false,
+  "dispatch_POST_repeated": false,
+  "SMTP": false,
+  "orders": false,
+  "pending": []
+}
