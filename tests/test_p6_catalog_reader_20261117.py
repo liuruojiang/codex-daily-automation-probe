@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_p6_reads_unchanged_calculation_contract_without_resigning_p5():
     p5 = inputs.producer_profile('microcap_local_producer_p5_20261116.json', inputs.P5_RUNTIME)
-    p6 = inputs.producer_profile('microcap_local_producer_runtime.json', inputs.P6_RUNTIME)
+    p6 = inputs.producer_profile('microcap_local_producer_p6_20261117.json', inputs.P6_RUNTIME)
     assert p5['calculation_sources'] == p6['calculation_sources']
     old = inputs.producer_profile('microcap_local_producer_p2_20261112.json', inputs.P2_RUNTIME)
     receipt = inputs.exact_p2_successor(inputs.P2_RUNTIME, old['calculation_sources'], p6['calculation_sources'], inputs.P6_RUNTIME)
@@ -34,3 +34,14 @@ def test_previous_published_source_pointer_keeps_original_p5_identity():
     pointer = json.loads(raw)
     assert pointer['owner'] == 'local'
     assert pointer['scoped_inputs']['runtime_sha'] == inputs.P5_RUNTIME
+
+
+def test_m13_requires_its_own_controller_and_keeps_m12_proof_readable():
+    identity = dict(revision=recovery.CONTROLLER, source_sha256=recovery.LEGACY_PRE_M13_CONTROLLER_SHA)
+    checkpoint = dict(strategy_sha=recovery.M12, handoff_mode=recovery.MODE, recovery_controller=identity)
+    recovery.reviewed_controller_identity(checkpoint)
+    with pytest.raises(ValueError):
+        recovery.reviewed_controller_identity(dict(checkpoint, strategy_sha=recovery.M13))
+    with pytest.raises(ValueError, match='formal recovery proof route'):
+        policy.validate_checkpoint_payload(dict(strategy_sha=recovery.M13,
+            handoff_mode='native_close_extends_previous'), policy.LOCAL_READ_POLICY)
