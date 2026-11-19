@@ -1,0 +1,15 @@
+{
+  "schema": "microcap_local_publication_v1",
+  "runtime_sha": "52214f002a8b83ab602a90fd40cc48336a7ce51a",
+  "producer_commit": "7b393414ffa4e85fc0bfdd5a9aea7128591f2c66",
+  "target": "2026-11-18",
+  "sha256": "e3b34e8a96bc9522814d6d1915459d024c41810389227621ea01e8ff515542a1",
+  "bytes": 172544191,
+  "status": "published",
+  "release_id": 450765182,
+  "asset_id": 765740249,
+  "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-20261118-52214f00/microcap-local-sources-close-20261118-52214f00.zip",
+  "server_digest": "sha256:e3b34e8a96bc9522814d6d1915459d024c41810389227621ea01e8ff515542a1",
+  "remote_manifest_sha256": "3c537f73b5d5162fb7377cc2aaa468cd8c1dbc2f8bb862ae3f75be1d07950ea0",
+  "whole_zip_readback": true
+}
