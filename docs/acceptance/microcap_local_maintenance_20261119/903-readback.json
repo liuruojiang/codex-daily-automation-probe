@@ -1,0 +1,19 @@
+{
+  "status": "903_complete",
+  "target": "2026-11-18",
+  "stages": 903,
+  "issuers": 300,
+  "observed_at": "2026-11-19T09:27:20.510017+08:00",
+  "bound_files": 54015,
+  "all_hashes_match": true,
+  "original_900_success_maps_reused": 900,
+  "runtime": "52214f002a8b83ab602a90fd40cc48336a7ce51a",
+  "result_sha256": "163411263e5c4f6fb1f60aebf90a027c895fd1dc6707accb2abda2dc338e8f0e",
+  "notice_observation": "2026-11-19T01:01:03.630784+00:00",
+  "current_names_observation": "2026-11-19T01:02:40.004400+00:00",
+  "native_notice_authority": [
+    ".microcap_index_cache/st_notice_sources/refresh_20261119T010103630039Z_f20d2f3293c9/archive.json",
+    "a676c34994a79f0ff6e2599edd963b1a20ee41cbfcc44b1f0f094e89a494292e"
+  ],
+  "full_strategy_delivery": false
+}

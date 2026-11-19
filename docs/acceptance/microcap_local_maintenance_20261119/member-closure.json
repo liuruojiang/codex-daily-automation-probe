@@ -1,0 +1,14 @@
+{
+  "observed_at": "2026-11-19T09:27:20.817819+08:00",
+  "status": "current_D18_member_closure_verified",
+  "checkpoint_sha256": "6ec0ab4f1ad2c7a076d629804bdfa2a8a16fbb6425c5e61afa85f02677654183",
+  "as_of": "2026-11-18",
+  "unique_members": 100,
+  "current_ST_intersections": 0,
+  "members_within_maintenance_pool": 100,
+  "period_unchanged_from_D13": true,
+  "original_R": "2026-11-12",
+  "effective_from": "2026-11-13",
+  "next_rebalance": "2026-11-26",
+  "full_native_NAV_claimed": false
+}
