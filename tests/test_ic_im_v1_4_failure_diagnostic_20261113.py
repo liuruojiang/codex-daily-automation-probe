@@ -152,9 +152,33 @@ def test_generation_time_uses_actual_clock_and_beijing_market_day(tmp_path, kind
 def test_diagnostic_text_cannot_inject_html_or_end_markdown_fence():
     raw = "IM\n```\n<script>alert(1)</script>\n<img src=x onerror=steal()>\n"
     body, html = renderer.failure_diagnostic_display(raw)
-    assert "<script>" not in html and "&lt;script&gt;" in html
+    assert "<script>" not in html and "alert(1)" not in html
     assert "<img src=x" not in html
-    assert "````text" in body
+    assert "<pre" not in html and "```" not in body
+
+
+def test_failed_product_and_available_product_have_separate_readable_sections():
+    raw = """### IC 1.4 / 中证500
+⚠️ 当日信号警告：旧腿报价缺失
+**最后逐腿核验快照（2026-11-19，仅研究审计）**
+- 0.5倍核心期货：IC2612
+### IM 1.4 / 中证1000
+**当前总期货：1倍；下一交易日确认目标：1倍。**
+| 仓位腿 | 当前策略仓位 | 下一交易日目标 | 变化 | 执行语义 |
+|---|---|---|---|---|
+| 核心 | IM2612 | IM2612 | 维持 | 研究目标 |
+- 期限贴水（近月－远月）：IM2611 − IM2612 = +173.60点
+- 数据审计：ConnectionError sha256=abcdef
+"""
+    body, html = renderer.failure_diagnostic_display(raw)
+    for rendered in (body, html):
+        assert "IC / 中证500（仅诊断）" in rendered
+        assert "IM / 中证1000（仅诊断）" in rendered
+        assert "旧腿报价缺失" in rendered and "IM2612" in rendered
+        assert "+173.60点" in rendered
+        assert "整体信号尚未确认" in rendered
+        assert "ConnectionError" not in rendered and "sha256" not in rendered
+    assert "<table" in html and "<pre" not in html
 
 
 def test_cli_failure_displays_and_attaches_verified_diagnostic(tmp_path, monkeypatch):

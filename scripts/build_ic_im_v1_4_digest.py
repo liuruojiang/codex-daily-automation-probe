@@ -1603,7 +1603,7 @@ def verified_failure_diagnostic(
         "diagnostic_report_market_date", "diagnostic_report_generated_at", "diagnostic_report_mode",
     }
     if not fields.intersection(payload):
-        if isinstance(proof, dict) and proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1"}:
+        if isinstance(proof, dict) and proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1"}:
             raise ValueError("current producer requires a bound failure diagnostic")
         return None, None  # Old failures retain their original warning-only form.
     from datetime import datetime, timezone
@@ -1611,7 +1611,7 @@ def verified_failure_diagnostic(
     from zoneinfo import ZoneInfo
     source_files = proof.get("source_sha256") if isinstance(proof, dict) else None
     if (not isinstance(proof, dict) or proof.get("status") != "verified"
-            or proof.get("release") not in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1"}
+            or proof.get("release") not in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1"}
             or not re.fullmatch(r"[0-9a-f]{40}", str(proof.get("strategy_sha", "")))
             or not isinstance(source_files, dict)
             or not re.fullmatch(r"[0-9a-f]{64}", str(
@@ -1661,16 +1661,101 @@ def verified_failure_diagnostic(
 
 
 def failure_diagnostic_display(text: str) -> tuple[str, str]:
-    """Show native text literally, including already available per-leg evidence."""
-    warning = ("整体信号尚未确认，账本未确认推进。以下仅保留失败前取得的原生逐腿诊断；"
-               "其中单腿文字不构成整份日报确认或账户执行建议。")
-    fence = "`" * max(3, 1 + max((len(run) for run in re.findall(r"`+", text)), default=0))
-    markdown = "\n\n## 已取得信息与缺项（原生诊断）\n\n" + warning + "\n\n" + fence + "text\n" + text + "\n" + fence
-    html_block = ("<section style=\"margin:20px auto;max-width:640px;\"><h2>已取得信息与缺项（原生诊断）</h2>"
-                  + "<p><strong>" + html.escape(warning) + "</strong></p>"
-                  + '<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.65;">'
-                  + html.escape(text) + "</pre></section>")
-    return markdown, html_block
+    """Summarize native diagnostics without promoting any field to a signal.
+
+    The byte-verified original is attached unchanged. Only exact product
+    headings and human-readable lines are shown in the mail; raw retry logs,
+    source hashes, repeated policy text and the original remain in the attachment.
+    """
+    warning = ("整体信号尚未确认，账本未确认推进。各品种以下内容均为原生诊断中的观察，"
+               "不是整份日报确认或账户执行建议。完整诊断与技术日志见附件。")
+    blocks = {}
+    current = None
+    for line in text.splitlines():
+        match = re.fullmatch(r"### (IC|IM)(?:[ /].*)?", line.strip())
+        if match:
+            current = match[1]
+            blocks.setdefault(current, [])
+            continue
+        if re.match(r"^#{1,3} ", line):
+            current = None
+        if current:
+            blocks[current].append(line.strip())
+    markdown = ["## 已取得信息与缺项", "", warning]
+    rendered = ['<section style="margin:20px auto;max-width:640px;">',
+                '<h2>已取得信息与缺项</h2><p><strong>' + html.escape(warning) + '</strong></p>']
+
+    def plain(line):
+        return (line.replace("**", "").replace("`", "")
+                .replace("下一交易日确认目标", "下一交易日诊断目标（未正式发布）")
+                .replace("下一交易日目标", "下一交易日目标（仅诊断）"))
+
+    prefixes = ("- 0.5倍核心期货", "- 动量袖：", "- 独立网格：", "- Put：",
+                "- 指数 ", "- 市场阶段：", "- 期限贴水", "- 季月价差",
+                "- 月度价差", "- Put 行情：", "- Call 行情：", "- 季度规则：")
+    for product in ("IC", "IM"):
+        lines = blocks.get(product, [])
+        title = f"{product} / {'中证500' if product == 'IC' else '中证1000'}（仅诊断）"
+        markdown.extend(["", "### " + title])
+        rendered.append('<div style="margin:12px 0;padding:16px;background:#fff;border:1px solid #e4e7ec;'
+                        'border-radius:12px;line-height:1.6;font-size:14px;"><h3 style="margin:0 0 12px;">'
+                        + html.escape(title) + '</h3>')
+        if not lines:
+            markdown.append("未取得该品种独立诊断；详情见附件。")
+            rendered.append("<p>未取得该品种独立诊断；详情见附件。</p></div>")
+            continue
+        selected = []
+        for i, line in enumerate(lines):
+            if (line.startswith(("⚠️ 当日信号警告", "**最后逐腿核验快照", "该品种的新目标尚未确认",
+                                 "**IV预警", "**当前总期货", "月度Put执行日：",
+                                 "**部分数据可用", "最后已核验期货合约：",
+                                 "已核验期货报价（仅行情观察）")) or
+                    line.startswith(prefixes) or
+                    re.match(r"^- `(?:IC|IM)\d{4}`(?: 延时行情|：)", line)):
+                selected.append(plain(line))
+            if line.startswith("**部分数据可用"):
+                reason = next((item for item in lines[i + 1:] if item), "")
+                if reason and len(reason) <= 500 and not reason.startswith(("#", "|", "- ")):
+                    selected.append(plain(reason))
+        # Preserve the native position table as a readable escaped table, not
+        # as parsed trading fields. Ignore other tables and verbose audit rows.
+        table = []
+        for i, line in enumerate(lines):
+            if line.startswith("| 仓位腿 |"):
+                for row in lines[i:]:
+                    if not row.startswith("|"):
+                        break
+                    cells = [plain(x.strip()) for x in row.strip("|").split("|")]
+                    if all(re.fullmatch(r":?-+:?", c) for c in cells):
+                        continue
+                    if len(cells) != 5:
+                        table = []
+                        break
+                    table.append(cells)
+                break
+        if selected:
+            for line in selected:
+                markdown.append("- " + line.removeprefix("- "))
+                rendered.append('<p style="margin:6px 0;overflow-wrap:anywhere;">'
+                                + html.escape(line.removeprefix("- ")) + '</p>')
+        if table:
+            markdown.append("")
+            markdown.append("| " + " | ".join(table[0]) + " |")
+            markdown.append("| " + " | ".join(["---"] * 5) + " |")
+            markdown.extend("| " + " | ".join(row) + " |" for row in table[1:])
+            rendered.append('<table style="width:100%;border-collapse:collapse;font-size:12px;">')
+            for i, row in enumerate(table):
+                tag = "th" if i == 0 else "td"
+                rendered.append("<tr>" + "".join(
+                    f'<{tag} style="border:1px solid #e4e7ec;padding:6px;vertical-align:top;">'
+                    + html.escape(cell) + f'</{tag}>' for cell in row) + "</tr>")
+            rendered.append("</table>")
+        if not selected and not table:
+            markdown.append("已保留该品种原生诊断，具体信息见附件。")
+            rendered.append("<p>已保留该品种原生诊断，具体信息见附件。</p>")
+        rendered.append("</div>")
+    rendered.append("</section>")
+    return "\n\n" + "\n".join(markdown), "".join(rendered)
 
 
 def source_provenance(path: str, expected_sha: str, expected_release: str | None = None) -> dict[str, Any] | None:
@@ -1683,6 +1768,7 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     files = proof.get("source_sha256")
     from hashlib import sha256
     releases = {
+        "20261120-monthly-old-leg-digest-v1": "docs/ic_im_monthly_old_leg_and_failure_digest_20261120_v1_manifest.json",
         "20261120-report-tenor-spreads-v1": "docs/ic_im_report_tenor_spreads_20261120_v1_manifest.json",
         "20261113-held-put-close-v2": "docs/ic_im_held_put_close_20261113_v2_manifest.json",
         "20261113-held-put-close-v1": "docs/ic_im_held_put_close_20261113_v1_manifest.json",
@@ -1701,12 +1787,12 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     if (proof.get("status") != "verified" or proof.get("strategy_sha") != expected_sha
             or proof.get("release") not in releases
             or not re.fullmatch(r"[0-9a-f]{64}", str(proof.get("manifest_sha256", "")))
-            or not isinstance(files, dict) or len(files) != (32 if proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1"} else 31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
+            or not isinstance(files, dict) or len(files) != (32 if proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1"} else 31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
             or "run_ic_im_v1_4_github_digest.py" not in files
             or files != expected_files or proof.get("manifest_sha256") != sha256(expected_raw).hexdigest()
             or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in files.values())):
         raise ValueError("source provenance does not match this run's execution inventory")
-    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1"}:
+    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1"}:
         if proof.get("support_sha256") != json.loads(expected_raw)["support_files"]:
             raise ValueError("source provenance lacks exact approved-calendar support bytes")
     from datetime import datetime, timezone
@@ -1730,7 +1816,7 @@ def main() -> int:
                               args.expected_source_release or None)
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
-    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1"}
+    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1"}
             and payload.get("status") in {"ok", "partial"} and "report_sha256" not in payload):
         raise ValueError("current IC/IM producer requires report_sha256")
     if str(payload.get("strategy_revision")) != "r1":
