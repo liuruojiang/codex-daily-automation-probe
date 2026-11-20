@@ -101,8 +101,8 @@ def test_missing_highest_committed_manifest_cannot_downgrade(tmp_path, monkeypat
 def test_current_daily_and_readiness_bind_same_release_and_immutable_pin():
     daily = (ROOT / '.github/workflows/ic-im-v1-4-daily-digest.yml').read_text()
     ready = (ROOT / '.github/workflows/ic-im-v1-4-delivery-readiness.yml').read_text()
-    assert '--expected-source-release 20261120-report-tenor-spreads-v1' in daily
-    assert '--expected-source-release 20261120-report-tenor-spreads-v1' in ready
+    assert '--expected-source-release 20261120-monthly-old-leg-digest-v1' in daily
+    assert '--expected-source-release 20261120-monthly-old-leg-digest-v1' in ready
     pins = re.findall(r'repository: liuruojiang/ic-im-rolling-arbitrage\s+ref: ([0-9a-f]{40})\b', daily)
     assert len(pins) == 1
     assert daily.count('--expected-strategy-sha ' + pins[0]) == 1
