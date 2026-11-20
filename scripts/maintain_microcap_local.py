@@ -23,7 +23,7 @@ import uuid
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 
-RUNTIME = '075949e609d2c403214379d949672a192a16e649'
+RUNTIME = 'd09b53af78767370a7ecb2bf4ebe6e3527d2eacc'
 LEGACY_P2 = '3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
 SOURCE_RUNTIMES = frozenset({RUNTIME,'52214f002a8b83ab602a90fd40cc48336a7ce51a','f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5','e3c855f980e503372fd9fc4268aeea2aa4b5aeeb','ae439a1eec4dae5729483f43356473bcb9b1dff1','3344e403ff01e17ef45b745a704a240e0917720b',LEGACY_P2,'f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5','be89e87a0da728b27be0308d7c4c9e57a212b815','a016ce27ea86fca1fa0b5199f802b198c0ed99de',
     '706af7ea9186bdb9b3948738deb5a5afda7a331e','63c7b16d77600c4aa9dadf58b86d31e034477e44'})
@@ -502,7 +502,7 @@ def select_local_notice_forward(*,root,protected_root,state,symbols,target,out,n
     from contextlib import ExitStack
     module_path=Path(__file__).with_name('microcap_notice_prefix.py').resolve()
     # Pin this reused dependency through maintain's existing orchestrator hash.
-    if sha(module_path.read_bytes().replace(b'\r\n',b'\n'))!='6f1e155d7dc12d71c3306396a2a70765cedd28ee8c811c1cb9d03367a362aed3':
+    if sha(module_path.read_bytes().replace(b'\r\n',b'\n'))!='15ce94f6a308d680c9a2ff89450d5138137b70da0e574bc5cfa4be6be70f8213':
         raise ValueError('Local notice selector dependency is not the reviewed exact source')
     import microcap_notice_prefix as prefix
     if Path(prefix.__file__).resolve()!=module_path:raise ValueError('Foreign local notice selector module')

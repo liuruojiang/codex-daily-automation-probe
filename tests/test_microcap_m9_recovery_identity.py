@@ -166,16 +166,16 @@ def test_M9_envelope_cannot_drop_proof_cross_bind_or_change_native_state(recover
 def test_M10_configs_preserve_M9_P3_identity_and_only_select_reviewed_successors():
     old = json.loads(subprocess.check_output(['git', '-C', str(ROOT), 'show', OLD_AUTO + ':config/microcap_scoped_rebalance.json']))
     current = settings.load(ROOT / 'config/microcap_scoped_rebalance.json', require_seed=True)
-    assert current['runtime_sha'] == m.M14
-    assert current['producer_sha'] == maintenance.RUNTIME == '075949e609d2c403214379d949672a192a16e649'
+    assert current['runtime_sha'] == m.M15
+    assert current['producer_sha'] == maintenance.RUNTIME == 'd09b53af78767370a7ecb2bf4ebe6e3527d2eacc'
     assert json.loads((ROOT/'config/microcap_local_producer_p3_20261112.json').read_bytes())['runtime_sha']==P3
-    old['runtime_sha'] = m.M14
-    old['producer_sha'] = '075949e609d2c403214379d949672a192a16e649'
+    old['runtime_sha'] = m.M15
+    old['producer_sha'] = 'd09b53af78767370a7ecb2bf4ebe6e3527d2eacc'
     # The independently verified Monday roster replaced the Nov9 publication.
     old['weekly_roster'] = dict(date='2026-11-13', sha256='f57de1d30015c104f064a1f9f4eb27355bfc0f475b7b68ad35854ab31a2d13eb', url='https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-weekly-roster-20261113/microcap-weekly-roster-20261113.zip')
     assert current == old
     old_policy = json.loads(subprocess.check_output(['git', '-C', str(ROOT), 'show', OLD_AUTO + ':config/microcap_member_local_runtime.json']))
-    expected = copy.deepcopy(old_policy); expected['rebalance_producer_shas'].extend([M9,M10,m.M11,m.M12,m.M13,m.M14])
+    expected = copy.deepcopy(old_policy); expected['rebalance_producer_shas'].extend([M9,M10,m.M11,m.M12,m.M13,m.M15])
     assert policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json') == expected
     assert {M9,M10} <= m.REVIEWED_NATIVES and {M9,M10} <= scoped_inputs.REVIEWED_CONSUMERS
     assert M9 in prefix.CONSUMER_READERS and M9 not in prefix.PRODUCER_READERS

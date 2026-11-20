@@ -34,12 +34,12 @@ M10 = '074a40d762df73a09a00369d1cc841645212cf37'
 M11 = '8467393b197b91d527395fe2024f6f1988afaced'
 M12 = 'c16c59411ca8efa86728ed0cc136235be4e60170'
 M13 = '712485bd14b5a7d860ccb4ab302a032b0d541e50'
-M14 = '74307f6a2834aa1b16d6aafdb3f9f97e5036ffcc'
-LEGACY_PRE_M14_CONTROLLER_SHA = 'ab7ea66bfca0d12bbbd8313c9b2148120d0cdd865addba026b99aa053749e753'
+M15 = 'df384741530a6fcd27c7526057b552c5ce138d53'
+LEGACY_PRE_M15_CONTROLLER_SHA = 'ab7ea66bfca0d12bbbd8313c9b2148120d0cdd865addba026b99aa053749e753'
 LEGACY_PRE_M13_CONTROLLER_SHA = '878b3181744357409a26ea56f3a3801f7a128bd63cddb2e99497fb2ae9c79786'
 LEGACY_PRE_M12_CONTROLLER_SHA = '462b523923adfd83085e1f829d6fba66a886f04a530bf8ce8010c7dcef6c92c1'
 LEGACY_M11_CONTROLLER_SHA = '8558a05482f6054a06e5832933fd53287a80554fe42bc60ae4101fef9015ceb7'
-REVIEWED_NATIVES = frozenset({NATIVE, M8, M9, M10, M11, M12, M13, M14})
+REVIEWED_NATIVES = frozenset({NATIVE, M8, M9, M10, M11, M12, M13, M15})
 LEGACY_M7_CONTROLLER_SHA = 'eea88c4886baaba42256a4b57050432a0e3a4e4dfe12e827f99086d3b0389b16'
 LEGACY_M8_CONTROLLER_SHA = '8a52b8d9b1c6caaaba868cd447073f9d42c432d3d131e4646bfe9442814a2e4b'
 LEGACY_M9_CONTROLLER_SHA = '6056bbc4a25bacefb74d554c3aec02eaae64ab7f824cb7768c9a08936ae8f958'
@@ -445,13 +445,13 @@ def reviewed_controller_identity(checkpoint):
     current=sha(Path(__file__).read_bytes().replace(b'\r\n',b'\n'))
     # Each preceding reader keeps only the producer relationships it reviewed.
     allowed={current}
-    if runtime != M14:
-        allowed.add(LEGACY_PRE_M14_CONTROLLER_SHA)
-    if runtime not in (M13, M14):
+    if runtime != M15:
+        allowed.add(LEGACY_PRE_M15_CONTROLLER_SHA)
+    if runtime not in (M13, M15):
         allowed.add(LEGACY_PRE_M13_CONTROLLER_SHA)
-    if runtime not in (M12, M13, M14):
+    if runtime not in (M12, M13, M15):
         allowed.add(LEGACY_PRE_M12_CONTROLLER_SHA)
-    if runtime not in (M11,M12,M13,M14):
+    if runtime not in (M11,M12,M13,M15):
         allowed.update({LEGACY_M10_CONTROLLER_SHA, LEGACY_M11_CONTROLLER_SHA})
     if runtime in (NATIVE,M8,M9):
         allowed.add(LEGACY_M9_CONTROLLER_SHA)
@@ -480,10 +480,10 @@ def validate_recovery_payload(checkpoint, payload_bytes):
     proof = period.get(KEY)
     # M8/M9/M10 were admitted only through formal recovery. Mode/controller fields
     # are untrusted transport data and cannot opt these producers out of proof.
-    if checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M14) and checkpoint.get('handoff_mode') != MODE:
+    if checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M15) and checkpoint.get('handoff_mode') != MODE:
         raise ValueError('The reviewed M8/M9/M10 producer requires its formal recovery proof route')
     if proof is None:
-        if (checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M14)
+        if (checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M15)
                 or checkpoint.get('handoff_mode') == MODE or 'recovery_controller' in checkpoint):
             raise ValueError('Recovery checkpoint lacks its proof')
         return None
