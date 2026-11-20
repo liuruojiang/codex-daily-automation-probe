@@ -17,7 +17,9 @@ LEGACY_CONTROLLER_SOURCES = {
     'microcap_recovery_handoff.py': '6056bbc4a25bacefb74d554c3aec02eaae64ab7f824cb7768c9a08936ae8f958',
     'microcap_handoff_witness.py': '91d57913553e45ad2ac9e791dbb419f4c759df368e9f9a7c20e53decb12c80c1',
 }
-REVIEWED_PROOF_READER = 'ab7ea66bfca0d12bbbd8313c9b2148120d0cdd865addba026b99aa053749e753'
+REVIEWED_PROOF_READER = '57f08cbdc0b1e86fd31b43c8e9da85a5655ca56819804a3232b180443aa59e5d'
+PRE_M14_STAGE_READER = '3b900e3f733216cd2bdac3d2c68dca29ed6f8c267850d42594ef2b8309cad7f9'
+PRE_M14_PROOF_READER = 'ab7ea66bfca0d12bbbd8313c9b2148120d0cdd865addba026b99aa053749e753'
 PRE_M13_STAGE_READER = '7f3966289ba0c1b14283ea895e3cc5c178801331ca0835a1e1fee7aae3a6eb78'
 PRE_M13_PROOF_READER = '878b3181744357409a26ea56f3a3801f7a128bd63cddb2e99497fb2ae9c79786'
 PRE_M12_STAGE_READER = '8b1ae81be73ca8e904a5ec0218a4702e92c4a0b00e21ed3f8cd7c39e5c28de78'
@@ -56,6 +58,11 @@ def reviewed_reader_context(original_raw, current_raw):
         expected = predecessor
     if supplied == m12_context:
         expected = m12_context
+    m13_context = dict(LEGACY_CONTROLLER_SOURCES, **{
+        'microcap_scoped_stage_resume.py': PRE_M14_STAGE_READER,
+        'microcap_recovery_handoff.py': PRE_M14_PROOF_READER})
+    if supplied == m13_context:
+        expected = m13_context
     unchanged = lambda value: {k: v for k, v in value.items() if k != 'controller_sources'}
     if (original.get('schema') != 'microcap_scoped_recovery_transaction_v1'
             or original.get('consumer_sha') != REVIEWED_NATIVE

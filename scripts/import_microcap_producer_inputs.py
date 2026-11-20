@@ -33,6 +33,7 @@ P4_RUNTIME='ae439a1eec4dae5729483f43356473bcb9b1dff1'
 P5_RUNTIME='e3c855f980e503372fd9fc4268aeea2aa4b5aeeb'
 P6_RUNTIME='f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5'
 P7_RUNTIME='52214f002a8b83ab602a90fd40cc48336a7ce51a'
+P8_RUNTIME='075949e609d2c403214379d949672a192a16e649'
 P2_P3_READERS={
     'scripts/share_change_source.py': (
         'be9e393f09196a812d60b9eb867d21e32b6afbd1e7862d7605accb8bf809d93c',
@@ -61,16 +62,17 @@ def exact_p2_successor(source_runtime,sources,current,reader_runtime):
                 P4_RUNTIME: 'microcap_local_producer_p4_20261113.json',
                 P5_RUNTIME: 'microcap_local_producer_p5_20261116.json',
                 P6_RUNTIME: 'microcap_local_producer_p6_20261117.json',
-                P7_RUNTIME: 'microcap_local_producer_runtime.json'}
+                P7_RUNTIME: 'microcap_local_producer_p7_20261119.json',
+                P8_RUNTIME: 'microcap_local_producer_runtime.json'}
     if reader_runtime not in profiles:
         raise ValueError('Unreviewed P2 to P3 source-only reader successor')
     profile=profiles[reader_runtime]
     new=producer_profile(profile,reader_runtime)['calculation_sources']
     readers=dict(P2_P3_READERS)
-    if reader_runtime in (P4_RUNTIME,P5_RUNTIME,P6_RUNTIME,P7_RUNTIME):
+    if reader_runtime in (P4_RUNTIME,P5_RUNTIME,P6_RUNTIME,P7_RUNTIME,P8_RUNTIME):
         readers['scripts/share_change_source.py']=(readers['scripts/share_change_source.py'][0],
             '9c89824455dc295683d918bc6f5444bd2df5786a86db2643425590b68a603b3f')
-    if reader_runtime in (P5_RUNTIME,P6_RUNTIME,P7_RUNTIME):
+    if reader_runtime in (P5_RUNTIME,P6_RUNTIME,P7_RUNTIME,P8_RUNTIME):
         readers['scripts/share_change_source.py']=(readers['scripts/share_change_source.py'][0],'cc51abb0834eae664f198440f0de95d7c1ba2a3d017860976f34737d7f0e675b')
     changed={name for name in old if old.get(name)!=new.get(name)}
     if (source_runtime!=P2_RUNTIME or set(old)!=set(new)

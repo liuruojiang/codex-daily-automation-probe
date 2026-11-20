@@ -1,7 +1,7 @@
 {
   "schema": "microcap_local_source_runtime_v1",
   "role": "source_preparation_only",
-  "runtime_sha": "52214f002a8b83ab602a90fd40cc48336a7ce51a",
+  "runtime_sha": "075949e609d2c403214379d949672a192a16e649",
   "max_candidates": 300,
   "calculation_sources": {
     "scripts/exchange_calendar.py": "8c5f82f72fee80b8ffb5ca381bb894bdf82eeb267678800ba972bf9bad64abcb",

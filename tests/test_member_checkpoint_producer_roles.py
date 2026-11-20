@@ -20,6 +20,7 @@ M9 = '906eca8a5dfede7fa1674fb17cd3c6ce12205e6d'
 M11 = '8467393b197b91d527395fe2024f6f1988afaced'
 M12 = 'c16c59411ca8efa86728ed0cc136235be4e60170'
 M13 = '712485bd14b5a7d860ccb4ab302a032b0d541e50'
+M14 = '74307f6a2834aa1b16d6aafdb3f9f97e5036ffcc'
 M10 = '074a40d762df73a09a00369d1cc841645212cf37'
 SOURCE_ONLY_PRODUCER = 'f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5'
 P2_SOURCE_ONLY_PRODUCER = '3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
@@ -36,7 +37,7 @@ def test_reviewed_roles_preserve_execution_namespace_core_and_old_producers():
     assert value['execution_strategy_sha'] == 'ab214c20d92ca9bbda1dde7e447bb153e7f59028'
     assert value['checkpoint_strategy_sha'] == '4774966da38f0b5af18617f73cc67c39c9e41a8e'
     assert value['core_strategy_sha'] == 'ad4de441d35442616f91aa613146ffdf8cd479f3'
-    assert value['rebalance_producer_shas'] == [M5, M6, M7, M8, M9, M10, M11, M12, M13]
+    assert value['rebalance_producer_shas'] == [M5, M6, M7, M8, M9, M10, M11, M12, M13, M14]
     assert len(value['rebalance_producer_shas']) == len(set(value['rebalance_producer_shas']))
     assert set(value['rebalance_producer_shas']).isdisjoint({value['execution_strategy_sha'],
         value['checkpoint_strategy_sha'], value['core_strategy_sha'], SOURCE_ONLY_PRODUCER,
@@ -81,12 +82,12 @@ def test_M8_M9_use_only_their_formal_recovery_route(mode,producer):
     ('same_close_period_switch', '123'), ('same_close_period_switch', 1)])
 def test_reviewed_marker_cannot_borrow_an_unknown_mode_or_malformed_parent(producer, mode, origin):
     value={'strategy_sha':producer,'handoff_mode':mode,'handoff_from':origin}
-    if producer in (M8,M9,M10,M11,M12,M13):
+    if producer in (M8,M9,M10,M11,M12,M13,M14):
         # Exercise the actual parent/type gate under M8's valid route; normal
         # M8 routes are independently rejected above, before lineage checks.
         selected=recovery.MODE if mode in ('native_close_extends_previous','same_close_period_switch') else mode
         value=recovery_value(selected,origin,producer)
-    error='formal recovery proof route' if producer in (M8,M9,M10,M11,M12,M13) and value['handoff_mode']!=recovery.MODE else 'handoff lineage'
+    error='formal recovery proof route' if producer in (M8,M9,M10,M11,M12,M13,M14) and value['handoff_mode']!=recovery.MODE else 'handoff lineage'
     with pytest.raises(ValueError, match=error):
         policy.validate_checkpoint_payload(value,known())
 
