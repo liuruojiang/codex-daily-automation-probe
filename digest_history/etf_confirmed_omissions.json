@@ -8399,6 +8399,19 @@
       "zh_summary": "以 DIA 为例解释道指价格加权，高价的高盛与卡特彼勒比跌幅更大的英伟达贡献更多拖累。",
       "evidence_level": "24/7 Wall St. 媒体全文",
       "verify_next": "用指数除数、逐日权重与同区间对照复核。"
+    },
+    {
+      "origin_run_id": "44951909544",
+      "origin_report_date": "2026-11-22",
+      "source": "The Compound",
+      "title": "The AI Bubble Already Popped | TCAF 269",
+      "zh_title": "AI泡沫是否已破裂，资金是否转向价值和股息",
+      "url": "https://www.youtube.com/watch?v=H709wTcFPo8",
+      "published": "2026-11-20T11:00:23+00:00",
+      "summary": "第269期的发布者说明列出 Anthropic 上市、科技向价值和股息股轮动、备兑 ETF 等议题，并披露 VanEck 和 Vanguard 赞助。",
+      "zh_summary": "第269期的发布者说明列出 Anthropic 上市、科技向价值和股息股轮动、备兑 ETF 等议题，并披露 VanEck 和 Vanguard 赞助。",
+      "evidence_level": "The Compound 发布方节目说明",
+      "verify_next": "观点证据以节目说明为限，检验主题与实际持仓、全收益及申赎数据的关系。"
     }
   ]
 }
