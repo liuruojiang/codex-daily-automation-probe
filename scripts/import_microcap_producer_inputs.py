@@ -34,6 +34,9 @@ P5_RUNTIME='e3c855f980e503372fd9fc4268aeea2aa4b5aeeb'
 P6_RUNTIME='f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5'
 P7_RUNTIME='52214f002a8b83ab602a90fd40cc48336a7ce51a'
 P9_RUNTIME='d09b53af78767370a7ecb2bf4ebe6e3527d2eacc'
+P10_RUNTIME='39c08829b43c8399bd6793d715de42cc67cd0d63'
+P9_SHARE_SHA='96201e1905c05601bcd1980433dee542cb3f62d264d4eb451f3e3dd700edec1e'
+P10_SHARE_SHA='28cd753a507c93a158465570132dd67af39883b47aff587509dd3de8195945fd'
 P2_P3_READERS={
     'scripts/share_change_source.py': (
         'be9e393f09196a812d60b9eb867d21e32b6afbd1e7862d7605accb8bf809d93c',
@@ -63,7 +66,8 @@ def exact_p2_successor(source_runtime,sources,current,reader_runtime):
                 P5_RUNTIME: 'microcap_local_producer_p5_20261116.json',
                 P6_RUNTIME: 'microcap_local_producer_p6_20261117.json',
                 P7_RUNTIME: 'microcap_local_producer_p7_20261119.json',
-                P9_RUNTIME: 'microcap_local_producer_runtime.json'}
+                P9_RUNTIME: 'microcap_local_producer_p9_20261120.json',
+                P10_RUNTIME: 'microcap_local_producer_runtime.json'}
     if reader_runtime not in profiles:
         raise ValueError('Unreviewed P2 to P3 source-only reader successor')
     profile=profiles[reader_runtime]
@@ -74,8 +78,9 @@ def exact_p2_successor(source_runtime,sources,current,reader_runtime):
             '9c89824455dc295683d918bc6f5444bd2df5786a86db2643425590b68a603b3f')
     if reader_runtime in (P5_RUNTIME,P6_RUNTIME,P7_RUNTIME,P9_RUNTIME):
         readers['scripts/share_change_source.py']=(readers['scripts/share_change_source.py'][0],'cc51abb0834eae664f198440f0de95d7c1ba2a3d017860976f34737d7f0e675b')
-    if reader_runtime == P9_RUNTIME:
-        readers['scripts/share_change_source.py']=(readers['scripts/share_change_source.py'][0], '96201e1905c05601bcd1980433dee542cb3f62d264d4eb451f3e3dd700edec1e')
+    if reader_runtime in (P9_RUNTIME, P10_RUNTIME):
+        share_sha = P9_SHARE_SHA if reader_runtime == P9_RUNTIME else P10_SHARE_SHA
+        readers['scripts/share_change_source.py']=(readers['scripts/share_change_source.py'][0], share_sha)
     changed={name for name in old if old.get(name)!=new.get(name)}
     if (source_runtime!=P2_RUNTIME or set(old)!=set(new)
             or sources!=old or current!=new or changed!=set(readers)
@@ -86,21 +91,27 @@ def exact_p2_successor(source_runtime,sources,current,reader_runtime):
                 original_source_identity_preserved=True,native_proof_required=True)
 
 
-def exact_p7_share_reader(source_runtime, sources, current, reader_runtime):
-    # Keep the original P7 fingerprints in the warm-input receipt.
-    old = producer_profile('microcap_local_producer_p7_20261119.json', P7_RUNTIME)['calculation_sources']
-    new = producer_profile('microcap_local_producer_runtime.json', P9_RUNTIME)['calculation_sources']
+def exact_share_reader(source_runtime, sources, current, reader_runtime):
+    profiles = {
+        P7_RUNTIME: ('microcap_local_producer_p7_20261119.json',
+                     'cc51abb0834eae664f198440f0de95d7c1ba2a3d017860976f34737d7f0e675b'),
+        P9_RUNTIME: ('microcap_local_producer_p9_20261120.json', P9_SHARE_SHA),
+        P10_RUNTIME: ('microcap_local_producer_runtime.json', P10_SHARE_SHA),
+    }
+    if (source_runtime, reader_runtime) not in {
+            (P7_RUNTIME, P9_RUNTIME), (P7_RUNTIME, P10_RUNTIME), (P9_RUNTIME, P10_RUNTIME)}:
+        raise ValueError('Unreviewed source-only share reader successor')
+    old_profile, old_hash = profiles[source_runtime]
+    new_profile, new_hash = profiles[reader_runtime]
+    old = producer_profile(old_profile, source_runtime)['calculation_sources']
+    new = producer_profile(new_profile, reader_runtime)['calculation_sources']
     key = 'scripts/share_change_source.py'
-    expected = (
-        'cc51abb0834eae664f198440f0de95d7c1ba2a3d017860976f34737d7f0e675b',
-        '96201e1905c05601bcd1980433dee542cb3f62d264d4eb451f3e3dd700edec1e',
-    )
-    if (source_runtime != P7_RUNTIME or reader_runtime != P9_RUNTIME
-            or sources != old or current != new or set(old) != set(new)
+    if (sources != old or current != new or set(old) != set(new)
             or {name for name in old if old[name] != new[name]} != {key}
-            or (old[key], new[key]) != expected):
-        raise ValueError('Unreviewed P7 source-only share reader successor')
-    return dict(schema='exact_p7_share_source_reader_v1', source_runtime=source_runtime,
+            or (old[key], new[key]) != (old_hash, new_hash)):
+        raise ValueError('Unreviewed source-only share reader successor')
+    schema = 'exact_p7_share_source_reader_v1' if source_runtime == P7_RUNTIME else 'exact_p9_share_source_reader_v1'
+    return dict(schema=schema, source_runtime=source_runtime,
                 reader_runtime=reader_runtime, source_fingerprints=old, reader_fingerprints=new,
                 changed_sources=[key], original_source_identity_preserved=True, native_proof_required=True)
 
@@ -267,7 +278,7 @@ def import_producer(*,root,protected_root,bundle,expected_sha,not_after,pool,sta
                 return dict(common,status='skipped_source_covered_by_formal_baseline',
                             formal_baseline=baseline,source_runtime=manifest['runtime_sha'],producer_pointers_changed=False)
             source_runtime = manifest['runtime_sha']
-            admit = exact_p7_share_reader if source_runtime == P7_RUNTIME else exact_p2_successor
+            admit = exact_share_reader if source_runtime in (P7_RUNTIME, P9_RUNTIME) else exact_p2_successor
             reader = admit(source_runtime, context.get('native_sources'), current, actual_runtime)
         if (set(context.get('native_sources',{}))!=set(SOURCE_FILES)
                 or (reader is None and context['native_sources']!=current)):
