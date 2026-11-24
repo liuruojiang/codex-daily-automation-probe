@@ -15,7 +15,7 @@ LOCAL_READ_POLICY = {
         '14e9a9fa6f0487f1d5547598435089c43f2f9fd1',
         'a7c1b9ac33454be4367880a0989dfc1466640503',
         '95d896fe58cc7cb84c0fcb7bd76534f62c9430f4',
-        '906eca8a5dfede7fa1674fb17cd3c6ce12205e6d','074a40d762df73a09a00369d1cc841645212cf37','8467393b197b91d527395fe2024f6f1988afaced','c16c59411ca8efa86728ed0cc136235be4e60170','712485bd14b5a7d860ccb4ab302a032b0d541e50','df384741530a6fcd27c7526057b552c5ce138d53','ede05731de7c78c9bcf2ebfd8ad5c58ee960a200',
+        '906eca8a5dfede7fa1674fb17cd3c6ce12205e6d','074a40d762df73a09a00369d1cc841645212cf37','8467393b197b91d527395fe2024f6f1988afaced','c16c59411ca8efa86728ed0cc136235be4e60170','712485bd14b5a7d860ccb4ab302a032b0d541e50','df384741530a6fcd27c7526057b552c5ce138d53','ede05731de7c78c9bcf2ebfd8ad5c58ee960a200','b60ebfbc2a821e0fbf08fcd110da1360cfc21400',
     ],
 }
 
@@ -47,9 +47,9 @@ def local_runtime(automation_root):
 
 
 def validate_checkpoint_payload(checkpoint, policy):
-    from microcap_recovery_handoff import M8,M9,M10,M11,M12,M13,M15,M16,MODE
+    from microcap_recovery_handoff import M8,M9,M10,M11,M12,M13,M15,M16,M17,MODE
     marker = checkpoint.get('strategy_sha')
-    if marker in (M8,M9,M10,M11,M12,M13,M15,M16) and checkpoint.get('handoff_mode')!=MODE:
+    if marker in (M8,M9,M10,M11,M12,M13,M15,M16,M17) and checkpoint.get('handoff_mode')!=MODE:
         raise ValueError('The reviewed M8/M9/M10 producer requires its formal recovery proof route')
     if policy is None:
         return

@@ -23,9 +23,9 @@ import uuid
 
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 
-RUNTIME = '39c08829b43c8399bd6793d715de42cc67cd0d63'
+RUNTIME = '106e2046e81f8963db2ecd9fc063b5e193d775ff'
 LEGACY_P2 = '3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
-SOURCE_RUNTIMES = frozenset({RUNTIME,'d09b53af78767370a7ecb2bf4ebe6e3527d2eacc','52214f002a8b83ab602a90fd40cc48336a7ce51a','f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5','e3c855f980e503372fd9fc4268aeea2aa4b5aeeb','ae439a1eec4dae5729483f43356473bcb9b1dff1','3344e403ff01e17ef45b745a704a240e0917720b',LEGACY_P2,'f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5','be89e87a0da728b27be0308d7c4c9e57a212b815','a016ce27ea86fca1fa0b5199f802b198c0ed99de',
+SOURCE_RUNTIMES = frozenset({RUNTIME,'39c08829b43c8399bd6793d715de42cc67cd0d63','d09b53af78767370a7ecb2bf4ebe6e3527d2eacc','52214f002a8b83ab602a90fd40cc48336a7ce51a','f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5','e3c855f980e503372fd9fc4268aeea2aa4b5aeeb','ae439a1eec4dae5729483f43356473bcb9b1dff1','3344e403ff01e17ef45b745a704a240e0917720b',LEGACY_P2,'f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5','be89e87a0da728b27be0308d7c4c9e57a212b815','a016ce27ea86fca1fa0b5199f802b198c0ed99de',
     '706af7ea9186bdb9b3948738deb5a5afda7a331e','63c7b16d77600c4aa9dadf58b86d31e034477e44'})
 BOOTSTRAP_RUNTIMES = {*SOURCE_RUNTIMES, '140b9c192e65a2b36a6b02106496e89f1143a4a6',
                       '24a41867408ebee570349de46d3ae37bcff2a6d4',
@@ -502,7 +502,7 @@ def select_local_notice_forward(*,root,protected_root,state,symbols,target,out,n
     from contextlib import ExitStack
     module_path=Path(__file__).with_name('microcap_notice_prefix.py').resolve()
     # Pin this reused dependency through maintain's existing orchestrator hash.
-    if sha(module_path.read_bytes().replace(b'\r\n',b'\n'))!='a5035d18723f9c4d7147d98fcac09496d25c3eb2d016e8fd6e467b4c0b9246a1':
+    if sha(module_path.read_bytes().replace(b'\r\n',b'\n'))!='e4f84f4166401c21f66522008c858f91e50a1b0377f748597d227009e9ed158d':
         raise ValueError('Local notice selector dependency is not the reviewed exact source')
     import microcap_notice_prefix as prefix
     if Path(prefix.__file__).resolve()!=module_path:raise ValueError('Foreign local notice selector module')
@@ -764,6 +764,7 @@ def refresh_current_names(root, target, native_fetch, native_universe_fetch, *, 
 def stable_current_risk_board(evidence, trace):
     """Reobserve the same Eastmoney board with a stable security-code sort."""
     import re
+    from urllib.parse import parse_qs, urljoin, urlsplit
     import requests
 
     url = 'https://40.push2.eastmoney.com/api/qt/clist/get'
@@ -778,10 +779,28 @@ def stable_current_risk_board(evidence, trace):
         started = datetime.now(timezone.utc).isoformat()
         response = requests.get(url, params=query, timeout=(5, 15), verify=True, allow_redirects=False)
         received = datetime.now(timezone.utc).isoformat()
+        redirect = None
+        if response.status_code in (301, 302, 307, 308):
+            raw_redirect = response.content
+            location = response.headers.get('Location')
+            location = urljoin(response.url, location) if location else ''
+            parsed = urlsplit(location)
+            redirect = dict(status=response.status_code, url=response.url, location=location,
+                            sha256=sha(raw_redirect), completed_at=received)
+            atomic(evidence / f'{page}-redirect.raw', raw_redirect)
+            atomic(evidence / f'{page}-redirect.json', encode(redirect))
+            if (parsed.scheme != 'https' or not re.fullmatch(r'(?:[0-9]+\.)?push2\.eastmoney\.com', parsed.netloc)
+                    or parsed.path != '/api/qt/clist/get' or parsed.fragment
+                    or parse_qs(parsed.query) != {key: [value] for key, value in query.items()}):
+                raise ValueError('Stable risk board redirected outside the exact Eastmoney query')
+            response = requests.get(location, timeout=(5, 15), verify=True, allow_redirects=False)
+            received = datetime.now(timezone.utc).isoformat()
         raw = response.content
         atomic(evidence / f'{page}.raw', raw)
         page_receipt = dict(url=url, params=query, page=page, status=response.status_code,
                             sha256=sha(raw), started_at=started, completed_at=received)
+        if redirect is not None:
+            page_receipt['redirect'] = redirect
         atomic(evidence / f'{page}.json', encode(page_receipt))
         response.raise_for_status()
         if response.status_code != 200:

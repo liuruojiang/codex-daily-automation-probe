@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import sys
 from types import SimpleNamespace
+from urllib.parse import urlencode
 import pandas as pd
 import pytest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
@@ -96,6 +97,29 @@ def test_stable_board_rejects_repeated_issuer_or_changing_coverage(tmp_path, mon
     with pytest.raises(ValueError,match='coverage|issuer'):
         m.stable_current_risk_board(evidence, [])
     assert (evidence/'2.raw').read_bytes() == second.content
+
+
+@pytest.mark.parametrize('host',['81.push2.eastmoney.com','other.example'])
+def test_stable_board_follows_only_exact_eastmoney_redirect(tmp_path, monkeypatch, host):
+    urls = []
+    def get(url, *, params=None, **kwargs):
+        urls.append(url)
+        if params is None:
+            return risk_board_response(1,'300295','*ST first')
+        query = urlencode(params)
+        return SimpleNamespace(status_code=302, url=url+'?'+query, content=b'',
+                               headers={'Location':f'https://{host}/api/qt/clist/get?{query}'})
+    monkeypatch.setattr('requests.get',get)
+    evidence = tmp_path / 'risk-board'
+    trace = []
+    if host == 'other.example':
+        with pytest.raises(ValueError,match='outside the exact Eastmoney query'):
+            m.stable_current_risk_board(evidence,trace)
+        assert len(urls) == 1
+    else:
+        assert m.stable_current_risk_board(evidence,trace) == [{'code':'300295','name':'*ST first'}]
+        assert len(urls) == 2 and trace[0]['redirect']['status'] == 302
+    assert (evidence/'1-redirect.json').is_file()
 
 
 def test_reviewed_alias_keeps_both_raw_names_and_native_st_membership(names):
