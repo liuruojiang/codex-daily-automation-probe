@@ -651,6 +651,10 @@ TENOR_SPREAD_EFFECTIVE = "2026-11-20"
 INDEX_BASIS_EFFECTIVE = "2026-11-25"
 INDEX_BASIS_LABELS = ("近月－指数", "远月－指数", "近季度－指数", "远季度－指数")
 INDEX_NAMES = {"IC": "中证500", "IM": "中证1000"}
+CLOSE_CURVE_EFFECTIVE = date(2026, 11, 25)
+CLOSE_CURVE_ROLES = ("near", "far", "quarter_near", "quarter_far")
+CLOSE_CURVE_LABELS = ("近月相对指数", "远月相对指数", "近季度相对指数", "远季度相对指数")
+CLOSE_CURVE_NOTE = "贴水口径：正值为贴水，负值为升水。指数为当日收盘；期货为同日最后报价（个别可能早于15:00），不是结算价。"
 TENOR_SPREAD_LABELS = {
     "near_far_month_spread": "近月－远月",
     "near_near_quarter_spread": "近月－近季",
@@ -847,10 +851,137 @@ def format_index_basis(signal, *, product=None):
     return lines
 
 
+def _contract_at(product, ordinal):
+    return f"{product}{ordinal // 12 % 100:02d}{ordinal % 12 + 1:02d}"
+
+
+@delivery_contract.with_calendar_policy()
+def _report_calendar_expiry_on_policy(payload, contract):
+    day = date.fromisoformat(payload["market_date"])
+    if not delivery_contract.is_session(day):
+        raise ValueError("行情日未获交易日历授权")
+    first = date(2000 + int(contract[2:4]), int(contract[-2:]), 1)
+    expiration = first + timedelta(days=(4 - first.weekday()) % 7 + 14)
+    while not delivery_contract.is_session(expiration):
+        expiration += timedelta(days=1)
+    return expiration
+
+
+def _report_calendar_expiry(product, day, contract):
+    return _report_calendar_expiry_on_policy({"market_date": day.isoformat()}, contract)
+
+
+def uses_close_curve(signal):
+    return (signal.get("mode") == "close" and signal.get("close_confirmed") is True
+            and str(signal.get("market_date", "")) >= CLOSE_CURVE_EFFECTIVE.isoformat())
+
+
+def _report_price(value, label):
+    number = _spread_number(value, label)
+    if number <= 0 or len(f"{number:.2f}") > 24 or f"{number:.2f}" == "0.00":
+        raise ValueError(f"{label} 报价异常或无法可靠显示")
+    return number
+
+
+def _curve_arithmetic(anchor, future, days):
+    points = anchor - future
+    ratio = points / anchor
+    annual = ratio * 365 / days
+    if (days <= 0 or not all(math.isfinite(x) for x in (points, ratio * 100, annual * 100))
+            or any(len(x) > 24 for x in (f"{points:+.2f}", f"{ratio:+.2%}", f"{annual:+.2%}"))):
+        raise ValueError("贴水数值或期间异常，无法可靠显示")
+    return points, ratio, annual
+
+
+def format_close_curve(signal, *, product=None):
+    """Independently revalidate each leg; a missing index or leg cannot hide other available legs."""
+    product = product or signal.get("product")
+    labels = tuple(TENOR_SPREAD_LABELS.values()) + CLOSE_CURVE_LABELS
+    def na(index, reason):
+        prefix = "期限贴水" if index < 3 else "期现贴水"
+        return f"{prefix}（{labels[index]}）：N/A（{reason}）"
+    curve = signal.get("close_report_curve")
+    try:
+        if not uses_close_curve(signal) or not isinstance(curve, dict) or curve.get("schema") != "close_curve_v2":
+            raise ValueError("未提供已核验收盘期限结构")
+        day = date.fromisoformat(str(signal.get("market_date")))
+        if (product not in INDEX_NAMES or product != signal.get("product") or product != curve.get("product")
+                or curve.get("market_date") != day.isoformat() or curve.get("source_date") != day.isoformat()
+                or str(signal.get("future_quote_date")) != day.isoformat() or curve.get("source") != signal.get("future_quote_source")
+                or not isinstance(curve.get("source"), str) or not curve["source"].strip()
+                or curve.get("price_type") != "same_snapshot_lastprice"):
+            raise ValueError("收盘期限结构的日期、品种或来源不一致")
+        current = day.year * 12 + day.month - 1
+        current_expiry = _report_calendar_expiry(product, day, _contract_at(product, current))
+        if curve.get("current_month_expiry") != current_expiry.isoformat():
+            raise ValueError("当月实际交割日不一致")
+        contracts = [_contract_at(product, m) for m in _tenor_months(current + (day >= current_expiry))]
+        listed = curve.get("listed_contracts")
+        if not isinstance(listed, list) or not all(isinstance(c, str) for c in listed) or len(listed) != len(set(listed)):
+            raise ValueError("挂牌清单异常")
+    except (ValueError, TypeError, KeyError, AttributeError, RuntimeError, OverflowError) as exc:
+        return [na(i, exc) for i in range(7)] + [CLOSE_CURVE_NOTE]
+    legs, errors = {}, {}
+    for i, (role, contract) in enumerate(zip(CLOSE_CURVE_ROLES, contracts)):
+        try:
+            value = curve.get("legs", {}).get(role)
+            if not isinstance(value, dict) or value.get("contract") != contract:
+                raise ValueError("目标合约身份缺失或不一致")
+            if contract not in listed:
+                raise ValueError("目标合约尚未实际挂牌")
+            if value.get("status") != "ok":
+                raise ValueError(str(value.get("reason", "无可验证报价")))
+            expiration = _report_calendar_expiry(product, day, contract)
+            if value.get("expiry") != expiration.isoformat() or expiration <= day:
+                raise ValueError("到期日历不一致或合约已交割")
+            legs[i] = (_report_price(value.get("price"), contract), expiration)
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError, OverflowError) as exc:
+            errors[i] = f"{contract}：{exc}"
+    try:
+        value = curve.get("index")
+        if not isinstance(value, dict) or value.get("status") != "ok" or value.get("source_date") != day.isoformat() or not isinstance(value.get("source"), str) or not value["source"].strip():
+            raise ValueError("指数收盘日期、来源或价格未核验")
+        spot = _report_price(value.get("price"), "指数")
+        if spot != _report_price(signal.get("index_price"), "指数"):
+            raise ValueError("指数收盘价格与信号不一致")
+        index_error = None
+    except (ValueError, TypeError, KeyError, AttributeError, OverflowError) as exc:
+        index_error = str(exc)
+    lines = []
+    for i in range(7):
+        leg = i + 1 if i < 3 else i - 3
+        try:
+            if leg not in legs:
+                raise ValueError(errors[leg])
+            future, expiration = legs[leg]
+            if i < 3:
+                if 0 not in legs:
+                    raise ValueError(errors[0])
+                anchor, anchor_expiry = legs[0]
+                name = contracts[0]
+                days = (expiration - anchor_expiry).days
+                prefix = "期限贴水"
+            else:
+                if index_error:
+                    raise ValueError(index_error)
+                anchor, name, days = spot, INDEX_NAMES[product], (expiration - day).days
+                prefix = "期现贴水"
+            points, ratio, annual = _curve_arithmetic(anchor, future, days)
+            duration = "到期间隔" if i < 3 else "距到期"
+            lines.append(f"{prefix}（{labels[i]}）：{name} {anchor:.2f} − {contracts[leg]} {future:.2f} = {points:+.2f}点"
+                         f"（{ratio:+.2%}；{duration} {days}天；年化 {annual:+.2%}/年，非保证收益）；"
+                         f"行情 {day}，期货报价 {curve['source']}")
+        except (ValueError, TypeError, KeyError, AttributeError, OverflowError, ZeroDivisionError) as exc:
+            lines.append(na(i, exc))
+    return lines + [CLOSE_CURVE_NOTE]
+
+
 def spread_reasons(signal, product):
+    if uses_close_curve(signal):
+        return format_close_curve(signal, product=product)
     if any(key in signal for key in TENOR_SPREAD_LABELS) or str(signal.get("market_date", ""))[:10] >= TENOR_SPREAD_EFFECTIVE:
         lines = tenor_spread_reasons(signal, product)
-        if signal.get("close_confirmed") is True and str(signal.get("market_date", "")) >= INDEX_BASIS_EFFECTIVE:
+        if signal.get("mode") != "intraday" and signal.get("close_confirmed") is True and str(signal.get("market_date", "")) >= INDEX_BASIS_EFFECTIVE:
             lines.extend(format_index_basis(signal, product=product))
         return lines
     return [quarter_spread_reason(signal),
@@ -1665,7 +1796,7 @@ def verified_failure_diagnostic(
         "diagnostic_report_market_date", "diagnostic_report_generated_at", "diagnostic_report_mode",
     }
     if not fields.intersection(payload):
-        if isinstance(proof, dict) and proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1"}:
+        if isinstance(proof, dict) and proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2"}:
             raise ValueError("current producer requires a bound failure diagnostic")
         return None, None  # Old failures retain their original warning-only form.
     from datetime import datetime, timezone
@@ -1673,7 +1804,7 @@ def verified_failure_diagnostic(
     from zoneinfo import ZoneInfo
     source_files = proof.get("source_sha256") if isinstance(proof, dict) else None
     if (not isinstance(proof, dict) or proof.get("status") != "verified"
-            or proof.get("release") not in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1"}
+            or proof.get("release") not in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2"}
             or not re.fullmatch(r"[0-9a-f]{40}", str(proof.get("strategy_sha", "")))
             or not isinstance(source_files, dict)
             or not re.fullmatch(r"[0-9a-f]{64}", str(
@@ -1753,7 +1884,7 @@ def failure_diagnostic_display(text: str) -> tuple[str, str]:
                 .replace("下一交易日目标", "下一交易日目标（仅诊断）"))
 
     prefixes = ("- 0.5倍核心期货", "- 动量袖：", "- 独立网格：", "- Put：",
-                "- 指数 ", "- 市场阶段：", "- 期限贴水", "- 期现贴水", "- 季月价差",
+                "- 指数 ", "- 市场阶段：", "- 期限贴水", "- 期现贴水", "- 贴水口径", "- 季月价差",
                 "- 月度价差", "- Put 行情：", "- Call 行情：", "- 季度规则：")
     for product in ("IC", "IM"):
         lines = blocks.get(product, [])
@@ -1830,6 +1961,7 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     files = proof.get("source_sha256")
     from hashlib import sha256
     releases = {
+        "20261124-report-close-curve-v2": "docs/ic_im_report_close_curve_20261124_v2_manifest.json",
         "20261124-report-index-basis-v1": "docs/ic_im_report_index_basis_20261124_v1_manifest.json",
         "20261123-previous-session-master-v1": "docs/ic_im_previous_session_master_20261123_v1_manifest.json",
         "20261120-monthly-old-leg-digest-v1": "docs/ic_im_monthly_old_leg_and_failure_digest_20261120_v1_manifest.json",
@@ -1851,12 +1983,12 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     if (proof.get("status") != "verified" or proof.get("strategy_sha") != expected_sha
             or proof.get("release") not in releases
             or not re.fullmatch(r"[0-9a-f]{64}", str(proof.get("manifest_sha256", "")))
-            or not isinstance(files, dict) or len(files) != (32 if proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1"} else 31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
+            or not isinstance(files, dict) or len(files) != (32 if proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2"} else 31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
             or "run_ic_im_v1_4_github_digest.py" not in files
             or files != expected_files or proof.get("manifest_sha256") != sha256(expected_raw).hexdigest()
             or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in files.values())):
         raise ValueError("source provenance does not match this run's execution inventory")
-    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1"}:
+    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2"}:
         if proof.get("support_sha256") != json.loads(expected_raw)["support_files"]:
             raise ValueError("source provenance lacks exact approved-calendar support bytes")
     from datetime import datetime, timezone
@@ -1880,7 +2012,7 @@ def main() -> int:
                               args.expected_source_release or None)
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
-    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1"}
+    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2"}
             and payload.get("status") in {"ok", "partial"} and "report_sha256" not in payload):
         raise ValueError("current IC/IM producer requires report_sha256")
     if str(payload.get("strategy_revision")) != "r1":
