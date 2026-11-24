@@ -16,6 +16,7 @@ def verify(root, expected):
     if observed != expected:
         raise ValueError('strategy checkout does not match the production pin')
     releases = {
+        'docs/ic_im_report_index_basis_20261124_v1_manifest.json': '20261124-report-index-basis-v1',
         'docs/ic_im_previous_session_master_20261123_v1_manifest.json': '20261123-previous-session-master-v1',
         'docs/ic_im_monthly_old_leg_and_failure_digest_20261120_v1_manifest.json': '20261120-monthly-old-leg-digest-v1',
         'docs/ic_im_report_tenor_spreads_20261120_v1_manifest.json': '20261120-report-tenor-spreads-v1',
@@ -44,7 +45,7 @@ def verify(root, expected):
         raise ValueError('unregistered source release')
     files = manifest.get('files')
     if (manifest.get('schema') != 'icim_audited_daily_release_v1' or not isinstance(files, dict)
-            or len(files) != (32 if manifest['release'] in {'20261113-held-put-close-v1', '20261113-held-put-close-v2', '20261120-report-tenor-spreads-v1', '20261120-monthly-old-leg-digest-v1', '20261123-previous-session-master-v1'} else 31 if manifest['release'] in {'20261112-expert-review-v5-r2', '20261112-expert-review-v5-r3'} else 29)
+            or len(files) != (32 if manifest['release'] in {'20261113-held-put-close-v1', '20261113-held-put-close-v2', '20261120-report-tenor-spreads-v1', '20261120-monthly-old-leg-digest-v1', '20261123-previous-session-master-v1', '20261124-report-index-basis-v1'} else 31 if manifest['release'] in {'20261112-expert-review-v5-r2', '20261112-expert-review-v5-r3'} else 29)
             or 'run_ic_im_v1_4_github_digest.py' not in files
             or 'ic_im_signal_evidence_v1.py' not in files or 'ic_im_evidence_adapter_v1.py' not in files):
         raise ValueError('incomplete execution inventory')
@@ -61,13 +62,13 @@ def verify(root, expected):
         if actual[name] != digest:
             raise ValueError('source fingerprint mismatch: ' + name)
     support = manifest.get('support_files', {})
-    if manifest['release'] in {'20261113-held-put-close-v1', '20261113-held-put-close-v2', '20261120-report-tenor-spreads-v1', '20261120-monthly-old-leg-digest-v1', '20261123-previous-session-master-v1', '20261112-expert-review-v5-r2', '20261112-expert-review-v5-r3'}:
+    if manifest['release'] in {'20261113-held-put-close-v1', '20261113-held-put-close-v2', '20261120-report-tenor-spreads-v1', '20261120-monthly-old-leg-digest-v1', '20261123-previous-session-master-v1', '20261124-report-index-basis-v1', '20261112-expert-review-v5-r2', '20261112-expert-review-v5-r3'}:
         if (not {'ic_im_expiry_evidence_v1.py', 'ic_im_state_council_calendar_v1.py'} <= files.keys()
                 or set(support) != {'requirements-poe-v1.4-server.txt',
                     'data/exchange_calendar/state_council_2027_v1.json',
                     'data/exchange_calendar/state_council_2027_notice_search_snapshot.txt'}):
             raise ValueError('incomplete approved-calendar release dependencies')
-    if manifest['release'] in {'20261113-held-put-close-v1', '20261113-held-put-close-v2', '20261120-report-tenor-spreads-v1', '20261120-monthly-old-leg-digest-v1', '20261123-previous-session-master-v1'} and 'ic_im_held_put_close_v1.py' not in files:
+    if manifest['release'] in {'20261113-held-put-close-v1', '20261113-held-put-close-v2', '20261120-report-tenor-spreads-v1', '20261120-monthly-old-leg-digest-v1', '20261123-previous-session-master-v1', '20261124-report-index-basis-v1'} and 'ic_im_held_put_close_v1.py' not in files:
         raise ValueError('incomplete held-put close release dependencies')
     checked_support = {}
     for name, digest in support.items():
