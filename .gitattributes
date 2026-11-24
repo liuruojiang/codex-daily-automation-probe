@@ -24,6 +24,7 @@ docs/ic_im_monthly_old_leg_and_failure_digest_20261120_v1_manifest.json -text
 docs/ic_im_previous_session_master_20261123_v1_manifest.json -text
 docs/ic_im_report_index_basis_20261124_v1_manifest.json -text
 docs/ic_im_report_close_curve_20261124_v2_manifest.json -text
+docs/ic_im_report_close_observation_20261124_v3_manifest.json -text
 docs/ic_im_expert_release_20261112_v2_manifest.json -text
 scripts/data/exchange_calendar/state_council_2027_notice_search_snapshot.txt -text
 tests/fixtures/icim/calendar_render_20261112/** -text
