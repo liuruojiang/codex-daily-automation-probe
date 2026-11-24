@@ -1796,7 +1796,7 @@ def verified_failure_diagnostic(
         "diagnostic_report_market_date", "diagnostic_report_generated_at", "diagnostic_report_mode",
     }
     if not fields.intersection(payload):
-        if isinstance(proof, dict) and proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2"}:
+        if isinstance(proof, dict) and proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2", "20261124-report-close-observation-v3"}:
             raise ValueError("current producer requires a bound failure diagnostic")
         return None, None  # Old failures retain their original warning-only form.
     from datetime import datetime, timezone
@@ -1804,7 +1804,7 @@ def verified_failure_diagnostic(
     from zoneinfo import ZoneInfo
     source_files = proof.get("source_sha256") if isinstance(proof, dict) else None
     if (not isinstance(proof, dict) or proof.get("status") != "verified"
-            or proof.get("release") not in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2"}
+            or proof.get("release") not in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2", "20261124-report-close-observation-v3"}
             or not re.fullmatch(r"[0-9a-f]{40}", str(proof.get("strategy_sha", "")))
             or not isinstance(source_files, dict)
             or not re.fullmatch(r"[0-9a-f]{64}", str(
@@ -1961,6 +1961,7 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     files = proof.get("source_sha256")
     from hashlib import sha256
     releases = {
+        "20261124-report-close-observation-v3": "docs/ic_im_report_close_observation_20261124_v3_manifest.json",
         "20261124-report-close-curve-v2": "docs/ic_im_report_close_curve_20261124_v2_manifest.json",
         "20261124-report-index-basis-v1": "docs/ic_im_report_index_basis_20261124_v1_manifest.json",
         "20261123-previous-session-master-v1": "docs/ic_im_previous_session_master_20261123_v1_manifest.json",
@@ -1983,12 +1984,12 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     if (proof.get("status") != "verified" or proof.get("strategy_sha") != expected_sha
             or proof.get("release") not in releases
             or not re.fullmatch(r"[0-9a-f]{64}", str(proof.get("manifest_sha256", "")))
-            or not isinstance(files, dict) or len(files) != (32 if proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2"} else 31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
+            or not isinstance(files, dict) or len(files) != (32 if proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2", "20261124-report-close-observation-v3"} else 31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
             or "run_ic_im_v1_4_github_digest.py" not in files
             or files != expected_files or proof.get("manifest_sha256") != sha256(expected_raw).hexdigest()
             or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in files.values())):
         raise ValueError("source provenance does not match this run's execution inventory")
-    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2"}:
+    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2", "20261124-report-close-observation-v3"}:
         if proof.get("support_sha256") != json.loads(expected_raw)["support_files"]:
             raise ValueError("source provenance lacks exact approved-calendar support bytes")
     from datetime import datetime, timezone
@@ -2012,7 +2013,7 @@ def main() -> int:
                               args.expected_source_release or None)
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
-    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2"}
+    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1", "20261124-report-close-curve-v2", "20261124-report-close-observation-v3"}
             and payload.get("status") in {"ok", "partial"} and "report_sha256" not in payload):
         raise ValueError("current IC/IM producer requires report_sha256")
     if str(payload.get("strategy_revision")) != "r1":
