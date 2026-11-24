@@ -789,7 +789,9 @@ def stable_current_risk_board(evidence, trace):
                             sha256=sha(raw_redirect), completed_at=received)
             atomic(evidence / f'{page}-redirect.raw', raw_redirect)
             atomic(evidence / f'{page}-redirect.json', encode(redirect))
-            if (parsed.scheme != 'https' or not re.fullmatch(r'(?:[0-9]+\.)?push2\.eastmoney\.com', parsed.netloc)
+            same_provider = (parsed.netloc == '40.push2delay.eastmoney.com'
+                             or re.fullmatch(r'(?:[0-9]+\.)?push2\.eastmoney\.com', parsed.netloc))
+            if (parsed.scheme != 'https' or not same_provider
                     or parsed.path != '/api/qt/clist/get' or parsed.fragment
                     or parse_qs(parsed.query) != {key: [value] for key, value in query.items()}):
                 raise ValueError('Stable risk board redirected outside the exact Eastmoney query')
