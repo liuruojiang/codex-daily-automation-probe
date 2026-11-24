@@ -1,6 +1,6 @@
 """Software name-transport invariants; no simulated market result is published."""
 import csv
-from datetime import datetime,timezone
+from datetime import datetime,timedelta,timezone
 import io
 import json
 from pathlib import Path
@@ -42,6 +42,60 @@ def test_native_names_query_only_maintained_pool_and_actual_st_conflict(names):
     original=receipt['scoped_observation']['prior_universe']
     assert m.bound(root,original['path']).read_bytes()==prior
     assert m.pd_read_names(m.bound(root,m.CACHE+'active_universe.csv').read_bytes())['600999']=='cold preserved'
+
+
+def risk_board_response(total, code, name):
+    return SimpleNamespace(status_code=200, raise_for_status=lambda: None,
+                           content=m.encode({'data': {'total': total, 'diff': [{'f12': code, 'f14': name}]}}))
+
+
+def test_intraday_duplicate_recovers_by_stable_page_order_without_dropping_rows(names, monkeypatch):
+    root,symbols,_,_=names
+    target = '2000-01-04'
+    board = m.bound(root,m.CACHE+'current_st.csv')
+    receipt = m.bound(root,m.CACHE+'local_current_names/'+target+'.json')
+    original_board = board.read_bytes() + b'300295,*ST complete\r\n'
+    board.write_bytes(original_board)
+    observation = json.loads(receipt.read_bytes())
+    observation.update(count=2, cache_sha256=m.sha(original_board))
+    receipt.write_bytes(m.encode(observation))
+    floor = datetime.now(timezone.utc) - timedelta(minutes=1)
+    with pytest.raises(m.DuplicateCurrentRiskRows):
+        m.current_names_proof(root,target,floor,symbols)
+
+    calls = []
+    rows = {'300295': '*ST complete', '000010': '*ST other'}
+    pages = [risk_board_response(2, code, name) for code,name in rows.items()]
+    def get(url, *, params, **kwargs):
+        calls.append(params)
+        assert kwargs['verify'] is True and kwargs['allow_redirects'] is False
+        return pages[int(params['pn'])-1]
+    monkeypatch.setattr('requests.get', get)
+    native = SimpleNamespace(fetch_current_st_codes=lambda **kw:pytest.fail('duplicate pages must not be queried again'))
+    def quote(requested):
+        return pd.DataFrame([dict(code=s,name=rows.get(s,'ordinary '+s),
+            fetched_at=datetime.now(timezone.utc).isoformat(),quote_source='tencent_batch_free') for s in requested])
+
+    evidence = root / 'evidence'
+    m.refresh_current_name_stage(root,target,native,symbols,quote,floor,evidence)
+    m.current_names_proof(root,target,floor,symbols)
+    assert m.pd_read_names(board.read_bytes()) == rows
+    assert [p['pn'] for p in calls] == ['1','2'] and {p['fid'] for p in calls} == {'f12'}
+    assert next(evidence.glob('*/2.raw')).read_bytes() == pages[1].content
+    assert json.loads(receipt.read_bytes())['native_functions'][0] == 'stable_current_risk_board'
+    saved = m.bound(root,m.CACHE+'local_current_names/observations/'+m.sha(original_board)+'.csv')
+    assert saved.read_bytes() == original_board
+
+
+@pytest.mark.parametrize('second',[risk_board_response(2,'300295','*ST repeated'),
+                                   risk_board_response(3,'000010','*ST changed total')])
+def test_stable_board_rejects_repeated_issuer_or_changing_coverage(tmp_path, monkeypatch, second):
+    first = risk_board_response(2,'300295','*ST first')
+    monkeypatch.setattr('requests.get', lambda url,*,params,**kw: first if params['pn']=='1' else second)
+    evidence = tmp_path / 'risk-board'
+    with pytest.raises(ValueError,match='coverage|issuer'):
+        m.stable_current_risk_board(evidence, [])
+    assert (evidence/'2.raw').read_bytes() == second.content
 
 
 def test_reviewed_alias_keeps_both_raw_names_and_native_st_membership(names):
