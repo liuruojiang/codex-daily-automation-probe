@@ -99,7 +99,7 @@ def test_stable_board_rejects_repeated_issuer_or_changing_coverage(tmp_path, mon
     assert (evidence/'2.raw').read_bytes() == second.content
 
 
-@pytest.mark.parametrize('host',['81.push2.eastmoney.com','other.example'])
+@pytest.mark.parametrize('host',['81.push2.eastmoney.com','40.push2delay.eastmoney.com','other.example'])
 def test_stable_board_follows_only_exact_eastmoney_redirect(tmp_path, monkeypatch, host):
     urls = []
     def get(url, *, params=None, **kwargs):
