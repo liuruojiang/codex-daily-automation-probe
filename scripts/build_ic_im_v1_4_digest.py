@@ -648,6 +648,9 @@ def _spread_number(value, label):
 
 
 TENOR_SPREAD_EFFECTIVE = "2026-11-20"
+INDEX_BASIS_EFFECTIVE = "2026-11-25"
+INDEX_BASIS_LABELS = ("近月－指数", "远月－指数", "近季度－指数", "远季度－指数")
+INDEX_NAMES = {"IC": "中证500", "IM": "中证1000"}
 TENOR_SPREAD_LABELS = {
     "near_far_month_spread": "近月－远月",
     "near_near_quarter_spread": "近月－近季",
@@ -788,9 +791,68 @@ def tenor_spread_reasons(signal, product):
     return _format_month_spread_reasons(signal, product, TENOR_SPREAD_LABELS)
 
 
+def format_index_basis(signal, *, product=None):
+    """Close-only display derived from existing, validated same-day signal evidence.
+
+    Do not mutate the signal or infer missing quotations from other contracts.
+    """
+    def unavailable(label, reason):
+        return f"期现贴水（{label}）：N/A（{reason}）"
+
+    product = product or signal.get("product")
+    try:
+        if product not in INDEX_NAMES or signal.get("product") != product or signal.get("close_confirmed") is not True:
+            raise ValueError("缺少对应品种的收盘确认")
+        day = date.fromisoformat(str(signal.get("market_date")))
+        if str(signal.get("future_quote_date")) != day.isoformat():
+            raise ValueError("期货行情日与指数收盘日不一致")
+        spot = _spread_number(signal.get("index_price"), "index_price")
+        if spot <= 0:
+            raise ValueError("指数价格必须为正")
+    except (ValueError, TypeError, OverflowError) as exc:
+        return [unavailable(label, exc) for label in INDEX_BASIS_LABELS]
+
+    checks = {}
+    for index, (key, label) in enumerate(TENOR_SPREAD_LABELS.items(), 1):
+        try:
+            checks[index] = _validated_month_spread(signal.get(key), label, product, day)
+        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError, OverflowError, ZeroDivisionError):
+            continue
+    anchors = {tuple(v[k] for k in ("near_contract", "near_price", "near_expiry", "current_month_expiry", "source", "source_date"))
+               for v in checks.values()}
+    if len(anchors) > 1 or any(v["source"] != signal.get("future_quote_source") for v in checks.values()):
+        return [unavailable(label, "近月基准或行情来源不一致") for label in INDEX_BASIS_LABELS]
+
+    lines = []
+    for index, label in enumerate(INDEX_BASIS_LABELS):
+        value = next(iter(checks.values()), None) if index == 0 else checks.get(index)
+        if value is None:
+            lines.append(unavailable(label, "未提供可核验的同日合约报价"))
+            continue
+        leg = "near" if index == 0 else "far"
+        contract = value[f"{leg}_contract"]
+        future = value[f"{leg}_price"]
+        days = (date.fromisoformat(value[f"{leg}_expiry"]) - day).days
+        points = spot - future
+        ratio = points / spot
+        annualized = ratio * 365 / days if days else None
+        if (days < 0 or not all(math.isfinite(x) for x in (points, ratio, ratio * 100))
+                or (annualized is not None and not math.isfinite(annualized * 100))):
+            lines.append(unavailable(label, "贴水或到期日无效"))
+            continue
+        annual = "年化 N/A（交割当日）" if annualized is None else f"年化 {annualized:+.2%}/年"
+        lines.append(f"期现贴水（{label}）：{INDEX_NAMES[product]} {spot:.2f} − {contract} {future:.2f}"
+                     f" = {points:+.2f}点（{ratio:+.2%}；距到期 {days}天；{annual}，非保证收益）；"
+                     f"行情 {day}，期货报价 {value['source']}")
+    return lines
+
+
 def spread_reasons(signal, product):
     if any(key in signal for key in TENOR_SPREAD_LABELS) or str(signal.get("market_date", ""))[:10] >= TENOR_SPREAD_EFFECTIVE:
-        return tenor_spread_reasons(signal, product)
+        lines = tenor_spread_reasons(signal, product)
+        if signal.get("close_confirmed") is True and str(signal.get("market_date", "")) >= INDEX_BASIS_EFFECTIVE:
+            lines.extend(format_index_basis(signal, product=product))
+        return lines
     return [quarter_spread_reason(signal),
             *(month_spread_reasons(signal, product) if any(key in signal for key in ("month_next_spread", "month_quarter_spread"))
               or str(signal.get("market_date", ""))[:10] >= "2026-10-18" else [])]
@@ -1603,7 +1665,7 @@ def verified_failure_diagnostic(
         "diagnostic_report_market_date", "diagnostic_report_generated_at", "diagnostic_report_mode",
     }
     if not fields.intersection(payload):
-        if isinstance(proof, dict) and proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1"}:
+        if isinstance(proof, dict) and proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1"}:
             raise ValueError("current producer requires a bound failure diagnostic")
         return None, None  # Old failures retain their original warning-only form.
     from datetime import datetime, timezone
@@ -1611,7 +1673,7 @@ def verified_failure_diagnostic(
     from zoneinfo import ZoneInfo
     source_files = proof.get("source_sha256") if isinstance(proof, dict) else None
     if (not isinstance(proof, dict) or proof.get("status") != "verified"
-            or proof.get("release") not in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1"}
+            or proof.get("release") not in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1"}
             or not re.fullmatch(r"[0-9a-f]{40}", str(proof.get("strategy_sha", "")))
             or not isinstance(source_files, dict)
             or not re.fullmatch(r"[0-9a-f]{64}", str(
@@ -1691,7 +1753,7 @@ def failure_diagnostic_display(text: str) -> tuple[str, str]:
                 .replace("下一交易日目标", "下一交易日目标（仅诊断）"))
 
     prefixes = ("- 0.5倍核心期货", "- 动量袖：", "- 独立网格：", "- Put：",
-                "- 指数 ", "- 市场阶段：", "- 期限贴水", "- 季月价差",
+                "- 指数 ", "- 市场阶段：", "- 期限贴水", "- 期现贴水", "- 季月价差",
                 "- 月度价差", "- Put 行情：", "- Call 行情：", "- 季度规则：")
     for product in ("IC", "IM"):
         lines = blocks.get(product, [])
@@ -1768,6 +1830,7 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     files = proof.get("source_sha256")
     from hashlib import sha256
     releases = {
+        "20261124-report-index-basis-v1": "docs/ic_im_report_index_basis_20261124_v1_manifest.json",
         "20261123-previous-session-master-v1": "docs/ic_im_previous_session_master_20261123_v1_manifest.json",
         "20261120-monthly-old-leg-digest-v1": "docs/ic_im_monthly_old_leg_and_failure_digest_20261120_v1_manifest.json",
         "20261120-report-tenor-spreads-v1": "docs/ic_im_report_tenor_spreads_20261120_v1_manifest.json",
@@ -1788,12 +1851,12 @@ def source_provenance(path: str, expected_sha: str, expected_release: str | None
     if (proof.get("status") != "verified" or proof.get("strategy_sha") != expected_sha
             or proof.get("release") not in releases
             or not re.fullmatch(r"[0-9a-f]{64}", str(proof.get("manifest_sha256", "")))
-            or not isinstance(files, dict) or len(files) != (32 if proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1"} else 31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
+            or not isinstance(files, dict) or len(files) != (32 if proof.get("release") in {"20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1"} else 31 if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3"} else 29)
             or "run_ic_im_v1_4_github_digest.py" not in files
             or files != expected_files or proof.get("manifest_sha256") != sha256(expected_raw).hexdigest()
             or any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in files.values())):
         raise ValueError("source provenance does not match this run's execution inventory")
-    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1"}:
+    if proof.get("release") in {"20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1"}:
         if proof.get("support_sha256") != json.loads(expected_raw)["support_files"]:
             raise ValueError("source provenance lacks exact approved-calendar support bytes")
     from datetime import datetime, timezone
@@ -1817,7 +1880,7 @@ def main() -> int:
                               args.expected_source_release or None)
 
     payload = json.loads(Path(args.result).read_text(encoding="utf-8"))
-    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1"}
+    if (proof and proof.get("release") in {"20261109-fear-source-round2-v3", "20261112-expert-review-v5-r2", "20261112-expert-review-v5-r3", "20261113-held-put-close-v1", "20261113-held-put-close-v2", "20261120-report-tenor-spreads-v1", "20261120-monthly-old-leg-digest-v1", "20261123-previous-session-master-v1", "20261124-report-index-basis-v1"}
             and payload.get("status") in {"ok", "partial"} and "report_sha256" not in payload):
         raise ValueError("current IC/IM producer requires report_sha256")
     if str(payload.get("strategy_revision")) != "r1":
