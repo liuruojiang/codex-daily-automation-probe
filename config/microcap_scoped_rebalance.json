@@ -1,8 +1,8 @@
 {
   "schema": "microcap_scoped_rebalance_runtime_v1",
   "enabled": true,
-  "runtime_sha": "ede05731de7c78c9bcf2ebfd8ad5c58ee960a200",
-  "producer_sha": "39c08829b43c8399bd6793d715de42cc67cd0d63",
+  "runtime_sha": "b60ebfbc2a821e0fbf08fcd110da1360cfc21400",
+  "producer_sha": "106e2046e81f8963db2ecd9fc063b5e193d775ff",
   "whole_seed": {
     "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-95d896fe/microcap-whole-delivery-state-archive-20261110-m8-multisource.zip",
     "sha256": "866bcd2b884e95335f2e6b9b23ba836092b4bc5d916c6c8c20d577a06fa1aedf",

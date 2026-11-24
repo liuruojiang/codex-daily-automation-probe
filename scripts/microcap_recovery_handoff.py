@@ -36,12 +36,14 @@ M12 = 'c16c59411ca8efa86728ed0cc136235be4e60170'
 M13 = '712485bd14b5a7d860ccb4ab302a032b0d541e50'
 M15 = 'df384741530a6fcd27c7526057b552c5ce138d53'
 M16 = 'ede05731de7c78c9bcf2ebfd8ad5c58ee960a200'
+M17 = 'b60ebfbc2a821e0fbf08fcd110da1360cfc21400'
+LEGACY_PRE_M17_CONTROLLER_SHA = 'fa7053a0f9e4ac4cd92bcd526fc09a161b3b6ae61a3220bdf9d3cc3ffbc9c885'
 LEGACY_PRE_M16_CONTROLLER_SHA = '397ba6e1f4fca4fb53b4047d83ec8e78cfdf12b5e86d57c8128225c9393dae0c'
 LEGACY_PRE_M15_CONTROLLER_SHA = 'ab7ea66bfca0d12bbbd8313c9b2148120d0cdd865addba026b99aa053749e753'
 LEGACY_PRE_M13_CONTROLLER_SHA = '878b3181744357409a26ea56f3a3801f7a128bd63cddb2e99497fb2ae9c79786'
 LEGACY_PRE_M12_CONTROLLER_SHA = '462b523923adfd83085e1f829d6fba66a886f04a530bf8ce8010c7dcef6c92c1'
 LEGACY_M11_CONTROLLER_SHA = '8558a05482f6054a06e5832933fd53287a80554fe42bc60ae4101fef9015ceb7'
-REVIEWED_NATIVES = frozenset({NATIVE, M8, M9, M10, M11, M12, M13, M15, M16})
+REVIEWED_NATIVES = frozenset({NATIVE, M8, M9, M10, M11, M12, M13, M15, M16, M17})
 LEGACY_M7_CONTROLLER_SHA = 'eea88c4886baaba42256a4b57050432a0e3a4e4dfe12e827f99086d3b0389b16'
 LEGACY_M8_CONTROLLER_SHA = '8a52b8d9b1c6caaaba868cd447073f9d42c432d3d131e4646bfe9442814a2e4b'
 LEGACY_M9_CONTROLLER_SHA = '6056bbc4a25bacefb74d554c3aec02eaae64ab7f824cb7768c9a08936ae8f958'
@@ -447,15 +449,17 @@ def reviewed_controller_identity(checkpoint):
     current=sha(Path(__file__).read_bytes().replace(b'\r\n',b'\n'))
     # Each preceding reader keeps only the producer relationships it reviewed.
     allowed={current}
-    if runtime != M16:
+    if runtime != M17:
+        allowed.add(LEGACY_PRE_M17_CONTROLLER_SHA)
+    if runtime not in (M16, M17):
         allowed.add(LEGACY_PRE_M16_CONTROLLER_SHA)
-    if runtime not in (M15, M16):
+    if runtime not in (M15, M16, M17):
         allowed.add(LEGACY_PRE_M15_CONTROLLER_SHA)
-    if runtime not in (M13, M15, M16):
+    if runtime not in (M13, M15, M16, M17):
         allowed.add(LEGACY_PRE_M13_CONTROLLER_SHA)
-    if runtime not in (M12, M13, M15, M16):
+    if runtime not in (M12, M13, M15, M16, M17):
         allowed.add(LEGACY_PRE_M12_CONTROLLER_SHA)
-    if runtime not in (M11,M12,M13,M15,M16):
+    if runtime not in (M11,M12,M13,M15,M16,M17):
         allowed.update({LEGACY_M10_CONTROLLER_SHA, LEGACY_M11_CONTROLLER_SHA})
     if runtime in (NATIVE,M8,M9):
         allowed.add(LEGACY_M9_CONTROLLER_SHA)
@@ -484,10 +488,10 @@ def validate_recovery_payload(checkpoint, payload_bytes):
     proof = period.get(KEY)
     # M8/M9/M10 were admitted only through formal recovery. Mode/controller fields
     # are untrusted transport data and cannot opt these producers out of proof.
-    if checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M15, M16) and checkpoint.get('handoff_mode') != MODE:
+    if checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M15, M16, M17) and checkpoint.get('handoff_mode') != MODE:
         raise ValueError('The reviewed M8/M9/M10 producer requires its formal recovery proof route')
     if proof is None:
-        if (checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M15, M16)
+        if (checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M15, M16, M17)
                 or checkpoint.get('handoff_mode') == MODE or 'recovery_controller' in checkpoint):
             raise ValueError('Recovery checkpoint lacks its proof')
         return None
