@@ -643,6 +643,14 @@ def select_local_notice_forward(*,root,protected_root,state,symbols,target,out,n
         return receipt
 
 
+class DuplicateCurrentRiskRows(ValueError):
+    """The risk-board page traversal did not return one row per issuer."""
+
+
+class ConflictingCurrentRiskRows(ValueError):
+    """One issuer was observed with incompatible names in the same board."""
+
+
 def current_names_proof(root, target, required_asof=None, symbols=None):
     """Current name cross-check only; native notice history still proves PIT ST."""
     name=CACHE+'current_st.csv';receipt=CACHE+'local_current_names/'+target+'.json'
@@ -655,8 +663,7 @@ def current_names_proof(root, target, required_asof=None, symbols=None):
             or not earliest<=observed<=datetime.now(timezone.utc)
             or record.get('cache_sha256')!=sha(bound(root,name).read_bytes())
             or record.get('native_source_sha256')!=sha(bound(root,'microcap_top100_mom16_biweekly_live_v2_0.py').read_bytes().replace(b'\r\n',b'\n'))
-            or not rows or record.get('count')!=len(rows)
-            or len({r['code'] for r in rows})!=len(rows)):
+            or not rows or record.get('count')!=len(rows)):
         raise ValueError('Current-name native snapshot identity or observation differs')
     for key in ('st_observed_at','universe_observed_at'):
         stamp=datetime.fromisoformat(record[key])
@@ -666,6 +673,10 @@ def current_names_proof(root, target, required_asof=None, symbols=None):
     if (record.get('schema')!='current_publication_names_v2'
             or record.get('universe_sha256')!=sha(bound(root,universe).read_bytes())):
         raise ValueError('Current publication universe observation is missing or changed')
+    if len({r['code'] for r in rows}) != len(rows):
+        if len({(r['code'], r['name']) for r in rows}) != len({r['code'] for r in rows}):
+            raise ConflictingCurrentRiskRows('Current risk board has conflicting names for one issuer')
+        raise DuplicateCurrentRiskRows('Current risk-board pages repeat an issuer; coverage is unverified')
     count=validate_publication_names(root)
     if record.get('universe_count')!=count:raise ValueError('Current publication name coverage differs')
     if record.get('publication_name_scope')!='maintained_plus_ST_conflicts':
@@ -718,7 +729,8 @@ def validate_publication_names(root):
     return len(rows)
 
 
-def refresh_current_names(root, target, native_fetch, native_universe_fetch, *, provider_trace=None,scoped_observation=None):
+def refresh_current_names(root, target, native_fetch, native_universe_fetch, *, provider_trace=None,scoped_observation=None,
+                          st_observer='fetch_current_st_codes'):
     # Keep immutable prior observations before the target's current pointer is replaced.
     current=bound(root,CACHE+'current_st.csv')
     receipt=bound(root,CACHE+'local_current_names/'+target+'.json')
@@ -740,7 +752,7 @@ def refresh_current_names(root, target, native_fetch, native_universe_fetch, *, 
     atomic(bound(root,CACHE+'local_current_names/'+target+'.json'),encode(dict(
         schema='current_publication_names_v2',target=target,observed_at=datetime.now(timezone.utc).isoformat(),count=len(rows),
         st_observed_at=st_observed,universe_observed_at=universe_observed,
-        native_functions=['fetch_current_st_codes','fetch_tencent_realtime_quotes' if scoped_observation is not None else 'fetch_active_universe'],provider_trace=provider_trace or [],
+        native_functions=[st_observer,'fetch_tencent_realtime_quotes' if scoped_observation is not None else 'fetch_active_universe'],provider_trace=provider_trace or [],
         publication_name_scope='maintained_plus_ST_conflicts' if scoped_observation is not None else 'full_native_name_snapshot',
         scoped_observation=scoped_observation,
         cache_sha256=sha(raw),native_source_sha256=sha(bound(root,
@@ -749,7 +761,51 @@ def refresh_current_names(root, target, native_fetch, native_universe_fetch, *, 
         semantics='native_current_name_cross_check_not_PIT_ST_certification')))
 
 
-def refresh_native_current_names(root,target,native,symbols,quote_fetch):
+def stable_current_risk_board(evidence, trace):
+    """Reobserve the same Eastmoney board with a stable security-code sort."""
+    import re
+    import requests
+
+    url = 'https://40.push2.eastmoney.com/api/qt/clist/get'
+    params = {'pz': '100', 'po': '1', 'np': '1', 'fltt': '2', 'invt': '2',
+              'ut': 'bd1d9ddb04089700cf9c27f6f7426281', 'fid': 'f12',
+              'fs': 'm:0 f:4,m:1 f:4', 'fields': 'f12,f14'}
+    evidence.mkdir(parents=True, exist_ok=False)
+    rows = []
+    total = page_size = None
+    for page in range(1, 11):
+        query = {**params, 'pn': str(page)}
+        started = datetime.now(timezone.utc).isoformat()
+        response = requests.get(url, params=query, timeout=(5, 15), verify=True, allow_redirects=False)
+        received = datetime.now(timezone.utc).isoformat()
+        raw = response.content
+        atomic(evidence / f'{page}.raw', raw)
+        page_receipt = dict(url=url, params=query, page=page, status=response.status_code,
+                            sha256=sha(raw), started_at=started, completed_at=received)
+        atomic(evidence / f'{page}.json', encode(page_receipt))
+        response.raise_for_status()
+        if response.status_code != 200:
+            raise ValueError('Unexpected response status for the stable risk-board page')
+        data = json.loads(raw)['data']
+        items = data['diff']
+        if type(data['total']) is not int or not isinstance(items, list) or not items:
+            raise ValueError('Stable risk board has an invalid total or page')
+        if total is None:
+            total, page_size = data['total'], len(items)
+        if data['total'] != total or len(items) != min(page_size, total - len(rows)):
+            raise ValueError('Stable risk-board page coverage or total changed')
+        for item in items:
+            code, name = item['f12'], item['f14']
+            if not re.fullmatch(r'[0-9]{6}', code) or not name.strip() or (rows and code >= rows[-1]['code']):
+                raise ValueError('Stable risk board has an invalid, duplicate, or unordered issuer')
+            rows.append({'code': code, 'name': name})
+        trace.append(page_receipt)
+        if len(rows) == total:
+            return rows
+    raise ValueError('Stable risk board exceeded the bounded page count')
+
+
+def refresh_native_current_names(root,target,native,symbols,quote_fetch, *, stable_evidence=None):
     from scripts import bounded_market_data as market
     original=market.fetch_akshare_frame;trace=[]
     def observed(method,*args,**kwargs):
@@ -763,6 +819,16 @@ def refresh_native_current_names(root,target,native,symbols,quote_fetch):
             raise
         finally:item['completed_at']=datetime.now(timezone.utc).isoformat()
     witness={}
+    def stable_fetch(*, force_refresh):
+        if not force_refresh:
+            raise ValueError('Stable risk-board recovery requires a fresh observation')
+        rows = stable_current_risk_board(stable_evidence, trace)
+        stream = io.StringIO(newline='')
+        writer = csv.DictWriter(stream, fieldnames=['code','name'])
+        writer.writeheader()
+        writer.writerows(rows)
+        atomic(bound(root,CACHE+'current_st.csv'), stream.getvalue().encode('utf-8'))
+
     def scoped_universe(*,force_refresh):
         if force_refresh is not True:raise ValueError('Fresh scoped name observations are required')
         path=bound(root,CACHE+'active_universe.csv')
@@ -792,8 +858,31 @@ def refresh_native_current_names(root,target,native,symbols,quote_fetch):
         stream=io.StringIO(newline='');writer=csv.DictWriter(stream,fieldnames=['symbol','name','code']);writer.writeheader();writer.writerows(original_rows)
         atomic(path,stream.getvalue().encode('utf-8'))
     market.fetch_akshare_frame=observed
-    try:refresh_current_names(root,target,native.fetch_current_st_codes,scoped_universe,provider_trace=trace,scoped_observation=witness)
+    try:refresh_current_names(root,target,native.fetch_current_st_codes if stable_evidence is None else stable_fetch,
+                              scoped_universe,provider_trace=trace,scoped_observation=witness,
+                              st_observer='fetch_current_st_codes' if stable_evidence is None else 'stable_current_risk_board')
     finally:market.fetch_akshare_frame=original
+
+
+def refresh_current_name_stage(root,target,native,symbols,quote_fetch,floor,evidence):
+    try:
+        current_names_proof(root,target,floor,symbols)
+    except DuplicateCurrentRiskRows:
+        pass
+    except ConflictingCurrentRiskRows:
+        raise
+    except (OSError, ValueError, KeyError):
+        refresh_native_current_names(root,target,native,symbols,quote_fetch)
+        try:
+            current_names_proof(root,target,floor,symbols)
+        except DuplicateCurrentRiskRows:
+            pass
+        else:
+            return
+    else:
+        return
+    refresh_native_current_names(root,target,native,symbols,quote_fetch,
+                                 stable_evidence=evidence/('attempt-stable-risk-board-'+uuid.uuid4().hex))
 
 
 def pd_read_names(raw):
@@ -867,8 +956,8 @@ def main(argv=None):
                     out=state/'runs'/args.as_of/'notice-generation-admissions',refresh=refresh_notice_archive,
                     resume_generation=args.resume_notice_generation)
         notice = journal.run('notice', notice_action, notice_verify)
-        current_names=journal.run('current-names',lambda:refresh_native_current_names(root,args.as_of,v2.base_mod.fetch_mod,
-            symbols,v2.base_mod.fetch_tencent_realtime_quotes),
+        current_names=journal.run('current-names',lambda:refresh_current_name_stage(root,args.as_of,v2.base_mod.fetch_mod,
+            symbols,v2.base_mod.fetch_tencent_realtime_quotes,floor,journal.directory),
             lambda:current_names_proof(root,args.as_of,floor,symbols))
         # Native approved Tencent route has explicit suspension/status evidence.
         # No empty-response fallback or inferred suspension is introduced here.
