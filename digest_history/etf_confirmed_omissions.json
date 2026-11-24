@@ -8616,6 +8616,7 @@
       "zh_title": "英伟达如何贡献约三分之一的标普基金盘前涨幅",
       "url": "https://247wallst.com/investing/2026/11/23/nvidia-is-about-5-of-a-500000-sp-500-fund-on-monday-morning-it-delivered-about-a-third-of-the-funds-23900-gain?.tsrc=rss",
       "published": "2026-11-23T15:03:00+00:00",
+      "summary": "盘前案例使用约5.1%的持仓权重，在50万美元组合假设中估算英伟达贡献约7900美元，并列出七家大科技股合计敞口。与已入选的VOO盘中案例使用不同的基金、权重和时点。",
       "zh_summary": "盘前案例使用约5.1%的持仓权重，在50万美元组合假设中估算英伟达贡献约7900美元，并列出七家大科技股合计敞口。与已入选的VOO盘中案例使用不同的基金、权重和时点。",
       "evidence_level": "媒体全文",
       "verify_next": "对齐同一基金的前日收盘权重与同一价格时刻，核查贡献加总。"
@@ -8628,6 +8629,7 @@
       "zh_title": "用股息替代19.5万美元薪资需要多少本金",
       "url": "https://247wallst.com/personal-finance/2026/11/23/how-much-do-you-really-need-invested-to-replace-a-195000-salary-with-dividends?.tsrc=rss",
       "published": "2026-11-23T19:55:29+00:00",
+      "summary": "媒体以3.5%、6%和12%分配率估算不同本金，给出含VYMI和TLT的组合例子，并展示BXSL减配如何改变资金需求。",
       "zh_summary": "媒体以3.5%、6%和12%分配率估算不同本金，给出含VYMI和TLT的组合例子，并展示BXSL减配如何改变资金需求。",
       "evidence_level": "媒体全文",
       "verify_next": "按现金分配、税负、通胀和净值压力重新验证测算。"
@@ -8640,6 +8642,7 @@
       "zh_title": "六只CLO ETF在加息情境下的票息与信用风险",
       "url": "https://seekingalpha.com/article/4971189-profit-from-higher-federal-reserve-rates-with-these-6-clo-etfs",
       "published": "2026-11-23T20:15:30+00:00",
+      "summary": "作者比较六只CLO ETF，讨论浮息票息重定价及各基金信用质量差别。",
       "zh_summary": "作者比较六只CLO ETF，讨论浮息票息重定价及各基金信用质量差别。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "比较各层级占比、利差、流动性和净值回撤。"
@@ -8652,6 +8655,7 @@
       "zh_title": "主动债券ETF JBND的本金回归和证券化敞口",
       "url": "https://seekingalpha.com/article/4971165-jbnd-an-active-bond-approach-that-could-benefit-from-the-coming-environment",
       "published": "2026-11-23T20:04:18+00:00",
+      "summary": "作者认为折价债到期向面值回归有助于解释JBND分配与总回报的差异，并指出STRIPS和非机构证券化头寸。",
       "zh_summary": "作者认为折价债到期向面值回归有助于解释JBND分配与总回报的差异，并指出STRIPS和非机构证券化头寸。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "匹配AGG久期、信用评级及现金流后比较费后含息回报。"
@@ -8664,6 +8668,7 @@
       "zh_title": "VYM与DIVB的不同科技敞口",
       "url": "https://seekingalpha.com/article/4971161-vym-vs-divb-two-buys-with-different-tech-exposure",
       "published": "2026-11-23T19:51:11+00:00",
+      "summary": "作者指出两只红利ETF的科技持仓分别向芯片和网络、IT服务与薪资服务倾斜，并比较截至2026年9月末的净值回报。",
       "zh_summary": "作者指出两只红利ETF的科技持仓分别向芯片和网络、IT服务与薪资服务倾斜，并比较截至2026年9月末的净值回报。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "锁定各期持仓，拆分行业配置和个股贡献。"
@@ -8676,6 +8681,7 @@
       "zh_title": "URA急跌后，铀价与核能股票走势分化",
       "url": "https://seekingalpha.com/article/4971160-ura-ai-related-selloff-brought-it-back-to-long-term-fundamentals",
       "published": "2026-11-23T19:42:56+00:00",
+      "summary": "作者指出URA下跌时铀价略升，将电网稳定需求和AI主题情绪分开讨论。",
       "zh_summary": "作者指出URA下跌时铀价略升，将电网稳定需求和AI主题情绪分开讨论。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "分解铀价、技术股、合同和矿企成本敏感度。"
@@ -8688,6 +8694,7 @@
       "zh_title": "11月中旬封闭式基金周报：净值、折价和CLO分配",
       "url": "https://seekingalpha.com/article/4971157-weekly-closed-end-fund-roundup-november-15-2026",
       "published": "2026-11-23T19:41:02+00:00",
+      "summary": "作者列出26个板块的价格及净值广度，并以ECC和EIC比较净值及分配。",
       "zh_summary": "作者列出26个板块的价格及净值广度，并以ECC和EIC比较净值及分配。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "对齐数据周、杠杆成本及净值来源。"
@@ -8700,6 +8707,7 @@
       "zh_title": "DTD如何按预期股息金额加权",
       "url": "https://seekingalpha.com/article/4971153-dtd-a-well-diversified-dividend-etf-built-for-this-market",
       "published": "2026-11-23T19:29:31+00:00",
+      "summary": "作者给出DTD的预期股息额加权法、0.28%费率及30天SEC收益率，比较其行业暴露及与FDVV表现的差异。",
       "zh_summary": "作者给出DTD的预期股息额加权法、0.28%费率及30天SEC收益率，比较其行业暴露及与FDVV表现的差异。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "复算同窗口的含息收益和行业调整表现。"
@@ -8712,6 +8720,7 @@
       "zh_title": "VIGI的实际分配增长与估值溢价",
       "url": "https://seekingalpha.com/article/4971151-vigi-phenomenal-real-dividend-growth-meets-full-valuation",
       "published": "2026-11-23T19:25:41+00:00",
+      "summary": "作者报告经通胀调整的分配增长与同类估值差别，并提示与美国股票的共同因子可能限制分散。",
       "zh_summary": "作者报告经通胀调整的分配增长与同类估值差别，并提示与美国股票的共同因子可能限制分散。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "核对币种、通胀口径、权重和起止期。"
@@ -8724,6 +8733,7 @@
       "zh_title": "波动率升高时分批回补股票的条件",
       "url": "https://seekingalpha.com/article/4971141-buy-stock-market-volatility-soon",
       "published": "2026-11-23T18:39:00+00:00",
+      "summary": "作者以VIX高位讨论逐步增加股票敞口及现金担保看跌期权，同时提醒反弹之前可能先继续回撤。",
       "zh_summary": "作者以VIX高位讨论逐步增加股票敞口及现金担保看跌期权，同时提醒反弹之前可能先继续回撤。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "预注册阈值，对照固定再平衡，计入期权价差、保证现金和路径损失。"
@@ -8736,6 +8746,7 @@
       "zh_title": "AIPO反弹背后的电力基建估值和政策限制",
       "url": "https://seekingalpha.com/article/4971140-aipo-a-jensen-bounce-but-patience-needed-with-ai-infrastructure-plays",
       "published": "2026-11-23T18:38:16+00:00",
+      "summary": "作者把较低估值与数据中心审批限制并列，并指出AIPO偏工业而非纯科技。",
       "zh_summary": "作者把较低估值与数据中心审批限制并列，并指出AIPO偏工业而非纯科技。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "核对收入敞口、项目审批及建设兑现。"
@@ -8748,6 +8759,7 @@
       "zh_title": "用净投资收入覆盖率筛选折价封闭式基金",
       "url": "https://seekingalpha.com/article/4971135-income-covered-closed-end-fund-report-november-2026",
       "published": "2026-11-23T18:19:26+00:00",
+      "summary": "作者从11月11日快照筛选净投资收入覆盖分配且低于净值成交的基金，共18只。",
       "zh_summary": "作者从11月11日快照筛选净投资收入覆盖分配且低于净值成交的基金，共18只。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "考察覆盖率持续性、估值质量及杠杆成本。"
@@ -8760,6 +8772,7 @@
       "zh_title": "CLO权益封闭式基金的净值和分配压力",
       "url": "https://seekingalpha.com/article/4971129-cef-weekly-review-nightmare-continues-for-clo-equity-cef",
       "published": "2026-11-23T17:47:40+00:00",
+      "summary": "作者以贷款利差偏紧和净值侵蚀解释CLO权益压力，列出OXLC分配调整和其他基金折价案例。",
       "zh_summary": "作者以贷款利差偏紧和净值侵蚀解释CLO权益压力，列出OXLC分配调整和其他基金折价案例。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "核对分配公告及穿透的CLO负债成本和资产质量。"
@@ -8772,6 +8785,7 @@
       "zh_title": "BALT的季度缓冲与买入时剩余保护",
       "url": "https://seekingalpha.com/article/4970969-balt-tracking-spy-with-a-20-percent-buffer-12-8-percent-remaining",
       "published": "2026-11-23T12:05:00+00:00",
+      "summary": "作者区分目标20%季度缓冲、当前剩余保护和到期才生效的限制，并比较BALT与SPY风险。",
       "zh_summary": "作者区分目标20%季度缓冲、当前剩余保护和到期才生效的限制，并比较BALT与SPY风险。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "按实际入场价重建期权到期图和费用。"
@@ -8784,6 +8798,7 @@
       "zh_title": "SBAR的短债底仓与三资产取最弱者的障碍期权",
       "url": "https://seekingalpha.com/article/4971026-sbar-high-fixed-income-rate-with-increased-option-premium-tactical-call",
       "published": "2026-11-23T11:29:11+00:00",
+      "summary": "作者描述SPY、QQQ与IWM中最弱者决定的到期障碍，并区分SEC收益率与分配率。",
       "zh_summary": "作者描述SPY、QQQ与IWM中最弱者决定的到期障碍，并区分SEC收益率与分配率。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "逐期验证障碍、价差、同步下跌损失和实际分配。"
@@ -8796,6 +8811,7 @@
       "zh_title": "股债同跌时封闭式基金折价与再投资",
       "url": "https://seekingalpha.com/article/4970983-history-does-not-always-repeat-but-it-sure-does-rhyme-sometimes",
       "published": "2026-11-23T11:05:00+00:00",
+      "summary": "作者类比2022年并列举EIC、HTD、JRI的折价和资产结构，以分批再投资处理下跌路径。",
       "zh_summary": "作者类比2022年并列举EIC、HTD、JRI的折价和资产结构，以分批再投资处理下跌路径。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "控制信用利差、杠杆和同期净值回报后比较。"
@@ -8808,6 +8824,7 @@
       "zh_title": "GLO折价加深与按年末净值重设分配",
       "url": "https://seekingalpha.com/article/4970972-glo-discount-gets-even-wider-still-remaining-on-the-sidelines",
       "published": "2026-11-23T05:22:01+00:00",
+      "summary": "作者指出GLO按年末净值的10%重设分配，持仓集中且空头对冲的实际效果有限。",
       "zh_summary": "作者指出GLO按年末净值的10%重设分配，持仓集中且空头对冲的实际效果有限。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "跟踪年末净值、实际分配、对冲敞口与杠杆。"
@@ -8820,6 +8837,7 @@
       "zh_title": "FFC优先证券估值回落后的行业集中和久期",
       "url": "https://seekingalpha.com/article/4970957-ffc-upgrading-this-cef-from-sell-to-hold-as-preferred-valuations-reset",
       "published": "2026-11-23T02:30:40+00:00",
+      "summary": "作者指出约四分之三的持仓为金融优先证券，组合久期约5.8年，并据估值重设调整看法。",
       "zh_summary": "作者指出约四分之三的持仓为金融优先证券，组合久期约5.8年，并据估值重设调整看法。",
       "evidence_level": "发布者作者公开摘要",
       "verify_next": "分解利率、金融信用、赎回及封闭式基金折价。"
@@ -8832,6 +8850,7 @@
       "zh_title": "两只电池ETF为何只有约32%的持仓重合",
       "url": "https://www.etftrends.com/thematic-investing-content-hub/batt-lit-battery-etfs-different-exposure",
       "published": "2026-11-23T19:17:53+00:00",
+      "summary": "发布者摘要比较BATT和LIT的持仓重合，提示相同主题标签可包含不同的供应链和地区敞口。",
       "zh_summary": "发布者摘要比较BATT和LIT的持仓重合，提示相同主题标签可包含不同的供应链和地区敞口。",
       "evidence_level": "发布者带日期的 RSS 摘要（直页受限）",
       "verify_next": "对齐持仓日期和权重重合定义，按材料、制造与整车拆解。"
@@ -8844,6 +8863,7 @@
       "zh_title": "把股票股息逐步转为比特币敞口的ETF机制",
       "url": "https://www.etftrends.com/thematic-investing-content-hub/how-dividends-could-help-advisors-add-bitcoin-portfolios",
       "published": "2026-11-23T18:32:17+00:00",
+      "summary": "发布者摘要介绍两只Franklin Templeton基金把股票股息持续投入比特币，并引述一次面向顾问的网络活动调查。",
       "zh_summary": "发布者摘要介绍两只Franklin Templeton基金把股票股息持续投入比特币，并引述一次面向顾问的网络活动调查。",
       "evidence_level": "发布者带日期的 RSS 摘要（直页受限）",
       "verify_next": "核对股息投向、仓位上限、调仓频率和调查样本。"
@@ -8856,6 +8876,7 @@
       "zh_title": "通胀超预期时FCPI的股票敞口",
       "url": "https://www.etftrends.com/etf-investing-content-hub/cpi-report-inflation-beat-october-fcpi-helps",
       "published": "2026-11-23T15:48:25+00:00",
+      "summary": "发布者摘要把最新通胀读数和FCPI的通胀主题股票工具联系起来。",
       "zh_summary": "发布者摘要把最新通胀读数和FCPI的通胀主题股票工具联系起来。",
       "evidence_level": "发布者带日期的 RSS 摘要（直页受限）",
       "verify_next": "对照指数方法及多个通胀意外窗口，分解行业相关性和实际利率。"
@@ -8868,6 +8889,7 @@
       "zh_title": "国际股票回调与发达市场质量倾斜",
       "url": "https://www.etftrends.com/etf-building-blocks-content-hub/correction-could-spell-opportunity-international-stocks",
       "published": "2026-11-23T13:15:11+00:00",
+      "summary": "发布者摘要以MSCI EAFE自高点回落为背景，讨论保留非美股票配置同时使用发达市场质量筛选。",
       "zh_summary": "发布者摘要以MSCI EAFE自高点回落为背景，讨论保留非美股票配置同时使用发达市场质量筛选。",
       "evidence_level": "发布者带日期的 RSS 摘要（直页受限）",
       "verify_next": "核对指数因子、估值、币种与下行样本。"
@@ -8880,6 +8902,7 @@
       "zh_title": "长端利率压力下如何理解IYRI房地产敞口",
       "url": "https://www.etftrends.com/monthly-income-content-hub/investigate-iyri-real-estate-opportunity",
       "published": "2026-11-23T13:00:42+00:00",
+      "summary": "发布者摘要将IYRI与利率敏感的REIT类别放在同一背景，并观察本轮国债收益率上行对普通房地产基金的冲击。",
       "zh_summary": "发布者摘要将IYRI与利率敏感的REIT类别放在同一背景，并观察本轮国债收益率上行对普通房地产基金的冲击。",
       "evidence_level": "发布者带日期的 RSS 摘要（直页受限）",
       "verify_next": "核对IYRI期权结构，分别比较净值总回报、分配与加息期相关性。"
@@ -8892,6 +8915,7 @@
       "zh_title": "白银价格下跌与ETF持有盎司数增加",
       "url": "https://www.etftrends.com/gold-silver-investing-content-hub/octobers-silver-slump-opportunity-buy-dip",
       "published": "2026-11-23T12:45:59+00:00",
+      "summary": "发布者摘要引述Sprott数据称白银在10月下跌时ETF持有量反而增加约490万盎司。",
       "zh_summary": "发布者摘要引述Sprott数据称白银在10月下跌时ETF持有量反而增加约490万盎司。",
       "evidence_level": "发布者带日期的 RSS 摘要（直页受限）",
       "verify_next": "用同一期ETF持仓和申赎口径复核，避免将盎司变化等同资金流金额。"
@@ -8904,6 +8928,7 @@
       "zh_title": "科技公司预付款如何传导到核燃料供应链",
       "url": "https://www.etftrends.com/nuclear-energy-content-hub/big-tech-dollars-flow-nuclear-supply-chain",
       "published": "2026-11-23T12:15:09+00:00",
+      "summary": "发布者摘要追踪Meta未来电力预付款、Oklo采购与Centrus浓缩产能之间的合同链。",
       "zh_summary": "发布者摘要追踪Meta未来电力预付款、Oklo采购与Centrus浓缩产能之间的合同链。",
       "evidence_level": "发布者带日期的 RSS 摘要（直页受限）",
       "verify_next": "核对有约束力的付款、交付里程碑及主题基金持仓。"
@@ -8916,6 +8941,7 @@
       "zh_title": "一只资产配置ETF如何替代多基金再平衡",
       "url": "https://www.etftrends.com/financial-literacy-content-hub/understanding-asset-allocation-etfs-heading-2027",
       "published": "2026-11-23T12:00:31+00:00",
+      "summary": "发布者摘要和同稿分发覆盖股债权重、用单一基金维护目标权重及半年再平衡案例。",
       "zh_summary": "发布者摘要和同稿分发覆盖股债权重、用单一基金维护目标权重及半年再平衡案例。",
       "evidence_level": "发布者带日期的 RSS 摘要（直页受限）",
       "verify_next": "比较底层费用、穿透持仓和目标权重漂移。"
@@ -8928,6 +8954,7 @@
       "zh_title": "实现波动率预测：零样本基础模型与计量基准",
       "url": "https://arxiv.org/abs/2607.05291",
       "published": "2026-11-23T05:00:00+00:00",
+      "summary": "11月23日公告的是v2修订。比较50项资产、9个基础模型与8个计量基准，TTM相对Log-HAR的平均优势窄，修订版提供目标波动率应用的成本前估计。",
       "zh_summary": "11月23日公告的是v2修订。比较50项资产、9个基础模型与8个计量基准，TTM相对Log-HAR的平均优势窄，修订版提供目标波动率应用的成本前估计。",
       "evidence_level": "预印本原始摘要及正式栏目公告",
       "verify_next": "冻结数据与模型版本，检验换手成本后效用及资产间差异。"
@@ -8940,6 +8967,7 @@
       "zh_title": "持有至到期会计、隐藏损失与银行相互传染",
       "url": "https://arxiv.org/abs/2611.26700",
       "published": "2026-11-23T05:00:00+00:00",
+      "summary": "11月23日首次公告的预印本在内生银行网络中建模共同利率敞口与延迟确认损失，流动性压力下违约呈非线性。",
       "zh_summary": "11月23日首次公告的预印本在内生银行网络中建模共同利率敞口与延迟确认损失，流动性压力下违约呈非线性。",
       "evidence_level": "预印本原始摘要及正式栏目公告",
       "verify_next": "用银行持仓、融资和偿付数据检验共同持仓与网络渠道。"
@@ -8952,6 +8980,7 @@
       "zh_title": "分布型深度对冲：先估计损益分布，再选风险偏好",
       "url": "https://arxiv.org/abs/2611.26652",
       "published": "2026-11-23T05:00:00+00:00",
+      "summary": "11月23日为风险管理栏目交叉收录。原文用损益分位数表示偏好，数值实验里同一个分布估计可服务于不同偏好，结果接近动态规划基准。",
       "zh_summary": "11月23日为风险管理栏目交叉收录。原文用损益分位数表示偏好，数值实验里同一个分布估计可服务于不同偏好，结果接近动态规划基准。",
       "evidence_level": "预印本原始摘要及正式栏目公告",
       "verify_next": "用点时权链、真实滑点和极端尾部分位数验证对冲。"
