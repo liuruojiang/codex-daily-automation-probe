@@ -1,9 +1,11 @@
 """Real child imports with an explicit small native-protocol fixture."""
 from datetime import date
+from hashlib import sha256
 import json
 from pathlib import Path
 import sys
 import types
+from zipfile import ZipFile
 
 import pytest
 
@@ -135,3 +137,54 @@ def test_child_exception_retains_native_stderr_and_never_returns_success(native_
     assert 'original-native-child-error' in (tmp_path/'evidence/check-1/stderr.log').read_text()
     assert 'original-native-child-error' in (tmp_path/'native-staged-validation-failure.stderr.log').read_text()
     assert not (tmp_path/'evidence/check-1/native-report.json').exists()
+
+
+
+@pytest.mark.parametrize('changed', [False, True])
+def test_embedded_reviewed_source_is_bound_to_the_receiver_and_never_written(native_fixture, tmp_path, monkeypatch, changed):
+    receiver, stage, native, _, _ = native_fixture
+    name = isolation.REVIEWED_FORWARD_DELISTING
+    approved = b'approved fixture source\r\n'
+    for root in (receiver, stage):
+        source = root / name
+        source.parent.mkdir(parents=True)
+        source.write_bytes(approved)
+    native.SOURCE_FILES.append(name)
+    monkeypatch.setattr(isolation, 'REVIEWED_FORWARD_DELISTING_SHA256', sha256(approved).hexdigest())
+    native.delivery.MANIFEST = 'outputs/top100_delivery_manifest.json'
+    native.state.MANIFEST_NAME = 'native-integrity.json'
+    native.state._verify_bundle_manifest = lambda archive: json.loads(archive.read(native.state.MANIFEST_NAME))
+    bundle = tmp_path / 'original.zip'
+    entries = {name: (b'conflicting fixture' if changed else approved),
+               'outputs/validated.csv': b'unchanged economics',
+               native.delivery.MANIFEST: json.dumps({'inputs': {
+                   name: sha256(approved.replace(b'\r\n', b'\n')).hexdigest()}}).encode()}
+    integrity = {'files': [{'path': item, 'sha256': sha256(body).hexdigest(), 'bytes': len(body)}
+                           for item, body in entries.items()]}
+    with ZipFile(bundle, 'x') as archive:
+        for item, body in entries.items():
+            archive.writestr(item, body)
+        archive.writestr(native.state.MANIFEST_NAME, json.dumps(integrity))
+    incoming = bundle.read_bytes()
+    original_restore = native.restore
+
+    def verify_transport(root, payload, expected):
+        assert payload != bundle
+        with ZipFile(payload) as archive:
+            assert name not in archive.namelist()
+            expected_paths = set(entries) - {name}
+            assert set(archive.namelist()) == expected_paths | {native.state.MANIFEST_NAME}
+            assert all(archive.read(item) == entries[item] for item in expected_paths)
+            filtered = json.loads(archive.read(native.state.MANIFEST_NAME))
+            assert filtered['files'] == [entry for entry in integrity['files'] if entry['path'] != name]
+        return original_restore(root, payload, expected)
+
+    native.restore = verify_transport
+    if changed:
+        with pytest.raises(ValueError, match='differs from the exact release authority'):
+            isolation.restore_isolated(receiver, bundle, '2026-11-12', tmp_path / 'evidence')
+    else:
+        result = isolation.restore_isolated(receiver, bundle, '2026-11-12', tmp_path / 'evidence')
+        assert result['ok'] and result['reviewed_release_source_transport']['original_archive_preserved']
+    assert bundle.read_bytes() == incoming
+    assert (receiver / name).read_bytes() == approved
