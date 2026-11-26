@@ -79,7 +79,8 @@ def test_source_collection_cannot_precede_preserved_original_R_boundaries():
     names=[item.get('name') for item in steps()]
     assert names.index('Capture original R boundaries before source collection') < names.index('Seal original R boundary recovery evidence')
     assert names.index('Seal original R boundary recovery evidence') < names.index('Preserve original R boundary recovery evidence')
-    assert names.index('Preserve original R boundary recovery evidence') < names.index('Prepare current close sources for exactly 300 candidates')
+    assert names.index('Preserve original R boundary recovery evidence') < names.index('Restore original verified weekly maintenance roster')
+    assert names.index('Restore original verified weekly maintenance roster') < names.index('Prepare current close sources for exactly 300 candidates')
     early=named('Preserve original R boundary recovery evidence')['with']['path']
     assert 'scoped-prepare/boundaries' in early and 'scoped-boundary-manifest.json' in early
     assert 'scoped-prepare/prepared.json' not in early
