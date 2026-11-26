@@ -130,8 +130,16 @@ def test_production_bundle_is_exact_reviewed_seed_for_current_runtime(monkeypatc
     runtime = json.loads((root / 'config/microcap_member_runtime.json').read_bytes())['strategy_sha']
     monkeypatch.setattr(restore.urllib.request, 'build_opener', offline)
     raw = restore.seed_download(config, runtime)
-    assert len(raw) == 86382
-    assert hashlib.sha256(raw).hexdigest() == 'e00bc988f4634c3cd21199de913eb927f9653fc12442efcdb03219304833affc'
+    approved = {
+        '4608a82dd7a4b3828440523a28e19e0b8e4cbbca': (
+            86382, 'e00bc988f4634c3cd21199de913eb927f9653fc12442efcdb03219304833affc',
+            '71b3eff81d8d57d772f61fd2f796801dc156f1721fc63e721058f0e38f4922bd'),
+        'e1e014b9af50eadaa9b52d6f881e3e0855ac4846': (
+            86383, '58c6ae90a88e8854388582255cd71f7bd2bc54e8b444eb4953ff8043679c6a0a',
+            'ece51cbdbe2208207bd2946fbe01b27323636cb7a761583b0d4aeff276695165'),
+    }
+    length, seed_hash, period_hash = approved[runtime]
+    assert len(raw) == length and hashlib.sha256(raw).hexdigest() == seed_hash
     identity = restore.checkpoint_identity(raw)
     assert identity['as_of_date'] == '2026-11-26' and identity['period_status'] == 'current'
-    assert identity['period_sha'] == '71b3eff81d8d57d772f61fd2f796801dc156f1721fc63e721058f0e38f4922bd'
+    assert identity['period_sha'] == period_hash
