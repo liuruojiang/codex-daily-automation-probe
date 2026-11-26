@@ -70,3 +70,35 @@ def test_corrupt_cached_source_is_preserved_and_never_redownloaded(source_downlo
 def test_source_download_rejects_a_different_original_producer_runtime(source_download):
     config,bundle,_,_,manifest=source_download;manifest['runtime_sha']='0'*40
     with pytest.raises(ValueError,match='producer receipt differ'):m.download_sources(config,bundle,'2026-11-12')
+
+
+
+def test_verified_previous_roster_source_is_skipped_but_bad_binding_is_rejected(source_download):
+    config,bundle,body,calls,manifest=source_download
+    manifest.update(scope_sha256='a'*64,producer_context={'scope_sha256':'a'*64})
+    match=m.download_sources(config,bundle,'2026-11-12',expected_scope='a'*64)
+    assert match['status']=='verified_local_source_bundle_downloaded'
+    other=m.download_sources(config,bundle,'2026-11-12',expected_scope='b'*64)
+    assert other['status']=='skipped_incompatible_optional_local_sources'
+    assert (other['source_scope_sha256'],other['current_scope_sha256'])==('a'*64,'b'*64)
+    assert bundle.read_bytes()==body and len(calls)==1
+    manifest['producer_context']['scope_sha256']='c'*64
+    with pytest.raises(ValueError,match='invalid roster binding'):
+        m.download_sources(config,bundle,'2026-11-12',expected_scope='b'*64)
+
+
+
+def test_production_warm_download_binds_the_same_roster_as_native_prepare(source_download,monkeypatch):
+    config,bundle,_,_,manifest=source_download
+    manifest.update(scope_sha256='a'*64,producer_context={'scope_sha256':'a'*64})
+    monkeypatch.setenv('MICROCAP_WARM_ROSTER_MANIFEST','verified-current/latest.json')
+    scopes=[]
+
+    def roster(path,day):
+        scopes.append((path,day))
+        return {},[],'b'*64
+
+    monkeypatch.setattr(m,'load_pool',roster)
+    result=m.download_sources(config,bundle,'2026-11-12')
+    assert scopes==[('verified-current/latest.json','2026-11-12')]
+    assert result['status']=='skipped_incompatible_optional_local_sources'
