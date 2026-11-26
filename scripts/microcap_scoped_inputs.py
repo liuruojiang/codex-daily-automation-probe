@@ -31,7 +31,7 @@ MAX_BYTES = 1024 * 1024 * 1024
 R26_EXPANDED_BYTES = 1536 * 1024 * 1024
 R26_SCOPE_SHA256 = '6bdbb984b70e652e5e129c366fe3128804b9e3c0f89fede9c02730c513d1efbb'
 R26_MASTER_SHA256 = '82995456dc5744ceb3923f3d55a986c0a3eaf97434e76dfc0faf87429dc0e427'
-REVIEWED_CONSUMERS = frozenset({'cd694952b5159db6706bfb5f26722234c5356445',
+REVIEWED_CONSUMERS = frozenset({'1e3f5adb1925049e3bc7ab0da977c241356f1b70',
     '33062463d66afbff0c4342e3dd9203fa3117d865',
     '564d681308dd7593ffadb075d4dd5291e4c4e89c','6b56e6902799aa189a0bbc42c18d6506dcc2a04e',
     '872abe41d48f818363d879cdf98b297d230377b4','efbfc3464208c2e9a2de5778310d813095446858',
@@ -62,13 +62,18 @@ def permitted(name):
     baseline_binary=(len(p.parts)==5 and p.parts[:3]==('.microcap_index_cache','share_sources','baselines')
         and len(p.parts[3])==64 and all(c in '0123456789abcdef' for c in p.parts[3])
         and p.parts[4]=='accepted_issuer_evidence.bin')
-    approved_suspension_pdf = name in {
+    approved_688511_pdf = name in {
         CACHE + 'trade_status/2025-04-30-official-suspension.pdf',
         CACHE + 'trade_status/2026-04-20-official-suspension.pdf',
+        CACHE + 'share_sources/baselines/a07a98e4e7a5d83637097f691a845778881bf2dd3c8ee3d9c47ae0154f2b7af7/history-source-diagnostic/issuer-20240812-capital.pdf',
+        CACHE + 'share_sources/baselines/a07a98e4e7a5d83637097f691a845778881bf2dd3c8ee3d9c47ae0154f2b7af7/history-source-diagnostic/issuer-202502-capital.pdf',
+        CACHE + 'share_sources/baselines/a07a98e4e7a5d83637097f691a845778881bf2dd3c8ee3d9c47ae0154f2b7af7/history-source-diagnostic/issuer-20260407-capital.pdf',
+        CACHE + 'share_sources/baselines/a07a98e4e7a5d83637097f691a845778881bf2dd3c8ee3d9c47ae0154f2b7af7/issuer-st-removal-20260418.pdf',
+        CACHE + 'share_sources/baselines/a07a98e4e7a5d83637097f691a845778881bf2dd3c8ee3d9c47ae0154f2b7af7/sse-listing-monthly-202107.pdf',
     }
     return (isinstance(name, str) and '\\' not in name and not p.is_absolute()
             and '..' not in p.parts and ':' not in name and p.as_posix() == name
-            and name.startswith(PREFIXES) and (p.suffix in ('.json', '.csv', '.js', '.raw') or baseline_binary or approved_suspension_pdf)
+            and name.startswith(PREFIXES) and (p.suffix in ('.json', '.csv', '.js', '.raw') or baseline_binary or approved_688511_pdf)
             and not any(part in ('locks', 'incomplete', 'failures') for part in p.parts))
 
 
