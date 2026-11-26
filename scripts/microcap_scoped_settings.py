@@ -42,7 +42,7 @@ def download_roster(config,bundle):
     atomic(bundle,raw);return item
 
 
-def download_sources(config,bundle,not_after):
+def download_sources(config,bundle,not_after,*,expected_scope=None):
     from restore_microcap_scoped_inputs import load_config
     from microcap_scoped_inputs import MAX_BYTES,read_bundle
     item=load_config(config)['scoped_inputs']
@@ -62,7 +62,17 @@ def download_sources(config,bundle,not_after):
     if (manifest['target']!=item['target'] or manifest.get('producer_commit')!=item['producer_commit']
             or manifest.get('runtime_sha')!=item['runtime_sha']):
         raise ValueError('Local source pointer and original producer receipt differ')
-    return dict(status='verified_local_source_bundle_downloaded',target=item['target'],sha256=item['sha256'],bundle=str(bundle.resolve()))
+    result=dict(status='verified_local_source_bundle_downloaded',target=item['target'],
+                sha256=item['sha256'],bundle=str(bundle.resolve()))
+    if expected_scope is not None:
+        source_scope=manifest.get('scope_sha256')
+        if (re.fullmatch('[0-9a-f]{64}',str(source_scope)) is None
+                or manifest.get('producer_context',{}).get('scope_sha256')!=source_scope):
+            raise ValueError('Local source package has an invalid roster binding')
+        if source_scope!=expected_scope:
+            result.update(status='skipped_incompatible_optional_local_sources',
+                          source_scope_sha256=source_scope,current_scope_sha256=expected_scope)
+    return result
 
 
 def main():
