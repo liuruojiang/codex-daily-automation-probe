@@ -63,11 +63,23 @@ def real_transport(monkeypatch, changed_core=False):
     return raw, downloads
 
 
+def legacy_automation_root(tmp_path):
+    root = tmp_path / 'historical-automation'
+    target = root / 'config'
+    target.mkdir(parents=True)
+    for source in (FIXTURE / 'config').iterdir():
+        (target / source.name).write_bytes(source.read_bytes())
+    name = 'microcap_member_seed_20261109_4774966d.zip'
+    (target / name).write_bytes((ROOT / 'config' / name).read_bytes())
+    return root
+
+
 def invoke(monkeypatch, out, extra=()):
+    automation = legacy_automation_root(out.parent)
     monkeypatch.setattr(sys, 'argv', ['restore', '--strategy-sha', AB,
-        '--checkpoint-read-policy', str(FIXTURE / 'config/microcap_member_local_runtime.json'),
+        '--checkpoint-read-policy', str(automation / 'config/microcap_member_local_runtime.json'),
         '--repository', 'liuruojiang/codex-daily-automation-probe', '--not-after-date', '2026-11-11',
-        '--seed-config', str(FIXTURE / 'config/microcap_member_checkpoint.json'), '--out', str(out), *extra])
+        '--seed-config', str(automation / 'config/microcap_member_checkpoint.json'), '--out', str(out), *extra])
     restore.main()
 
 

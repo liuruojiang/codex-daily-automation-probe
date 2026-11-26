@@ -14,7 +14,7 @@ sys.path.insert(0,str(ROOT/'scripts'))
 import restore_microcap_member_checkpoint as restore
 import run_microcap_member_local as runner
 from run_microcap_member_local import reusable_checkpoint
-from test_member_local_checkpoint_read_policy import AB, real_transport, invoke
+from test_member_local_checkpoint_read_policy import AB, real_transport, invoke, legacy_automation_root
 
 
 def test_explicit_cache_is_reusable_only_for_exact_expected_completed_session(tmp_path):
@@ -87,7 +87,8 @@ def test_prepare_replaces_stale_cache_via_exact_D_restore_then_native_verify(tmp
     monkeypatch.setattr(runner,'github_environment',lambda:{})
     out=tmp_path/'prepared'
     today=datetime.now(runner.BJ).date().isoformat()
-    monkeypatch.setattr(sys,'argv',['prepare','--automation-root',str(ROOT),'--root',str(native),
+    legacy = legacy_automation_root(tmp_path)
+    monkeypatch.setattr(sys,'argv',['prepare','--automation-root',str(legacy),'--root',str(native),
         '--date',today,'--out',str(out),'--checkpoint',str(stale),'--prepare-only'])
     assert runner.main()==0
     result=json.loads(capsys.readouterr().out.strip())
