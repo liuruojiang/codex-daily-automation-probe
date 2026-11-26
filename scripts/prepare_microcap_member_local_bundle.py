@@ -62,7 +62,8 @@ def prepare(source, revision, strategy, out):
     seed = json.loads(bodies['config/microcap_member_checkpoint.json'])
     seed_name = seed.get('bundled_path')
     if seed_name not in ('microcap_member_seed_20261109_4774966d.zip',
-                          'microcap_member_seed_20261126_4608a82d.zip'):
+                          'microcap_member_seed_20261126_4608a82d.zip',
+                          'microcap_member_seed_20261126_e1e014b9.zip'):
         raise ValueError('Bootstrap seed name differs from the reviewed bundle')
     seed_path = 'config/' + seed_name
     bodies[seed_path] = subprocess.check_output(['git', '-C', str(source), 'show', revision + ':' + seed_path])

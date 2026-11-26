@@ -268,7 +268,7 @@ jobs:
           else
             args+=(--fallback-url "$SEED_URL" --fallback-sha256 "$SEED_SHA256")
           fi
-          if [[ "$RUNTIME_SHA" == '4608a82dd7a4b3828440523a28e19e0b8e4cbbca' ]]; then
+          if [[ "$RUNTIME_SHA" == '4608a82dd7a4b3828440523a28e19e0b8e4cbbca' || "$RUNTIME_SHA" == 'e1e014b9af50eadaa9b52d6f881e3e0855ac4846' ]]; then
             python -B automation/scripts/microcap_scoped_whole_recovery.py "${args[@]}"
           else
             args+=(--review automation/config/microcap_exact_runtime_review_20261120.json --activation-receipt scoped-prepare/runtime-activation.json)

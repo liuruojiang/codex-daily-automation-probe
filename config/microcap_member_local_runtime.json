@@ -1,8 +1,8 @@
 {
   "schema": "member_daily_local_runtime_v1",
-  "policy": "approved_688511_migration_member_checkpoint_v1",
-  "execution_strategy_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
-  "checkpoint_strategy_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
-  "core_strategy_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
+  "policy": "approved_688511_published_return_guard_checkpoint_v1",
+  "execution_strategy_sha": "e1e014b9af50eadaa9b52d6f881e3e0855ac4846",
+  "checkpoint_strategy_sha": "e1e014b9af50eadaa9b52d6f881e3e0855ac4846",
+  "core_strategy_sha": "e1e014b9af50eadaa9b52d6f881e3e0855ac4846",
   "rebalance_producer_shas": []
 }

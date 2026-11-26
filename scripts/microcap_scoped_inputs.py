@@ -25,7 +25,7 @@ from microcap_local_due import completed, pool_binding
 SCHEMA = 'microcap_scoped_source_inputs_v1'
 PREFIXES = tuple(CACHE + p + '/' for p in ('prices_raw', 'share_change', 'trade_status', 'share_sources', 'return_basis'))
 MAX_BYTES = 1024 * 1024 * 1024
-REVIEWED_CONSUMERS = frozenset({'4608a82dd7a4b3828440523a28e19e0b8e4cbbca', '33062463d66afbff0c4342e3dd9203fa3117d865',
+REVIEWED_CONSUMERS = frozenset({'4608a82dd7a4b3828440523a28e19e0b8e4cbbca', 'e1e014b9af50eadaa9b52d6f881e3e0855ac4846', '33062463d66afbff0c4342e3dd9203fa3117d865',
     '564d681308dd7593ffadb075d4dd5291e4c4e89c','6b56e6902799aa189a0bbc42c18d6506dcc2a04e',
     '872abe41d48f818363d879cdf98b297d230377b4','efbfc3464208c2e9a2de5778310d813095446858',
     '1634a27c5a609a46ab35fc29ca2c65b94182671b',
