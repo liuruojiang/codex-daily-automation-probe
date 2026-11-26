@@ -30,7 +30,7 @@ M7_UNDEPLOYED_CONTENT_CANDIDATE = 'c9657364696c263cd77d78f53088ff0d276252bd'
 
 
 def known():
-    return policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json',
+    return policy.load_read_policy(ROOT / 'tests/fixtures/member_checkpoint_local_read_20261111/config/microcap_member_local_runtime.json',
                                    policy.LOCAL_READ_POLICY['execution_strategy_sha'])
 
 

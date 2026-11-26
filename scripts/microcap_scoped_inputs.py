@@ -25,14 +25,7 @@ from microcap_local_due import completed, pool_binding
 SCHEMA = 'microcap_scoped_source_inputs_v1'
 PREFIXES = tuple(CACHE + p + '/' for p in ('prices_raw', 'share_change', 'trade_status', 'share_sources', 'return_basis'))
 MAX_BYTES = 1024 * 1024 * 1024
-# The locally prepared November 26 bundle retains the whole verified stock
-# history, including the previous provider responses. Keep the compressed cap
-# and admit only the measured enlarged closure for the exact approved scope.
-R26_EXPANDED_BYTES = 1536 * 1024 * 1024
-R26_SCOPE_SHA256 = '6bdbb984b70e652e5e129c366fe3128804b9e3c0f89fede9c02730c513d1efbb'
-R26_MASTER_SHA256 = '82995456dc5744ceb3923f3d55a986c0a3eaf97434e76dfc0faf87429dc0e427'
-REVIEWED_CONSUMERS = frozenset({'1e3f5adb1925049e3bc7ab0da977c241356f1b70',
-    '33062463d66afbff0c4342e3dd9203fa3117d865',
+REVIEWED_CONSUMERS = frozenset({'4608a82dd7a4b3828440523a28e19e0b8e4cbbca', '33062463d66afbff0c4342e3dd9203fa3117d865',
     '564d681308dd7593ffadb075d4dd5291e4c4e89c','6b56e6902799aa189a0bbc42c18d6506dcc2a04e',
     '872abe41d48f818363d879cdf98b297d230377b4','efbfc3464208c2e9a2de5778310d813095446858',
     '1634a27c5a609a46ab35fc29ca2c65b94182671b',
@@ -138,6 +131,7 @@ def read_bundle(bundle, not_after, expected_sha=None):
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         names=archive.namelist()
         if len(names)!=len(set(names)) or 'manifest.json' not in names: raise ValueError('Duplicate or absent archive manifest')
+        if sum(i.file_size for i in archive.infolist()) > MAX_BYTES: raise ValueError('Scoped input archive expands beyond limit')
         if archive.getinfo('manifest.json').file_size > 32 * 1024 * 1024:
             raise ValueError('Scoped input manifest exceeds its size limit')
         manifest=json.loads(archive.read('manifest.json'))
@@ -146,13 +140,6 @@ def read_bundle(bundle, not_after, expected_sha=None):
                 or manifest.get('native_ST_refresh_required_at_consumer') is not True
                 or manifest.get('final_strategy_delivery') is not False):
             raise ValueError('Scoped input producer identity or scope differs')
-        expanded_limit = MAX_BYTES
-        if (manifest['runtime_sha']==RUNTIME and manifest['target']=='2026-11-26'
-                and manifest.get('scope_sha256')==R26_SCOPE_SHA256
-                and manifest.get('master_sha256')==R26_MASTER_SHA256):
-            expanded_limit = R26_EXPANDED_BYTES
-        if sum(i.file_size for i in archive.infolist()) > expanded_limit:
-            raise ValueError('Scoped input archive expands beyond limit')
         target=date.fromisoformat(manifest['target'])
         if target>date.fromisoformat(not_after): raise ValueError('Scoped source inputs are from a future session')
         symbols=manifest['symbols']

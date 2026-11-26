@@ -19,7 +19,6 @@ BUNDLE_FILES = (
     'config/microcap_member_runtime.json',
     'config/microcap_member_local_runtime.json',
     'config/microcap_member_checkpoint.json',
-    'config/microcap_member_seed_20261109_4774966d.zip',
 )
 LOCAL_DEPENDENCIES = {
     'microcap_member_report_contract': 'scripts/microcap_member_report_contract.py',
@@ -61,11 +60,16 @@ def prepare(source, revision, strategy, out):
     policy = validate_read_policy(json.loads(bodies['config/microcap_member_local_runtime.json']))
     cloud = json.loads(bodies['config/microcap_member_runtime.json'])
     seed = json.loads(bodies['config/microcap_member_checkpoint.json'])
+    seed_name = seed.get('bundled_path')
+    if seed_name not in ('microcap_member_seed_20261109_4774966d.zip',
+                          'microcap_member_seed_20261126_4608a82d.zip'):
+        raise ValueError('Bootstrap seed name differs from the reviewed bundle')
+    seed_path = 'config/' + seed_name
+    bodies[seed_path] = subprocess.check_output(['git', '-C', str(source), 'show', revision + ':' + seed_path])
     if (cloud.get('strategy_sha') != policy['checkpoint_strategy_sha']
             or cloud.get('core_strategy_sha') != policy['core_strategy_sha']
             or seed.get('strategy_sha') != policy['checkpoint_strategy_sha']
-            or seed.get('bundled_path') != 'microcap_member_seed_20261109_4774966d.zip'
-            or seed.get('sha256') != sha(bodies['config/' + seed['bundled_path']])):
+            or seed.get('sha256') != sha(bodies[seed_path])):
         raise ValueError('Candidate local/cloud/seed contracts differ')
     actual = subprocess.check_output(['git', '-C', str(strategy), 'rev-parse', 'HEAD'], text=True).strip()
     if actual != policy['execution_strategy_sha']:

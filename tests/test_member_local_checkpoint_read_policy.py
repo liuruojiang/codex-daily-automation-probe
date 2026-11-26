@@ -65,9 +65,9 @@ def real_transport(monkeypatch, changed_core=False):
 
 def invoke(monkeypatch, out, extra=()):
     monkeypatch.setattr(sys, 'argv', ['restore', '--strategy-sha', AB,
-        '--checkpoint-read-policy', str(ROOT / 'config/microcap_member_local_runtime.json'),
+        '--checkpoint-read-policy', str(FIXTURE / 'config/microcap_member_local_runtime.json'),
         '--repository', 'liuruojiang/codex-daily-automation-probe', '--not-after-date', '2026-11-11',
-        '--seed-config', str(ROOT / 'config/microcap_member_checkpoint.json'), '--out', str(out), *extra])
+        '--seed-config', str(FIXTURE / 'config/microcap_member_checkpoint.json'), '--out', str(out), *extra])
     restore.main()
 
 
@@ -110,7 +110,7 @@ def test_global_cloud477_restore_still_uses_exact_477_namespace(tmp_path, monkey
     assert result['artifact_id'] == 13838054871 and downloads == [13838054871]
     assert result['strategy_sha'] == result['checkpoint_strategy_sha'] == NAMESPACE
     assert result['checkpoint_read_policy'] is None
-    assert policy.local_runtime(ROOT) == (AB, ROOT / 'config/microcap_member_local_runtime.json')
+    assert policy.local_runtime(FIXTURE) == (AB, FIXTURE / 'config/microcap_member_local_runtime.json')
 
 
 @pytest.mark.parametrize('field,value', [
@@ -131,7 +131,7 @@ def test_unknown_relationship_is_rejected_before_network_or_output(tmp_path, mon
 
 def test_known_policy_rejects_different_execution_pin():
     with pytest.raises(ValueError, match='Unreviewed'):
-        policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json', NAMESPACE)
+        policy.load_read_policy(FIXTURE / 'config/microcap_member_local_runtime.json', NAMESPACE)
 
 
 def test_core_mismatch_cannot_be_hidden_by_known_artifact_namespace(tmp_path, monkeypatch):
@@ -143,7 +143,7 @@ def test_core_mismatch_cannot_be_hidden_by_known_artifact_namespace(tmp_path, mo
 
 
 def test_explicit_cached_checkpoint_cannot_bypass_the_same_core_identity_guard():
-    known = policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json', AB)
+    known = policy.load_read_policy(FIXTURE / 'config/microcap_member_local_runtime.json', AB)
     policy.validate_checkpoint_payload({'strategy_sha': CORE}, known)
     with pytest.raises(ValueError, match='core identity'):
         policy.validate_checkpoint_payload({'strategy_sha': 'd' * 40}, known)
@@ -151,7 +151,7 @@ def test_explicit_cached_checkpoint_cannot_bypass_the_same_core_identity_guard()
 
 @pytest.mark.parametrize('producer', policy.LOCAL_READ_POLICY['rebalance_producer_shas'])
 def test_exact_reviewed_rebalance_marker_requires_preserved_native_handoff(producer):
-    known = policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json', AB)
+    known = policy.load_read_policy(FIXTURE / 'config/microcap_member_local_runtime.json', AB)
     error='formal recovery proof route' if producer in (recovery.M8,recovery.M9,recovery.M10,recovery.M11,recovery.M12,recovery.M13,recovery.M15,recovery.M16,recovery.M17) else 'handoff lineage'
     with pytest.raises(ValueError, match=error):
         policy.validate_checkpoint_payload({'strategy_sha': producer}, known)
@@ -181,7 +181,7 @@ def test_exact_reviewed_rebalance_marker_requires_preserved_native_handoff(produ
 
 def test_reader_policy_cannot_relabel_a_checkpoint_for_publication(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, 'argv', ['describe', '--strategy-sha', AB,
-        '--checkpoint-read-policy', str(ROOT / 'config/microcap_member_local_runtime.json'),
+        '--checkpoint-read-policy', str(FIXTURE / 'config/microcap_member_local_runtime.json'),
         '--describe-checkpoint', str(tmp_path / 'not-needed.json')])
     with pytest.raises(SystemExit):
         restore.main()
@@ -191,11 +191,13 @@ def test_reader_policy_cannot_relabel_a_checkpoint_for_publication(tmp_path, mon
 def test_bundle_materializes_exact_git_objects_without_activating(tmp_path, monkeypatch, add_report_contract):
     source = tmp_path / 'source'
     source.mkdir()
-    names = [*bundle.BUNDLE_FILES, *[p for p in bundle.LOCAL_DEPENDENCIES.values() if (ROOT/p).exists()]]
+    names = [*bundle.BUNDLE_FILES, 'config/microcap_member_seed_20261109_4774966d.zip',
+             *[p for p in bundle.LOCAL_DEPENDENCIES.values() if (ROOT/p).exists()]]
     for name in names:
         target = source / name
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes((ROOT / name).read_bytes())
+        original_config = FIXTURE / name
+        target.write_bytes((original_config if original_config.is_file() else ROOT / name).read_bytes())
     if add_report_contract:
         contract = bundle.LOCAL_DEPENDENCIES['microcap_member_report_contract']
         if contract not in names:

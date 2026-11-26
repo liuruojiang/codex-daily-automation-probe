@@ -61,23 +61,6 @@ def test_transport_decode_does_not_claim_native_acceptance(tmp_path):
     assert m['final_strategy_delivery'] is False
 
 
-def test_expanded_limit_is_confined_to_the_exact_r26_producer_and_scope(tmp_path, monkeypatch):
-    def change(manifest, entries):
-        role = next(iter(manifest['files']))
-        entries[role] = b'covered source evidence' * 300
-        manifest['files'][role] = package.sha(entries[role])
-        manifest.update(target='2026-11-26', scope_sha256=package.R26_SCOPE_SHA256)
-        monkeypatch.setattr(package, 'R26_MASTER_SHA256', manifest['master_sha256'])
-
-    bundle = archive(tmp_path, change)
-    monkeypatch.setattr(package, 'MAX_BYTES', bundle.stat().st_size + 100)
-    loaded, _, _ = package.read_bundle(bundle, '2026-11-26')
-    assert loaded['scope_sha256'] == package.R26_SCOPE_SHA256
-    monkeypatch.setattr(package, 'R26_SCOPE_SHA256', '0' * 64)
-    with pytest.raises(ValueError, match='expands beyond limit'):
-        package.read_bundle(bundle, '2026-11-26')
-
-
 def test_original_native_raw_responses_are_retained_by_transport(tmp_path):
     assert package.permitted(package.CACHE+'share_sources/providers/type/000001/id/sina.raw')
     assert package.permitted(package.CACHE+'trade_status/raw/000001.json')

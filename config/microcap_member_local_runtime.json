@@ -1,21 +1,8 @@
 {
   "schema": "member_daily_local_runtime_v1",
-  "policy": "ab214_reads_477_member_checkpoint_v2",
-  "execution_strategy_sha": "ab214c20d92ca9bbda1dde7e447bb153e7f59028",
-  "checkpoint_strategy_sha": "4774966da38f0b5af18617f73cc67c39c9e41a8e",
-  "core_strategy_sha": "ad4de441d35442616f91aa613146ffdf8cd479f3",
-  "rebalance_producer_shas": [
-    "1634a27c5a609a46ab35fc29ca2c65b94182671b",
-    "14e9a9fa6f0487f1d5547598435089c43f2f9fd1",
-    "a7c1b9ac33454be4367880a0989dfc1466640503",
-    "95d896fe58cc7cb84c0fcb7bd76534f62c9430f4",
-    "906eca8a5dfede7fa1674fb17cd3c6ce12205e6d",
-    "074a40d762df73a09a00369d1cc841645212cf37",
-    "8467393b197b91d527395fe2024f6f1988afaced",
-    "c16c59411ca8efa86728ed0cc136235be4e60170",
-    "712485bd14b5a7d860ccb4ab302a032b0d541e50",
-    "df384741530a6fcd27c7526057b552c5ce138d53",
-    "ede05731de7c78c9bcf2ebfd8ad5c58ee960a200",
-    "b60ebfbc2a821e0fbf08fcd110da1360cfc21400"
-  ]
+  "policy": "approved_688511_migration_member_checkpoint_v1",
+  "execution_strategy_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
+  "checkpoint_strategy_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
+  "core_strategy_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
+  "rebalance_producer_shas": []
 }
