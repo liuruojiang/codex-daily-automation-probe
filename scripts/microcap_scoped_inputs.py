@@ -25,6 +25,12 @@ from microcap_local_due import completed, pool_binding
 SCHEMA = 'microcap_scoped_source_inputs_v1'
 PREFIXES = tuple(CACHE + p + '/' for p in ('prices_raw', 'share_change', 'trade_status', 'share_sources', 'return_basis'))
 MAX_BYTES = 1024 * 1024 * 1024
+# The locally prepared November 26 bundle retains the whole verified stock
+# history, including the previous provider responses. Keep the compressed cap
+# and admit only the measured enlarged closure for the exact approved scope.
+R26_EXPANDED_BYTES = 1536 * 1024 * 1024
+R26_SCOPE_SHA256 = '6bdbb984b70e652e5e129c366fe3128804b9e3c0f89fede9c02730c513d1efbb'
+R26_MASTER_SHA256 = '82995456dc5744ceb3923f3d55a986c0a3eaf97434e76dfc0faf87429dc0e427'
 REVIEWED_CONSUMERS = frozenset({'e90c080ca91c9078f0972547ff60ce8e6e44fa54',
     '33062463d66afbff0c4342e3dd9203fa3117d865',
     '564d681308dd7593ffadb075d4dd5291e4c4e89c','6b56e6902799aa189a0bbc42c18d6506dcc2a04e',
@@ -127,13 +133,21 @@ def read_bundle(bundle, not_after, expected_sha=None):
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         names=archive.namelist()
         if len(names)!=len(set(names)) or 'manifest.json' not in names: raise ValueError('Duplicate or absent archive manifest')
-        if sum(i.file_size for i in archive.infolist())>MAX_BYTES: raise ValueError('Scoped input archive expands beyond limit')
+        if archive.getinfo('manifest.json').file_size > 32 * 1024 * 1024:
+            raise ValueError('Scoped input manifest exceeds its size limit')
         manifest=json.loads(archive.read('manifest.json'))
         if (manifest.get('schema')!=SCHEMA or manifest.get('runtime_sha') not in SOURCE_RUNTIMES
                 or manifest.get('source_inputs_only') is not True
                 or manifest.get('native_ST_refresh_required_at_consumer') is not True
                 or manifest.get('final_strategy_delivery') is not False):
             raise ValueError('Scoped input producer identity or scope differs')
+        expanded_limit = MAX_BYTES
+        if (manifest['runtime_sha']==RUNTIME and manifest['target']=='2026-11-26'
+                and manifest.get('scope_sha256')==R26_SCOPE_SHA256
+                and manifest.get('master_sha256')==R26_MASTER_SHA256):
+            expanded_limit = R26_EXPANDED_BYTES
+        if sum(i.file_size for i in archive.infolist()) > expanded_limit:
+            raise ValueError('Scoped input archive expands beyond limit')
         target=date.fromisoformat(manifest['target'])
         if target>date.fromisoformat(not_after): raise ValueError('Scoped source inputs are from a future session')
         symbols=manifest['symbols']
