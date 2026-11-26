@@ -1,105 +1,80 @@
-name: One-off exact Microcap archive byte relay
+name: Exact Top100 published-return archive relay
 on:
   workflow_dispatch:
 permissions:
   contents: write
 concurrency:
-  group: microcap-archive-byte-relay-20261112
+  group: microcap-return-guard-archive-relay
   cancel-in-progress: false
 jobs:
-  transfer:
-    if: github.repository == 'liuruojiang/codex-daily-automation-probe' && github.ref == 'refs/heads/main'
+  relay:
+    if: github.repository == 'liuruojiang/codex-daily-automation-probe' && github.ref == 'refs/heads/codex/top100-published-return-archive-relay-20261126'
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
-      REPOSITORY: liuruojiang/codex-daily-automation-probe
-      TAG: microcap-scoped-whole-20261110-1634a27c
+      REPO: liuruojiang/codex-daily-automation-probe
+      TAG: microcap-scoped-whole-20261126-e1e014b9
+      BASE_TAG: microcap-scoped-whole-20261126-4608a82d
+      RECIPE_SHA: 65e51dc29c01fbcbf87fb0df011b50a9e34c6f1f51e3f3268a8616c7c31fb548
+      ARCHIVE_SHA: 015a78c66d356eb6e729816f9805325002e42c7acc59d74d3e88fef9bea32f15
+      ARCHIVE_SIZE: '785561502'
+      ARCHIVE: microcap-whole-delivery-state-20261126-e1e014b9.zip
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
-      - name: Reconcile exact existing release before any write
+          python-version: '3.14'
+      - name: Reconcile the exact draft release
         run: |
-          gh api "repos/$REPOSITORY/releases/441957202" > release-before.json
+          gh release view "$TAG" --repo "$REPO" --json isDraft,tagName,assets > release-before.json
           python - <<'PY'
-          import json
-          v=json.load(open('release-before.json'))
-          assert v['id']==441957202 and v['tag_name']=='microcap-scoped-whole-20261110-1634a27c'
-          name='microcap-whole-delivery-state-archive-20261110-1634a27c.zip'
-          items=[x for x in v['assets'] if x['name']==name]
-          if items:
-              assert len(items)==1 and items[0]['state']=='uploaded'
-              assert items[0]['size']==673248922
-              assert items[0]['digest']=='sha256:3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1'
-          else:
-              assert v['draft'] is True
-          with open('asset-present.txt','w') as f:f.write(str(bool(items)).lower())
-          PY
-      - name: Download fixed original archive and exact literal transport
-        run: |
-          gh release download microcap-scoped-whole-20261110-872abe41 --repo "$REPOSITORY" --pattern microcap-whole-delivery-state-close-20261110.zip
-          gh release download "$TAG" --repo "$REPOSITORY" --pattern m5-archive-byte-relay-20261112.delta.gz
-      - name: Reconstruct and verify exact native-validated ZIP bytes
-        run: |
-          python -B scripts/microcap_archive_byte_relay_20261112.py \
-            --base microcap-whole-delivery-state-close-20261110.zip \
-            --delta m5-archive-byte-relay-20261112.delta.gz \
-            --output microcap-whole-delivery-state-archive-20261110-1634a27c.zip \
-            --receipt byte-relay.json
-      - name: Publish verified original bytes without replacing an asset
-        run: |
-          gh api "repos/$REPOSITORY/releases/441957202" > release-preupload.json
-          python - <<'PY'
-          import json,os,urllib.request
+          import json, os
           from pathlib import Path
-          v=json.load(open('release-preupload.json'))
-          assert v['id']==441957202 and v['tag_name']=='microcap-scoped-whole-20261110-1634a27c'
-          endpoint='https://uploads.github.com/repos/liuruojiang/codex-daily-automation-probe/releases/441957202/assets'
-          assert v['upload_url'].split('{',1)[0]==endpoint
-          name='microcap-whole-delivery-state-archive-20261110-1634a27c.zip'
-          items=[x for x in v['assets'] if x['name']==name]
-          if items:
-              assert len(items)==1 and items[0]['state']=='uploaded' and items[0]['size']==673248922
-              assert items[0]['digest']=='sha256:3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1'
+          current=json.load(open('release-before.json'))
+          assert current['tagName']==os.environ['TAG']
+          archive=[i for i in current['assets'] if i['name']==os.environ['ARCHIVE']]
+          if archive:
+              assert len(archive)==1 and archive[0]['state']=='uploaded'
+              assert archive[0]['digest']=='sha256:'+os.environ['ARCHIVE_SHA']
+              assert archive[0]['size']==int(os.environ['ARCHIVE_SIZE'])
           else:
-              assert v['draft'] is True
-              class NoRedirect(urllib.request.HTTPRedirectHandler):
-                  def redirect_request(self,*args,**kwargs):raise ValueError('Refuse upload redirect')
-              opener=urllib.request.build_opener(NoRedirect())
-              with Path(name).open('rb') as stream:
-                  request=urllib.request.Request(endpoint+'?name='+name,data=stream,method='POST',headers={
-                      'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Content-Type':'application/zip',
-                      'Content-Length':'673248922','Accept':'application/vnd.github+json'})
-                  with opener.open(request,timeout=180) as response:
-                      result=json.load(response)
-              Path('upload-response.json').write_text(json.dumps(result,indent=2)+'\n')
+              assert current['isDraft'] is True
+          Path('target-present').write_text(str(bool(archive)).lower())
           PY
-          gh api "repos/$REPOSITORY/releases/441957202" > release-uploaded.json
+      - name: Reconstruct byte-identical archive and publish it
+        run: |
+          if [[ "$(cat target-present)" == 'false' ]]; then
+            gh release download "$BASE_TAG" --repo "$REPO" --pattern 'microcap-whole-delivery-state-20261126-4608a82d.zip'
+            gh release download "$TAG" --repo "$REPO" --pattern 'whole-return-guard-literals.gz' --pattern 'whole-return-guard-delta.json'
+            python -B scripts/microcap_archive_byte_relay_20261112.py
+            gh release upload "$TAG" "$ARCHIVE" --repo "$REPO"
+          fi
+      - name: Verify uploaded bytes and publish draft
+        run: |
+          gh release view "$TAG" --repo "$REPO" --json tagName,assets > release-uploaded.json
           python - <<'PY'
-          import json
-          v=json.load(open('release-uploaded.json'))
-          a=[x for x in v['assets'] if x['name']=='microcap-whole-delivery-state-archive-20261110-1634a27c.zip']
-          assert len(a)==1 and a[0]['state']=='uploaded' and a[0]['size']==673248922
-          assert a[0]['digest']=='sha256:3326bf3adec1cb073d72318991a49e94d2e4599426ef0adcf5025baf2e6aa5d1'
+          import json,os
+          current=json.load(open('release-uploaded.json'))
+          assert current['tagName']==os.environ['TAG']
+          archive=[i for i in current['assets'] if i['name']==os.environ['ARCHIVE']]
+          assert len(archive)==1 and archive[0]['state']=='uploaded'
+          assert archive[0]['digest']=='sha256:'+os.environ['ARCHIVE_SHA']
+          assert archive[0]['size']==int(os.environ['ARCHIVE_SIZE'])
           PY
-          gh api --method PATCH "repos/$REPOSITORY/releases/441957202" -F draft=false > release-publication-response.json
-          gh api "repos/$REPOSITORY/releases/441957202" > release-published.json
-          python -c "import json;v=json.load(open('release-published.json'));assert v['draft'] is False"
+          gh release edit "$TAG" --repo "$REPO" --draft=false
+          gh release view "$TAG" --repo "$REPO" --json isDraft,tagName,assets > release-published.json
+          python -c 'import json; assert json.load(open("release-published.json"))["isDraft"] is False'
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: microcap-exact-archive-byte-relay-20261112
+          name: exact-archive-relay-evidence
           path: |
-            byte-relay.json
+            relay-result.json
             release-before.json
             release-uploaded.json
-            release-preupload.json
-            upload-response.json
-            release-publication-response.json
             release-published.json
           if-no-files-found: error
           retention-days: 90
