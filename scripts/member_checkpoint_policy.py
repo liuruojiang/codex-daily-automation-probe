@@ -20,9 +20,19 @@ LOCAL_READ_POLICY = {
 }
 
 
+MIGRATION_READ_POLICY = {
+    'schema': 'member_daily_local_runtime_v1',
+    'policy': 'approved_688511_migration_member_checkpoint_v1',
+    'execution_strategy_sha': '4608a82dd7a4b3828440523a28e19e0b8e4cbbca',
+    'checkpoint_strategy_sha': '4608a82dd7a4b3828440523a28e19e0b8e4cbbca',
+    'core_strategy_sha': '4608a82dd7a4b3828440523a28e19e0b8e4cbbca',
+    'rebalance_producer_shas': [],
+}
+
+
 def validate_read_policy(value, execution_sha=None):
-    # This is one reviewed relationship, not a configurable version alias list.
-    if value != LOCAL_READ_POLICY or (execution_sha is not None
+    # Only the two exact reviewed reader contracts may resolve a namespace.
+    if value not in (LOCAL_READ_POLICY, MIGRATION_READ_POLICY) or (execution_sha is not None
             and execution_sha != value['execution_strategy_sha']):
         raise ValueError('Unreviewed member checkpoint reader relationship')
     return dict(value)

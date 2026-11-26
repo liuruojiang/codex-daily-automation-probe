@@ -1,16 +1,16 @@
 {
   "schema": "microcap_scoped_rebalance_runtime_v1",
   "enabled": true,
-  "runtime_sha": "b60ebfbc2a821e0fbf08fcd110da1360cfc21400",
-  "producer_sha": "106e2046e81f8963db2ecd9fc063b5e193d775ff",
+  "runtime_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
+  "producer_sha": "0051d4c185e3c695494c7fc9486934fc4d987805",
   "whole_seed": {
-    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261110-95d896fe/microcap-whole-delivery-state-archive-20261110-m8-multisource.zip",
-    "sha256": "866bcd2b884e95335f2e6b9b23ba836092b4bc5d916c6c8c20d577a06fa1aedf",
-    "date": "2026-11-10"
+    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261126-4608a82d/microcap-whole-delivery-state-20261126-4608a82d.zip",
+    "sha256": "173a6bcbb39a53615f98cf36cdd621c4daa74652d50a9286ea32c8ede39ee90f",
+    "date": "2026-11-26"
   },
   "weekly_roster": {
-    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-weekly-roster-20261113/microcap-weekly-roster-20261113.zip",
-    "sha256": "f57de1d30015c104f064a1f9f4eb27355bfc0f475b7b68ad35854ab31a2d13eb",
-    "date": "2026-11-13"
+    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-local-sources-20261126-0051d4c1/microcap-weekly-roster-20261120.zip",
+    "sha256": "803fdd00ef65d03447bf63844c4acce3885f03c4ae75325863d2b5ba793d0f2d",
+    "date": "2026-11-20"
   }
 }

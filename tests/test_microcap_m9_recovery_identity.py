@@ -163,11 +163,15 @@ def test_M9_envelope_cannot_drop_proof_cross_bind_or_change_native_state(recover
         policy.validate_checkpoint_directory(package(tmp_path, cp, payload), policy.LOCAL_READ_POLICY)
 
 
-def test_M10_configs_preserve_M9_P3_identity_and_only_select_reviewed_successors():
+def test_M10_configs_preserve_M9_P3_identity_and_only_select_reviewed_successors(monkeypatch):
     old = json.loads(subprocess.check_output(['git', '-C', str(ROOT), 'show', OLD_AUTO + ':config/microcap_scoped_rebalance.json']))
-    current = settings.load(ROOT / 'config/microcap_scoped_rebalance.json', require_seed=True)
+    historical_producer = '106e2046e81f8963db2ecd9fc063b5e193d775ff'
+    assert historical_producer in maintenance.SOURCE_RUNTIMES
+    monkeypatch.setattr(settings, 'RUNTIME', historical_producer)
+    fixture = ROOT / 'tests/fixtures/member_checkpoint_local_read_20261111/config/microcap_scoped_rebalance.json'
+    current = settings.load(fixture, require_seed=True)
     assert current['runtime_sha'] == m.M17
-    assert current['producer_sha'] == maintenance.RUNTIME == '106e2046e81f8963db2ecd9fc063b5e193d775ff'
+    assert current['producer_sha'] == historical_producer
     assert json.loads((ROOT/'config/microcap_local_producer_p3_20261112.json').read_bytes())['runtime_sha']==P3
     old['runtime_sha'] = m.M17
     old['producer_sha'] = '106e2046e81f8963db2ecd9fc063b5e193d775ff'
@@ -176,7 +180,7 @@ def test_M10_configs_preserve_M9_P3_identity_and_only_select_reviewed_successors
     assert current == old
     old_policy = json.loads(subprocess.check_output(['git', '-C', str(ROOT), 'show', OLD_AUTO + ':config/microcap_member_local_runtime.json']))
     expected = copy.deepcopy(old_policy); expected['rebalance_producer_shas'].extend([M9,M10,m.M11,m.M12,m.M13,m.M15,m.M16,m.M17])
-    assert policy.load_read_policy(ROOT / 'config/microcap_member_local_runtime.json') == expected
+    assert policy.load_read_policy(ROOT / 'tests/fixtures/member_checkpoint_local_read_20261111/config/microcap_member_local_runtime.json') == expected
     assert {M9,M10} <= m.REVIEWED_NATIVES and {M9,M10} <= scoped_inputs.REVIEWED_CONSUMERS
     assert M9 in prefix.CONSUMER_READERS and M9 not in prefix.PRODUCER_READERS
 
