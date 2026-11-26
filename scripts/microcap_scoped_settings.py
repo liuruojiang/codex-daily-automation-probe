@@ -2,12 +2,13 @@
 import argparse
 from datetime import date
 import json
+import os
 from pathlib import Path
 import re
 import urllib.parse
 import urllib.request
 from prepare_microcap_local import atomic,sha
-from maintain_microcap_local import RUNTIME
+from maintain_microcap_local import RUNTIME,load_pool
 
 RELEASE_PREFIX='/liuruojiang/codex-daily-automation-probe/releases/download/'
 
@@ -64,10 +65,14 @@ def download_sources(config,bundle,not_after,*,expected_scope=None):
         raise ValueError('Local source pointer and original producer receipt differ')
     result=dict(status='verified_local_source_bundle_downloaded',target=item['target'],
                 sha256=item['sha256'],bundle=str(bundle.resolve()))
+    roster=os.environ.get('MICROCAP_WARM_ROSTER_MANIFEST')
+    if expected_scope is None and roster:
+        _,_,expected_scope=load_pool(roster,not_after)
     if expected_scope is not None:
+        context=manifest.get('producer_context')
         source_scope=manifest.get('scope_sha256')
         if (re.fullmatch('[0-9a-f]{64}',str(source_scope)) is None
-                or manifest.get('producer_context',{}).get('scope_sha256')!=source_scope):
+                or not isinstance(context,dict) or context.get('scope_sha256')!=source_scope):
             raise ValueError('Local source package has an invalid roster binding')
         if source_scope!=expected_scope:
             result.update(status='skipped_incompatible_optional_local_sources',

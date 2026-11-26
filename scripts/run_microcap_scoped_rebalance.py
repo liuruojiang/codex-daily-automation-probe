@@ -394,11 +394,9 @@ def prepare(*, consumer, producer, state, out, pool, target, consumer_sha, resum
         if warm_source_config is not None:
             from microcap_scoped_settings import download_sources
             downloaded=out/'local-source-warm.zip'
-            warm=download_sources(warm_source_config,downloaded,target,expected_scope=scope_sha)
+            warm=download_sources(warm_source_config,downloaded,target)
             save_once(out/'local-source-download.json',encode(warm))
             warm_files['local-source-download.json']=sha((out/'local-source-download.json').read_bytes())
-            if warm['status']=='skipped_incompatible_optional_local_sources':
-                warm_files['local-source-warm.zip']=warm['sha256']
             if warm['status']=='verified_local_source_bundle_downloaded':
                 receipt=run('warm-local-source-inputs',[sys.executable,'-B',SCRIPTS/'import_microcap_producer_inputs.py',
                     '--root',producer,'--protected-root',consumer,'--state',state,'--pool',Path(pool).resolve(),

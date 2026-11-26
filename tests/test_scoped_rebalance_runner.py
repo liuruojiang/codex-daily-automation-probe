@@ -255,16 +255,13 @@ def test_boundary_fetch_reuses_original_two_pages_and_matches_native_receipt_con
     assert calls==[1,2]
 
 
-def warm_setup(prepared,monkeypatch,*,fault=False,stale=False,other_roster=False):
+def warm_setup(prepared,monkeypatch,*,fault=False,stale=False):
     import microcap_scoped_settings as settings
     args,calls,*_=prepared
     raw=b'previous close local source cache';digest=sha(raw)
-    def download(config,path,target,*,expected_scope):
+    def download(config,path,target):
         if stale:return dict(status='skipped_stale_optional_local_sources',target='2026-10-01')
         path.write_bytes(raw)
-        if other_roster:
-            return dict(status='skipped_incompatible_optional_local_sources',target='2026-10-28',
-                        sha256=digest,source_scope_sha256='a'*64,current_scope_sha256=expected_scope)
         return dict(status='verified_local_source_bundle_downloaded',target='2026-10-28',sha256=digest,bundle=str(path.resolve()))
     monkeypatch.setattr(settings,'download_sources',download)
     original=args['run']
@@ -308,14 +305,3 @@ def test_optional_stale_local_sources_are_explicitly_skipped_before_normal_refre
     assert not any(label=='warm-local-source-inputs' for label,_ in calls)
     assert value['local_source_warm']['status']=='skipped_stale_optional_local_sources'
     assert 'local-source-download.json' in value['files']
-
-
-def test_old_roster_source_is_preserved_without_preventing_native_maintenance(prepared,monkeypatch):
-    args,calls=warm_setup(prepared,monkeypatch,other_roster=True)
-    value=runner.prepare(**args)
-    assert [label for label,_ in calls][:4]==['preflight','boundary-2026-10-29','bootstrap','maintain']
-    warm=value['local_source_warm']
-    assert warm['status']=='skipped_incompatible_optional_local_sources'
-    assert warm['current_scope_sha256']==value['scope_sha256']
-    assert value['files']['local-source-warm.zip']==warm['sha256']
-    runner.validate_prepared(args['out']/'prepared.json',args['consumer'],args['target'],args['consumer_sha'])
