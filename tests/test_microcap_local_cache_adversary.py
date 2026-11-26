@@ -25,6 +25,7 @@ from test_microcap_crossday_recovery_adversarial import (
 sys.path.insert(0, str(ROOT / 'scripts'))
 import run_microcap_member_local as current_runner
 import member_checkpoint_policy as policy
+from test_member_local_checkpoint_read_policy import legacy_automation_root
 
 
 @pytest.fixture
@@ -73,7 +74,8 @@ def invoke(runner, checkpoint, out, reader, monkeypatch):
     monkeypatch.setitem(sys.modules, 'scripts.exchange_calendar', calendar)
     monkeypatch.setattr(runner, 'datetime', SoftwareRecoveryClock)
     monkeypatch.setattr(runner, 'github_environment', lambda: pytest.fail('Cached package must not fetch GitHub'))
-    monkeypatch.setattr(sys, 'argv', ['run_microcap_member_local.py', '--automation-root', str(ROOT),
+    legacy = legacy_automation_root(out.parent)
+    monkeypatch.setattr(sys, 'argv', ['run_microcap_member_local.py', '--automation-root', str(legacy),
         '--root', str(reader), '--date', '2026-11-13', '--out', str(out),
         '--checkpoint', str(checkpoint), '--prepare-only'])
     calls = []

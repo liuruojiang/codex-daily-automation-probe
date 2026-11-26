@@ -130,6 +130,8 @@ def test_production_bundle_is_exact_reviewed_seed_for_current_runtime(monkeypatc
     runtime = json.loads((root / 'config/microcap_member_runtime.json').read_bytes())['strategy_sha']
     monkeypatch.setattr(restore.urllib.request, 'build_opener', offline)
     raw = restore.seed_download(config, runtime)
-    assert len(raw) == 85009
-    assert hashlib.sha256(raw).hexdigest() == '3fa87b093e46f81651a17a2c6de23ad4cf3e46d1853744211c1ff191c6d67c50'
-    assert restore.checkpoint_identity(raw)['as_of_date'] == '2026-11-09'
+    assert len(raw) == 86382
+    assert hashlib.sha256(raw).hexdigest() == 'e00bc988f4634c3cd21199de913eb927f9653fc12442efcdb03219304833affc'
+    identity = restore.checkpoint_identity(raw)
+    assert identity['as_of_date'] == '2026-11-26' and identity['period_status'] == 'current'
+    assert identity['period_sha'] == '71b3eff81d8d57d772f61fd2f796801dc156f1721fc63e721058f0e38f4922bd'
