@@ -503,7 +503,10 @@ def select_local_notice_forward(*,root,protected_root,state,symbols,target,out,n
     from contextlib import ExitStack
     module_path=Path(__file__).with_name('microcap_notice_prefix.py').resolve()
     # Pin this reused dependency through maintain's existing orchestrator hash.
-    if sha(module_path.read_bytes().replace(b'\r\n',b'\n'))!='611bd60980187ba251b3fcf292b38d0461e06dea19a614bd723a83c68443882b':
+    if sha(module_path.read_bytes().replace(b'\r\n',b'\n')) not in {
+        '611bd60980187ba251b3fcf292b38d0461e06dea19a614bd723a83c68443882b',
+        'f67b8a7c473039730600469e4b69823b6f7263e3254cecdb05c911b2549a0271',
+    }:
         raise ValueError('Local notice selector dependency is not the reviewed exact source')
     import microcap_notice_prefix as prefix
     if Path(prefix.__file__).resolve()!=module_path:raise ValueError('Foreign local notice selector module')

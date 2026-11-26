@@ -1,12 +1,12 @@
 {
   "schema": "member_daily_seed_v1",
-  "strategy_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
-  "url": "https://github.com/liuruojiang/microcap/releases/download/member-daily-688511-20261126-4608a82d/microcap_member_seed_20261126_4608a82d.zip",
-  "sha256": "e00bc988f4634c3cd21199de913eb927f9653fc12442efcdb03219304833affc",
-  "bundled_path": "microcap_member_seed_20261126_4608a82d.zip",
-  "seed_data_producer_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
-  "seed_consumer_verified_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
-  "seed_repair_source_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
+  "strategy_sha": "e1e014b9af50eadaa9b52d6f881e3e0855ac4846",
+  "url": "https://github.com/liuruojiang/microcap/releases/download/member-daily-return-guard-20261126-e1e014b9/microcap_member_seed_20261126_e1e014b9.zip",
+  "sha256": "58c6ae90a88e8854388582255cd71f7bd2bc54e8b444eb4953ff8043679c6a0a",
+  "bundled_path": "microcap_member_seed_20261126_e1e014b9.zip",
+  "seed_data_producer_sha": "e1e014b9af50eadaa9b52d6f881e3e0855ac4846",
+  "seed_consumer_verified_sha": "e1e014b9af50eadaa9b52d6f881e3e0855ac4846",
+  "seed_repair_source_sha": "e1e014b9af50eadaa9b52d6f881e3e0855ac4846",
   "superseded_history_sha256": [
     "ea9a96cc6b684c9495176f071fdd4f76b8e62860e21a35c7c71f2003feafc483"
   ]

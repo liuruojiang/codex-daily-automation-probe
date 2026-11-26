@@ -30,9 +30,18 @@ MIGRATION_READ_POLICY = {
 }
 
 
+RETURN_GUARD_READ_POLICY = {
+    **MIGRATION_READ_POLICY,
+    'policy': 'approved_688511_published_return_guard_checkpoint_v1',
+    'execution_strategy_sha': 'e1e014b9af50eadaa9b52d6f881e3e0855ac4846',
+    'checkpoint_strategy_sha': 'e1e014b9af50eadaa9b52d6f881e3e0855ac4846',
+    'core_strategy_sha': 'e1e014b9af50eadaa9b52d6f881e3e0855ac4846',
+}
+
+
 def validate_read_policy(value, execution_sha=None):
-    # Only the two exact reviewed reader contracts may resolve a namespace.
-    if value not in (LOCAL_READ_POLICY, MIGRATION_READ_POLICY) or (execution_sha is not None
+    # Only an exact reviewed reader contract may resolve a namespace.
+    if value not in (LOCAL_READ_POLICY, MIGRATION_READ_POLICY, RETURN_GUARD_READ_POLICY) or (execution_sha is not None
             and execution_sha != value['execution_strategy_sha']):
         raise ValueError('Unreviewed member checkpoint reader relationship')
     return dict(value)

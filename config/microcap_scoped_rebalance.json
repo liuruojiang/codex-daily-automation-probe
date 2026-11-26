@@ -1,11 +1,11 @@
 {
   "schema": "microcap_scoped_rebalance_runtime_v1",
   "enabled": true,
-  "runtime_sha": "4608a82dd7a4b3828440523a28e19e0b8e4cbbca",
+  "runtime_sha": "e1e014b9af50eadaa9b52d6f881e3e0855ac4846",
   "producer_sha": "0051d4c185e3c695494c7fc9486934fc4d987805",
   "whole_seed": {
-    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261126-4608a82d/microcap-whole-delivery-state-20261126-4608a82d.zip",
-    "sha256": "173a6bcbb39a53615f98cf36cdd621c4daa74652d50a9286ea32c8ede39ee90f",
+    "url": "https://github.com/liuruojiang/codex-daily-automation-probe/releases/download/microcap-scoped-whole-20261126-e1e014b9/microcap-whole-delivery-state-20261126-e1e014b9.zip",
+    "sha256": "015a78c66d356eb6e729816f9805325002e42c7acc59d74d3e88fef9bea32f15",
     "date": "2026-11-26"
   },
   "weekly_roster": {
