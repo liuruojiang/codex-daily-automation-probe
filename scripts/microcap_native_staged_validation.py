@@ -6,13 +6,17 @@ fresh interpreter; the receiver's own validation remains in the native process.
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import date
 import hashlib
 import inspect
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
+import tempfile
+import zipfile
 
 
 CHILD = r'''
@@ -115,6 +119,47 @@ def _source_identity(receiver, stage, names):
     return result
 
 
+REVIEWED_FORWARD_DELISTING = 'data/reviewed_forward_delisting/002731-SZSE-2026-124.pdf'
+REVIEWED_FORWARD_DELISTING_SHA256 = '26788d351ebfd99bd32b4df65aeaa00f2b528cb5e975ad40b420106a78daaac3'
+
+
+@contextmanager
+def _release_source_transport(native, receiver, bundle, evidence, receipt):
+    # The archive carries one reviewed source file as part of the native
+    # observation closure. Supply that file from the verified receiver checkout
+    # so the original native restore can keep its data-only write boundary.
+    name = REVIEWED_FORWARD_DELISTING
+    if name not in native.SOURCE_FILES:
+        yield bundle
+        return
+    with zipfile.ZipFile(bundle) as original:
+        if name not in original.namelist():
+            yield bundle
+            return
+        authority = _local_file(receiver, name).read_bytes()
+        digest = hashlib.sha256(authority).hexdigest()
+        if digest != REVIEWED_FORWARD_DELISTING_SHA256 or original.read(name) != authority:
+            raise ValueError('Embedded reviewed issuer notice differs from the exact release authority')
+        delivery = json.loads(original.read(native.delivery.MANIFEST))
+        authority_contract = hashlib.sha256(authority.replace(b'\r\n', b'\n')).hexdigest()
+        if delivery.get('inputs', {}).get(name) != authority_contract:
+            raise ValueError('Original delivery does not bind the reviewed issuer notice')
+        manifest = native.state._verify_bundle_manifest(original)
+        manifest['files'] = [entry for entry in manifest['files'] if entry['path'] != name]
+        with tempfile.TemporaryDirectory(prefix='native-data-only-', dir=evidence) as private:
+            payload = Path(private) / 'verified-data-only.zip'
+            with zipfile.ZipFile(payload, 'x', zipfile.ZIP_DEFLATED, compresslevel=1) as checked:
+                for item in original.infolist():
+                    if item.is_dir() or item.filename in (name, native.state.MANIFEST_NAME):
+                        continue
+                    with original.open(item) as src, checked.open(item.filename, 'w') as dst:
+                        shutil.copyfileobj(src, dst, 1024 * 1024)
+                checked.writestr(native.state.MANIFEST_NAME, json.dumps(manifest, ensure_ascii=False))
+            receipt.update(source_path=name, source_sha256=digest,
+                           original_archive_preserved=True, delivered_data_manifest_unchanged=True)
+            yield payload
+
+
 def restore_isolated(receiver, bundle, expected, evidence):
     """Delegate the unchanged native restore, isolating only foreign roots."""
     from scripts import top100_cloud_delivery as native
@@ -125,6 +170,7 @@ def restore_isolated(receiver, bundle, expected, evidence):
     original_inspect = native.delivery.inspect_outputs
     source_files = tuple(native.SOURCE_FILES)
     checks = []
+    transport = {}
 
     def failure(directory, state, exit_code=None):
         stderr = directory/'stderr.log'
@@ -176,13 +222,19 @@ def restore_isolated(receiver, bundle, expected, evidence):
     native.state.validate_state = lambda path,*args,**kwargs: validate('validate_state',original,path,*args,**kwargs)
     native.delivery.inspect_outputs = lambda path,*args,**kwargs: validate('inspect_outputs',original_inspect,path,*args,**kwargs)
     try:
-        return native.restore(receiver, Path(bundle), expected)
+        with _release_source_transport(native, receiver, Path(bundle), evidence, transport) as payload:
+            report = native.restore(receiver, payload, expected)
+        if transport:
+            if _sha(_local_file(receiver, transport['source_path'])) != transport['source_sha256']:
+                raise ValueError('Reviewed release source changed during native restore')
+            report['reviewed_release_source_transport'] = transport
+        return report
     finally:
         native.state.validate_state = original
         native.delivery.inspect_outputs = original_inspect
         receipt=json.dumps(dict(
             schema='native_foreign_root_validation_isolation_v1', receiver=str(receiver),
             source_rewritten=False, validation_rules_changed=False,
-            original_native_validation_checks=checks), ensure_ascii=False, indent=2)+'\n'
+            reviewed_release_source_transport=transport or None, original_native_validation_checks=checks), ensure_ascii=False, indent=2)+'\n'
         (evidence/'isolation-receipt.json').write_text(receipt,encoding='utf-8')
         (evidence.parent/'native-staged-validation.json').write_text(receipt,encoding='utf-8')
