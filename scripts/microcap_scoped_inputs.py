@@ -25,7 +25,8 @@ from microcap_local_due import completed, pool_binding
 SCHEMA = 'microcap_scoped_source_inputs_v1'
 PREFIXES = tuple(CACHE + p + '/' for p in ('prices_raw', 'share_change', 'trade_status', 'share_sources', 'return_basis'))
 MAX_BYTES = 1024 * 1024 * 1024
-REVIEWED_CONSUMERS = frozenset({'33062463d66afbff0c4342e3dd9203fa3117d865',
+REVIEWED_CONSUMERS = frozenset({'e90c080ca91c9078f0972547ff60ce8e6e44fa54',
+    '33062463d66afbff0c4342e3dd9203fa3117d865',
     '564d681308dd7593ffadb075d4dd5291e4c4e89c','6b56e6902799aa189a0bbc42c18d6506dcc2a04e',
     '872abe41d48f818363d879cdf98b297d230377b4','efbfc3464208c2e9a2de5778310d813095446858',
     '1634a27c5a609a46ab35fc29ca2c65b94182671b',
@@ -55,9 +56,13 @@ def permitted(name):
     baseline_binary=(len(p.parts)==5 and p.parts[:3]==('.microcap_index_cache','share_sources','baselines')
         and len(p.parts[3])==64 and all(c in '0123456789abcdef' for c in p.parts[3])
         and p.parts[4]=='accepted_issuer_evidence.bin')
+    approved_suspension_pdf = name in {
+        CACHE + 'trade_status/2025-04-30-official-suspension.pdf',
+        CACHE + 'trade_status/2026-04-20-official-suspension.pdf',
+    }
     return (isinstance(name, str) and '\\' not in name and not p.is_absolute()
             and '..' not in p.parts and ':' not in name and p.as_posix() == name
-            and name.startswith(PREFIXES) and (p.suffix in ('.json', '.csv', '.js', '.raw') or baseline_binary)
+            and name.startswith(PREFIXES) and (p.suffix in ('.json', '.csv', '.js', '.raw') or baseline_binary or approved_suspension_pdf)
             and not any(part in ('locks', 'incomplete', 'failures') for part in p.parts))
 
 
