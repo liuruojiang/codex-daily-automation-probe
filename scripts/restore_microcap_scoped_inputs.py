@@ -14,7 +14,10 @@ from microcap_scoped_inputs import MAX_BYTES,RUNTIME,SOURCE_RUNTIMES,install,rea
 
 
 def load_config(path):
-    value=json.loads(Path(path).read_bytes())
+    return validate_config(json.loads(Path(path).read_bytes()))
+
+
+def validate_config(value):
     if (set(value)!={'schema','owner','scoped_inputs'} or value['schema']!='microcap_local_maintenance_host_v1'
             or value['owner'] not in ('local','cloud')):raise ValueError('Invalid maintenance host config')
     item=value['scoped_inputs']

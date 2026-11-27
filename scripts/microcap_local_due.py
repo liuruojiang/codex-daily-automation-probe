@@ -86,13 +86,14 @@ def completed(directory, root, target, files_out=None, required_asof=None,
     return True
 
 
-def plan(now, sessions, state, root, pool=None):
+def plan(now, sessions, state, root, pool=None, *, files_out=None):
     target = morning_target(now, sessions)
     if target is None:
         return dict(status='not_due', target=None, action='no_collection')
     try:
         binding = pool_binding(state, target, pool)
-        done = completed(Path(state) / 'runs' / target, root, target, required_asof=observation_floor(now),
+        done = completed(Path(state) / 'runs' / target, root, target, files_out=files_out,
+                         required_asof=observation_floor(now),
                          **(dict(expected_symbols=binding[0], expected_scope=binding[1]) if binding else {}))
     except (OSError, ValueError, KeyError, TypeError):
         return dict(status='evidence_needs_revalidation', target=target,

@@ -58,6 +58,38 @@ def test_discovery_accepts_only_exact_runtime_successful_main_upload(monkeypatch
     assert len(calls)==3 and all(recovery.REPOSITORY in url for url in calls)
 
 
+def test_pinned_readback_fetches_only_the_original_artifact(monkeypatch):
+    item = artifact()
+    calls = []
+
+    def read(url, token):
+        calls.append(url)
+        if url.endswith('/artifacts/31'):
+            return item
+        if '/jobs?' in url:
+            return jobs()
+        assert url.endswith('/runs/21')
+        return run()
+
+    monkeypatch.setattr(recovery, 'api_json', read)
+    result = recovery.fetch_pinned('fixture', RUNTIME, 31)
+    assert result['id'] == 31
+    assert len(calls) == 3 and '/artifacts?' not in ''.join(calls)
+    item['id'] = 32
+    with pytest.raises(recovery.RecoveryError, match='pinned_artifact_identity_invalid'):
+        recovery.fetch_pinned('fixture', RUNTIME, 31)
+
+
+@pytest.mark.parametrize('digest,day', [('f' * 64, '2026-11-10'), ('e' * 64, '2026-11-11')])
+def test_pinned_inner_zip_identity_is_checked_before_native_restore(monkeypatch, tmp_path, digest, day):
+    monkeypatch.setattr(recovery, 'bundle_identity', lambda *args: dict(
+        bundle_sha256='e' * 64, seed_date='2026-11-10'))
+    monkeypatch.setattr(recovery, 'native_stage', lambda *args: pytest.fail('Unexpected native mutation'))
+    with pytest.raises(recovery.RecoveryError, match='pinned_inner_bundle_identity_invalid'):
+        recovery.restore_bundle(tmp_path, tmp_path/'state.zip', RUNTIME, '2026-11-11', tmp_path,
+                                expected=(digest, day))
+
+
 @pytest.mark.parametrize('conclusion', ['failure', 'cancelled', 'timed_out'])
 def test_closed_server_archive_after_lost_upload_response_is_readonly_reconciled(monkeypatch, conclusion):
     item,workflow,job=artifact(),run(),jobs()
