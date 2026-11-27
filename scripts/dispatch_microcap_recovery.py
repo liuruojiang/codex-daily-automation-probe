@@ -103,18 +103,18 @@ def _config(api, repository, head=None):
     return head, contract
 
 
-def _runs(api, repository, **query):
+def _runs(api, repository, *, workflow=WORKFLOW, **query):
     result = []
     for page in range(1, 4):
         params = urlencode(dict(query, per_page=100, page=page))
-        obj = api('GET', f'repos/{repository}/actions/workflows/{WORKFLOW}/runs?' + params)
+        obj = api('GET', f'repos/{repository}/actions/workflows/{workflow}/runs?' + params)
         rows = obj.get('workflow_runs') if isinstance(obj, dict) else None
         if (not isinstance(rows, list) or type(obj.get('total_count')) is not int
                 or obj['total_count'] < len(rows)):
             raise ReadFailure('workflow_run_page_invalid')
         for row in rows:
             if (type(row.get('id')) is not int or row['id'] <= 0
-                    or str(row.get('path', '')).split('@')[0] != '.github/workflows/' + WORKFLOW
+                    or str(row.get('path', '')).split('@')[0] != '.github/workflows/' + workflow
                     or row.get('status') not in (*ACTIVE, 'completed')
                     or re.fullmatch('[0-9a-f]{40}', row.get('head_sha', '')) is None
                     or not isinstance(row.get('created_at'), str)

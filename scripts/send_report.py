@@ -6,7 +6,7 @@ import json
 import os
 import re
 import tempfile
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from mail_utils import mail_addresses, send_mail
@@ -36,6 +36,7 @@ def main() -> int:
     parser.add_argument("metadata", type=Path)
     parser.add_argument("--receipt", type=Path)
     parser.add_argument("--member-delivery-marker", default="")
+    parser.add_argument("--icim-delivery-transaction", type=Path)
     args = parser.parse_args()
     metadata_bytes = args.metadata.read_bytes()
     meta = json.loads(metadata_bytes.decode("utf-8"))
@@ -49,6 +50,17 @@ def main() -> int:
         validate_member_delivery_marker(meta,args.member_delivery_marker)
     elif args.member_delivery_marker:
         raise ValueError("A member delivery transaction requires member report metadata")
+    icim_marker = ""
+    if args.icim_delivery_transaction:
+        from ic_im_v1_4_mail_transaction import validate_transaction
+
+        if args.receipt is None or member_report:
+            raise ValueError("IC/IM delivery requires its own SMTP receipt")
+        transaction = json.loads(args.icim_delivery_transaction.read_bytes())
+        icim_marker = validate_transaction(
+            transaction, metadata_bytes, date.fromisoformat(transaction["market_date"]),
+            transaction["publication_mode"], transaction["kind"],
+        )
     if "delivery_test_id" in meta:
         test_id = meta["delivery_test_id"]
         if (not isinstance(test_id, str) or re.fullmatch(r"[a-z0-9][a-z0-9-]{7,63}", test_id, flags=re.ASCII) is None
@@ -79,9 +91,14 @@ def main() -> int:
             "metadata_sha256": hashlib.sha256(metadata_bytes).hexdigest(),
             "subject_sha256": hashlib.sha256(meta["subject"].encode("utf-8")).hexdigest(),
             "body_sha256": hashlib.sha256(meta["body"].encode("utf-8")).hexdigest(),
-            "sender": sender,
-            "recipients": recipients,
         }
+        if icim_marker:
+            # The IC/IM Actions repository is public. Keep the acceptance proof
+            # and transaction identity without attaching the SMTP envelope.
+            receipt["icim_delivery_marker"] = icim_marker
+            receipt["recipient_count"] = len(recipients)
+        else:
+            receipt.update(sender=sender, recipients=recipients)
         if member_report:
             receipt["member_delivery_marker"] = args.member_delivery_marker
         write_receipt(args.receipt, receipt)

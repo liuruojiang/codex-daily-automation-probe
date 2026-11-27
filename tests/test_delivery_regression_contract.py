@@ -242,10 +242,15 @@ def test_normal_smtp_requires_durable_intent_and_mode_specific_preflight(name):
     assert indexed['send_intent'][0] < indexed['send_gmail'][0]
     intent = indexed['send_intent'][1]
     assert intent['uses'] == 'actions/upload-artifact@v7'
-    marker_source = 'delivery_gate' if name.startswith('microcap') else 'prepare_marker'
+    marker_source = 'delivery_gate' if name.startswith('microcap') else 'result_day_gate'
     assert intent['with']['name'] == '${{ steps.' + marker_source + '.outputs.marker_name }}-send-intent'
-    if marker_source == 'prepare_marker':
-        assert indexed['prepare_marker'][0] < indexed['send_intent'][0]
+    if marker_source == 'result_day_gate':
+        assert indexed['prepare_marker'][0] < indexed['result_day_gate'][0] < indexed['send_intent'][0]
+        assert indexed['upload_ledger'][0] < indexed['send_intent'][0]
+        assert 'mail-artifacts/delivery-transaction.json' in intent['with']['path']
+        alert = indexed['failure_intent'][1]
+        assert alert['with']['name'] == '${{ steps.failure_gate.outputs.marker_name }}-send-intent'
+        assert "steps.failure_intent.outcome == 'success'" in indexed['send_gmail'][1]['if']
     assert intent['with']['if-no-files-found'] == 'error'
     assert 'continue-on-error' not in intent
     assert "steps.send_intent.outcome == 'success'" in indexed['send_gmail'][1]['if']
@@ -257,8 +262,8 @@ def test_normal_smtp_requires_durable_intent_and_mode_specific_preflight(name):
         assert receipt['with']['if-no-files-found'] == 'error'
     completion = next(s for s in steps if s.get('name') == 'Mark digest delivered')
     assert completion['with']['if-no-files-found'] == 'error'
+    assert "steps.smtp_receipt.outcome == 'success'" in completion['if']
     if name.startswith('microcap'):
-        assert "steps.smtp_receipt.outcome == 'success'" in completion['if']
         for guarded in (intent, indexed['send_gmail'][1]):
             assert "steps.whole_delivery.outputs.validated == 'true'" in guarded['if']
 

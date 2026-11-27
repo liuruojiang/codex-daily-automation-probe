@@ -22,7 +22,8 @@ globalThis.fetch = async (url, options) => {
     reads.push(url);
     const sent = calls[0];
     const stamp = scenario.scheduledTime || Date.parse('2026-11-06T01:00:00Z');
-    const run = sent && {display_title: 'microcap-dispatch:' + sent.body.inputs.dispatch_key,
+    const family = sent?.url.includes('/ic-im-v1-4-daily-digest.yml/') ? 'icim' : 'microcap';
+    const run = sent && {display_title: family + '-dispatch:' + sent.body.inputs.dispatch_key,
       head_branch: 'main', event: 'workflow_dispatch',
       path: '.github/workflows/' + sent.url.split('/').at(-2),
       created_at: new Date(stamp).toISOString(),
@@ -97,13 +98,14 @@ def test_streaming_retryable_http_failure_retains_status_and_budget():
     ("0 12 * * MON-FRI", "ic-im-v1-4-daily-digest.yml"),
 ])
 def test_each_cron_dispatches_only_its_own_close_confirmed_workflow(cron, workflow):
-    result = execute(cron=cron, status=503, succeedOn=2)
+    result = execute(cron=cron, succeedOn=1)
     assert not result["error"]
-    assert len(result["calls"]) == 2
+    assert len(result["calls"]) == 1
     assert all(call["url"].endswith(f"/{workflow}/dispatches") for call in result["calls"])
-    assert all(call["body"] == {"ref": "main", "inputs": {
-        "correction": False, "external_schedule": True, "publication_mode": "close_confirmed"}}
-        for call in result["calls"])
+    inputs = {"correction": False, "external_schedule": True, "publication_mode": "close_confirmed"}
+    if workflow == "ic-im-v1-4-daily-digest.yml":
+        inputs["dispatch_key"] = "icim-close-2026-11-06"
+    assert result["calls"][0]["body"] == {"ref": "main", "inputs": inputs}
 
 
 def test_missing_credential_never_sends():
@@ -141,6 +143,8 @@ def test_activated_split_dispatches_exactly_one_workflow(cron, workflow, inputs)
     assert value['calls'][0]['url'].endswith('/'+workflow+'/dispatches')
     if workflow.startswith('microcap-member-'):
         inputs = {**inputs, 'dispatch_key': 'microcap-'+inputs.get('task','daily')+'-20261106T010000000Z'}
+    if workflow.startswith('ic-im-'):
+        inputs = {**inputs, 'dispatch_key': 'icim-close-2026-11-06'}
     assert value['calls'][0]['body']=={'ref':'main','inputs':inputs}
 
 
@@ -187,6 +191,29 @@ def test_ambiguous_microcap_http_acceptance_never_repeats_the_post(status):
     accepted = execute(memberDaily=True, status=status, acceptedHttpError=True)
     assert len(accepted['calls']) == 1 and len(accepted['reads']) == 1
     assert not accepted['error']
+
+
+@pytest.mark.parametrize("scenario", [
+    {"status": 503, "acceptedHttpError": True, "succeedOn": 2},
+    {"acceptThenLose": True},
+])
+def test_icim_reconciles_original_accepted_post_without_a_second_request(scenario):
+    value = execute(cron="0 12 * * MON-FRI", scheduledTime=1795694400000, **scenario)
+    assert len(value["calls"]) == len(value["reads"]) == 1
+    assert value["calls"][0]["body"]["inputs"]["dispatch_key"] == "icim-close-2026-11-26"
+    assert "/ic-im-v1-4-daily-digest.yml/runs?" in value["reads"][0]
+    assert not value["error"]
+
+
+@pytest.mark.parametrize("scenario", [
+    {"status": 503},
+    {"status": 503, "acceptedHttpError": True,
+     "lookupMutation": {"display_title": "icim-dispatch:icim-close-2026-11-25"}},
+])
+def test_icim_unconfirmed_original_slot_does_not_repeat_the_post(scenario):
+    value = execute(cron="0 12 * * MON-FRI", scheduledTime=1795694400000, **scenario)
+    assert len(value["calls"]) == 1 and len(value["reads"]) == 3
+    assert "acceptance unknown" in value["error"]
 
 
 @pytest.mark.parametrize('mutation', [

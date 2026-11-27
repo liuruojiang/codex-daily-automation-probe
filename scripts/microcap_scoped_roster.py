@@ -1,6 +1,7 @@
 """Carry an original weekly screen across hosts without changing its evidence."""
 import argparse
 import csv
+from datetime import date
 import io
 import json
 from pathlib import Path
@@ -36,8 +37,7 @@ def export(pool,target,bundle):
     return dict(status='original_weekly_roster_exported',sha256=sha(bundle.read_bytes()),date=summary['date'])
 
 
-def restore(bundle,expected,target,out):
-    bundle=Path(bundle);raw=bundle.read_bytes()
+def roster_archive(raw, expected, target):
     if len(raw)>LIMIT or sha(raw)!=expected:raise ValueError('Weekly roster archive identity differs')
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         names=archive.namelist();manifest=json.loads(archive.read('manifest.json'))
@@ -46,17 +46,27 @@ def restore(bundle,expected,target,out):
                 or len(names)!=len(set(names)) or set(names)!={'manifest.json',*manifest['files']}
                 or sum(v.file_size for v in archive.infolist())>LIMIT):raise ValueError('Invalid weekly roster archive')
         bodies={name:archive.read(name) for name in manifest['files']}
-    out=Path(out).resolve()
-    if out.exists():raise ValueError('Weekly roster destination already exists')
     for name,body in bodies.items():
         allowed=name in ('original-summary.json','candidates.json','st-reference.csv') or (
             name.startswith('source/page-') and name.endswith(('.json','.receipt.json')) and len(Path(name).parts)==2)
         if not allowed or sha(body)!=manifest['files'][name]:raise ValueError('Weekly roster source identity differs')
-        bound(out,name)
     summary=json.loads(bodies['original-summary.json'])
-    if (summary['date']!=manifest['date'] or sha(bodies['candidates.json'])!=summary['candidates_sha256']
+    if (summary.get('schema')!='microcap_local_screen_preparation_v1' or summary.get('status')!='PREPARATION_VERIFIED'
+            or summary['date']!=manifest['date']
+            or not 0 <= (date.fromisoformat(target) - date.fromisoformat(summary['date'])).days <= 7
+            or sha(bodies['candidates.json'])!=summary['candidates_sha256']
             or sha(bodies['st-reference.csv'])!=summary['st_reference_sha256']):
         raise ValueError('Weekly roster original summary differs')
+    return summary, bodies
+
+
+def restore(bundle,expected,target,out):
+    bundle=Path(bundle)
+    if bundle.stat().st_size > LIMIT:raise ValueError('Weekly roster archive exceeds its size limit')
+    summary,bodies=roster_archive(bundle.read_bytes(),expected,target)
+    out=Path(out).resolve()
+    if out.exists():raise ValueError('Weekly roster destination already exists')
+    for name in bodies:bound(out,name)
     out.mkdir(parents=True)
     for name,body in bodies.items():atomic(bound(out,name),body)
     # A derived locator changes only its host path. Keep the original receipt

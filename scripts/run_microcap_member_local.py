@@ -1,6 +1,7 @@
 """Local member-only preparation/reporting; no SMTP or whole-state operations."""
 from __future__ import annotations
 import argparse
+from hashlib import sha256
 import json
 import os
 from pathlib import Path
@@ -74,6 +75,7 @@ def main():
         (out/'commands.json').write_text(json.dumps(commands,ensure_ascii=False,indent=2),encoding='utf8')
         if process.returncode:
             raise RuntimeError(f'Member local stage {number} failed; see saved exit code and logs')
+        return process.stdout
     py=sys.executable
     sys.path.insert(0,str(strategy))
     from scripts.exchange_calendar import latest_completed_session
@@ -87,16 +89,58 @@ def main():
         (out/name).write_text(json.dumps({'cached_checkpoint':str(args.checkpoint),
             'reason':'exact superseded history serialization' if superseded else 'checkpoint is not the latest completed session',
             'actual_as_of':original.get('as_of_date'),'expected_as_of':expected,'original_retained':True}),encoding='utf8')
+    policy_args = ['--checkpoint-read-policy', str(read_policy)] if read_policy is not None else []
+    restore_command = [py, '-B', str(auto/'scripts/restore_microcap_member_checkpoint.py'),
+                       '--strategy-sha', runtime, *policy_args, '--not-after-date', expected,
+                       '--expected-date', expected, '--out', str(out/'checkpoint')]
+    cp = cached
+    remote_check = None
     if cached is None:
-        policy_args=['--checkpoint-read-policy',str(read_policy)] if read_policy is not None else []
-        run([py,'-B',str(auto/'scripts/restore_microcap_member_checkpoint.py'),'--strategy-sha',runtime,*policy_args,'--seed-config',str(auto/'config/microcap_member_checkpoint.json'),'--not-after-date',expected,'--expected-date',expected,'--out',str(out/'checkpoint')],github_environment())
-        cp=out/'checkpoint/checkpoint.json'
+        source = json.loads(run([*restore_command, '--seed-config', str(auto/'config/microcap_member_checkpoint.json')],
+                                github_environment()))
+        cp = out/'checkpoint/checkpoint.json'
     else:
-        cp=cached
-    if json.loads(cp.read_bytes()).get('as_of_date') != expected:
+        source = {'source': 'verified_local_checkpoint', 'path': str(cached)}
+        if json.loads(cached.read_bytes()).get('period_status') == 'awaiting_handoff':
+            # Only an independently authenticated current package can replace
+            # this reference package for the same close. Avoid re-downloading
+            # pending packages and never select a seed on this lookup.
+            remote_check = json.loads(run([*restore_command, '--current-only'], github_environment()))
+            if remote_check.get('status') != 'no_current_published_for_session':
+                cp = out/'checkpoint/checkpoint.json'
+                source = remote_check
+    checkpoint_raw = cp.read_bytes()
+    checkpoint = json.loads(checkpoint_raw)
+    if checkpoint.get('as_of_date') != expected:
         raise ValueError('Local preparation requires the latest completed checkpoint session')
     validate_checkpoint_directory(cp, load_read_policy(read_policy, runtime) if read_policy is not None else None)
     run([py,'-B',str(strategy/'scripts/member_period_handoff.py'),'verify','--checkpoint',str(cp)])
+    if checkpoint_raw != cp.read_bytes():
+        raise ValueError('Member checkpoint bytes changed during native verification')
+    period_raw = (cp.parent / checkpoint['period']['path']).read_bytes()
+    if sha256(period_raw).hexdigest() != checkpoint['period']['sha256']:
+        raise ValueError('Member period bytes changed during native verification')
+    period = json.loads(period_raw)
+    receipt = {
+        'schema': 'microcap_member_local_checkpoint_readback_v1',
+        'mode': 'prepare' if args.prepare_only else 'intraday',
+        'date': args.date,
+        'source': source,
+        'current_lookup': remote_check.get('status', 'current_published') if remote_check else None,
+        'checkpoint': str(cp),
+        'checkpoint_sha256': sha256(checkpoint_raw).hexdigest(),
+        'as_of_date': checkpoint['as_of_date'],
+        'next_trade_date': checkpoint.get('next_trade_date'),
+        'period_status': checkpoint.get('period_status', 'current'),
+        'period_sha256': checkpoint['period']['sha256'],
+        'period_package_id': period.get('package_id'),
+        'period_effective_from': period.get('effective_from'),
+        'next_rebalance_date': period.get('next_rebalance_date'),
+        'producer_strategy_sha': checkpoint['strategy_sha'],
+        'execution_strategy_sha': runtime,
+        'native_verify_exit_code': 0,
+    }
+    (out/'checkpoint_readback.json').write_text(json.dumps(receipt, indent=2)+'\n', encoding='utf8')
     if args.prepare_only:
         print(json.dumps({'status':'prepared','checkpoint':str(cp),'market_quotes_collected':False}))
         return 0

@@ -23,8 +23,7 @@ def asset(value,kind):
     date.fromisoformat(value['date']);return value
 
 
-def load(path,require_seed=False):
-    value=json.loads(Path(path).read_bytes())
+def validate_settings(value, require_seed=False):
     if (set(value)!={'schema','enabled','runtime_sha','producer_sha','whole_seed','weekly_roster'}
             or value['schema']!='microcap_scoped_rebalance_runtime_v1' or type(value['enabled']) is not bool
             or any(not isinstance(value[n],str) or re.fullmatch('[0-9a-f]{40}',value[n]) is None for n in ('runtime_sha','producer_sha'))
@@ -35,12 +34,24 @@ def load(path,require_seed=False):
     return value
 
 
+def load(path, require_seed=False):
+    return validate_settings(json.loads(Path(path).read_bytes()), require_seed)
+
+
+def read_roster(item, opener=None):
+    from microcap_scoped_roster import LIMIT
+    opener = opener or urllib.request.urlopen
+    with opener(item['url'], timeout=60) as response:
+        raw = response.read(LIMIT + 1)
+    if len(raw) > LIMIT or sha(raw) != item['sha256']:
+        raise ValueError('Downloaded weekly roster SHA differs')
+    return raw
+
+
 def download_roster(config,bundle):
     item=load(config,require_seed=True)['weekly_roster'];bundle=Path(bundle)
     if bundle.exists():raise ValueError('Preserve existing roster download evidence')
-    with urllib.request.urlopen(item['url'],timeout=60) as response:raw=response.read(10*1024*1024+1)
-    if len(raw)>10*1024*1024 or sha(raw)!=item['sha256']:raise ValueError('Downloaded weekly roster SHA differs')
-    atomic(bundle,raw);return item
+    atomic(bundle,read_roster(item));return item
 
 
 def download_sources(config,bundle,not_after,*,expected_scope=None):

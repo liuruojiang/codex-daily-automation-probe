@@ -122,7 +122,8 @@ def fetch_artifacts(
 
 
 def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dict,
-                        day: date, publication_mode: str, test_id: str = "") -> None:
+                        day: date, publication_mode: str, test_id: str = "", *,
+                        require_archive_digest: bool = False) -> dict:
     """A matching artifact name alone cannot prove that SMTP accepted a digest."""
     from restore_ic_im_v1_3_ledger import api_request, download
 
@@ -136,6 +137,12 @@ def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dic
     workflow_path = run.get("path")
     if workflow_path not in {".github/workflows/microcap-realtime-digest.yml", ".github/workflows/microcap-member-daily.yml"}:
         raise RuntimeError("BLOCKED: SMTP receipt belongs to an unexpected workflow")
+    if require_archive_digest and (
+            run.get("head_branch") != "main" or run.get("event") != "workflow_dispatch"
+            or run.get("repository", {}).get("full_name") != repository
+            or run.get("head_repository", {}).get("full_name") != repository
+            or (artifact.get("workflow_run") or {}).get("head_sha") != run.get("head_sha")):
+        raise RuntimeError("BLOCKED: SMTP receipt is not from an original mainline run")
     jobs = delivery_json(api_request(f"{base}/runs/{run_id}/jobs?per_page=100", token))
     send_jobs = [job for job in jobs.get("jobs", []) if job.get("name") == "send"]
     if len(send_jobs) != 1:
@@ -144,6 +151,10 @@ def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dic
     if any(steps.get(name) != "success" for name in ("Send Gmail", "Preserve accepted SMTP receipt")):
         raise RuntimeError("BLOCKED: workflow did not confirm SMTP acceptance and receipt upload")
     raw = retry_checkpoint_read(lambda: download(artifact, token), 'SMTP receipt archive request', pause=sleep)
+    archive_sha256 = hashlib.sha256(raw).hexdigest()
+    if require_archive_digest and (artifact.get("digest") != "sha256:" + archive_sha256
+                                   or artifact.get("size_in_bytes") != len(raw)):
+        raise RuntimeError("BLOCKED: original SMTP receipt archive differs from GitHub metadata")
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         values = {}
         for basename, limit in (("metadata.json", 1024 * 1024), ("smtp-accepted.json", 64 * 1024)):
@@ -227,6 +238,9 @@ def verify_smtp_receipt(repository: str, token: str, api_url: str, artifact: dic
             or not valid_address(receipt.get("sender")) or not isinstance(recipients, list)
             or not recipients or not all(valid_address(item) for item in recipients)):
         raise RuntimeError("BLOCKED: SMTP receipt lacks a matching acceptance record")
+    return {key: receipt[key] for key in ("metadata_sha256", "body_sha256", "subject_sha256", "accepted_at")} | {
+        "receipt_archive_sha256": archive_sha256,
+    }
 
 
 def write_outputs(values: dict[str, str]) -> None:

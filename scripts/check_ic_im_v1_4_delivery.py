@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import urllib.parse
 import urllib.request
 from datetime import date, datetime, timezone
@@ -100,8 +101,7 @@ def marker_exists(payload: dict[str, object], prefix: str) -> bool:
     artifacts = payload.get("artifacts", [])
     return isinstance(artifacts, list) and any(
         isinstance(item, dict)
-        and str(item.get("name", "")).startswith(prefix)
-        and not str(item.get("name", "")).endswith("-send-intent")
+        and re.fullmatch(re.escape(prefix) + "[0-9a-f]{12}", str(item.get("name", ""))) is not None
         and item.get("expired") is not True
         for item in artifacts
     )
@@ -156,8 +156,12 @@ def write_outputs(values: dict[str, str]) -> None:
 
 
 def main() -> int:
+    from ic_im_v1_4_mail_transaction import check_transaction, verify_smtp_receipt, write_recovered_marker
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--correction", action="store_true")
+    parser.add_argument("--delivery-date", default="")
+    parser.add_argument("--recovery-dir", type=Path)
     parser.add_argument(
         "--publication-mode",
         choices=("realtime", "close_confirmed"),
@@ -168,21 +172,30 @@ def main() -> int:
     parser.add_argument("--api-url", default=os.environ.get("GITHUB_API_URL", "https://api.github.com"))
     args = parser.parse_args()
 
-    day = delivery_date(now_utc())
+    today = delivery_date(now_utc())
+    day = date.fromisoformat(args.delivery_date) if args.delivery_date else today
+    if args.delivery_date and (day.isoformat() != args.delivery_date or day > today
+                              or (args.publication_mode == "realtime" and day != today)):
+        raise ValueError("IC/IM due date differs from its delivery mode or current calendar")
     prefix = marker_prefix(day, args.publication_mode)
-    exists = False
+    status, recovered = "correction", None
     if not args.correction:
         if not args.repository or not args.token:
             raise SystemExit("GITHUB_REPOSITORY and GITHUB_TOKEN are required")
         artifacts = fetch_artifacts(args.repository, args.token, args.api_url)
-        exists = marker_exists(artifacts, prefix)
-        if not exists and pending_send_exists(artifacts, prefix):
-            raise RuntimeError("BLOCKED: prior SMTP send intent has no completion marker; delivery is uncertain, reconcile Gmail before explicit correction")
+        status, recovered = check_transaction(
+            artifacts, day, args.publication_mode, "normal",
+            lambda *values: verify_smtp_receipt(args.repository, args.token, args.api_url, *values),
+        )
+        write_recovered_marker(args.recovery_dir, recovered)
     write_outputs(
         {
-            "should_send": str(args.correction or not exists).lower(),
+            "should_send": str(status in {"due", "correction"}).lower(),
             "marker_prefix": prefix,
             "subject_prefix": "纠正版" if args.correction else "",
+            "recover_marker": str(recovered is not None).lower(),
+            "marker_name": recovered["marker_name"] if recovered else "",
+            "delivery_status": status,
         }
     )
     return 0

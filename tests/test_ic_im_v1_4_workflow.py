@@ -45,9 +45,9 @@ class ICIMV14WorkflowTests(unittest.TestCase):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("name: IC IM v1.4-r1 Post-Close Digest", text)
         self.assertIn('- cron: "0 12 * * *"', text)
-        self.assertIn('"$(date +%H)" -lt 20', text)
-        self.assertIn('SCHEDULED_ATTEMPT: ${{ github.event_name == \'schedule\' || inputs.external_schedule == true }}', text)
-        self.assertLess(text.index('Scheduled ICIM delivery is not due'), text.index('python automation/scripts/check_ic_im_v1_4_delivery.py'))
+        self.assertLess(text.index("Check original slot delivery before regression"), text.index("  regression:"))
+        self.assertIn("if: needs.preflight.outputs.run_required == 'true'", text)
+        self.assertIn('--delivery-date "$TARGET_DATE"', text)
         self.assertNotIn('- cron: "3 5 * * *"', text)
         self.assertNotIn('- cron: "18 5 * * *"', text)
         self.assertNotIn('- cron: "33 5 * * *"', text)
@@ -76,7 +76,7 @@ class ICIMV14WorkflowTests(unittest.TestCase):
         self.assertIn("ICIM_LEGULEGU_DAILY_SNAPSHOT: ${{ secrets.ICIM_LEGULEGU_DAILY_SNAPSHOT }}", text)
         self.assertIn("ICIM_CHINABOND_SNAPSHOT_FILE: strategy-artifacts/chinabond.json", text)
         self.assertIn("timeout --foreground 90s python -u strategy/ic_im_chinabond.py", text)
-        self.assertIn('--expected-date "${{ steps.calendar.outputs.today }}"', text)
+        self.assertIn('--expected-date "$TARGET_DAY"', text)
         self.assertIn("use disclosed frozen fallback", text)
         self.assertLess(text.index("python -u strategy/ic_im_chinabond.py"), text.index("python -u strategy/run_ic_im_v1_4_github_digest.py"))
         self.assertNotIn("ref: main", text)
@@ -98,8 +98,8 @@ class ICIMV14WorkflowTests(unittest.TestCase):
         self.assertIn('strategy.IM_PUT_EXECUTION_REVISION == "im_monthly_reset_20260907_v1"', text)
         self.assertLess(text.index("Install strategy dependencies"), text.index("Verify IC/IM fix11 build and historical identities"))
         self.assertIn('strategy._latest_completed_exchange_day(clock)', text)
-        self.assertIn("steps.calendar.outputs.completed_day", text)
-        self.assertIn("steps.publication_mode.outputs.mode == 'realtime'", text)
+        self.assertIn("steps.calendar.outputs.target_day", text)
+        self.assertIn('--expected-market-date "$TARGET_DAY"', text)
         self.assertIn('ICIM_REQUIRE_MIGRATION: "1"', text)
         self.assertIn("ICIM_STATE_DIR: state", text)
         self.assertLess(text.index("Verify v1.4 ledger chain"), text.index("Run IC/IM signal"))
@@ -166,8 +166,10 @@ def _healthy_delivery_context(*, ledger_only):
             "prepare_marker": {"outcome": "success"},
             "result_day_gate": {"outcome": "success", "outputs": {"should_send_result_day": "true"}},
             "verify_recovery": {"outcome": "success" if ledger_only else "skipped"},
+            "upload_ledger": {"outcome": "success"},
             "send_intent": {"outcome": "success"},
             "send_gmail": {"outcome": "success"},
+            "smtp_receipt": {"outcome": "success"},
         },
     }
 
@@ -234,8 +236,25 @@ def test_actual_yaml_failed_production_boundary_cannot_promote_or_emit_intent(le
     assert not _workflow_step_enabled("Upload successful ledger", context, healthy=False)
     assert not _workflow_step_enabled("Persist normal-send intent before SMTP", context, healthy=False)
     assert not _workflow_step_enabled("Mark digest delivered", context, healthy=False)
-    if ledger_only or phase != "run_signal":
-        assert not _workflow_step_enabled("Send Gmail", context, healthy=False)
+    assert not _workflow_step_enabled("Send Gmail", context, healthy=False)
+
+
+def test_actual_yaml_failure_alert_has_independent_intent_and_receipt():
+    context = _healthy_delivery_context(ledger_only=False)
+    steps = context["steps"]
+    steps["run_signal"]["outputs"]["exit_code"] = "1"
+    steps["send_intent"]["outcome"] = "skipped"
+    assert _workflow_step_enabled("Check independent failure alert transaction", context)
+    assert not _workflow_step_enabled("Send Gmail", context)
+    steps["failure_gate"] = {"outcome": "success", "outputs": {"should_send_result_day": "true"}}
+    assert _workflow_step_enabled("Persist failure-alert intent before SMTP", context)
+    assert not _workflow_step_enabled("Upload successful ledger", context)
+    steps["failure_intent"] = {"outcome": "success"}
+    assert _workflow_step_enabled("Send Gmail", context)
+    assert _workflow_step_enabled("Preserve accepted SMTP receipt", context)
+    assert _workflow_step_enabled("Mark digest delivered", context)
+    steps["smtp_receipt"]["outcome"] = "failure"
+    assert not _workflow_step_enabled("Mark digest delivered", context)
 
 
 @pytest.mark.parametrize("outcome", ["failure", "cancelled", "skipped"])
