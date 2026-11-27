@@ -128,7 +128,15 @@ def test_explicit_exact_archive_recovery_still_enters_restore_job(mode, trading)
 def test_new_member_daily_normal_send_permission_is_preserved(validation, expected):
     jobs = yaml.safe_load((ROOT / '.github/workflows/microcap-member-daily.yml').read_text(encoding='utf8'))['jobs']
     job = jobs['send']
-    assert 'if' not in job
+    original_slot = {f'inputs.{name}': '' for name in
+                     ('reconcile_delivery_date', 'reconcile_delivery_phase', 'reconcile_receipt_id')}
+    assert condition(job['if'], original_slot)
+    assert not condition(jobs['reconcile_marker']['if'], original_slot)
+    for field in original_slot:
+        attempted_recovery = {**original_slot, field: 'present'}
+        assert not condition(job['if'], attempted_recovery)
+        assert condition(jobs['reconcile_marker']['if'], attempted_recovery)
+    assert all('send_report.py' not in s.get('run', '') for s in jobs['reconcile_marker']['steps'])
     step = next(step for step in job['steps'] if step.get('name') == 'Send Gmail')
     assert condition(step['if'], {'inputs.validation_only': validation, 'steps.intent.outcome': 'success'}) is expected
     assert next(step for step in job['steps'] if step.get('name') == 'Check delivery marker')['run'].count('check_microcap_delivery.py') == 1
