@@ -14,10 +14,15 @@ const INPUTS_BY_WORKFLOW = {
 };
 const MAX_ATTEMPTS = 3;
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504]);
+const ICIM_WORKFLOW = "ic-im-v1-4-daily-digest.yml";
 
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 function dispatchKey(workflow, inputs, scheduledTime) {
+  if (workflow === ICIM_WORKFLOW) {
+    // This cron is 12:00 UTC, so UTC and Beijing have the same calendar date.
+    return `icim-close-${new Date(scheduledTime).toISOString().slice(0, 10)}`;
+  }
   if (!["microcap-member-daily.yml", "microcap-member-maintenance.yml"].includes(workflow)) return null;
   const stamp = new Date(scheduledTime).toISOString().replace(/[-:.]/g, "");
   return `microcap-${inputs.task ?? "daily"}-${stamp}`;
@@ -28,6 +33,7 @@ async function reconcileDispatch(env, workflow, key, scheduledTime) {
   // A POST can be accepted before its response is lost. Reads are safe to
   // retry; another dispatch is not. Match the exact title and workflow slot.
   const since = new Date(scheduledTime - 60000).toISOString();
+  const displayTitle = `${workflow === ICIM_WORKFLOW ? "icim" : "microcap"}-dispatch:${key}`;
   const url = `https://api.github.com/repos/${REPOSITORY}/actions/workflows/${workflow}/runs?event=workflow_dispatch&branch=main&per_page=100&created=${encodeURIComponent(">=" + since)}`;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     try {
@@ -43,7 +49,7 @@ async function reconcileDispatch(env, workflow, key, scheduledTime) {
       if (response.ok) {
         const payload = await response.json();
         if (Array.isArray(payload.workflow_runs) && payload.workflow_runs.some((run) =>
-          run.display_title === `microcap-dispatch:${key}` && run.head_branch === "main" &&
+          run.display_title === displayTitle && run.head_branch === "main" &&
           run.event === "workflow_dispatch" &&
           run.path === `.github/workflows/${workflow}` &&
           Number.isFinite(Date.parse(run.created_at)) && Date.parse(run.created_at) >= scheduledTime - 60000 &&

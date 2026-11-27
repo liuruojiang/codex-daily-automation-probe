@@ -166,8 +166,10 @@ def _healthy_delivery_context(*, ledger_only):
             "prepare_marker": {"outcome": "success"},
             "result_day_gate": {"outcome": "success", "outputs": {"should_send_result_day": "true"}},
             "verify_recovery": {"outcome": "success" if ledger_only else "skipped"},
+            "upload_ledger": {"outcome": "success"},
             "send_intent": {"outcome": "success"},
             "send_gmail": {"outcome": "success"},
+            "smtp_receipt": {"outcome": "success"},
         },
     }
 
@@ -234,8 +236,25 @@ def test_actual_yaml_failed_production_boundary_cannot_promote_or_emit_intent(le
     assert not _workflow_step_enabled("Upload successful ledger", context, healthy=False)
     assert not _workflow_step_enabled("Persist normal-send intent before SMTP", context, healthy=False)
     assert not _workflow_step_enabled("Mark digest delivered", context, healthy=False)
-    if ledger_only or phase != "run_signal":
-        assert not _workflow_step_enabled("Send Gmail", context, healthy=False)
+    assert not _workflow_step_enabled("Send Gmail", context, healthy=False)
+
+
+def test_actual_yaml_failure_alert_has_independent_intent_and_receipt():
+    context = _healthy_delivery_context(ledger_only=False)
+    steps = context["steps"]
+    steps["run_signal"]["outputs"]["exit_code"] = "1"
+    steps["send_intent"]["outcome"] = "skipped"
+    assert _workflow_step_enabled("Check independent failure alert transaction", context)
+    assert not _workflow_step_enabled("Send Gmail", context)
+    steps["failure_gate"] = {"outcome": "success", "outputs": {"should_send_result_day": "true"}}
+    assert _workflow_step_enabled("Persist failure-alert intent before SMTP", context)
+    assert not _workflow_step_enabled("Upload successful ledger", context)
+    steps["failure_intent"] = {"outcome": "success"}
+    assert _workflow_step_enabled("Send Gmail", context)
+    assert _workflow_step_enabled("Preserve accepted SMTP receipt", context)
+    assert _workflow_step_enabled("Mark digest delivered", context)
+    steps["smtp_receipt"]["outcome"] = "failure"
+    assert not _workflow_step_enabled("Mark digest delivered", context)
 
 
 @pytest.mark.parametrize("outcome", ["failure", "cancelled", "skipped"])

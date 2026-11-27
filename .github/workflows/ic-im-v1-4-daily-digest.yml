@@ -443,30 +443,48 @@ jobs:
           fi
           python automation/scripts/check_ic_im_v1_4_result_day_delivery.py \
             --result strategy-artifacts/result.json \
+            --delivery-date "${{ steps.calendar.outputs.target_day }}" \
+            --publication-mode "${{ steps.publication_mode.outputs.mode }}" \
+            --metadata mail-artifacts/metadata.json \
+            --transaction mail-artifacts/delivery-transaction.json \
+            --recovery-dir recovered-transaction \
             "${args[@]}"
 
-      - name: Persist normal-send intent before SMTP
-        id: send_intent
-        if: steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success' && steps.result_day_gate.outputs.should_send_result_day == 'true'
+      - name: Check independent failure alert transaction
+        id: failure_gate
+        if: steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code != '' && steps.run_signal.outputs.exit_code != '0' && steps.build_digest.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python automation/scripts/check_ic_im_v1_4_result_day_delivery.py \
+            --result strategy-artifacts/result.json \
+            --delivery-date "${{ steps.calendar.outputs.target_day }}" \
+            --publication-mode "${{ steps.publication_mode.outputs.mode }}" \
+            --kind failure \
+            --metadata mail-artifacts/metadata.json \
+            --transaction mail-artifacts/delivery-transaction.json \
+            --recovery-dir recovered-transaction
+
+      - name: Restore verified result-day delivery marker
+        if: steps.attempt.outputs.smtp_enabled == 'true' && (steps.result_day_gate.outputs.recover_marker == 'true' || steps.failure_gate.outputs.recover_marker == 'true')
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.prepare_marker.outputs.marker_name }}-send-intent
-          path: mail-artifacts/metadata.json
+          name: ${{ steps.result_day_gate.outputs.marker_name || steps.failure_gate.outputs.marker_name }}
+          path: recovered-transaction/delivery.json
           if-no-files-found: error
           retention-days: 30
 
-      - name: Send Gmail
-        id: send_gmail
-        if: always() && steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.external_schedule != true) || steps.calendar.outputs.trade_day == 'true') && steps.run_signal.outcome != 'skipped' && steps.build_digest.outcome == 'success' && ((steps.run_signal.outputs.exit_code == '0' && steps.send_intent.outcome == 'success') || (steps.run_signal.outputs.exit_code != '0' && steps.attempt.outputs.final_attempt == 'true'))
-        env:
-          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
-          MAIL_PORT: ${{ secrets.MAIL_PORT }}
-          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
-          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-          MAIL_FROM: ${{ secrets.MAIL_FROM }}
-          MAIL_TO: ${{ secrets.MAIL_TO }}
-          MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
-        run: python automation/scripts/send_report.py mail-artifacts/metadata.json
+      - name: Persist failure-alert intent before SMTP
+        id: failure_intent
+        if: steps.failure_gate.outcome == 'success' && steps.failure_gate.outputs.should_send_result_day == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.failure_gate.outputs.marker_name }}-send-intent
+          path: |
+            mail-artifacts/metadata.json
+            mail-artifacts/delivery-transaction.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Verify ledger-only recovery before artifact promotion
         id: verify_recovery
@@ -500,6 +518,7 @@ jobs:
           PY
 
       - name: Upload successful ledger
+        id: upload_ledger
         if: steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success' && steps.result_day_gate.outcome == 'success' && ((steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true') || (steps.attempt.outputs.ledger_only == 'true' && steps.attempt.outputs.smtp_enabled == 'false' && steps.verify_recovery.outcome == 'success'))
         uses: actions/upload-artifact@v7
         with:
@@ -511,12 +530,53 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Mark digest delivered
-        if: steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true' && steps.run_signal.outcome == 'success' && steps.run_signal.outputs.exit_code == '0' && steps.send_gmail.outcome == 'success'
+      - name: Persist normal-send intent before SMTP
+        id: send_intent
+        if: steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outputs.exit_code == '0' && steps.build_digest.outcome == 'success' && steps.prepare_marker.outcome == 'success' && steps.result_day_gate.outputs.should_send_result_day == 'true' && steps.upload_ledger.outcome == 'success'
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.prepare_marker.outputs.marker_name }}
-          path: delivery-marker/delivery.json
+          name: ${{ steps.result_day_gate.outputs.marker_name }}-send-intent
+          path: |
+            mail-artifacts/metadata.json
+            mail-artifacts/delivery-transaction.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Send Gmail
+        id: send_gmail
+        if: steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true' && steps.delivery_gate.outputs.should_send == 'true' && steps.run_signal.outcome == 'success' && steps.build_digest.outcome == 'success' && ((steps.run_signal.outputs.exit_code == '0' && steps.send_intent.outcome == 'success' && steps.upload_ledger.outcome == 'success') || (steps.run_signal.outputs.exit_code != '' && steps.run_signal.outputs.exit_code != '0' && steps.failure_intent.outcome == 'success'))
+        env:
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_USE_SSL: ${{ secrets.MAIL_USE_SSL }}
+        run: |
+          python automation/scripts/send_report.py mail-artifacts/metadata.json \
+            --icim-delivery-transaction mail-artifacts/delivery-transaction.json \
+            --receipt mail-artifacts/smtp-accepted.json
+
+      - name: Preserve accepted SMTP receipt
+        id: smtp_receipt
+        if: steps.send_gmail.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.result_day_gate.outputs.marker_name || steps.failure_gate.outputs.marker_name }}-smtp-accepted
+          path: |
+            mail-artifacts/metadata.json
+            mail-artifacts/delivery-transaction.json
+            mail-artifacts/smtp-accepted.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Mark digest delivered
+        if: steps.attempt.outcome == 'success' && steps.attempt.outputs.final_attempt == 'true' && steps.attempt.outputs.ledger_only == 'false' && steps.attempt.outputs.smtp_enabled == 'true' && steps.send_gmail.outcome == 'success' && steps.smtp_receipt.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.result_day_gate.outputs.marker_name || steps.failure_gate.outputs.marker_name }}
+          path: ${{ steps.run_signal.outputs.exit_code == '0' && 'delivery-marker/delivery.json' || 'mail-artifacts/delivery-transaction.json' }}
           if-no-files-found: error
           retention-days: 30
 
