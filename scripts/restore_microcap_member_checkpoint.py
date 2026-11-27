@@ -31,6 +31,10 @@ V2_PREFIX = 'microcap-member-checkpoint-v2-'
 MAX_LEGACY_READS = 8
 
 
+class NoPublishedCheckpoint(RuntimeError):
+    """The verified publication lookup found no eligible package."""
+
+
 def retry_checkpoint_read(read, label, *, pause=None):
     """Retry only the failed idempotent read; never select an older state."""
     for attempt in range(3):
@@ -227,10 +231,12 @@ def publication_accepted(jobs, *, allow_reconciliation=False):
     return None
 
 
-def fetch_latest(repository: str, token: str, sha: str, not_after_date=None):
+def fetch_latest(repository: str, token: str, sha: str, not_after_date=None, *, current_on=None):
     if re.fullmatch(r"[0-9a-f]{40}", sha) is None:
         raise ValueError("Member checkpoint requires exact strategy SHA")
     ceiling=date.fromisoformat(not_after_date).isoformat() if not_after_date else None
+    if current_on is not None and (date.fromisoformat(current_on).isoformat() != current_on or current_on != ceiling):
+        raise ValueError('A current checkpoint lookup requires one exact permitted session')
     base=f"https://api.github.com/repos/{repository}/actions"
     v2=re.compile(re.escape(V2_PREFIX+sha)+r"-(\d{4}-\d{2}-\d{2})-(current|awaiting_handoff)-([0-9a-f]{12})$")
     old_name="microcap-member-checkpoint-v1-"+sha
@@ -244,9 +250,10 @@ def fetch_latest(repository: str, token: str, sha: str, not_after_date=None):
                 session,phase,period=match.groups()
                 date.fromisoformat(session)
                 if ceiling and session>ceiling:continue
+                if current_on is not None and (session != current_on or phase != 'current'):continue
                 item['_declared']=dict(as_of_date=session,period_status=phase,period_short=period)
                 modern.append(item)
-            elif item.get('name')==old_name:legacy.append(item)
+            elif current_on is None and item.get('name')==old_name:legacy.append(item)
         if len(items)<100:break
     else:raise RuntimeError('Member artifact pagination exceeded safety limit')
     modern.sort(key=lambda a:(a['_declared']['as_of_date'],a['_declared']['period_status']=='current',int(a['id'])),reverse=True)
@@ -306,7 +313,7 @@ def fetch_latest(repository: str, token: str, sha: str, not_after_date=None):
         return dict(artifact,_payload=raw,_selection=identity,_rejected=rejected)
     if len(legacy)>MAX_LEGACY_READS:raise RuntimeError('Legacy checkpoint order is ambiguous; publish dated v2 checkpoints rather than guessing from upload order')
     if rejected:raise RuntimeError('No valid published checkpoint remains after explicit payload rejection: '+json.dumps(rejected))
-    raise RuntimeError('No published member checkpoint: run the explicit one-time bootstrap; whole-state fallback is disabled')
+    raise NoPublishedCheckpoint('No published member checkpoint: run the explicit one-time bootstrap; whole-state fallback is disabled')
 
 
 def seed_download(path: Path, sha: str) -> bytes:
@@ -357,6 +364,8 @@ def main():
     p.add_argument("--seed-config", type=Path)
     p.add_argument("--not-after-date")
     p.add_argument("--expected-date", help="Require this exact completed session; a ceiling alone is insufficient for local preparation")
+    p.add_argument("--current-only", action="store_true",
+                   help="Look for a published current v2 checkpoint on the exact session; report a confirmed miss without a seed")
     p.add_argument("--checkpoint-read-policy", type=Path,
                    help="Exact reviewed local execution/producer relationship; does not relabel a checkpoint")
     p.add_argument("--describe-checkpoint", type=Path)
@@ -377,10 +386,18 @@ def main():
         return
     if args.out is None:
         p.error('--out is required for checkpoint restoration')
+    if args.current_only and (expected is None or ceiling != expected or args.seed_config is not None):
+        p.error('--current-only requires one exact --expected-date and no seed fallback')
     token = os.environ["GITHUB_TOKEN"]
     try:
-        artifact = fetch_latest(args.repository, token, namespace,ceiling)
+        if args.current_only:
+            artifact = fetch_latest(args.repository, token, namespace, ceiling, current_on=expected)
+        else:
+            artifact = fetch_latest(args.repository, token, namespace, ceiling)
     except RuntimeError as exc:
+        if args.current_only and isinstance(exc, NoPublishedCheckpoint):
+            print(json.dumps({"status": "no_current_published_for_session", "selection": {"as_of_date": expected}}))
+            return
         if not str(exc).startswith("No published member checkpoint:") or args.seed_config is None:
             raise
         raw=seed_download(args.seed_config,namespace)
@@ -391,15 +408,23 @@ def main():
         if args.not_after_date and identity['as_of_date']>date.fromisoformat(args.not_after_date).isoformat():
             raise ValueError('Approved seed is later than the permitted market session')
         unpack(raw, args.out)
+        config = json.loads(args.seed_config.read_bytes())
         print(json.dumps({"source": "exact_small_bootstrap_seed", "strategy_sha": args.strategy_sha,
                           "checkpoint_strategy_sha": namespace,
-                          "checkpoint_read_policy": policy['policy'] if policy else None}))
+                          "checkpoint_read_policy": policy['policy'] if policy else None,
+                          "archive_url": config["url"], "archive_sha256": hashlib.sha256(raw).hexdigest(),
+                          "selection": identity}))
     else:
         validate_checkpoint_core(artifact["_payload"], policy)
         if expected is not None and artifact['_selection']['as_of_date'] != expected:
             raise ValueError('Published checkpoint does not cover the expected completed session')
+        if args.current_only and artifact['_selection']['period_status'] != 'current':
+            raise ValueError('Publication lookup did not return a current checkpoint')
         unpack(artifact["_payload"], args.out)
-        receipt={"artifact_id": artifact["id"], "run_id": artifact["workflow_run"]["id"],
+        receipt={"source": "published_checkpoint_artifact",
+                          "artifact_id": artifact["id"], "artifact_name": artifact["name"],
+                          "archive_sha256": hashlib.sha256(artifact["_payload"]).hexdigest(),
+                          "run_id": artifact["workflow_run"]["id"],
                           "strategy_sha": args.strategy_sha, "checkpoint_strategy_sha": namespace,
                           "checkpoint_read_policy": policy['policy'] if policy else None,
                           "selection": artifact["_selection"], "rejected": artifact["_rejected"]}

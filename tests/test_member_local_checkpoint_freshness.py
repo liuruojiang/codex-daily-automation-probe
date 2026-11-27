@@ -97,3 +97,61 @@ def test_prepare_replaces_stale_cache_via_exact_D_restore_then_native_verify(tmp
     commands=json.loads((out/'commands.json').read_bytes())
     assert len(commands)==2 and all(c['exit_code']==0 for c in commands)
     assert json.loads((out/'stale_checkpoint.json').read_bytes())['expected_as_of']=='2026-11-11'
+
+
+@pytest.mark.parametrize('remote_current', [False, True])
+def test_pending_cache_native_entry_checks_same_session_current(tmp_path, monkeypatch, capsys, remote_current):
+    raw, downloads = real_transport(monkeypatch)
+    monkeypatch.setenv('GITHUB_REPOSITORY', 'liuruojiang/codex-daily-automation-probe')
+    native = tmp_path/'reader'
+    (native/'scripts').mkdir(parents=True)
+    verifier = ROOT/'tests/fixtures/member_checkpoint_local_read_20261111/ab214_member_period_handoff.py'
+    (native/'scripts/member_period_handoff.py').write_bytes(verifier.read_bytes())
+    calendar = ModuleType('scripts.exchange_calendar')
+    calendar.latest_completed_session = lambda: date(2026, 11, 11)
+    monkeypatch.setitem(sys.modules, 'scripts.exchange_calendar', calendar)
+    pending_path = tmp_path/'pending'
+    restore.unpack(raw, pending_path)
+    cached = pending_path/'checkpoint.json'
+    cached.write_text(json.dumps({**json.loads(cached.read_bytes()), 'period_status': 'awaiting_handoff'}))
+    pending_raw = cached.read_bytes()
+    if not remote_current:
+        def no_match(*args, **kwargs):
+            assert kwargs == {'current_on': '2026-11-11'}
+            raise restore.NoPublishedCheckpoint('confirmed miss')
+        monkeypatch.setattr(restore, 'fetch_latest', no_match)
+    native_run = runner.subprocess.run
+
+    def command(argv, **kwargs):
+        if argv[:2] == ['git', '-C']:
+            return SimpleNamespace(stdout=AB+'\n', returncode=0)
+        if Path(argv[2]).name == 'restore_microcap_member_checkpoint.py':
+            assert '--current-only' in argv and '--seed-config' not in argv
+            with monkeypatch.context() as patch:
+                patch.setattr(sys, 'argv', [argv[2], *argv[3:]])
+                stream = io.StringIO()
+                with contextlib.redirect_stdout(stream):
+                    restore.main()
+            return SimpleNamespace(returncode=0, stdout=stream.getvalue(), stderr='')
+        return native_run(argv, **kwargs)
+
+    monkeypatch.setattr(runner.subprocess, 'run', command)
+    monkeypatch.setattr(runner, 'github_environment', lambda: {})
+    out = tmp_path/'prepared'
+    legacy = legacy_automation_root(tmp_path)
+    today = datetime.now(runner.BJ).date().isoformat()
+    monkeypatch.setattr(sys, 'argv', ['prepare', '--automation-root', str(legacy), '--root', str(native),
+        '--date', today, '--out', str(out), '--checkpoint', str(cached), '--prepare-only'])
+    assert runner.main() == 0
+    assert json.loads(capsys.readouterr().out)['status'] == 'prepared'
+    assert cached.read_bytes() == pending_raw
+    receipt = json.loads((out/'checkpoint_readback.json').read_bytes())
+    assert receipt['native_verify_exit_code'] == 0
+    if remote_current:
+        assert downloads == [13838054871]
+        assert receipt['source']['artifact_id'] == 13838054871
+        assert receipt['period_status'] == 'current'
+    else:
+        assert downloads == []
+        assert receipt['current_lookup'] == 'no_current_published_for_session'
+        assert receipt['period_status'] == 'awaiting_handoff'

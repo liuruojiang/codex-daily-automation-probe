@@ -50,6 +50,26 @@ def test_newer_upload_old_awaiting_cannot_undo_same_close_handoff(monkeypatch):
     selected=restore.fetch_latest(REPO,'isolated',SHA,'2026-10-29')
     assert selected['id']==10 and selected['_selection']['period_status']=='current'
 
+
+def test_pending_cache_lookup_reads_only_current_on_its_exact_close(monkeypatch):
+    install(monkeypatch, [(21, archive(phase='awaiting_handoff')),
+                          (20, archive(day='2026-10-30')), (10, archive()),
+                          (9, archive(day='2026-10-28'))])
+    selected = restore.fetch_latest(REPO, 'isolated', SHA, '2026-10-29', current_on='2026-10-29')
+    assert selected['id'] == 10
+    install(monkeypatch, [(21, archive(phase='awaiting_handoff')),
+                          (20, archive(day='2026-10-30')), (9, archive(day='2026-10-28'))])
+    with pytest.raises(restore.NoPublishedCheckpoint):
+        restore.fetch_latest(REPO, 'isolated', SHA, '2026-10-29', current_on='2026-10-29')
+
+
+def test_pending_cache_lookup_does_not_call_corrupt_current_a_clean_miss(monkeypatch):
+    name, _ = archive()
+    install(monkeypatch, [(20, (name, b'invalid ZIP')), (19, archive(phase='awaiting_handoff'))])
+    with pytest.raises(RuntimeError, match='explicit payload rejection') as exc:
+        restore.fetch_latest(REPO, 'isolated', SHA, '2026-10-29', current_on='2026-10-29')
+    assert not isinstance(exc.value, restore.NoPublishedCheckpoint)
+
 def test_late_rebalance_upload_cannot_replace_next_session_close(monkeypatch):
     install(monkeypatch,[(20,archive()),(10,archive(day='2026-10-30',phase='awaiting_handoff'))])
     assert restore.fetch_latest(REPO,'isolated',SHA,'2026-10-30')['id']==10
