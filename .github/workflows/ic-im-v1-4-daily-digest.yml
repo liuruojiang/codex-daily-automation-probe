@@ -1,4 +1,5 @@
 name: IC IM v1.4-r1 Post-Close Digest
+run-name: ${{ inputs.dispatch_key != '' && format('icim-dispatch:{0}', inputs.dispatch_key) || 'IC IM v1.4-r1 Post-Close Digest' }}
 
 on:
   schedule:
@@ -7,6 +8,10 @@ on:
     - cron: "0 12 * * *"
   workflow_dispatch:
     inputs:
+      dispatch_key:
+        description: "Original external 20:00 slot, as icim-close-YYYY-MM-DD"
+        required: false
+        type: string
       ledger_only:
         description: "Repair and persist the verified close ledger without SMTP, send intent or delivered marker"
         required: false
@@ -40,13 +45,92 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    outputs:
+      run_required: ${{ steps.plan.outputs.run_required }}
+      target_date: ${{ steps.slot.outputs.target_date }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: automation
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Resolve original ICIM delivery slot
+        id: slot
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SCHEDULE_CRON: ${{ github.event.schedule }}
+          EXTERNAL_SCHEDULE: ${{ inputs.external_schedule && 'true' || 'false' }}
+          DISPATCH_KEY: ${{ inputs.dispatch_key }}
+          REQUESTED_MODE: ${{ inputs.publication_mode || 'close_confirmed' }}
+          CORRECTION: ${{ inputs.correction && 'true' || 'false' }}
+          LEDGER_ONLY: ${{ inputs.ledger_only && 'true' || 'false' }}
+        run: python automation/scripts/resolve_ic_im_v1_4_scheduled_slot.py
+
+      - name: Check original slot delivery before regression
+        id: original_day_gate
+        if: steps.slot.outputs.route == 'scheduled' && steps.slot.outputs.delivered_run_id == ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TARGET_DATE: ${{ steps.slot.outputs.target_date }}
+        run: |
+          python automation/scripts/check_ic_im_v1_4_delivery.py \
+            --publication-mode close_confirmed --delivery-date "$TARGET_DATE" \
+            --recovery-dir recovered-delivery-marker
+
+      - name: Recover accepted SMTP marker without sending
+        if: steps.original_day_gate.outputs.recover_marker == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.original_day_gate.outputs.marker_name }}
+          path: recovered-delivery-marker/delivery.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Decide whether the planned close needs work
+        id: plan
+        shell: bash
+        env:
+          ROUTE: ${{ steps.slot.outputs.route }}
+          TARGET_DATE: ${{ steps.slot.outputs.target_date }}
+          WINDOW_OPEN: ${{ steps.slot.outputs.collection_window_open }}
+          DELIVERED_RUN: ${{ steps.slot.outputs.delivered_run_id }}
+          MARKER_ID: ${{ steps.slot.outputs.normal_marker_id }}
+          LEDGER_ID: ${{ steps.slot.outputs.ledger_artifact_id }}
+          SHOULD_SEND: ${{ steps.original_day_gate.outputs.should_send }}
+          DELIVERY_STATUS: ${{ steps.original_day_gate.outputs.delivery_status }}
+        run: |
+          if [[ "$ROUTE" == 'manual' ]]; then
+            echo 'run_required=true' >> "$GITHUB_OUTPUT"
+          elif [[ "$ROUTE" == 'non_trading_slot' || "$ROUTE" == 'legacy_external_not_due' ]]; then
+            echo 'run_required=false' >> "$GITHUB_OUTPUT"
+            echo "ICIM $ROUTE ${TARGET_DATE:-no bound date}" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$ROUTE" == 'scheduled' && -n "$DELIVERED_RUN" && -n "$MARKER_ID" && -n "$LEDGER_ID" ]]; then
+            echo 'run_required=false' >> "$GITHUB_OUTPUT"
+            echo "ICIM $TARGET_DATE already delivered in run $DELIVERED_RUN, marker $MARKER_ID and ledger artifact $LEDGER_ID" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$ROUTE" == 'scheduled' && "$SHOULD_SEND" == 'false' ]]; then
+            echo 'run_required=false' >> "$GITHUB_OUTPUT"
+            echo "ICIM $TARGET_DATE SMTP stage $DELIVERY_STATUS. Check ledger through its independent artifact when needed." >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$ROUTE" == 'scheduled' && "$SHOULD_SEND" == 'true' && "$WINDOW_OPEN" == 'true' ]]; then
+            echo 'run_required=true' >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Unresolved ICIM delivery for ${TARGET_DATE:-unknown date}. The next market close has passed or the original slot was not verified."
+            exit 1
+          fi
+
   regression:
+    needs: preflight
+    if: needs.preflight.outputs.run_required == 'true'
     uses: ./.github/workflows/delivery-regression.yml
     with:
       family: icim
 
   send:
-    needs: regression
+    needs: [preflight, regression]
     runs-on: ubuntu-latest
     timeout-minutes: 85
     env:
@@ -87,12 +171,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           CORRECTION: ${{ github.event_name == 'workflow_dispatch' && inputs.correction && 'true' || 'false' }}
-          SCHEDULED_ATTEMPT: ${{ github.event_name == 'schedule' || inputs.external_schedule == true }}
+          TARGET_DATE: ${{ needs.preflight.outputs.target_date }}
+          RUN_REQUIRED: ${{ needs.preflight.outputs.run_required }}
         run: |
-          # Ignore stale external 18:00 dispatches; manual diagnostics remain available.
-          if [[ "${SCHEDULED_ATTEMPT}" == "true" && "$(date +%H)" -lt 20 ]]; then
-            echo "should_send=false" >> "${GITHUB_OUTPUT}"
-            echo "Scheduled ICIM delivery is not due before 20:00 Asia/Shanghai"
+          if [[ -n "$TARGET_DATE" ]]; then
+            test "$RUN_REQUIRED" = 'true'
+            printf 'should_send=true\nsubject_prefix=\n' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           args=()
@@ -101,7 +185,17 @@ jobs:
           fi
           python automation/scripts/check_ic_im_v1_4_delivery.py \
             --publication-mode "${{ steps.publication_mode.outputs.mode }}" \
+            --recovery-dir recovered-delivery-marker \
             "${args[@]}"
+
+      - name: Recover accepted manual SMTP marker without sending
+        if: steps.delivery_gate.outputs.recover_marker == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.delivery_gate.outputs.marker_name }}
+          path: recovered-delivery-marker/delivery.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Check out public IC/IM strategy repository
         if: steps.delivery_gate.outputs.should_send == 'true'
@@ -185,18 +279,33 @@ jobs:
         if: steps.delivery_gate.outputs.should_send == 'true'
         id: calendar
         shell: bash
+        env:
+          TARGET_DATE: ${{ needs.preflight.outputs.target_date }}
+          PUBLICATION_MODE: ${{ steps.publication_mode.outputs.mode }}
         run: |
           python - <<'PY' | tee calendar.env
-          import sys
-          from datetime import datetime
+          import os, sys
+          from datetime import date, datetime
           from zoneinfo import ZoneInfo
           sys.path.insert(0, "strategy")
           import poe_ic_im_mainline_v1_4_bot as strategy
           clock = datetime.now(ZoneInfo("Asia/Shanghai"))
           today = clock.date()
-          print(f"trade_day={str(strategy._is_exchange_trading_day(today)).lower()}")
+          completed = strategy._latest_completed_exchange_day(clock)
+          scheduled = os.environ["TARGET_DATE"]
+          mode = os.environ["PUBLICATION_MODE"]
+          if scheduled:
+              selected = date.fromisoformat(scheduled)
+              if mode != "close_confirmed" or selected != completed or not strategy._is_exchange_trading_day(selected):
+                  raise ValueError(f"Planned ICIM close {scheduled} is no longer the latest completed session ({completed})")
+          else:
+              selected = today if mode == "realtime" else completed
+          trade_day = selected if scheduled else today
+          print(f"trade_day={str(strategy._is_exchange_trading_day(trade_day)).lower()}")
           print(f"today={today.isoformat()}")
-          print(f"completed_day={strategy._latest_completed_exchange_day(clock).isoformat()}")
+          print(f"completed_day={completed.isoformat()}")
+          print(f"target_day={selected.isoformat()}")
+          print(f"catchup={str(bool(scheduled) and selected < today).lower()}")
           PY
           cat calendar.env >> "${GITHUB_OUTPUT}"
 
@@ -245,9 +354,10 @@ jobs:
         env:
           ICIM_REQUIRE_MIGRATION: "1"
           ICIM_STATE_DIR: state
+          TARGET_DATE: ${{ needs.preflight.outputs.target_date }}
         run: |
           python - <<'PY'
-          import json, sys
+          import json, os, sys
           from pathlib import Path
           sys.path.insert(0, "strategy")
           import poe_ic_im_v1_4_state as state
@@ -256,6 +366,9 @@ jobs:
           store = state.StateStore("state")
           latest = store.load_latest()
           state.anchors_from_record(latest)
+          target = os.environ["TARGET_DATE"]
+          if target and str(latest["verified_day"])[:10] > target:
+              raise ValueError(f"Official ICIM ledger {latest['verified_day']} already exceeds planned close {target}")
           migration = json.loads(Path("state/migration_record.json").read_text(encoding="utf-8"))
           assert migration["new_ledger"]["strategy_revision"] == "r1"
           assert migration["new_ledger"]["digest"] == store.load_sequence(0)["digest"]
@@ -275,13 +388,14 @@ jobs:
           ICIM_STATE_DIR: state
           ICIM_LEGULEGU_DAILY_SNAPSHOT: ${{ secrets.ICIM_LEGULEGU_DAILY_SNAPSHOT }}
           ICIM_CHINABOND_SNAPSHOT_FILE: strategy-artifacts/chinabond.json
+          TARGET_DAY: ${{ steps.calendar.outputs.target_day }}
         run: |
           # A failed/late bond source falls back explicitly; never stop the
           # existing market/ledger gates or relabel old yield as today's rate.
           mkdir -p strategy-artifacts
           rm -f strategy-artifacts/chinabond.json
           timeout --foreground 90s python -u strategy/ic_im_chinabond.py \
-            --expected-date "${{ steps.calendar.outputs.today }}" \
+            --expected-date "$TARGET_DAY" \
             --output strategy-artifacts/chinabond.json || echo "ChinaBond fetch unavailable; use disclosed frozen fallback"
           set +e
           timeout --foreground 65m python -u strategy/run_ic_im_v1_4_github_digest.py \
@@ -290,7 +404,7 @@ jobs:
             --mode "${{ steps.publication_mode.outputs.runner_mode }}" \
             --max-sessions 20 \
             --network-budget-per-product 180 \
-            --expected-market-date "${{ steps.publication_mode.outputs.mode == 'realtime' && steps.calendar.outputs.today || steps.calendar.outputs.completed_day }}" 2>&1 | tee strategy-run.log
+            --expected-market-date "$TARGET_DAY" 2>&1 | tee strategy-run.log
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >> "${GITHUB_OUTPUT}"
           exit 0
@@ -304,7 +418,7 @@ jobs:
             --source-provenance strategy-artifacts/program-source.json --expected-source-sha 1f584c0b02809bb409b9c1b0e2c0d1bfdbd35789 \
             --expected-source-release 20261124-report-close-observation-v3 \
             --out-dir mail-artifacts \
-            --subject-prefix "${{ steps.delivery_gate.outputs.subject_prefix }}"
+            --subject-prefix "${{ steps.calendar.outputs.catchup == 'true' && '补跑' || steps.delivery_gate.outputs.subject_prefix }}"
 
       - name: Prepare delivery marker
         id: prepare_marker
@@ -429,6 +543,8 @@ jobs:
             echo "- Publication mode basis: ${{ steps.publication_mode.outputs.basis }}"
             echo "- Resolved at: ${{ steps.publication_mode.outputs.beijing_time }}"
             echo "- Planned: ${PLANNED_BJ}"
+            echo "- Market date bound by the slot: ${{ steps.calendar.outputs.target_day }}"
+            echo "- Cross-midnight catch-up: ${{ steps.calendar.outputs.catchup }}"
             echo "- Trading day: ${{ steps.calendar.outputs.trade_day }}"
             echo "- Final attempt: ${{ steps.attempt.outputs.final_attempt }}"
             echo "- Ledger only: ${{ steps.attempt.outputs.ledger_only }}"
