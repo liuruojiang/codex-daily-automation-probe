@@ -91,13 +91,16 @@ def main() -> int:
             "metadata_sha256": hashlib.sha256(metadata_bytes).hexdigest(),
             "subject_sha256": hashlib.sha256(meta["subject"].encode("utf-8")).hexdigest(),
             "body_sha256": hashlib.sha256(meta["body"].encode("utf-8")).hexdigest(),
-            "sender": sender,
-            "recipients": recipients,
         }
+        if icim_marker:
+            # The IC/IM Actions repository is public. Keep the acceptance proof
+            # and transaction identity without attaching the SMTP envelope.
+            receipt["icim_delivery_marker"] = icim_marker
+            receipt["recipient_count"] = len(recipients)
+        else:
+            receipt.update(sender=sender, recipients=recipients)
         if member_report:
             receipt["member_delivery_marker"] = args.member_delivery_marker
-        if icim_marker:
-            receipt["icim_delivery_marker"] = icim_marker
         write_receipt(args.receipt, receipt)
     return 0
 

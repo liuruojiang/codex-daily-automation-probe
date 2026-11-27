@@ -70,7 +70,7 @@ def test_cross_midnight_receipt_recovers_only_marker(kind, marker, tmp_path, mon
     tx.write_text(json.dumps(mail.build_transaction(result(kind), meta.read_bytes(), DAY, MODE, kind)),
                   encoding="utf-8")
     calls = []
-    timestamp = datetime(2026, 11, 26, 20, 43, 51, tzinfo=timezone.utc)
+    timestamp = datetime(2026, 11, 26, 20, 43, 51, 921477, tzinfo=timezone.utc)
     class TestClock(datetime):
         @classmethod
         def now(cls, tz=None):
@@ -82,9 +82,14 @@ def test_cross_midnight_receipt_recovers_only_marker(kind, marker, tmp_path, mon
     monkeypatch.setattr(sys, "argv", ["send_report.py", str(meta),
                                      "--icim-delivery-transaction", str(tx), "--receipt", str(receipt)])
     assert send_report.main() == 0
-    assert json.loads(receipt.read_bytes())["icim_delivery_marker"] == marker
+    receipt_data = json.loads(receipt.read_bytes())
+    assert receipt_data["icim_delivery_marker"] == marker
+    assert receipt_data["recipient_count"] == 1
+    assert {"sender", "recipients"}.isdisjoint(receipt_data)
     assert calls == ["verified test"]
     assert not delivery.marker_exists(artifacts(marker + mail.RECEIPT_SUFFIX), delivery.marker_prefix(DAY, MODE))
+    receipt_data["accepted_at"] = timestamp.isoformat()
+    receipt.write_text(json.dumps(receipt_data), encoding="utf-8")
 
     packed = io.BytesIO()
     with zipfile.ZipFile(packed, "w") as archive:
@@ -103,7 +108,7 @@ def test_cross_midnight_receipt_recovers_only_marker(kind, marker, tmp_path, mon
               else "Persist failure-alert intent before SMTP")
     steps = [{"name": intent, "conclusion": "success"},
              {"name": "Send Gmail", "conclusion": "success", "started_at": "2026-11-26T20:43:50Z",
-              "completed_at": "2026-11-26T20:43:52Z"},
+              "completed_at": "2026-11-26T20:43:51Z"},
              {"name": "Preserve accepted SMTP receipt", "conclusion": "success"}]
     monkeypatch.setattr(mail, "_read_github", lambda url, token:
                         {"jobs": [{"name": "send", "steps": steps}], "total_count": 1} if "/jobs?" in url else run)
@@ -117,6 +122,10 @@ def test_cross_midnight_receipt_recovers_only_marker(kind, marker, tmp_path, mon
     restored = json.loads((tmp_path / "recover/delivery.json").read_bytes())
     assert (restored["marker_name"], restored["message_id"]) == (marker, "<id@example.invalid>")
     assert calls == ["verified test"]
+    steps[-2]["completed_at"] = "2026-11-26T20:43:50Z"
+    with pytest.raises(RuntimeError, match="does not prove acceptance"):
+        mail.check_transaction(evidence, DAY, MODE, kind, verify)
+    steps[-2]["completed_at"] = "2026-11-26T20:43:51Z"
     steps[-1]["conclusion"] = "skipped"
     with pytest.raises(RuntimeError, match="does not prove acceptance"):
         mail.check_transaction(evidence, DAY, MODE, kind, verify)

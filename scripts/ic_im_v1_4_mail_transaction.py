@@ -162,6 +162,7 @@ def verify_smtp_receipt(repository, token, api_url, artifact, day, mode, kind) -
     receipt = json.loads(entries["smtp-accepted.json"])
     marker = validate_transaction(transaction, metadata_raw, day, mode, kind)
     accepted = _timestamp(receipt["accepted_at"])
+    acceptance_second = accepted.replace(microsecond=0)
     intent_name = ("Persist normal-send intent before SMTP" if kind == "normal"
                    else "Persist failure-alert intent before SMTP")
     valid_jobs = 0
@@ -171,7 +172,11 @@ def verify_smtp_receipt(repository, token, api_url, artifact, day, mode, kind) -
         preserved = steps.get("Preserve accepted SMTP receipt", {})
         if (send.get("conclusion") == "success" and preserved.get("conclusion") == "success"
                 and steps.get(intent_name, {}).get("conclusion") == "success"):
-            if _timestamp(send["started_at"]) <= accepted <= _timestamp(send["completed_at"]):
+            # Actions exposes step bounds at second precision. A receipt may
+            # include subsecond precision within the same terminal second.
+            start = _timestamp(send["started_at"]).replace(microsecond=0)
+            end = _timestamp(send["completed_at"]).replace(microsecond=0)
+            if start <= acceptance_second <= end:
                 valid_jobs += 1
     build, revision = expected_identity_for_day(day)
     if (valid_jobs != 1 or artifact.get("name") != marker + RECEIPT_SUFFIX
