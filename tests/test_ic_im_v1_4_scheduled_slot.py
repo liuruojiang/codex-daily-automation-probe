@@ -121,7 +121,7 @@ def test_lightweight_lookup_requires_both_delivery_and_ledger_evidence_from_same
     monkeypatch.setattr(slot, "read_actions_json", read)
     found = slot.published_delivery_for_slot(repository, "test-placeholder", "https://api.github.invalid", day)
     assert len(requested) == 2
-    assert "2026-11-26T04%3A00%3A00Z" in requested[0]
+    assert "2026-11-26T07%3A00%3A00Z" in requested[0]
     if variant == "complete":
         assert found == {"normal_marker_id": "61", "ledger_artifact_id": "62", "delivered_run_id": "42"}
     else:
