@@ -209,3 +209,31 @@ def test_tail_anchor_is_read_from_exact_immutable_original_price_snapshot(tmp_pa
     path.write_bytes(raw + b'2026-11-06,10.6\n')
     with pytest.raises(ValueError, match='seed changed'):
         local.price_seed_anchor(tmp_path, '000001', baseline)
+
+
+def test_cold_metadata_refuses_an_uncovered_consumed_horizon(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    protected = tmp_path / 'protected'
+    out = protected / 'outputs'
+    out.mkdir(parents=True)
+    proxy = out / 'wind_microcap_top_100_biweekly_thursday_16y_cached.csv'
+    meta = out / 'microcap_top100_mom16_biweekly_live_v2_0_base_proxy_meta.json'
+    proxy.write_bytes(b'date,close\n2026-11-26,1\n')
+    meta.write_bytes(b'{}')
+    inputs = {path.relative_to(protected).as_posix(): local.sha(path.read_bytes()) for path in (proxy, meta)}
+    (out / 'top100_delivery_manifest.json').write_bytes(local.encode(dict(
+        expected_date='2026-11-26', ok=True, errors=[], status='complete',
+        scope='whole_workspace_delivery', release_sha='a' * 40, inputs=inputs)))
+    baseline = dict(reference_consumed_through='2026-11-26', source_root=str(protected),
+                    reference_proxy_sha256=local.sha(proxy.read_bytes()))
+    cold = {'000001': '2026-11-12'}
+    result = dict(horizons={'000001': '2026-11-13'}, full_rebuild='2026-10-29', checked_files=10)
+    monkeypatch.setattr(local.subprocess, 'run', lambda *args, **kwargs: SimpleNamespace(
+        returncode=0, stdout=json.dumps(result), stderr=''))
+    with pytest.raises(ValueError, match='original consumed issuer horizon'):
+        local.scoped_cold_consumption(protected, baseline, tmp_path, cold)
+    assert not (tmp_path / 'cold-metadata-consumption.json').exists()
+    result['horizons']['000001'] = '2026-11-12'
+    assert local.scoped_cold_consumption(protected, baseline, tmp_path, cold) == cold
+    assert json.loads((tmp_path / 'cold-metadata-consumption.json').read_bytes())['old_horizons'] == cold

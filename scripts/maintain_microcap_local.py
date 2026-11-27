@@ -24,9 +24,10 @@ import uuid
 from prepare_microcap_local import atomic, encode, sha, writer_lock
 
 LEGACY_P11 = '106e2046e81f8963db2ecd9fc063b5e193d775ff'
-RUNTIME = '0051d4c185e3c695494c7fc9486934fc4d987805'
+RUNTIME = '163f208187f5e84232b05c9f54f84fed95d88e38'
+NOV26_SOURCE_RUNTIME = '0051d4c185e3c695494c7fc9486934fc4d987805'
 LEGACY_P2 = '3fe2e15ee9e3f2ee7e25bbc328479f1fd9910d36'
-SOURCE_RUNTIMES = frozenset({RUNTIME,LEGACY_P11,'39c08829b43c8399bd6793d715de42cc67cd0d63','d09b53af78767370a7ecb2bf4ebe6e3527d2eacc','52214f002a8b83ab602a90fd40cc48336a7ce51a','f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5','e3c855f980e503372fd9fc4268aeea2aa4b5aeeb','ae439a1eec4dae5729483f43356473bcb9b1dff1','3344e403ff01e17ef45b745a704a240e0917720b',LEGACY_P2,'f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5','be89e87a0da728b27be0308d7c4c9e57a212b815','a016ce27ea86fca1fa0b5199f802b198c0ed99de',
+SOURCE_RUNTIMES = frozenset({RUNTIME,NOV26_SOURCE_RUNTIME,LEGACY_P11,'39c08829b43c8399bd6793d715de42cc67cd0d63','d09b53af78767370a7ecb2bf4ebe6e3527d2eacc','52214f002a8b83ab602a90fd40cc48336a7ce51a','f2ded1092aa11a1061b52aaf468ebcd5d2ce17a5','e3c855f980e503372fd9fc4268aeea2aa4b5aeeb','ae439a1eec4dae5729483f43356473bcb9b1dff1','3344e403ff01e17ef45b745a704a240e0917720b',LEGACY_P2,'f6970d665d5c7a39b37c866cf13dc3d4cb8fdcc5','be89e87a0da728b27be0308d7c4c9e57a212b815','a016ce27ea86fca1fa0b5199f802b198c0ed99de',
     '706af7ea9186bdb9b3948738deb5a5afda7a331e','63c7b16d77600c4aa9dadf58b86d31e034477e44'})
 BOOTSTRAP_RUNTIMES = {*SOURCE_RUNTIMES, '140b9c192e65a2b36a6b02106496e89f1143a4a6',
                       '24a41867408ebee570349de46d3ae37bcff2a6d4',
@@ -395,6 +396,167 @@ def scoped_metadata_marker(root, scope_sha):
     return relative
 
 
+def scoped_cold_consumption(protected, baseline, journal, cold):
+    # Use the protected native proof for issuers whose old horizon is cold.
+    proxy = 'outputs/wind_microcap_top_100_biweekly_thursday_16y_cached.csv'
+    meta = 'outputs/microcap_top100_mom16_biweekly_live_v2_0_base_proxy_meta.json'
+    manifest_path = bound(protected, 'outputs/top100_delivery_manifest.json')
+    manifest_raw = manifest_path.read_bytes()
+    manifest = json.loads(manifest_raw)
+    anchor = baseline['reference_consumed_through']
+    proxy_raw = bound(protected, proxy).read_bytes()
+    meta_raw = bound(protected, meta).read_bytes()
+    if (manifest.get('expected_date') != anchor or manifest.get('ok') is not True
+            or manifest.get('errors') != [] or manifest.get('status') != 'complete'
+            or manifest.get('scope') != 'whole_workspace_delivery'
+            or Path(baseline['source_root']).resolve() != protected
+            or sha(proxy_raw) != baseline['reference_proxy_sha256']):
+        raise ValueError('Cold metadata requires the exact approved bootstrap reference')
+    for name, raw in ((proxy, proxy_raw), (meta, meta_raw)):
+        if manifest.get('inputs', {}).get(name) not in (sha(raw), sha(raw.replace(b'\r\n', b'\n'))):
+            raise ValueError('Cold metadata protected proxy binding differs: ' + name)
+    code = r'''
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1])
+sys.path.insert(0,str(root))
+from scripts.stock_return_pipeline import _consumption_requirements
+from scripts.top100_delivery import verify_candidate_release
+import microcap_top100_mom16_biweekly_live_v2_0 as native
+if verify_candidate_release(root,sys.argv[2])!=sys.argv[2]:
+    raise ValueError('Cold metadata protected checkout is not the manifest release')
+target=sys.argv[3]
+symbols=set(native.base_mod.freq_mod.list_backtest_universe_symbols())
+full,latest,observed=_consumption_requirements(root,target,symbols)
+requested=json.loads(sys.argv[4])
+if not set(requested)<=symbols:
+    raise ValueError('Cold metadata issuer missing from the protected historical universe')
+horizons={s:(latest.get(s,full) if isinstance(latest,dict)
+             else target if s in latest else full) for s in requested}
+print(json.dumps(dict(horizons=horizons,full_rebuild=full,checked_files=len(observed))))
+'''
+    completed = subprocess.run([sys.executable, '-B', '-X', 'utf8', '-c', code,
+        str(protected), manifest['release_sha'], anchor, json.dumps(sorted(cold))],
+        capture_output=True, encoding='utf-8', check=False)
+    if completed.returncode:
+        raise ValueError('Cold metadata native consumption verification failed: ' + completed.stderr.strip())
+    record = json.loads(completed.stdout)
+    horizons = record['horizons']
+    if set(horizons) != set(cold) or any(date.fromisoformat(horizons[s]).isoformat() != horizons[s]
+                                         or horizons[s] > cold[s] or horizons[s] > anchor for s in cold):
+        raise ValueError('Cold metadata archive does not cover the original consumed issuer horizon')
+    if (manifest_path.read_bytes() != manifest_raw or bound(protected, proxy).read_bytes() != proxy_raw
+            or bound(protected, meta).read_bytes() != meta_raw):
+        raise ValueError('Cold metadata protected reference changed during native verification')
+    atomic(journal / 'cold-metadata-consumption.json', encode(dict(record, protected_root=str(protected),
+           formal_manifest_sha256=sha(manifest_raw), original_scoped_cutoff=anchor, old_horizons=cold)))
+    return horizons
+
+
+def restore_cold_metadata_ancestors(root, protected, references):
+    from scripts.st_history_scope import resolve_archive_reference, source_closure
+
+    active = resolve_archive_reference(root)
+    current = json.loads(bound(root, active[0]).read_bytes())
+    for relative, digest in sorted(references):
+        original = bound(root, relative)
+        if original.exists():
+            if sha(original.read_bytes()) != digest:
+                raise ValueError('Preserve conflicting immutable metadata authority: ' + relative)
+            continue
+        old = json.loads(bound(protected, relative).read_bytes())
+        prefix = old.get('daily_increments')
+        if (not prefix or current.get('daily_increments', [])[:len(prefix)] != prefix
+                or any(old.get(k) != current.get(k) for k in (old.keys() | current.keys()) - {'daily_increments'})):
+            raise ValueError('Cold metadata authority is not an exact prefix of the current authority')
+        files = source_closure(protected, relative, digest)
+        for name, expected in files.items():
+            destination = bound(root, name)
+            if destination.exists():
+                if sha(destination.read_bytes()) != expected:
+                    raise ValueError('Preserve conflicting immutable metadata input: ' + name)
+            else:
+                raw = bound(protected, name).read_bytes()
+                if sha(raw) != expected:
+                    raise ValueError('Original cold metadata source changed: ' + name)
+                atomic(destination, raw)
+        if resolve_archive_reference(root) != active:
+            raise ValueError('Current metadata authority changed during ancestor restoration')
+
+
+def refresh_scoped_metadata(root, protected, state, journal, symbols, scope_sha, target, freq):
+    from scripts import st_metadata_refresh as native
+    from scripts.st_history_scope import resolve_archive_reference
+    import pandas as pd
+
+    baseline = json.loads((state/'bootstrap.json').read_bytes())
+    require_complete_bootstrap(baseline, symbols)
+    if sha((state/'reference-proxy.csv').read_bytes()) != baseline['reference_proxy_sha256']:
+        raise ValueError('Reference consumed proxy changed')
+    cutoff = baseline['reference_consumed_through']
+    authority = resolve_archive_reference(root)[1]
+    cold = {}
+    ancestors = set()
+    pending = {}
+    for symbol in symbols:
+        meta = freq._read_security_meta_payload(bound(root, CACHE+'security_meta/'+symbol+'.json'), symbol)
+        if meta.get('st_notice_archive_sha256') == authority and freq._notice_horizon_covers(meta, pd.Timestamp(target)):
+            continue
+        end = date.fromisoformat(meta['notice_query_end_date']).isoformat()
+        pending[symbol] = end
+        if end < cutoff:
+            cold[symbol] = end
+            ancestors.add((meta['st_notice_archive_manifest_path'], meta['st_notice_archive_sha256']))
+
+    original_marker = bound(root, scoped_metadata_marker(root, scope_sha))
+    plan_path = journal / 'scoped-metadata-cold-plan.json'
+    key = dict(target=target, scope_sha256=scope_sha, authority=authority, cutoff=cutoff)
+    plan = json.loads(plan_path.read_bytes()) if plan_path.exists() else None
+    if plan is None and cold:
+        if original_marker.exists() and json.loads(original_marker.read_bytes())['status'] != 'complete':
+            raise ValueError('Preserve the unresolved original scoped metadata transaction')
+        horizons = scoped_cold_consumption(protected, baseline, journal, cold)
+        restore_cold_metadata_ancestors(root, protected, ancestors)
+        groups = {}
+        for symbol, end in pending.items():
+            groups.setdefault(min(end, cutoff), []).append(symbol)
+        plan = dict(key=key, groups=groups, cold=cold, horizons=horizons)
+        atomic(plan_path, encode(plan))
+    if plan is None:
+        groups = {cutoff: list(symbols)}
+    else:
+        groups = plan['groups']
+        members = [s for group in groups.values() for s in group]
+        if (plan.get('key') != key or not groups or len(members) != len(set(members))
+                or not set(pending) <= set(members) <= set(symbols)
+                or set(plan['horizons']) != set(plan['cold'])
+                or any(plan['horizons'][s] > plan['cold'][s] or not plan['cold'][s] < cutoff
+                       or s not in groups.get(plan['cold'][s], ()) for s in plan['cold'])
+                or any(not group or (day != cutoff and any(plan['cold'].get(s) != day for s in group))
+                       for day, group in groups.items())):
+            raise ValueError('Preserve the unresolved scoped metadata plan and its original bounds')
+
+    class ScopedFrequency:
+        def __init__(self, group):
+            self.group = group
+
+        def __getattr__(self, name):
+            return getattr(freq, name)
+
+        def list_backtest_universe_symbols(self):
+            return self.group
+
+    saved = native.MARKER
+    try:
+        for consumed, group in sorted(groups.items()):
+            group_id = sha(encode(dict(roster=scope_sha, cutoff=consumed, symbols=sorted(group)))) if plan is not None else scope_sha
+            native.MARKER = scoped_metadata_marker(root, group_id)
+            native.refresh_metadata_after_notice(root=root, freq_mod=ScopedFrequency(group), target=target,
+                notice_result={'authority_changed': True}, consumed_through=consumed, scoped_preparation=True)
+    finally:
+        native.MARKER = saved
+
+
 def observation_floor(now=None):
     now = now or datetime.now(timezone.utc)
     return now.astimezone(ZoneInfo('Asia/Shanghai')).replace(hour=9, minute=0, second=0, microsecond=0)
@@ -506,6 +668,7 @@ def select_local_notice_forward(*,root,protected_root,state,symbols,target,out,n
     if sha(module_path.read_bytes().replace(b'\r\n',b'\n')) not in {
         '611bd60980187ba251b3fcf292b38d0461e06dea19a614bd723a83c68443882b',
         'f67b8a7c473039730600469e4b69823b6f7263e3254cecdb05c911b2549a0271',
+        'a17db87a2a1b3b0e457d908d622a38c2d5d05ae1b241a998131f433fcb123b05',
     }:
         raise ValueError('Local notice selector dependency is not the reviewed exact source')
     import microcap_notice_prefix as prefix
@@ -998,10 +1161,6 @@ def main(argv=None):
         # actual 300-stock cache. The frozen notice source is authenticated once
         # per batch and rechecked before any metadata is installed.
         available = symbols
-        class ScopedFrequency:
-            def __getattr__(self, name): return getattr(v2.base_mod.freq_mod, name)
-            def list_backtest_universe_symbols(self): return available
-        freq_scope = ScopedFrequency()
         def metadata_verify():
             require_complete_bootstrap(json.loads((state / 'bootstrap.json').read_bytes()), symbols)
             freq = v2.base_mod.freq_mod
@@ -1012,24 +1171,21 @@ def main(argv=None):
                 if (not meta.get('notice_source_complete') or meta['st_notice_archive_sha256'] != resolve_archive_reference(root)[1]
                         or not freq._notice_horizon_covers(meta, pd.Timestamp(args.as_of))):
                     raise ValueError('Scoped metadata authority/horizon differs: ' + s)
+            pending_plan = journal.directory / 'scoped-metadata-cold-plan.json'
+            if pending_plan.exists():
+                plan = json.loads(pending_plan.read_bytes())
+                for cutoff, group in plan['groups'].items():
+                    identity = sha(encode(dict(roster=scope_sha, cutoff=cutoff, symbols=sorted(group))))
+                    marker = json.loads(bound(root, scoped_metadata_marker(root, identity)).read_bytes())
+                    if (marker.get('status') != 'complete' or marker.get('symbols') != sorted(group)
+                            or marker.get('target') != args.as_of
+                            or marker.get('authority') != list(resolve_archive_reference(root))):
+                        raise ValueError('Scoped cold metadata transaction is not complete: ' + cutoff)
             return hashes(root, [CACHE + 'security_meta/' + s + '.json' for s in available] +
                           [CACHE + 'st_notice_archive_pointer.json',CACHE+'current_st.csv'])
         def metadata_action():
-            from scripts import st_metadata_refresh as metadata_native
-            baseline = json.loads((state / 'bootstrap.json').read_bytes())
-            require_complete_bootstrap(baseline, symbols)
-            if sha((state / 'reference-proxy.csv').read_bytes()) != baseline['reference_proxy_sha256']:
-                raise ValueError('Reference consumed proxy changed')
-            original_marker = metadata_native.MARKER
-            try:
-                # A completed transaction belongs to one roster, while raw
-                # source history can remain cached across weekly roster changes.
-                metadata_native.MARKER = scoped_metadata_marker(root,scope_sha)
-                metadata_native.refresh_metadata_after_notice(root=root, freq_mod=freq_scope, target=args.as_of,
-                    notice_result={'authority_changed': True}, consumed_through=baseline['reference_consumed_through'],
-                    scoped_preparation=True)
-            finally:
-                metadata_native.MARKER = original_marker
+            refresh_scoped_metadata(root, args.protected_root.resolve(), state, journal.directory,
+                                    available, scope_sha, args.as_of, v2.base_mod.freq_mod)
         metadata = journal.run('metadata', metadata_action, metadata_verify) if notice['status'] == current_names['status'] == 'complete' else {'status': 'waiting_for_notice_or_current_names'}
         progress.update(status='complete' if not failures and notice['status'] == current_names['status'] == metadata['status'] == 'complete' else 'incomplete',
                         completed_at=datetime.now(timezone.utc).isoformat(), context=context,

@@ -244,3 +244,29 @@ def test_bundle_materializes_exact_git_objects_without_activating(tmp_path, monk
     assert policy.local_runtime(out) == (AB, out / 'config/microcap_member_local_runtime.json')
     with pytest.raises(ValueError, match='already exists'):
         bundle.prepare(source, revision, strategy, out)
+
+
+def test_notice_receiver_keeps_original_execution_pin_and_requires_its_controller():
+    import hashlib
+    import json
+    from pathlib import Path
+
+    import member_checkpoint_policy as policy
+    import microcap_recovery_handoff as handoff
+
+    old = policy.RETURN_GUARD_READ_POLICY
+    new = policy.NOTICE_RECEIVER_READ_POLICY
+    assert all(new[name] == old[name] for name in ('execution_strategy_sha', 'checkpoint_strategy_sha', 'core_strategy_sha'))
+    assert new['rebalance_producer_shas'] == [handoff.NOTICE_RECEIVER_RUNTIME]
+    assert policy.validate_read_policy(new, old['execution_strategy_sha']) == new
+
+    checkpoint = {'strategy_sha': handoff.NOTICE_RECEIVER_RUNTIME, 'handoff_mode': handoff.MODE,
+                  'handoff_from': '1' * 64, 'recovery_controller': {'revision': handoff.CONTROLLER,
+                  'source_sha256': handoff.PRE_NOTICE_RECEIVER_CONTROLLER}}
+    with pytest.raises(ValueError, match='Unreviewed recovery controller'):
+        policy.validate_checkpoint_payload(checkpoint, new)
+    body = Path(handoff.__file__).read_bytes().replace(b'\r\n', b'\n')
+    checkpoint['recovery_controller']['source_sha256'] = hashlib.sha256(body).hexdigest()
+    policy.validate_checkpoint_payload(checkpoint, new)
+    with pytest.raises(ValueError, match='lacks its proof'):
+        handoff.validate_recovery_payload(checkpoint, {'period': json.dumps({}).encode()})

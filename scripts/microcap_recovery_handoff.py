@@ -39,6 +39,8 @@ M16 = 'ede05731de7c78c9bcf2ebfd8ad5c58ee960a200'
 M17 = 'b60ebfbc2a821e0fbf08fcd110da1360cfc21400'
 MIGRATION_RUNTIME = '4608a82dd7a4b3828440523a28e19e0b8e4cbbca'
 RETURN_GUARD_RUNTIME = 'e1e014b9af50eadaa9b52d6f881e3e0855ac4846'
+NOTICE_RECEIVER_RUNTIME = 'c169efff1fc266d0b86e26e01a3257cbde382bb4'
+PRE_NOTICE_RECEIVER_CONTROLLER = '4a5ff597449813f3416517bc60ef579bfa1db214e513d739f18aab0a1fd53fd0'
 PRE_RETURN_GUARD_CONTROLLER = '987aaeed007b170e28fda8ee0550107c8b72b242e84995608c59d74e0cba72ce'
 LEGACY_PRE_MIGRATION_CONTROLLER_SHA = 'de4e0fc68e6dab35de2ba948c6a3e4abc7b3100956776ef56cb517def80897bf'
 LEGACY_PRE_M17_CONTROLLER_SHA = 'fa7053a0f9e4ac4cd92bcd526fc09a161b3b6ae61a3220bdf9d3cc3ffbc9c885'
@@ -47,7 +49,7 @@ LEGACY_PRE_M15_CONTROLLER_SHA = 'ab7ea66bfca0d12bbbd8313c9b2148120d0cdd865addba0
 LEGACY_PRE_M13_CONTROLLER_SHA = '878b3181744357409a26ea56f3a3801f7a128bd63cddb2e99497fb2ae9c79786'
 LEGACY_PRE_M12_CONTROLLER_SHA = '462b523923adfd83085e1f829d6fba66a886f04a530bf8ce8010c7dcef6c92c1'
 LEGACY_M11_CONTROLLER_SHA = '8558a05482f6054a06e5832933fd53287a80554fe42bc60ae4101fef9015ceb7'
-REVIEWED_NATIVES = frozenset({NATIVE, M8, M9, M10, M11, M12, M13, M15, M16, M17, MIGRATION_RUNTIME, RETURN_GUARD_RUNTIME})
+REVIEWED_NATIVES = frozenset({NATIVE, M8, M9, M10, M11, M12, M13, M15, M16, M17, MIGRATION_RUNTIME, RETURN_GUARD_RUNTIME, NOTICE_RECEIVER_RUNTIME})
 LEGACY_M7_CONTROLLER_SHA = 'eea88c4886baaba42256a4b57050432a0e3a4e4dfe12e827f99086d3b0389b16'
 LEGACY_M8_CONTROLLER_SHA = '8a52b8d9b1c6caaaba868cd447073f9d42c432d3d131e4646bfe9442814a2e4b'
 LEGACY_M9_CONTROLLER_SHA = '6056bbc4a25bacefb74d554c3aec02eaae64ab7f824cb7768c9a08936ae8f958'
@@ -479,6 +481,8 @@ def reviewed_controller_identity(checkpoint):
     if runtime == MIGRATION_RUNTIME:
         allowed = {current, PRE_RETURN_GUARD_CONTROLLER}
     if runtime == RETURN_GUARD_RUNTIME:
+        allowed = {current, PRE_NOTICE_RECEIVER_CONTROLLER}
+    if runtime == NOTICE_RECEIVER_RUNTIME:
         allowed = {current}
     if (runtime not in REVIEWED_NATIVES or checkpoint.get('handoff_mode')!=MODE
             or not isinstance(identity,dict) or set(identity)!={'revision','source_sha256'}
@@ -510,7 +514,7 @@ def validate_recovery_payload(checkpoint, payload_bytes):
     if checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M15, M16, M17) and checkpoint.get('handoff_mode') != MODE:
         raise ValueError('The reviewed M8/M9/M10 producer requires its formal recovery proof route')
     if proof is None:
-        if (checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M15, M16, M17)
+        if (checkpoint.get('strategy_sha') == NOTICE_RECEIVER_RUNTIME or checkpoint.get('strategy_sha') in (M8, M9, M10, M11, M12, M13, M15, M16, M17)
                 or checkpoint.get('handoff_mode') == MODE or 'recovery_controller' in checkpoint):
             raise ValueError('Recovery checkpoint lacks its proof')
         return None

@@ -39,9 +39,16 @@ RETURN_GUARD_READ_POLICY = {
 }
 
 
+NOTICE_RECEIVER_READ_POLICY = {
+    **RETURN_GUARD_READ_POLICY,
+    'policy': 'published_return_guard_reads_reviewed_notice_receiver_v1',
+    'rebalance_producer_shas': ['c169efff1fc266d0b86e26e01a3257cbde382bb4'],
+}
+
+
 def validate_read_policy(value, execution_sha=None):
     # Only an exact reviewed reader contract may resolve a namespace.
-    if value not in (LOCAL_READ_POLICY, MIGRATION_READ_POLICY, RETURN_GUARD_READ_POLICY) or (execution_sha is not None
+    if value not in (LOCAL_READ_POLICY, MIGRATION_READ_POLICY, RETURN_GUARD_READ_POLICY, NOTICE_RECEIVER_READ_POLICY) or (execution_sha is not None
             and execution_sha != value['execution_strategy_sha']):
         raise ValueError('Unreviewed member checkpoint reader relationship')
     return dict(value)
