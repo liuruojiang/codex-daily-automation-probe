@@ -23,6 +23,18 @@ on:
       reviewed_result_sha256:
         type: string
         default: ''
+      reconcile_delivery_date:
+        description: 'Original 16:00 session for marker-only recovery'
+        type: string
+        default: ''
+      reconcile_delivery_phase:
+        description: 'Exact original normal or partial delivery'
+        type: string
+        default: ''
+      reconcile_receipt_id:
+        description: 'Original accepted SMTP artifact ID for marker-only recovery'
+        type: string
+        default: ''
       publication_mode:
         type: choice
         options: [close_confirmed, realtime]
@@ -34,7 +46,45 @@ concurrency:
   group: microcap-realtime-digest
   cancel-in-progress: false
 jobs:
+  reconcile_marker:
+    if: inputs.reconcile_delivery_date != '' || inputs.reconcile_delivery_phase != '' || inputs.reconcile_receipt_id != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Verify original scheduled SMTP acceptance
+        id: original
+        env:
+          TARGET: ${{ inputs.reconcile_delivery_date }}
+          PHASE: ${{ inputs.reconcile_delivery_phase }}
+          RECEIPT: ${{ inputs.reconcile_receipt_id }}
+          VALIDATE: ${{ inputs.validation_only }}
+          EXTERNAL: ${{ inputs.external_schedule }}
+          CHECKPOINT: ${{ inputs.persist_checkpoint }}
+          MODE: ${{ inputs.publication_mode }}
+          REPORT_URL: ${{ inputs.reviewed_result_url }}
+          REPORT_SHA: ${{ inputs.reviewed_result_sha256 }}
+        run: |
+          if [[ "$VALIDATE" != 'true' || "$EXTERNAL" == 'true' || "$CHECKPOINT" == 'true' || "$MODE" != 'close_confirmed' || -n "$REPORT_URL$REPORT_SHA" ]]; then
+            echo 'Marker-only recovery cannot also request publication or strategy writes' >&2
+            exit 1
+          fi
+          python -B scripts/check_microcap_scheduled_delivery.py --date "$TARGET" --marker-only "$PHASE" --receipt-id "$RECEIPT" --out marker-recovery.json
+      - name: Restore the missing marker for the original transaction
+        if: steps.original.outputs.write_marker == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.original.outputs.marker_name }}
+          path: marker-recovery.json
+          if-no-files-found: error
+          retention-days: 30
   send:
+    if: inputs.reconcile_delivery_date == '' && inputs.reconcile_delivery_phase == '' && inputs.reconcile_receipt_id == ''
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

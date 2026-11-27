@@ -70,6 +70,12 @@ def permitted(name):
             and not any(part in ('locks', 'incomplete', 'failures') for part in p.parts))
 
 
+def transport_files(files):
+    if any(p.startswith(PREFIXES) and not permitted(p) for p in files):
+        raise ValueError('A native source evidence object has no supported transport role')
+    return {p: h for p, h in files.items() if permitted(p)}
+
+
 def export(root, state, target, bundle, pool=None):
     root, state, bundle = Path(root), Path(state), Path(bundle)
     files = {}
@@ -84,9 +90,7 @@ def export(root, state, target, bundle, pool=None):
     for name,digest in result['context']['native_sources'].items():
         if sha(bound(root,name).read_bytes().replace(b'\r\n',b'\n'))!=digest:
             raise ValueError('Native source code changed after completed maintenance')
-    if any(p.startswith(PREFIXES) and not permitted(p) for p in files):
-        raise ValueError('A native source evidence object has no supported transport role')
-    files = {p:h for p,h in files.items() if permitted(p)}
+    files = transport_files(files)
     symbols = result['symbols']
     require_complete_bootstrap(json.loads((state/'bootstrap.json').read_bytes()), symbols)
     for s in symbols:
