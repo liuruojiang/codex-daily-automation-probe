@@ -11,6 +11,18 @@ on:
         type: choice
         options: [maintenance, rebalance, rebalance_recovery, scoped_acceptance, scoped_readback]
         default: maintenance
+      artifact_id:
+        description: 'scoped_readback only. Existing artifact ID from the successful publication'
+        type: string
+        default: ''
+      bundle_sha256:
+        description: 'scoped_readback only. Exact SHA-256 of the inner formal ZIP'
+        type: string
+        default: ''
+      archive_date:
+        description: 'scoped_readback only. Exact archive trading date'
+        type: string
+        default: ''
 permissions:
   contents: read
   actions: write
@@ -261,6 +273,9 @@ jobs:
           TARGET: ${{ steps.schedule.outputs.date }}
           SEED_URL: ${{ steps.config.outputs.seed_url }}
           SEED_SHA256: ${{ steps.config.outputs.seed_sha256 }}
+          ARTIFACT_ID: ${{ inputs.artifact_id }}
+          BUNDLE_SHA256: ${{ inputs.bundle_sha256 }}
+          ARCHIVE_DATE: ${{ inputs.archive_date }}
         run: |
           args=(--root scoped-consumer --runtime-sha "$RUNTIME_SHA" --not-after-date "$TARGET" --bundle "$RUNNER_TEMP/restored-scoped-whole.zip" --receipt scoped-restore.json)
           if [[ "$TASK" == 'scoped_readback' ]]; then
@@ -268,7 +283,14 @@ jobs:
           else
             args+=(--fallback-url "$SEED_URL" --fallback-sha256 "$SEED_SHA256")
           fi
-          if [[ "$RUNTIME_SHA" == '4608a82dd7a4b3828440523a28e19e0b8e4cbbca' || "$RUNTIME_SHA" == 'e1e014b9af50eadaa9b52d6f881e3e0855ac4846' || "$RUNTIME_SHA" == 'c169efff1fc266d0b86e26e01a3257cbde382bb4' ]]; then
+          if [[ -n "$ARTIFACT_ID$BUNDLE_SHA256$ARCHIVE_DATE" ]]; then
+            if [[ "$TASK" != 'scoped_readback' || -z "$ARTIFACT_ID" || -z "$BUNDLE_SHA256" || -z "$ARCHIVE_DATE" ]]; then
+              echo 'The exact artifact ID, ZIP SHA-256 and archive date belong together on scoped_readback' >&2
+              exit 1
+            fi
+            args+=(--artifact-id "$ARTIFACT_ID" --expected-bundle-sha256 "$BUNDLE_SHA256" --expected-archive-date "$ARCHIVE_DATE")
+            python -B automation/scripts/microcap_scoped_whole_recovery.py "${args[@]}"
+          elif [[ "$RUNTIME_SHA" == '4608a82dd7a4b3828440523a28e19e0b8e4cbbca' || "$RUNTIME_SHA" == 'e1e014b9af50eadaa9b52d6f881e3e0855ac4846' || "$RUNTIME_SHA" == 'c169efff1fc266d0b86e26e01a3257cbde382bb4' ]]; then
             python -B automation/scripts/microcap_scoped_whole_recovery.py "${args[@]}"
           else
             args+=(--review automation/config/microcap_exact_runtime_review_20261120.json --activation-receipt scoped-prepare/runtime-activation.json)

@@ -125,28 +125,45 @@ def fetch_latest(token,runtime_sha):
         if len(items)<100:break
     else:raise RecoveryError('github_artifact_pagination_incomplete')
     for item in sorted(candidates,key=lambda a:(str(a.get('created_at','')),int(a.get('id',0))),reverse=True):
-        run_id=(item.get('workflow_run') or {}).get('id')
-        if type(run_id) is not int or run_id<=0:continue
-        run=api_json(f'{base}/runs/{run_id}',token)
-        if not eligible_run(run,run_id,allow_reconciliation=True):continue
-        reconcile=(run.get('event')=='workflow_dispatch'
-                   and (item.get('workflow_run') or {}).get('head_sha')==run['head_sha']
-                   and re.fullmatch('sha256:[0-9a-f]{64}',str(item.get('digest',''))) is not None)
-        publication={}
-        if not published_step(base,token,run,allow_reconciliation=reconcile,observation=publication):continue
-        if (type(item.get('id')) is not int or item['id']<=0
-                or item.get('archive_download_url')!=f"{base}/artifacts/{item['id']}/zip"):
-            raise RecoveryError('artifact_repository_url_mismatch')
-        if type(item.get('size_in_bytes')) is not int or not 0<item['size_in_bytes']<=MAX_BUNDLE_BYTES:
-            raise RecoveryError('artifact_size_out_of_bounds')
-        digest=item.get('digest')
-        if digest is not None and re.fullmatch('sha256:[0-9a-f]{64}',str(digest)) is None:
-            raise RecoveryError('artifact_digest_invalid')
-        declared=(item.get('workflow_run') or {}).get('head_sha')
-        if declared is not None and declared!=run['head_sha']:
-            raise RecoveryError('artifact_workflow_identity_mismatch')
-        return dict(item,producer_head_sha=run['head_sha'],publication_acceptance=publication['kind'])
+        verified=eligible_artifact(base,token,item)
+        if verified is not None:return verified
     return None
+
+
+def eligible_artifact(base,token,item):
+    run_id=(item.get('workflow_run') or {}).get('id')
+    if type(run_id) is not int or run_id<=0:return None
+    run=api_json(f'{base}/runs/{run_id}',token)
+    if not eligible_run(run,run_id,allow_reconciliation=True):return None
+    declared=(item.get('workflow_run') or {}).get('head_sha')
+    digest=item.get('digest')
+    reconcile=(run.get('event')=='workflow_dispatch' and declared==run['head_sha']
+               and re.fullmatch('sha256:[0-9a-f]{64}',str(digest)) is not None)
+    publication={}
+    if not published_step(base,token,run,allow_reconciliation=reconcile,observation=publication):return None
+    if (type(item.get('id')) is not int or item['id']<=0
+            or item.get('archive_download_url')!=f"{base}/artifacts/{item['id']}/zip"):
+        raise RecoveryError('artifact_repository_url_mismatch')
+    if type(item.get('size_in_bytes')) is not int or not 0<item['size_in_bytes']<=MAX_BUNDLE_BYTES:
+        raise RecoveryError('artifact_size_out_of_bounds')
+    if digest is not None and re.fullmatch('sha256:[0-9a-f]{64}',str(digest)) is None:
+        raise RecoveryError('artifact_digest_invalid')
+    if declared is not None and declared!=run['head_sha']:
+        raise RecoveryError('artifact_workflow_identity_mismatch')
+    return dict(item,producer_head_sha=run['head_sha'],publication_acceptance=publication['kind'])
+
+
+def fetch_pinned(token,runtime_sha,artifact_id):
+    if not token:raise RecoveryError('github_repository_authentication_required')
+    base=f'https://api.github.com/repos/{REPOSITORY}/actions'
+    item=api_json(f'{base}/artifacts/{artifact_id}',token)
+    if (not isinstance(item,dict) or item.get('id')!=artifact_id
+            or item.get('name')!=artifact_name(runtime_sha) or item.get('expired') is not False
+            or re.fullmatch('sha256:[0-9a-f]{64}',str(item.get('digest'))) is None):
+        raise RecoveryError('pinned_artifact_identity_invalid')
+    verified=eligible_artifact(base,token,item)
+    if verified is None:raise RecoveryError('pinned_artifact_publication_unverified')
+    return verified
 
 
 class HTTPSAuthSafeRedirect(StripCrossOriginAuthRedirectHandler):
@@ -272,9 +289,11 @@ def native_stage(label,code,args,work):
     if process.returncode:raise RecoveryError('native_'+label+'_failed')
 
 
-def restore_bundle(root,bundle,runtime_sha,not_after,work):
+def restore_bundle(root,bundle,runtime_sha,not_after,work,*,expected=None):
     root,bundle,work=Path(root).resolve(),Path(bundle).resolve(),Path(work).resolve()
     identity=bundle_identity(bundle,runtime_sha,not_after)
+    if expected is not None and (identity['bundle_sha256'],identity['seed_date'])!=expected:
+        raise RecoveryError('pinned_inner_bundle_identity_invalid')
     native_stage('source-release',VERIFY,[root,runtime_sha,identity['source_manifest_release_sha']],work)
     native_stage('whole-restore',RESTORE,[root,bundle,identity['seed_date'],work/'native-restore.json',Path(__file__).resolve().parent],work)
     restored=json.loads((root/MANIFEST).read_bytes())
@@ -287,12 +306,20 @@ def restore_bundle(root,bundle,runtime_sha,not_after,work):
                 historical_release_files_equivalent=True,freshness='verified_archive_only_requires_current_refresh')
 
 
-def recover(*,root,runtime_sha,not_after,bundle,receipt,token,fallback_url=None,fallback_sha256=None,require_artifact=False):
+def recover(*,root,runtime_sha,not_after,bundle,receipt,token,fallback_url=None,fallback_sha256=None,
+            require_artifact=False,artifact_id=None,expected_bundle_sha256=None,expected_archive_date=None):
     root,bundle,receipt=map(lambda p:Path(p).resolve(),(root,bundle,receipt))
     artifact_name(runtime_sha);date.fromisoformat(not_after)
     if fallback_url is not None or fallback_sha256 is not None:
         validate_seed(fallback_url or '',fallback_sha256 or '')
     if require_artifact and fallback_url:raise RecoveryError('required_artifact_cannot_use_fallback')
+    pinned=any(v is not None for v in (artifact_id,expected_bundle_sha256,expected_archive_date))
+    if pinned and (not require_artifact or fallback_url is not None or fallback_sha256 is not None
+                   or type(artifact_id) is not int or artifact_id<=0
+                   or re.fullmatch('[0-9a-f]{64}',str(expected_bundle_sha256)) is None
+                   or date.fromisoformat(expected_archive_date or '').isoformat()!=expected_archive_date
+                   or expected_archive_date>not_after):
+        raise RecoveryError('pinned_archive_requires_exact_id_digest_date_and_no_fallback')
     if receipt.exists() or bundle.exists():raise RecoveryError('recovery_evidence_destination_already_exists')
     if receipt==bundle:raise RecoveryError('recovery_receipt_cannot_replace_bundle')
     if (bundle==root or receipt==root or bundle.is_relative_to(root) or receipt.is_relative_to(root)
@@ -304,7 +331,7 @@ def recover(*,root,runtime_sha,not_after,bundle,receipt,token,fallback_url=None,
     work=Path(tempfile.mkdtemp(prefix='scoped-whole-recovery-',dir=bundle.parent))
     source=dict(runtime_sha=runtime_sha,repository=REPOSITORY,restored=False,fallback_used=False,work_directory=str(work))
     try:
-        item=fetch_latest(token,runtime_sha)
+        item=fetch_pinned(token,runtime_sha,artifact_id) if pinned else fetch_latest(token,runtime_sha)
         if item is None:
             if require_artifact or not fallback_url:raise RecoveryError('no_eligible_published_scoped_whole_artifact')
             source.update(source='explicit_release_seed',fallback_used=True,fallback_reason='complete_discovery_no_eligible_artifact',
@@ -320,7 +347,9 @@ def recover(*,root,runtime_sha,not_after,bundle,receipt,token,fallback_url=None,
             downloaded,transport=download_artifact(item,token,work)
         # Preserve the original bytes and manifest release identity. No repack.
         os.replace(downloaded,bundle)
-        result=dict(source,**transport,**restore_bundle(root,bundle,runtime_sha,not_after,work),status='scoped_whole_restore_verified')
+        expected={'expected':(expected_bundle_sha256,expected_archive_date)} if pinned else {}
+        result=dict(source,**transport,**restore_bundle(root,bundle,runtime_sha,not_after,work,**expected),
+                    status='scoped_whole_restore_verified')
         atomic(receipt,encode(result))
         return result
     except Exception as exc:
@@ -334,13 +363,17 @@ def main():
     for name in ('root','bundle','receipt'):parser.add_argument('--'+name,type=Path,required=True)
     parser.add_argument('--runtime-sha',required=True);parser.add_argument('--not-after-date',required=True)
     parser.add_argument('--fallback-url');parser.add_argument('--fallback-sha256');parser.add_argument('--require-artifact',action='store_true')
+    parser.add_argument('--artifact-id',type=int)
+    parser.add_argument('--expected-bundle-sha256');parser.add_argument('--expected-archive-date')
     args=parser.parse_args()
     if os.environ.get('GITHUB_REPOSITORY',REPOSITORY)!=REPOSITORY:
         parser.error('Scoped recovery is limited to its exact repository')
     try:
         report=recover(root=args.root,runtime_sha=args.runtime_sha,not_after=args.not_after_date,bundle=args.bundle,
                        receipt=args.receipt,token=os.environ.get('GITHUB_TOKEN',''),fallback_url=args.fallback_url,
-                       fallback_sha256=args.fallback_sha256,require_artifact=args.require_artifact)
+                       fallback_sha256=args.fallback_sha256,require_artifact=args.require_artifact,
+                       artifact_id=args.artifact_id,expected_bundle_sha256=args.expected_bundle_sha256,
+                       expected_archive_date=args.expected_archive_date)
     except Exception as exc:
         print(json.dumps(dict(restored=False,error_code=str(exc) if isinstance(exc,RecoveryError) else type(exc).__name__)))
         return 1
