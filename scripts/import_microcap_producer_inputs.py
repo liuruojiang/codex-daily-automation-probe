@@ -70,7 +70,7 @@ def exact_p2_successor(source_runtime,sources,current,reader_runtime):
                 P7_RUNTIME: 'microcap_local_producer_p7_20261119.json',
                 P9_RUNTIME: 'microcap_local_producer_p9_20261120.json',
                 P10_RUNTIME: 'microcap_local_producer_p10_20261123.json',
-                P11_RUNTIME: 'microcap_local_producer_runtime.json'}
+                P11_RUNTIME: 'microcap_local_producer_p11_20261124.json'}
     if reader_runtime not in profiles:
         raise ValueError('Unreviewed P2 to P3 source-only reader successor')
     profile=profiles[reader_runtime]
@@ -101,7 +101,7 @@ def exact_share_reader(source_runtime, sources, current, reader_runtime):
                      'cc51abb0834eae664f198440f0de95d7c1ba2a3d017860976f34737d7f0e675b'),
         P9_RUNTIME: ('microcap_local_producer_p9_20261120.json', P9_SHARE_SHA),
         P10_RUNTIME: ('microcap_local_producer_p10_20261123.json', P10_SHARE_SHA),
-        P11_RUNTIME: ('microcap_local_producer_runtime.json', P11_SHARE_SHA),
+        P11_RUNTIME: ('microcap_local_producer_p11_20261124.json', P11_SHARE_SHA),
     }
     if (source_runtime, reader_runtime) not in {
             (P7_RUNTIME, P9_RUNTIME), (P7_RUNTIME, P10_RUNTIME), (P9_RUNTIME, P10_RUNTIME),

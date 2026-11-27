@@ -453,6 +453,37 @@ print(json.dumps(dict(horizons=horizons,full_rebuild=full,checked_files=len(obse
     return horizons
 
 
+def restore_cold_metadata_ancestors(root, protected, references):
+    from scripts.st_history_scope import resolve_archive_reference, source_closure
+
+    active = resolve_archive_reference(root)
+    current = json.loads(bound(root, active[0]).read_bytes())
+    for relative, digest in sorted(references):
+        original = bound(root, relative)
+        if original.exists():
+            if sha(original.read_bytes()) != digest:
+                raise ValueError('Preserve conflicting immutable metadata authority: ' + relative)
+            continue
+        old = json.loads(bound(protected, relative).read_bytes())
+        prefix = old.get('daily_increments')
+        if (not prefix or current.get('daily_increments', [])[:len(prefix)] != prefix
+                or any(old.get(k) != current.get(k) for k in (old.keys() | current.keys()) - {'daily_increments'})):
+            raise ValueError('Cold metadata authority is not an exact prefix of the current authority')
+        files = source_closure(protected, relative, digest)
+        for name, expected in files.items():
+            destination = bound(root, name)
+            if destination.exists():
+                if sha(destination.read_bytes()) != expected:
+                    raise ValueError('Preserve conflicting immutable metadata input: ' + name)
+            else:
+                raw = bound(protected, name).read_bytes()
+                if sha(raw) != expected:
+                    raise ValueError('Original cold metadata source changed: ' + name)
+                atomic(destination, raw)
+        if resolve_archive_reference(root) != active:
+            raise ValueError('Current metadata authority changed during ancestor restoration')
+
+
 def refresh_scoped_metadata(root, protected, state, journal, symbols, scope_sha, target, freq):
     from scripts import st_metadata_refresh as native
     from scripts.st_history_scope import resolve_archive_reference
@@ -465,6 +496,7 @@ def refresh_scoped_metadata(root, protected, state, journal, symbols, scope_sha,
     cutoff = baseline['reference_consumed_through']
     authority = resolve_archive_reference(root)[1]
     cold = {}
+    ancestors = set()
     pending = {}
     for symbol in symbols:
         meta = freq._read_security_meta_payload(bound(root, CACHE+'security_meta/'+symbol+'.json'), symbol)
@@ -474,6 +506,7 @@ def refresh_scoped_metadata(root, protected, state, journal, symbols, scope_sha,
         pending[symbol] = end
         if end < cutoff:
             cold[symbol] = end
+            ancestors.add((meta['st_notice_archive_manifest_path'], meta['st_notice_archive_sha256']))
 
     original_marker = bound(root, scoped_metadata_marker(root, scope_sha))
     plan_path = journal / 'scoped-metadata-cold-plan.json'
@@ -483,6 +516,7 @@ def refresh_scoped_metadata(root, protected, state, journal, symbols, scope_sha,
         if original_marker.exists() and json.loads(original_marker.read_bytes())['status'] != 'complete':
             raise ValueError('Preserve the unresolved original scoped metadata transaction')
         horizons = scoped_cold_consumption(protected, baseline, journal, cold)
+        restore_cold_metadata_ancestors(root, protected, ancestors)
         groups = {}
         for symbol, end in pending.items():
             groups.setdefault(min(end, cutoff), []).append(symbol)
@@ -634,6 +668,7 @@ def select_local_notice_forward(*,root,protected_root,state,symbols,target,out,n
     if sha(module_path.read_bytes().replace(b'\r\n',b'\n')) not in {
         '611bd60980187ba251b3fcf292b38d0461e06dea19a614bd723a83c68443882b',
         'f67b8a7c473039730600469e4b69823b6f7263e3254cecdb05c911b2549a0271',
+        'a17db87a2a1b3b0e457d908d622a38c2d5d05ae1b241a998131f433fcb123b05',
     }:
         raise ValueError('Local notice selector dependency is not the reviewed exact source')
     import microcap_notice_prefix as prefix

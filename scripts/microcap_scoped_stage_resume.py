@@ -17,7 +17,9 @@ LEGACY_CONTROLLER_SOURCES = {
     'microcap_recovery_handoff.py': '6056bbc4a25bacefb74d554c3aec02eaae64ab7f824cb7768c9a08936ae8f958',
     'microcap_handoff_witness.py': '91d57913553e45ad2ac9e791dbb419f4c759df368e9f9a7c20e53decb12c80c1',
 }
-REVIEWED_PROOF_READER = '4a5ff597449813f3416517bc60ef579bfa1db214e513d739f18aab0a1fd53fd0'
+REVIEWED_PROOF_READER = '64fe6fd0bdf8c40f66be1a09fb4adc452fe876311818b8dfaf190fc6d62e6896'
+PRE_NOTICE_RECEIVER_PROOF_READER = '4a5ff597449813f3416517bc60ef579bfa1db214e513d739f18aab0a1fd53fd0'
+PRE_NOTICE_RECEIVER_STAGE_READER = '2ff32fdeb08cda485c516de08370147718ddcf64826c47f3f077ae4ec172f8e8'
 PRE_RETURN_GUARD_STAGE_READER = '0c2fc1f700c6ae1292930d25c42ea39d931da76f99464739c16cd9560a2116b6'
 PRE_RETURN_GUARD_PROOF_READER = '987aaeed007b170e28fda8ee0550107c8b72b242e84995608c59d74e0cba72ce'
 PRE_MIGRATION_STAGE_READER = '1c55c5869e2756f9f1c401c03afe8cc5fc91ceef3d639defdad5cd3589e6b75b'
@@ -91,6 +93,11 @@ def reviewed_reader_context(original_raw, current_raw):
         'microcap_recovery_handoff.py': PRE_RETURN_GUARD_PROOF_READER})
     if supplied == pre_return_guard_context:
         expected = pre_return_guard_context
+    pre_notice_receiver_context = dict(LEGACY_CONTROLLER_SOURCES, **{
+        'microcap_scoped_stage_resume.py': PRE_NOTICE_RECEIVER_STAGE_READER,
+        'microcap_recovery_handoff.py': PRE_NOTICE_RECEIVER_PROOF_READER})
+    if supplied == pre_notice_receiver_context:
+        expected = pre_notice_receiver_context
     unchanged = lambda value: {k: v for k, v in value.items() if k != 'controller_sources'}
     if (original.get('schema') != 'microcap_scoped_recovery_transaction_v1'
             or original.get('consumer_sha') != REVIEWED_NATIVE
